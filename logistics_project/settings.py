@@ -71,7 +71,7 @@ DATABASES = {
 'NAME': 'good_way_express',  
 'USER': 'user1',  
 'PASSWORD': '0786',  
-'HOST': 'localhost',  
+'HOST': 'dpg-ctnest5umphs73c610og-a',  # Use the hostname you provided
 'PORT': '5433',  
 }  
 }  
