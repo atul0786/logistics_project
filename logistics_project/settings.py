@@ -23,7 +23,6 @@ INSTALLED_APPS = [  'django.contrib.admin',
                   'dealer_app',  
                   'transporter_app',  
                   'crispy_forms',  
-                  'crispy_bootstrap4',
                   'django_extensions',  
                   'rest_framework',
 
