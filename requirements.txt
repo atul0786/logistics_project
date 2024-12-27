@@ -28,6 +28,7 @@ docopt==0.6.2
 executing==2.1.0
 fastjsonschema==2.21.1
 fonttools==4.54.1
+gunicorn==23.0.0
 html5lib==1.1
 idna==3.10
 ipython==8.12.3
@@ -66,6 +67,7 @@ pyphen==0.16.0
 pypng==0.20220715.0
 python-bidi==0.6.0
 python-dateutil==2.9.0.post0
+pywin32==308
 PyYAML==6.0.2
 pyzmq==26.2.0
 qrcode==7.4.2
