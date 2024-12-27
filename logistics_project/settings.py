@@ -12,7 +12,12 @@ SECRET_KEY = 'django-insecure-@jcjdu2*cprnhxp1eim1c4td1p3ef55-v6wksl1*t&$a-da14)
   
 DEBUG = True  
   
-ALLOWED_HOSTS = []  
+ALLOWED_HOSTS = [
+    'logistics-project-4.onrender.com',
+    'localhost',
+    '127.0.0.1',
+    # Add any other hosts you want to allow
+]
   
 INSTALLED_APPS = [  'django.contrib.admin',
                   'django.contrib.auth',  
