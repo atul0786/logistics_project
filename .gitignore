@@ -1,0 +1,6 @@
+/Git/
+/venv/
+*.dll
+*.exe
+*.pyd
+node_modules

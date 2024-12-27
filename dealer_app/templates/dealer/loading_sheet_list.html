@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Loading Sheets</h1>
+<table>
+    <thead>
+        <tr>
+            <th>LS Number</th>
+            <th>Transporter</th>
+            <th>Total CNotes</th>
+            <th>Total Amount</th>
+            <th>Status</th>
+            <th>Created At</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for sheet in loading_sheets %}
+            <tr>
+                <td>{{ sheet.ls_number }}</td>
+                <td>{{ sheet.transporter.name }}</td>
+                <td>{{ sheet.total_cnote }}</td>
+                <td>{{ sheet.total_paid_amount|add:sheet.total_topay_amount|add:sheet.total_tbb_amount|add:sheet.total_foc_amount }}</td>
+                <td>{{ sheet.status }}</td>
+                <td>{{ sheet.created_at }}</td>
+                <td>
+                    <a href="{% url 'loading_sheet_detail' sheet.ls_number %}">View</a>
+                    {% if sheet.status != 'cancelled' %}
+                        <a href="{% url 'cancel_loading_sheet' sheet.ls_number %}">Cancel</a>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{% url 'create_loading_sheet' %}">Create New Loading Sheet</a>
+{% endblock %}
