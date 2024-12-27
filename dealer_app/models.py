@@ -334,8 +334,7 @@ class LoadingSheetSummary(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Loading Sheet {
-self.ls_number} - Dealer: {self.dealer.name}, Transporter: {self.transporter.company_name}"
+        return f"Loading Sheet {self.ls_number} - Dealer: {self.dealer.name}, Transporter: {self.transporter.company_name}"
     
 
     def cancel(self):
