@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CNote PDF</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .header, .footer {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .content {
+            margin: 20px;
+        }
+        .content p {
+            margin: 5px 0;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .table, .table th, .table td {
+            border: 1px solid black;
+        }
+        .table th, .table td {
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Section -->
+    <div class="header">
+        <h1>Consignment Note (CNote)</h1>
+        <p>Date: {{ cnote.created_at|date:"d-m-Y" }}</p>
+    </div>
+
+    <!-- Consignment Details -->
+    <div class="content">
+        <h2>Consignor and Consignee Information</h2>
+        <p><strong>Dealer:</strong> {{ cnote.dealer.name }}</p>
+        <p><strong>Consignor (From):</strong> {{ cnote.consignor_name }}</p>
+        <p><strong>Consignor Mobile:</strong> {{ cnote.consignor_mobile }}</p>
+        <p><strong>Consignor Address:</strong> {{ cnote.consignor_address }}</p>
+        
+        <p><strong>Consignee (To):</strong> {{ cnote.consignee_name }}</p>
+        <p><strong>Consignee Mobile:</strong> {{ cnote.consignee_mobile }}</p>
+        <p><strong>Consignee Address:</strong> {{ cnote.consignee_address }}</p>
+    </div>
+
+    <!-- Package Details Section -->
+    <div class="content">
+        <h2>Package Details</h2>
+        <p><strong>Consignment Number:</strong> CN{{ cnote.id }}</p>
+        <p><strong>Article:</strong> {{ cnote.article }}</p>
+        <p><strong>Article Type:</strong> {{ cnote.art_type }}</p>
+        <p><strong>Article Amount:</strong> ₹{{ cnote.art_amount }}</p>
+        <p><strong>Total Weight:</strong> {{ cnote.weight }} kg</p>
+        <p><strong>Destination:</strong> {{ cnote.destination }}</p>
+    </div>
+
+    <!-- Charges Section -->
+    <div class="content">
+        <h2>Charges</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Amount (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Freight Charges</td>
+                    <td>{{ cnote.freight }}</td>
+                </tr>
+                <tr>
+                    <td>Docket Charges</td>
+                    <td>{{ cnote.docket_charge }}</td>
+                </tr>
+                <tr>
+                    <td>Door Delivery Charges</td>
+                    <td>{{ cnote.door_delivery }}</td>
+                </tr>
+                <tr>
+                    <td>Handling Charges</td>
+                    <td>{{ cnote.handling }}</td>
+                </tr>
+                <tr>
+                    <td>Pickup Charges</td>
+                    <td>{{ cnote.pickup }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Grand Total</strong></td>
+                    <td><strong>₹{{ cnote.grand_total }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Footer Section -->
+    <div class="footer">
+        <p>Thank you for booking with us!</p>
+        <p>For any queries, please contact: {{ cnote.dealer.contact_info }}</p>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,1178 @@
+from django.shortcuts import render, redirect, get_object_or_404   
+from django.contrib.auth.decorators import login_required, user_passes_test   
+from django.contrib.auth import login, authenticate   
+from django.contrib import messages   
+from django.http import HttpResponseForbidden, HttpResponseRedirect, JsonResponse, HttpResponse   
+from django.views.decorators.csrf import csrf_protect   
+from django.core.paginator import Paginator   
+from rest_framework.decorators import api_view   
+from rest_framework.response import Response   
+from django.template.loader import get_template
+from django.http import JsonResponse
+from transporter_app.models import City, Pickup
+import json
+from django.db import transaction
+from io import BytesIO   
+from xhtml2pdf import pisa   
+from functools import wraps  
+from .models import BookingType, CNotes, DeliveryDestination, Dealer, CNote, Article, ArtType
+import logging   
+from django.http import JsonResponse
+from transporter_app.models import Transporter
+from django.db import connection
+from django.views.decorators.http import require_POST
+from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login as auth_login
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from .models import CNote  # यदि आप CNote मॉडल का उपयोग कर रहे हैं
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from .models import CNote
+from transporter_app.models import Pickup  # Import Pickup from transporter_app
+from django.urls import reverse
+from django.db.models import Count
+from django.http import JsonResponse
+from .models import CNote
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db.models import Sum
+#from .models import Transporter, Pickup  # Assuming you have these models
+from django.shortcuts import render, get_object_or_404
+from .models import Dealer, CNote  # Make sure these models are correctly imported
+from transporter_app.models import Transporter, Pickup  # Import Pickup from transporter_app
+from django.contrib.auth import authenticate, login as auth_login
+from django.shortcuts import redirect, render
+from django.contrib import messages
+from transporter_app.models import Transporter
+from transporter_app.models import Transporter  # Make sure this import is correct
+import logging
+from django.http import JsonResponse
+from transporter_app.models import City  # सही आयात
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from .models import CNote  # Ensure your models are imported correctly
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib import messages
+from django.utils import timezone
+from .models import CNote
+from .models import CNotes
+from transporter_app.models import Pickup
+import logging
+from transporter_app.models import Transporter  # Transporter मॉडल का सही आयात
+from django.shortcuts import render
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from xml.etree.ElementTree import Element, SubElement, tostring
+from .models import BookingType, DeliveryDestination, Dealer, CNote, Article, ArtType, LoadingSheetSummary, LoadingSheetDetail
+import logging
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.utils import timezone
+from .models import CNote, LoadingSheetSummary, LoadingSheetDetail
+from transporter_app.models import Transporter
+
+
+# Set up logging   
+logger = logging.getLogger(__name__)   
+
+
+
+@login_required
+def render_to_pdf(template_src, context_dict):   
+    template = get_template(template_src)   
+    html = template.render(context_dict)   
+    result = BytesIO()   
+    pdf = pisa.pisaDocument(BytesIO(html.encode("UTF-8")), result)   
+    if not pdf.err:   
+        return result.getvalue()   
+    return None 
+  
+def user_owns_cnote(view_func):
+    @wraps(view_func)
+    def wrapper(request, cnote_id, *args, **kwargs):
+        # Get the CNote object using the provided cnote_id
+        cnote = get_object_or_404(CNote, id=cnote_id)
+        
+        # Check if the dealer associated with the CNote is the same as the logged-in user
+        if cnote.dealer.user != request.user:
+            return HttpResponseForbidden("You do not have permission to access this CNote.")
+        
+        # Call the original view function
+        return view_func(request, cnote_id, *args, **kwargs)
+    
+    return wrapper
+
+
+def custom_login_redirect(request):
+    if request.method == 'POST':
+        user_type = request.POST.get('user_type')
+        username = request.POST['username']
+        password = request.POST['password']
+        
+        logger.debug(f"Login attempt - User Type: {user_type}, Username: {username}")
+        
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            logger.debug(f"User authenticated: {user.username}")
+            auth_login(request, user)
+            
+            if user_type == 'dealer' and hasattr(user, 'dealer'):
+                logger.debug(f"Dealer login successful: {user.username}")
+                return redirect('dealer:create_cnotes')
+            elif user_type == 'transporter':
+                try:
+                    transporter = Transporter.objects.get(user=user)
+                    logger.debug(f"Transporter login successful: {user.username}")
+                    return redirect('transporter:home')  # Use the namespace here
+                except Transporter.DoesNotExist:
+                    logger.warning(f"User {user.username} tried to log in as transporter but has no associated Transporter")
+                    messages.error(request, 'आपका खाता ट्रांसपोर्टर के रूप में सेट नहीं है।')
+                except Transporter.MultipleObjectsReturned:
+                    logger.error(f"Multiple Transporter objects found for user {user.username}")
+                    messages.error(request, 'आपके खाते में एक तकनीकी समस्या है। कृपया व्यवस्थापक से संपर्क करें।')
+            else:
+                logger.warning(f"Invalid account type for user: {user.username}")
+                messages.error(request, 'आपका खाता मान्य नहीं है।')
+        else:
+            logger.warning(f"Authentication failed for username: {username}")
+            messages.error(request, 'अमान्य उपयोगकर्ता नाम या पासवर्ड।')
+
+    return render(request, 'registration/login.html')
+
+@login_required
+def login_redirect(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user_type = request.POST.get('user_type')
+
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            print("Authenticated user:", user.username)  # Debug statement
+            # Redirect based on user type
+            if user_type == 'dealer':
+                return redirect('dealer:create_cnotes')  # Redirect to dealer page
+            elif user_type == 'transporter':
+                return redirect('transporter:home')  # Use the namespace here
+        else:
+            print("Authentication failed for user:", username)  # Debugging output
+            messages.error(request, 'Invalid username or password.')
+
+    return render(request, 'registration/login.html')
+
+@login_required  
+@user_owns_cnote  
+def get_cnote(request, cnote_id):  
+    try:  
+        cnote = CNote.objects.get(id=cnote_id)  
+        articles = Article.objects.filter(cnote=cnote)  
+        cnote_data = {  
+            'id': cnote.id,  
+            'booking_type': cnote.booking_type,  
+            'delivery_destination': cnote.delivery_destination,  
+            'consignee_name': cnote.consignee_name,  
+            'payment_type': cnote.payment_type,  
+            'grand_total': cnote.grand_total,  
+            'created_at': cnote.created_at.strftime('%Y-%m-%d %H:%M:%S'),  
+            'articles': [  
+                {  
+                    'article_type': article.article_type,  
+                    'art': article.art,  
+                    'art_type': article.art_type,  
+                    'said_to_cont': article .said_to_cont,  
+                    'art_amt': article.art_amt  
+                } for article in articles  
+            ]  
+        }  
+        return JsonResponse({'status': 'success', 'data': cnote_data})  
+    except CNote.DoesNotExist:  
+        logger.warning(f"CNote not found: {cnote_id}")  
+        return JsonResponse({'status': 'error', 'message': 'CNote not found'}, status=404)  
+    except Exception as e:  
+        logger.error(f"Error getting CNote: {str(e)}")  
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)  
+
+@login_required  
+def list_cnotes(request):  
+    try:  
+        cnotes = CNote.objects.filter(dealer__user=request.user).order_by('-created_at')  
+        paginator = Paginator(cnotes, 10)  
+        page_number = request.GET.get('page')  
+        page_obj = paginator.get_page(page_number)  
+        cnotes_data = [  
+            {  
+                'id': cnote.id,  
+                'booking_type': cnote.booking_type,  
+                'delivery_destination': cnote.delivery_destination,  
+                'consignee_name': cnote.consignee_name,  
+                'payment_type': cnote.payment_type,  
+                'grand_total': cnote.grand_total,  
+                'created_at': cnote.created_at.strftime('%Y-%m-%d %H:%M:%S')  
+            } for cnote in page_obj  
+        ]  
+        return JsonResponse({'status': 'success', 'data': cnotes_data, 'count': paginator.count})  
+    except Exception as e:  
+        logger.error(f"Error getting CNotes: {str(e)}")  
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)  
+
+@login_required  
+@user_owns_cnote  
+def update_cnote(request, cnote_id):  
+    cnote = get_object_or_404(CNote, id=cnote_id) 
+    if request.method == 'POST':  
+        # Access form data using request.POST  
+        dealer_id = request.POST.get('dealer_id')  
+        booking_type = request.POST.get('booking_type')  
+        delivery_type = request.POST.get('delivery_type')  
+        delivery_method = request.POST.get('delivery_method')  
+        delivery_destination = request.POST.get('delivery_destination')  
+        ewayBillNumber = request.POST.get('ewayBillNumber')  
+        consignor_name = request.POST.get('consignor_name')  
+        consignor_mobile = request.POST.get('consignor_mobile')  
+        consignor_gst = request.POST.get('consignor_gst')  
+        consignor_address = request.POST.get('consignor_address')  
+        consignee_name = request.POST.get('consignee_name')  
+        consignee_mobile = request.POST.get('consignee_mobile')  
+        consignee_gst = request.POST.get('consignee_gst')  
+        consignee_address = request.POST.get('consignee_address')  
+        article = request.POST.get('article')  
+        art = request.POST.get('art')  
+        art_type = request.POST.get('art_type')  
+        said_to_cont = request.POST.get('said_to_cont')  
+        art_amt = request.POST.get('art_amt')  
+        actual_weight = request.POST.get('actual_weight')  
+        charged_weight = request.POST.get('charged_weight')  
+        weight_rate = request.POST.get('weight_rate')  
+        weight_amount = request.POST.get('weight_amount')  
+        fix_amount = request.POST.get('fix_amount')  
+        invoice_number = request.POST.get('invoice_number')  
+        declared_value = request.POST.get('declared_value')  
+        risk_type = request.POST.get('risk_type')  
+        pod_required = request.POST.get('pod_required')  
+        freight = request.POST.get('freight')  
+        docket_charge = request.POST.get('docket_charge')  
+        door_delivery_charge = request.POST.get('door_delivery_charge')  
+        handling_charge = request.POST.get('handling_charge')  
+        pickup_charge = request.POST.get('pickup_charge')  
+        transhipment_charge = request.POST.get('transhipment_charge')  
+        insurance = request.POST.get('insurance')  
+        fuel_surcharge = request.POST.get('fuel_surcharge')  
+        commission = request.POST.get('commission')  
+        other_charge = request.POST.get('other_charge')  
+        carrier_risk = request.POST.get('carrier_risk')  
+        grand_total = request.POST.get('grand_total')  
+
+        # Update the CNote object and save it to the database  
+        cnote.dealer = Dealer.objects.get(id=dealer_id)  
+        cnote.booking_type = booking_type  
+        cnote.delivery_type = delivery_type  
+        cnote.delivery_method = delivery_method  
+        cnote .delivery_destination = delivery_destination  
+        cnote.ewayBillNumber = ewayBillNumber  
+        cnote.consignor_name = consignor_name  
+        cnote.consignor_mobile = consignor_mobile  
+        cnote.consignor_gst = consignor_gst  
+        cnote.consignor_address = consignor_address  
+        cnote.consignee_name = consignee_name  
+        cnote.consignee_mobile = consignee_mobile  
+        cnote.consignee_gst = consignee_gst  
+        cnote.consignee_address = consignee_address  
+        cnote.article = article  
+        cnote.art = art  
+        cnote.art_type = art_type  
+        cnote.said_to_cont = said_to_cont  
+        cnote.art_amt = art_amt  
+        cnote.actual_weight = actual_weight  
+        cnote.charged_weight = charged_weight  
+        cnote.weight_rate = weight_rate  
+        cnote.weight_amount = weight_amount  
+        cnote.fix_amount = fix_amount  
+        cnote.invoice_number = invoice_number  
+        cnote.declared_value = declared_value  
+        cnote.risk_type = risk_type  
+        cnote.pod_required = pod_required  
+        cnote.freight = freight  
+        cnote.docket_charge = docket_charge 
+        cnote.door_delivery_charge = door_delivery_charge  
+        cnote.handling_charge = handling_charge  
+        cnote.pickup_charge = pickup_charge  
+        cnote.transhipment_charge = transhipment_charge  
+        cnote.insurance = insurance  
+        cnote.fuel_surcharge = fuel_surcharge  
+        cnote.commission = commission  
+        cnote.other_charge = other_charge  
+        cnote.carrier_risk = carrier_risk  
+        cnote.grand_total = grand_total  
+        cnote.save()  
+        messages.success(request, 'CNote updated successfully.')  
+        return redirect('dealer:dealer_cnotes')  
+    else:  
+        return render(request, 'dealer/update_cnote.html', {'cnote': cnote})  
+
+@login_required  
+@user_owns_cnote  
+def delete_cnote(request, cnote_id):  
+    cnote = get_object_or_404(CNote, id=cnote_id)  
+    if request.method == 'POST':  
+        cnote.delete()  
+        messages.success(request, 'CNote deleted successfully.')  
+        return redirect('dealer:dealer_cnotes')  
+    return render(request, 'dealer/confirm_delete.html', {'cnote': cnote})  
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+@login_required
+@require_POST
+@transaction.atomic
+def create_loading_sheet(request):
+    try:
+        data = json.loads(request.body)
+        transporter_id = data.get('transporter_id')
+        cnote_ids = data.get('cnote_ids', [])
+
+        logger.info(f"Creating loading sheet for transporter {transporter_id} with CNotes: {cnote_ids}")
+
+        transporter = get_object_or_404(Transporter, id=transporter_id)
+        dealer = request.user.dealer
+
+        loading_sheet = LoadingSheetSummary.objects.create(
+            dealer=dealer,
+            transporter=transporter,
+            city=dealer.city,
+            total_cnote_number=len(cnote_ids),
+            state=dealer.state,
+            status='dispatched'
+        )
+
+        logger.info(f"Created LoadingSheetSummary with ID: {loading_sheet.ls_number}")
+
+        total_package = 0
+        total_paid_amount = 0
+        total_to_pay_amount = 0
+
+        for cnote_id in cnote_ids:
+            try:
+                cnote = CNotes.objects.select_for_update().get(pk=cnote_id)
+                if cnote.status in ['booked', 'received_at_godown']:
+                    LoadingSheetDetail.objects.create(
+                        loading_sheet=loading_sheet,
+                        cnote=cnote,
+                        consignor_name=cnote.consignor_name,
+                        consignee_name=cnote.consignee_name,
+                        consignor_contact=cnote.consignor_mobile,
+                        consignee_contact=cnote.consignee_mobile,
+                        destination=str(cnote.delivery_destination),
+                        art=cnote.total_art,
+                        payment_type=cnote.payment_type,
+                        amount=cnote.grand_total,
+                        status='dispatched'
+                    )
+                    logger.info(f"Created LoadingSheetDetail for CNotes {cnote.cnote_number}")
+                    
+                    # Update CNotes status to 'dispatched'
+                    cnote.status = 'dispatched'
+                    cnote.save()
+                    logger.info(f"Updated CNotes {cnote.cnote_number} status to 'dispatched'")
+
+                    total_package += cnote.articles.count()
+                    if cnote.payment_type == 'PAID':
+                        total_paid_amount += cnote.grand_total
+                    else:
+                        total_to_pay_amount += cnote.grand_total
+                else:
+                    logger.warning(f"CNotes {cnote.cnote_number} status is not eligible for dispatch")
+            except CNotes.DoesNotExist:
+                logger.warning(f"CNotes with ID {cnote_id} does not exist")
+                continue
+            except Exception as e:
+                logger.error(f"Error processing CNotes {cnote_id}: {str(e)}")
+                continue
+
+        loading_sheet.total_package = total_package
+        loading_sheet.total_paid_amount = total_paid_amount
+        loading_sheet.total_to_pay_amount = total_to_pay_amount
+        loading_sheet.save()
+
+        logger.info(f"Loading sheet {loading_sheet.ls_number} updated with totals")
+
+        return JsonResponse({
+            'message': 'Loading sheet created successfully',
+            'loading_sheet_id': loading_sheet.ls_number
+        })
+
+    except Exception as e:
+        logger.error(f"Error creating loading sheet: {str(e)}")
+        return JsonResponse({
+            'error': str(e)
+        }, status=400)
+
+@login_required
+@require_POST
+@transaction.atomic
+def cancel_loading_sheet(request, loading_sheet_id):
+    try:
+        loading_sheet = get_object_or_404(LoadingSheetSummary, ls_number=loading_sheet_id, dealer=request.user.dealer)
+        
+        # Get all CNotes associated with this loading sheet
+        cnotes = CNotes.objects.filter(loading_sheet_details__loading_sheet=loading_sheet)
+        
+        # Update the status of each CNote back to 'booked'
+        for cnote in cnotes:
+            if cnote.status == 'dispatched':
+                cnote.status = 'booked'
+                cnote.save()
+                logger.info(f"CNotes {cnote.cnote_number} status reverted to 'booked'")
+        
+        # Update the loading sheet status
+        loading_sheet.status = 'cancelled'
+        loading_sheet.save()
+        
+        # Delete the loading sheet details
+        LoadingSheetDetail.objects.filter(loading_sheet=loading_sheet).delete()
+        
+        logger.info(f"Loading sheet {loading_sheet_id} cancelled successfully")
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Loading sheet cancelled successfully.'
+        })
+    except Exception as e:
+        logger.error(f"Error cancelling loading sheet {loading_sheet_id}: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=400)
+
+@login_required
+def update_cnote_status(request, cnote_id):
+    cnote = get_object_or_404(CNotes, id=cnote_id)
+    new_status = request.POST.get('status')
+    if new_status:
+        cnote.status = new_status
+        cnote.save()
+        messages.success(request, f'CNotes status updated to: {new_status}')
+    else:
+        messages.error(request, 'Invalid status')
+    return redirect('dealer:create_cnotes')
+# ... other views ...
+
+@login_required
+def mark_cnote_received(request, cnote_id):
+    cnote = get_object_or_404(CNotes, id=cnote_id)
+    cnote.update_status('received')  # Update status to received
+    messages.success(request, 'CNotes marked as received')
+    return redirect('transporter:cnote_detail', cnote_id=cnote.id)
+
+@login_required
+def create_delivery(request, cnote_id):
+    cnote = get_object_or_404(CNotes, id=cnote_id)
+    Delivery.objects.create(cnote=cnote)  # Create a new delivery record
+    cnote.update_status('due_for_delivery')  # Update status to due for delivery
+    messages.success(request, 'Delivery created and CNotes marked as due for delivery')
+    return redirect('transporter:delivery_list')
+
+@login_required
+def update_delivery(request, delivery_id):
+    delivery = get_object_or_404(Delivery, id=delivery_id)
+    if request.method == 'POST':
+        is_successful = request.POST.get('is_successful') == 'true'
+        delivery.is_successful = is_successful
+        delivery.delivered_at = timezone.now() if is_successful else None
+        delivery.save()
+        status = 'delivered' if is_successful else 'received_at_godown'
+        messages.success(request , f'Delivery updated and CNotes marked as {status}')
+    return redirect('transporter:delivery_list')
+
+@login_required
+def cancel_cnote(request, cnote_id):
+    cnote = get_object_or_404(CNotes, id=cnote_id)
+    if cnote.status != 'cancelled':
+        cnote.update_status('cancelled')
+        messages.success(request, 'CNotes cancelled successfully')
+    else:
+        messages.error(request, 'This CNotes is already cancelled')
+    return redirect('dealer:cnote_detail', cnote_id=cnote.id)
+
+@login_required
+def loading_sheet(request):
+    dealer = request.user.dealer  # Get the dealer associated with the logged-in user
+    cnotes = CNotes.objects.filter(dealer=dealer, status__in=['booked', 'received'])
+    destinations = DeliveryDestination.objects.filter(id__in=cnotes.values('delivery_destination'))
+
+    # Fetch all transporters to pass to the template
+    transporters = Transporter.objects.all()  # Fetch all transporters
+
+    context = {
+        'available_cnotes': cnotes,
+        'destinations': destinations,
+        'dealer': dealer,  # Ensure dealer is included in the context
+        'transporters': transporters  # Pass transporters to the template
+    }
+
+    if request.method == 'POST':
+        cnote_ids = request.POST.getlist('cnote_ids')  # Get the list of CNotes IDs
+        transporter_id = request.POST.get('transporter_id')
+
+        if not cnote_ids:
+            messages.error(request, 'Please select at least one CNotes for the loading sheet.')
+            return redirect('dealer:loading_sheet')
+
+        if not transporter_id:
+            messages.error(request, 'Please select a transporter.')
+            return redirect('dealer:loading_sheet')
+
+        try:
+            transporter = Transporter.objects.get(id=transporter_id)
+        except Transporter.DoesNotExist:
+            messages.error(request, 'Invalid transporter selected.')
+            return redirect('dealer:loading_sheet')
+
+        # Create loading sheet logic here...
+
+        messages.success(request, 'Loading sheet created successfully.')
+        return redirect('dealer:loading_sheet_detail', loading_sheet_id=loading_sheet.id)
+
+    return render(request, 'dealer/loading_sheet.html', context)
+
+
+@login_required
+def booking_register_view(request):
+    # Get the logged-in dealer
+    try:
+        dealer = request.user.dealer
+    except AttributeError:
+        # If the user is not a dealer, show an error or redirect
+        return redirect('login')
+
+    # Filter CNotes for the logged-in dealer
+    dealer_cnotes = CNotes.objects.filter(dealer=dealer).order_by('-created_at')
+
+    # Get article data for each CNotes
+    article_data = []
+    for cnote in dealer_cnotes:
+        articles = Article.objects.filter(cnote=cnote)
+        article_data.append({
+            'cnote_id': cnote.id,
+            'articles': articles,
+            'total_art': sum(article.art for article in articles),
+            'art_types': '/'.join(article.art_type.art_type_name for article in articles),
+            'said_to_contain': '/'.join(f'{article.said_to_contain} - {article.art}' for article in articles),
+            'art_amounts': '/'.join(str(article.art_amount) for article in articles),
+            'cnote_number': cnote.cnote_number,
+            'booking_type': cnote.booking_type,
+            'delivery_destination': cnote.delivery_destination,
+            'consignor_name': cnote.consignor_name,
+            'consignee_name': cnote.consignee_name,
+            'payment_type': cnote.payment_type,
+            'grand_total': cnote.grand_total,
+            'created_at': cnote.created_at,
+            'eway_bill_number': cnote.eway_bill_number,
+            'actual_weight': cnote.actual_weight,
+            'charged_weight': cnote.charged_weight,
+            'weight_rate': cnote.weight_rate,
+            'weight_amount': cnote.weight_amount,
+            'fix_amount': cnote.fix_amount,
+            'invoice_number': cnote.invoice_number,
+            'declared_value': cnote.declared_value,
+            'risk_type': cnote.risk_type,
+            'pod_required': cnote.pod_required,
+            'freight': cnote.freight,
+            'docket_charge': cnote.docket_charge,
+            'door_delivery_charge': cnote.door_delivery_charge,
+            'handling_charge': cnote.handling_charge,
+            'pickup_charge': cnote.pickup_charge,
+            'transhipment_charge': cnote.transhipment_charge,
+            'insurance': cnote.insurance,
+            'fuel_surcharge': cnote.fuel_surcharge,
+            'commission': cnote.commission,
+            'other_charge': cnote.other_charge,
+            'carrier_risk': cnote.carrier_risk,
+            'booking_type': cnote.booking_type,
+            'delivery_type': cnote.delivery_type,
+            'delivery_method': cnote.delivery_method,
+            'status': cnote.status,
+            'consignor_gst': cnote.consignor_gst,
+            'consignee_gst': cnote.consignee_gst,
+        })
+
+    # Pass the required data to the template
+    context = {
+        'dealer': dealer,
+        'dealer_cnotes': dealer_cnotes,
+        'article_data': article_data,
+    }
+
+    return render(request, 'dealer/booking_register.html', context)
+
+
+@login_required
+def cnote_options(request, cnote_id):
+    cnote = get_object_or_404(CNotes, id=cnote_id)
+    if request.method == 'POST':
+        option = request.POST.get('option')
+        if option == 'pdf':
+            pdf_file = render_to_pdf('dealer/cnote_pdf.html', {'cnote': cnote})
+            response = HttpResponse(pdf_file, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="cnote_{cnote_id}.pdf"'
+            return response
+        elif option == 'print':
+            return redirect('create_cnotes')  # Adjust as needed
+    return render(request, 'dealer/cnote_options.html', {'cnote': cnote})
+
+
+@login_required
+def view_pending_pickups(request, transporter_id):
+    # Get the transporter object based on the ID
+    transporter = get_object_or_404(Transporter, id=transporter_id)
+
+    # Fetch the pending pickups for this transporter
+    pending_pickups = Pickup.objects.filter(transporter=transporter, status='pending')
+
+    # Render the template with the pending pickups
+    return render(request, 'dealer/view_pending_pickups.html', {
+        'transporter': transporter,
+        'pending_pickups': pending_pickups
+    })
+
+
+
+@login_required
+def view_pending_pickups(request, transporter_id):
+    # Get the transporter object based on the ID
+    transporter = get_object_or_404(Transporter, id=transporter_id)
+
+    # Fetch the pending pickups for this transporter
+    pending_pickups = Pickup.objects.filter(transporter=transporter, status='pending')
+
+    # Render the template with the pending pickups
+    return render(request, 'dealer/view_pending_pickups.html', {
+        'transporter': transporter,
+        'pending_pickups': pending_pickups
+    })
+
+
+
+
+@login_required
+def view_pickups(request):
+    pickups = Pickup.objects.all()  # Get all pickups
+    return render(request, 'dealer/view_pickups.html', {'pickups': pickups})
+
+
+
+
+def mark_pickup(request, cnote_id):
+    # Logic to mark the pickup
+    pickup = get_object_or_404(Pickup, cnote_id=cnote_id)
+    # Update the pickup status or any other logic you need
+    pickup.status = 'picked_up'  # Example status update
+    pickup.save()
+    return render(request, 'dealer/pickup_marked.html', {'pickup': pickup})
+
+def add_dealer(request):
+    # यहाँ पर डीलर जोड़ने की लॉजिक डालें
+    return render(request, 'dealer/add_dealer.html')  # डीलर जोड़ने का टेम्पलेट
+
+
+def print_pdf(request, cnote_id):
+    # यहाँ पर PDF प्रिंट करने की लॉजिक डालें
+    return render(request, 'dealer/print_pdf.html', {'cnote_id': cnote_id})  # PDF प्रिंट करने का टेम्पलेट
+
+
+def download_pdf(request, cnote_id):
+    # यहाँ पर PDF डाउनलोड करने की लॉजिक डालें
+    cnote = CNotes.objects.get(id=cnote_id)  # उदाहरण के लिए, CNotes मॉडल से डेटा प्राप्त करना
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="cnote_{cnote_id}.pdf"'
+    
+    # यहाँ पर PDF जनरेट करने की लॉजिक डालें
+    # उदाहरण के लिए, आप ReportLab या किसी अन्य लाइब्रेरी का उपयोग कर सकते हैं
+
+    return response  # PDF फ़ाइल को वापस करें
+
+
+@login_required
+def get_cnote_details(request, cnote_number):
+    cnote = get_object_or_404(CNotes, cnote_number=cnote_number)
+    data = {
+        'cnote_number': cnote.cnote_number,
+        'created_at': cnote.created_at.isoformat(),
+        'payment_type': cnote.payment_type,
+        'booking_type': cnote.booking_type,
+        'delivery_type': cnote.delivery_type,
+        'delivery_method': cnote.delivery_method,
+        'delivery_destination': cnote.delivery_destination,
+        'eway_bill_number': cnote.eway_bill_number,
+        'consignor_name': cnote.consignor_name,
+        'consignor_mobile': cnote.consignor_mobile,
+        'consignor_gst': cnote.consignor_gst,
+        'consignor_address': cnote.consignor_address,
+        'consignee_name': cnote.consignee_name,
+        'consignee_mobile': cnote.consignee_mobile,
+        'consignee_gst': cnote.consignee_gst,
+        'consignee_address': cnote.consignee_address,
+        'articles': [
+            {
+                'name': article.name,
+                'quantity': article.quantity,
+                'type': article.type,
+                'said_to_contain': article.said_to_contain,
+                'amount': float(article.amount)
+            } for article in cnote.articles.all()
+        ],
+        'freight': float(cnote.freight),
+        'docket_charge': float(cnote.docket_charge),
+        'door_delivery_charge': float(cnote.door_delivery_charge),
+        'handling_charge': float(cnote.handling_charge),
+        'other_charge': float(cnote.other_charge),
+        'grand_total': float(cnote.grand_total),
+        'dealer': {
+            'logo_url': cnote.dealer.logo.url if cnote.dealer.logo else None
+        }
+    }
+    return JsonResponse(data)
+
+
+def cnote_success(request, cnote_number):
+    cnote = get_object_or_404(CNotes, cnote_number=cnote_number)
+    return render(request, 'dealer/cnote_success.html', {'cnote': cnote})
+
+@login_required
+def view_cnote(request, cnote_number):
+    print(f"Searching for CNotes with number: {cnote_number}")
+    try:
+        cnote = CNotes.objects.get(cnote_number=cnote_number)
+        print(f"CNotes found: {cnote}")
+        return render(request, 'dealer/view_cnote.html', {'cnote': cnote})
+    except CNotes.DoesNotExist:
+        print(f"CNotes with number {cnote_number} does not exist")
+        raise Http404("CNotes does not exist")
+    
+
+# dealer_app/views.py
+
+logger = logging.getLogger(__name__)
+
+@login_required
+def fetch_pending_cnotes(request):
+    dealer = request.user.dealer
+    cnotes = CNotes.objects.filter(
+        dealer=dealer, 
+        status__in=['booked', 'received_at_godown']
+    ).values(
+        'id', 'created_at', 'cnote_number', 'delivery_destination__destination_name',
+        'consignor_name', 'consignee_name', 'total_art', 'actual_weight', 
+        'charged_weight', 'booking_type', 'freight', 'grand_total'
+    )
+    
+    # Convert queryset to list and ensure total_art is not None
+    cnotes_list = list(cnotes)
+    for cnote in cnotes_list:
+        if cnote['total_art'] is None:
+            cnote['total_art'] = 0
+            
+    return JsonResponse(cnotes_list, safe=False)
+
+logger = logging.getLogger(__name__)
+@csrf_exempt
+def fetch_transporters(request):
+    transporters = Transporter.objects.all()
+    
+    # Create XML structure
+    root = Element('transporters')
+    for transporter in transporters:
+        transporter_elem = SubElement(root, 'transporter')
+        transporter_elem.set('id', str(transporter.id))
+        name_elem = SubElement(transporter_elem, 'name')
+        name_elem.text = transporter.name
+
+    # Convert XML to string
+    xml_str = tostring(root, encoding='unicode')
+    
+    # Return XML response
+    return HttpResponse(xml_str, content_type='application/xml')
+
+@login_required
+def home(request):
+    # Logic specific to the dealer dashboard
+    return render(request, 'transporter_app/home.html')  # Adjust the template path as needed
+
+
+def get_cities(request):
+    if request.is_ajax():
+        cities = City.objects.values_list('name', flat=True)
+        return JsonResponse(list(cities), safe=False)
+    return JsonResponse([], safe=False)
+
+def fetch_cities(request):
+    # Get all city names from the City model
+    cities = City.objects.values_list('name', flat=True)
+    return JsonResponse(list(cities), safe=False)
+
+logger = logging.getLogger(__name__)
+
+@login_required
+@csrf_exempt
+def send_pickup_request(request):
+    if request.method == 'POST':
+        logger.debug("Received POST request for sending pickup request.")
+        logger.debug(f"POST data: {request.POST}")
+        
+        transporter_name = request.POST.get('transporter_name')
+        cnote_ids = request.POST.get('cnote_ids', '')
+
+        logger.debug(f"Transporter name: {transporter_name}, CNotes IDs: {cnote_ids}")
+
+        if not transporter_name:
+            messages.error(request, 'No transporter name provided.')
+            logger.warning("No transporter name provided.")
+            return redirect('dealer:loading_sheet')
+
+        if isinstance(cnote_ids, str):
+            cnote_ids = [id.strip() for id in cnote_ids.split(',') if id.strip()]
+        
+        if not cnote_ids:
+            messages.error(request, 'No valid CNotes IDs provided.')
+            logger.warning("No valid CNotes IDs provided.")
+            return redirect('dealer:loading_sheet')
+
+        try:
+            transporter = Transporter.objects.get(name=transporter_name)
+        except Transporter.DoesNotExist:
+            messages.error(request, f'Transporter with name "{transporter_name}" does not exist.')
+            logger.warning(f"Transporter with name '{transporter_name}' does not exist.")
+            return redirect('dealer:loading_sheet')
+
+        dealer = request.user.dealer
+        
+        try:
+            loading_sheet_summary = LoadingSheetSummary.objects.create(
+                dealer=dealer,
+                transporter=transporter,
+                total_cnote=len(cnote_ids),
+                status='dispatched'
+            )
+
+            valid_cnote_ids = []
+            total_art = 0
+            total_paid_amount = total_topay_amount = total_tbb_amount = total_foc_amount = 0
+
+            for cnote_id in cnote_ids:
+                try:
+                    cnote = CNotes.objects.get(id=int(cnote_id))
+                    if cnote.status in ['booked', 'received_at_godown']:  # Update: Added status check
+                        valid_cnote_ids.append(cnote_id)
+
+                        LoadingSheetDetail.objects.create(
+                            loading_sheet=loading_sheet_summary,
+                            cnote=cnote,
+                            consignor_name=cnote.consignor_name,
+                            consignee_name=cnote.consignee_name,
+                            consignor_contact=cnote.consignor_mobile,
+                            consignee_contact=cnote.consignee_mobile,
+                            destination=str(cnote.delivery_destination),
+                            art=cnote.total_art,
+                            payment_type=cnote.payment_type,
+                            amount=cnote.grand_total,
+                            status='dispatched'
+                        )
+
+                    cnote.status = 'dispatched'
+                    cnote.save()
+                    logger.info(f"CNotes {cnote_id} status updated to 'dispatched'")
+
+                    total_art += cnote.total_art
+                    if cnote.payment_type == 'PAID':
+                        total_paid_amount += cnote.grand_total
+                    elif cnote.payment_type == 'TO PAY':
+                        total_topay_amount += cnote.grand_total
+                    elif cnote.payment_type == 'TBB':
+                        total_tbb_amount += cnote.grand_total
+                    elif cnote.payment_type == 'FOC':
+                        total_foc_amount += cnote.grand_total
+
+                    logger.debug(f"LoadingSheetDetail created for CNotes ID: {cnote_id}")
+                except ValueError:
+                    logger.warning(f"Invalid CNotes ID format: {cnote_id}")
+                except CNotes.DoesNotExist:
+                    logger.warning(f"CNotes with ID {cnote_id} does not exist")
+                except Exception as e:
+                    logger.error(f"Error processing CNotes {cnote_id}: {str(e)}")
+
+            loading_sheet_summary.total_art = total_art
+            loading_sheet_summary.total_paid_amount = total_paid_amount
+            loading_sheet_summary.total_topay_amount = total_topay_amount
+            loading_sheet_summary.total_tbb_amount = total_tbb_amount
+            loading_sheet_summary.total_foc_amount = total_foc_amount
+            loading_sheet_summary.save()
+
+            logger.info(f"Loading sheet {loading_sheet_summary.ls_number} created successfully")
+
+            messages.success(request, f'Loading sheet {loading_sheet_summary.ls_number} created successfully!')
+
+            # Redirect to the mf_print.html page using ls_number
+            return redirect('dealer:mf_print', loading_sheet_number=loading_sheet_summary.ls_number)
+        
+        except Exception as e:
+            logger.error(f"Error creating loading sheet: { str(e)}")
+            messages.error(request, f'Error creating loading sheet: {str(e)}')
+            return redirect('dealer:loading_sheet')
+
+    messages.error(request, 'Invalid request method.')
+    return redirect('dealer:loading_sheet')
+
+@login_required
+def accept_loading_sheet(request, sheet_id):
+    loading_sheet = get_object_or_404(LoadingSheet, id=sheet_id)
+    for cnote in loading_sheet.cnotes.all():
+        cnote.status = 'received'
+        cnote.save()
+    messages.success(request, 'CNotes acknowledged by transporter.')
+    return redirect('transporter:home')
+
+@login_required
+def mark_as_delivered(request, cnote_id):
+    cnote = get_object_or_404(CNotes, id=cnote_id)
+    Delivery.objects.create(cnote=cnote, is_successful=True)
+    messages.success(request, 'CNotes marked as delivered.')
+    return redirect('transporter:delivery_list')
+
+@login_required
+def transporter_list(request):
+    # Fetch all transporters
+    transporters = Transporter.objects.all()
+
+    # Render the template with the correct path
+    return render(request, 'transporter/transporter_list.html', {'transporters': transporters})
+
+@login_required
+def search(request):
+    dealer = request.user.dealer  # Fetch the logged-in dealer's information
+    return render(request, 'dealer/search.html', {'dealer': dealer})  # Pass dealer info to the template
+
+
+
+@login_required
+def search_loading_sheets(request):
+        # Get the logged-in dealer
+    try:
+        dealer = request.user.dealer
+    except AttributeError:
+        # If the user is not a dealer, show an error or redirect
+        return redirect('login')
+
+    if request.method == 'POST':
+        search_type = request.POST.get('type')
+        query = request.POST.get('query', '').strip()
+        
+        if search_type == 'ls':
+            dealer = request.user.dealer
+            if query:
+                # Search for a specific loading sheet
+                loading_sheets = LoadingSheetSummary.objects.filter(
+                    dealer=dealer,
+                    ls_number__icontains=query
+                )
+            else:
+                # Show all loading sheets for the dealer
+                loading_sheets = LoadingSheetSummary.objects.filter(dealer=dealer)
+            
+            results = loading_sheets.order_by('-created_at')
+        else:
+            results = []
+    else:
+        results = []
+    
+    return render(request, 'dealer/search.html', {
+        'results': results,
+        'query': query if 'query' in locals() else '',
+    })
+
+logger = logging.getLogger(__name__)
+
+@login_required
+def mf_print(request, loading_sheet_number):
+    try:
+        # Get the loading sheet
+        loading_sheet = get_object_or_404(LoadingSheetSummary, ls_number=loading_sheet_number)
+        
+        # Get all CNotes associated with this loading sheet
+        loading_sheet_details = LoadingSheetDetail.objects.filter(
+            loading_sheet=loading_sheet
+        ).select_related('cnote')
+        
+        # Get the dealer associated with the loading sheet
+        dealer = loading_sheet.dealer
+        
+        context = {
+            'loading_sheet': loading_sheet,
+            'loading_sheet_details': loading_sheet_details,
+            'dealer': dealer,
+            'transporter': loading_sheet.transporter,
+        }
+        
+        return render(request, 'dealer/mf_print.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error rendering MF Print page: {str(e)}")
+        messages.error(request, 'Error loading the print page. Please try again.')
+        return redirect('dealer:loading_sheet')
+    
+@login_required
+@require_POST
+def cancel_loading_sheet(request, loading_sheet_id):
+    try:
+        loading_sheet = get_object_or_404(LoadingSheetSummary, ls_number=loading_sheet_id, dealer=request.user.dealer)
+        
+        # Get all CNotes associated with this loading sheet
+        cnotes = CNotes.objects.filter(loading_sheet_details__loading_sheet=loading_sheet)
+        
+        # Update the status of each CNote
+        for cnote in cnotes:
+            if cnote.status == 'dispatched':
+                # Revert the status to 'booked' or the appropriate previous state
+                cnote.status = 'booked'
+                cnote.save()
+        
+        # Update the loading sheet status
+        loading_sheet.status = 'cancelled'
+        loading_sheet.save()
+        
+        # Delete the loading sheet details
+        LoadingSheetDetail.objects.filter(loading_sheet=loading_sheet).delete()
+        
+        return JsonResponse({'success': True, 'message': 'Loading sheet cancelled successfully.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+logger = logging.getLogger(__name__)
+
+@login_required
+def create_cnotes(request):
+    logger = logging.getLogger(__name__)
+    logger.info("Create CNotes view called.")
+    
+    try:
+        dealer = Dealer.objects.get(user=request.user)
+        logger.info(f"Dealer: {dealer}")
+    except Dealer.DoesNotExist:
+        logger.error('Dealer not found.')
+        return JsonResponse({'success': False, 'error': 'Dealer not found.'})
+
+    if request.method == 'POST':
+        logger.info("POST request received.")
+        logger.info(f"POST data: {request.POST}")
+
+        try:
+            # Process charge fields with explicit mapping
+            charge_fields = {
+                'freight': 'freight',
+                'docket_charge': 'docket_charge',
+                'door_delivery_charge': 'door_delivery_charge',
+                'handling_charge': 'handling_charge',
+                'pickup_charge': 'pickup_charge',
+                'transhipment_charge': 'transhipment_charge',
+                'insurance': 'insurance',
+                'fuel_surcharge': 'fuel_surcharge',
+                'commission': 'commission',
+                'other_charge': 'other_charge',
+                'carrier_risk': 'carrier_risk',
+                'grand_total': 'grand_total'
+            }
+            
+            charges = {}
+            for field, db_field in charge_fields.items():
+                try:
+                    value = request.POST.get(field, '0')
+                    charges[db_field] = float(value)
+                    logger.info(f"Processed {field}: {charges[db_field]}")
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"Error converting {field}: {str(e)}")
+                    charges[db_field] = 0.0
+
+            # Create CNotes object with all fields
+            cnote = CNotes(
+                dealer=dealer,
+                booking_type=request.POST.get('booking_type'),
+                delivery_type=request.POST.get('delivery_type'),
+                delivery_method=request.POST.get('delivery_method'),
+                delivery_destination=DeliveryDestination.objects.get_or_create(
+                    destination_name=request.POST.get('delivery_destination')
+                )[0],
+                eway_bill_number=request.POST.get('ewayBillNumber'),
+                consignor_name=request.POST.get('consignor_name'),
+                consignor_mobile=request.POST.get('consignor_mobile'),
+                consignor_gst=request.POST.get('consignorGST'),
+                consignor_address=request.POST.get('consignorAddress'),
+                consignee_name=request.POST.get('consignee_name'),
+                consignee_mobile=request.POST.get('consignee_mobile'),
+                consignee_gst=request.POST.get('consigneeGST'),
+                consignee_address=request.POST.get('consigneeAddress'),
+                actual_weight=float(request.POST.get('actual_weight', 0)),
+                charged_weight=float(request.POST.get('charged_weight', 0)),
+                weight_rate=float(request.POST.get('weight_rate', 0)),
+                weight_amount=float(request.POST.get('weight_amount', 0)),
+                fix_amount=float(request.POST.get('fix_amount', 0)),
+                invoice_number=request.POST.get('invoice_number'),
+                declared_value=float(request.POST.get('declared_value', 0)),
+                risk_type=request.POST.get('risk_type'),
+                pod_required=request.POST.get('pod_required'),
+                payment_type=request.POST.get('paymentType'),
+                **charges  # Unpack all charge fields
+            )
+            
+            # Save the CNotes object
+            cnote.save()
+            logger.info(f"CNotes saved successfully. ID: {cnote.id}")
+
+            # Create Article objects
+            articles = request.POST.getlist('article')
+            arts = request.POST.getlist('art')
+            art_types = request.POST.getlist('artType')
+            said_to_contains = request.POST.getlist('saidToCont')
+            art_amounts = request.POST.getlist('artAmt')
+
+            for i in range(len(articles)):
+                Article.objects.create(
+                    cnote=cnote,
+                    article_type=articles[i],
+                    art=arts[i],
+                    art_type=ArtType.objects.get_or_create(art_type_name=art_types[i])[0],
+                    said_to_contain=said_to_contains[i],
+                    art_amount=float(art_amounts[i])
+                )
+
+            # Return success response with redirect URL
+            return JsonResponse({
+                'success': True,
+                'message': f'CNotes created successfully with number: {cnote.cnote_number}',
+                'redirect_url': reverse('dealer:cnote_success', kwargs={'cnote_number': cnote.cnote_number})
+            })
+
+        except Exception as e:
+            logger.error(f"Error saving CNotes: {str(e)}", exc_info=True)
+            return JsonResponse({
+                'success': False,
+                'error': f'Error creating CNotes: {str(e)}'
+            })
+
+    # GET request - render the form
+    context = {
+        'dealer': request.user.dealer,
+        'destinations': DeliveryDestination.objects.all(),
+        'cities': City.objects.all(),
+    }
+    return render(request, 'dealer/create_cnotes.html', context)

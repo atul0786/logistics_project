@@ -1,0 +1,6 @@
+<h2>CNotes</h2>
+<ul>
+    {% for cnote in cnotes %}
+    <li>{{ cnote.cnote_number }} - {{ cnote.customer_name }} - {{ cnote.package_amount }}</li>
+    {% endfor %}
+</ul>

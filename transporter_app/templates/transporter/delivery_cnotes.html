@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Delivery Management System</title>
+    <style>
+        :root {
+            --primary-color: #2196F3;
+            --secondary-color: #f44336;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --text-color: #333;
+            --background-color: #f5f5f5;
+            --header-bg: #1a237e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        header {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .logo {
+            font-size: 1.5em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            font-size: 24px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logout-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .logout-btn:hover {
+            background-color: #d32f2f;
+        }
+
+        nav {
+            display: flex;
+            gap: 20px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        nav a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        nav a.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        main {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .search-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .lr-search {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .lr-search input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+
+        .search-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .search-btn:hover {
+            background-color: #1976d2;
+        }
+
+        .delivery-details {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .status-badges {
+            display: flex;
+            gap: 10px;
+        }
+
+        .badge {
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .badge:hover {
+            transform: translateY(-2px);
+        }
+
+        .badge.status {
+            background-color: #e3f2fd;
+            color: var(--primary-color);
+        }
+
+        .badge.dispatch {
+            background-color: #ffebee;
+            color: var(--secondary-color);
+        }
+
+        .edit-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .edit-btn:hover {
+            background-color: #1976d2;
+            transform: translateY(-2px);
+        }
+
+        .booking-info {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .info-item {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            min-width: 200px;
+        }
+
+        .status-received {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+
+        .paid-badge {
+            background-color: var(--success-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .consignment-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .party-details {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+
+        .party-details h3 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .charges-section {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+
+        .charges-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .charges-table th,
+        .charges-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .charges-table th {
+            background-color: #f1f3f5;
+            font-weight: 600;
+        }
+
+        .charges-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .delivery-form {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+        }
+
+        .deliver-btn {
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s;
+        }
+
+        .deliver-btn:hover {
+            background-color: #388e3c;
+            transform: translateY(-2px);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 4px;
+            color: white;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+            z-index: 1001;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        .success {
+            background-color: var(--success-color);
+        }
+
+        .error {
+            background-color: var(--secondary-color);
+        }
+
+        .warning {
+            background-color: var(--warning-color);
+        }
+
+        .discount-section {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .discount-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .discount-form label {
+            font-weight: bold;
+        }
+
+        .discount-form select,
+        .discount-form input {
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+
+        .apply-discount-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .apply-discount-btn:hover {
+            background-color: #1976d2;
+        }
+
+        @media print {
+            .no-print {
+                display: none;
+            }
+            body {
+                background-color: white;
+            }
+            .delivery-details {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="no-print">
+        <div class="header-content">
+            <div class="logo">
+                <span class="logo-icon">📦</span>
+                Delivery Management
+            </div>
+            <div class="user-info">
+                <span id="currentTime"></span>
+                <span class="user">Welcome ATUL (NAGPUR - NAGPUR)</span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+        <nav>
+            <a href="#" class="active">Home</a>
+            <a href="#">Operations</a>
+            <a href="#">Search</a>
+            <a href="#">Report</a>
+            <a href="#">Profile</a>
+            <a href="#">Dashboard</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="search-section no-print">
+            <div class="lr-search">
+                <label>LR No:</label>
+                <input type="text" id="lrNumber" placeholder="Enter LR number">
+                <button class="search-btn" onclick="searchLR()">Search</button>
+                <button class="search-btn" onclick="printDeliveryDetails()">Print</button>
+            </div>
+        </div>
+
+        <div id="deliveryDetails" class="delivery-details">
+            <div class="section-header">
+                <h2>Booking Details</h2>
+                <div class="status-badges no-print">
+                    <span class="badge status" onclick="showStatusDetails()">Status Details</span>
+                    <span class="badge dispatch" onclick="showDispatchDetails()">Dispatch Details</span>
+                    <button class="edit-btn" onclick="editDetails()">Edit</button>
+                </div>
+            </div>
+
+            <div class="booking-info">
+                <div class="info-row">
+                    <div class="info-item">
+                        <label>LR No:</label>
+                        <span id="displayLRNo"></span></div>
+                    <div class="info-item">
+                        <label>Current Status:</label>
+                        <span id="currentStatus" class="status-received"></span>
+                    </div>
+                    <div class="info-item">
+                        <label>LR Type:</label>
+                        <span id="lrType" class="paid-badge"></span>
+                    </div>
+                </div>
+
+                <div class="consignment-details">
+                    <div class="consignor">
+                        <h3>Consignor</h3>
+                        <div id="consignorDetails" class="party-details">
+                            <!-- Consignor details will be populated here -->
+                        </div>
+                    </div>
+                    <div class="consignee">
+                        <h3>Consignee</h3>
+                        <div id="consigneeDetails" class="party-details">
+                            <!-- Consignee details will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charges-section">
+                    <h3>Charges Details</h3>
+                    <div class="discount-section">
+                        <div class="discount-form">
+                            <label for="discountType">Discount Type:</label>
+                            <select id="discountType">
+                                <option value="percentage">Percentage</option>
+                                <option value="amount">Amount</option>
+                            </select>
+                            <option value="amount">Amount</option>
+                            </select>
+                            <input type="number" id="discountValue" placeholder="Enter discount">
+                            <button class="apply-discount-btn" onclick="applyDiscount()">Apply Discount</button>
+                        </div>
+                    </div>
+                    <table class="charges-table">
+                        <thead>
+                            <tr>
+                                <th>Description</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Freight Charges</td>
+                                <td id="freightCharges">0</td>
+                            </tr>
+                            <tr>
+                                <td>Other Charges</td>
+                                <td id="otherCharges">0</td>
+                            </tr>
+                            <tr>
+                                <td>Discount</td>
+                                <td id="discountAmount">0</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Amount</strong></td>
+                                <td id="totalAmount"><strong>0</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="delivery-form no-print">
+                    <h3>Delivery Details</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Payment Type:</label>
+                            <select id="paymentType">
+                                <option value="">-- Select --</option>
+                                <option value="cash">Cash</option>
+                                <option value="card">Card</option>
+                                <option value="upi">UPI</option>
+                                <option value="cheque">Cheque</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Delivered To Name:</label>
+                            <input type="text" id="deliveredToName">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number:</label>
+                            <input type="text" id="phoneNumber">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>ID Proof Type:</label>
+                            <select id="idProofType">
+                                <option value="">-- Select --</option>
+                                <option value="aadhar">Aadhar Card</option>
+                                <option value="pan">PAN Card</option>
+                                <option value="dl">Driving License</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>ID Proof Number:</label>
+                            <input type="text" id="idProofNumber">
+                        </div>
+                        <div class="form-group">
+                            <label>Remarks:</label>
+                            <input type="text" id="remarks" placeholder="Any additional notes">
+                        </div>
+                    </div>
+                    <button class="deliver-btn" onclick="submitDelivery()">Deliver</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Status Details Modal -->
+    <div id="statusModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('statusModal')">&times;</span>
+            <h2>Status History</h2>
+            <table class="charges-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Location</th>
+                    </tr>
+                </thead>
+                <tbody id="statusHistory">
+                    <!-- Status history will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Dispatch Details Modal -->
+    <div id="dispatchModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('dispatchModal')">&times;</span>
+            <h2>Dispatch Details</h2>
+            <table class="charges-table">
+                <thead>
+                    <tr>
+                        <th>Vehicle No</th>
+                        <th>Driver</th>
+                        <th>Contact</th>
+                    </tr>
+                </thead>
+                <tbody id="dispatchDetails">
+                    <!-- Dispatch details will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('en-US', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+            document.getElementById('currentTime').textContent = timeString;
+        }
+
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Modal functions
+        function showModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function showStatusDetails() {
+            showModal('statusModal');
+        }
+
+        function showDispatchDetails() {
+            showModal('dispatchModal');
+        }
+
+        // Function to reset all fields
+        function resetAllFields() {
+            document.getElementById('lrNumber').value = '';
+            document.getElementById('discountType').value = 'percentage';
+            document.getElementById('discountValue').value = '';
+            document.getElementById('paymentType').value = '';
+            document.getElementById('deliveredToName').value = '';
+            document.getElementById('phoneNumber').value = '';
+            document.getElementById('idProofType').value = '';
+            document.getElementById('idProofNumber').value = '';
+            document.getElementById('remarks').value = '';
+
+            // Reset displayed data
+            document.getElementById('displayLRNo').textContent = '';
+            document.getElementById('currentStatus').textContent = '';
+            document.getElementById('lrType').textContent = '';
+            document.getElementById('consignorDetails').innerHTML = '';
+            document.getElementById('consigneeDetails').innerHTML = '';
+            document.getElementById('freightCharges').textContent = '0.00';
+            document.getElementById('otherCharges').textContent = '0.00';
+            document.getElementById('discountAmount').textContent = '0.00';
+            document.getElementById('totalAmount').textContent = '0.00';
+
+            // Hide the delivery details section
+            document.getElementById('deliveryDetails').style.display = 'none';
+        }
+
+        // Search LR functionality
+        async function searchLR() {
+            const lrNumber = document.getElementById('lrNumber').value;
+            if (!lrNumber) {
+                showNotification('Please enter an LR number', 'error');
+                return;
+            }
+
+            // Reset all fields before searching
+            resetAllFields();
+
+            try {
+                const response = await fetch(`/transporter/api/search-cnote/?lrNumber=${lrNumber}`);
+                if (!response.ok) {
+                    throw new Error('CNotes not found');
+                }
+                const data = await response.json();
+
+                // Remove automatic discount calculation
+                data.charges.total = data.charges.freight + data.charges.other;
+
+                displayCNoteData(data);
+                showNotification('LR details loaded successfully', 'success');
+            } catch (error) {
+                console.error('Error fetching CNotes:', error);
+                showNotification('Error fetching LR details', 'error');
+            }
+        }
+
+        // Display CNotes data
+        function displayCNoteData(data) {
+            document.getElementById('deliveryDetails').style.display = 'block';
+            document.getElementById('displayLRNo').textContent = data.lrNumber;
+            document.getElementById('currentStatus').textContent = data.status;
+            document.getElementById('lrType').textContent = data.lrType;
+
+            // Populate consignor details
+            const consignorDetails = document.getElementById('consignorDetails');
+            consignorDetails.innerHTML = `
+                <p>${data.consignor.name}</p>
+                <p>${data.consignor.address}</p>
+                <p>Contact: ${data.consignor.contact}</p>
+                <p>GST: ${data.consignor.gst}</p>
+            `;
+
+            // Populate consignee details
+            const consigneeDetails = document.getElementById('consigneeDetails');
+            consigneeDetails.innerHTML = `
+                <p>${data.consignee.name}</p>
+                <p>${data.consignee.address}</p>
+                <p>Contact: ${data.consignee.contact}</p>
+                <p>GST: ${data.consignee.gst}</p>
+            `;
+
+            // Populate charges
+            document.getElementById('freightCharges').textContent = data.charges.freight.toFixed(2);
+            document.getElementById('otherCharges').textContent = data.charges.other.toFixed(2);
+            document.getElementById('discountAmount').textContent = '0.00';
+            document.getElementById('totalAmount').textContent = data.charges.total.toFixed(2);
+
+            // Store the original charges for discount calculations
+            window.originalCharges = {
+                freight: data.charges.freight,
+                other: data.charges.other,
+                total: data.charges.total
+            };
+        }
+
+        // Apply discount
+        function applyDiscount() {
+            const discountType = document.getElementById('discountType').value;
+            const discountValue = parseFloat(document.getElementById('discountValue').value) || 0;
+            const originalTotal = window.originalCharges.total;
+
+            let discountAmount = 0;
+            if (discountType === 'percentage') {
+                discountAmount = originalTotal * (discountValue / 100);
+            } else {
+                discountAmount = discountValue;
+            }
+
+            // Ensure discount doesn't exceed total amount
+            discountAmount = Math.min(discountAmount, originalTotal);
+
+            const newTotal = originalTotal - discountAmount;
+
+            // Update the display
+            document.getElementById('discountAmount').textContent = discountAmount.toFixed(2);
+            document.getElementById('totalAmount').textContent = newTotal.toFixed(2);
+
+            showNotification(`Discount of ${discountAmount.toFixed(2)} applied successfully`, 'success');
+        }
+
+        // Validate phone number
+        function validatePhone(phone) {
+            return /^\d{10}$/.test(phone);
+        }
+
+        // Function to get the CSRF token from the cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+
+        // Submit delivery
+        async function submitDelivery() {
+            const paymentType = document.getElementById('paymentType').value;
+            const deliveredToName = document.getElementById('deliveredToName').value;
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const idProofType = document.getElementById('idProofType').value;
+            const idProofNumber = document.getElementById('idProofNumber').value;
+            const remarks = document.getElementById('remarks').value;
+
+            if (!paymentType || !deliveredToName || !phoneNumber) {
+                showNotification('Please fill in all required fields', 'error');
+                return;
+            }
+
+            if (!validatePhone(phoneNumber)) {
+                showNotification('Please enter a valid 10-digit phone number', 'error');
+                return;
+            }
+
+            const deliveryData = {
+                lrNumber: document.getElementById('displayLRNo').textContent,
+                status: document.getElementById('currentStatus').textContent,
+                paymentType,
+                consignor: {
+                    name: document.getElementById('consignorDetails').querySelector('p:nth-child(1)').textContent,
+                    address: document.getElementById('consignorDetails').querySelector('p:nth-child(2)').textContent,
+                    contact: document.getElementById('consignorDetails').querySelector('p:nth-child(3)').textContent,
+                    gst: document.getElementById('consignorDetails').querySelector('p:nth-child(4)').textContent,
+                },
+                consignee: {
+                    name: document.getElementById('consigneeDetails').querySelector('p:nth-child(1)').textContent,
+                    address: document.getElementById('consigneeDetails').querySelector('p:nth-child(2)').textContent,
+                    contact: document.getElementById('consigneeDetails').querySelector('p:nth-child(3)').textContent,
+                    gst: document.getElementById('consigneeDetails').querySelector('p:nth-child(4)').textContent,
+                },
+                charges: {
+                    freight: parseFloat(document.getElementById('freightCharges').textContent),
+                    other: parseFloat(document.getElementById('otherCharges').textContent),
+                    discount: parseFloat(document.getElementById('discountAmount').textContent),
+                    total: parseFloat(document.getElementById('totalAmount').textContent),
+                },
+                deliveredToName,
+                phoneNumber,
+                idProofType,
+                idProofNumber,
+                remarks
+            };
+
+            try {
+                const csrftoken = getCookie('csrftoken');  // Get the CSRF token
+        
+                const response = await fetch('/transporter/api/submit-delivery/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken  // Include the CSRF token in the headers
+                    },
+                    body: JSON.stringify(deliveryData),
+                });
+        
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to update delivery');
+                }
+                showNotification('Delivery updated successfully!', 'success');
+                 
+                
+
+
+
+                // Reset form
+                document.getElementById('paymentType').value = '';
+                document.getElementById('deliveredToName').value = '';
+                document.getElementById('phoneNumber').value = '';
+                document.getElementById('idProofType').value = '';
+                document.getElementById('idProofNumber').value = '';
+                document.getElementById('remarks').value = '';
+            } catch (error) {
+                console.error('Error updating delivery:', error);
+                showNotification('Failed to update delivery', 'error');
+            }
+        }
+
+        // Print functionality
+        function printDeliveryDetails() {
+            window.print();
+        }
+
+        // Logout functionality
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                showNotification('Logging out...', 'warning');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 1500);
+            }
+        }
+
+        // Edit functionality
+        function editDetails() {
+            showNotification('Edit mode enabled', 'warning');
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.className === 'modal') {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

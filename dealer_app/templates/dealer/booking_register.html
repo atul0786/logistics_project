@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Advanced Dynamic Booking Register Report</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+      :root {
+        --primary-color: #3498db;
+        --secondary-color: #2ecc71;
+        --accent-color: #e74c3c;
+        --background-color: #ecf0f1;
+        --text-color: #34495e;
+        --border-color: #bdc3c7;
+        --header-height: 60px;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color);
+        line-height: 1.6;
+      }
+
+      
+
+      header {
+        background-color: #87CEEB;  /* Change to skyblue */
+        color: #333;  /* Darker text color for better contrast */
+        padding: 1rem;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+      .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .menu-icon {
+        font-size: 1.5rem;
+        cursor: pointer;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .search-container {
+        display: flex;
+        align-items: center;
+      }
+
+      #lr-search {
+        padding: 0.5rem;
+        border: none;
+        border-radius: 4px;
+        margin-right: 10px;
+      }
+
+      .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      .btn-primary {
+        background-color: var(--secondary-color);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background-color: #27ae60;
+      }
+
+      .btn-danger {
+        background-color: var(--accent-color);
+        color: white;
+      }
+
+      .btn-danger:hover {
+        background-color: #c0392b;
+      }
+
+      main {
+        margin-top: var(--header-height); 
+      }
+
+      .filter-section {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+
+      .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .filter-item {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .filter-item label {
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      .filter-item select,
+      .filter-item input {
+        padding: 8px;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      .filter-item input[type="date"] {  
+        width: 150px; /* adjust the width to your desired size */  
+        height: 35px; /* adjust the height to your desired size */  
+        font-size: 14px; /* adjust the font size to your desired size */  
+      }
+
+
+
+
+
+
+
+
+      .button-group {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .chart-container {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+
+      .chart-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+
+      .chart-column {
+        flex: 1;
+        margin: 0 10px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: white;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+
+      th,
+      td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+        position: sticky;
+        top: var(--header-height);
+        z-index: 10;
+        cursor: pointer;
+      }
+
+      th:hover {
+        background-color: #e9ecef;
+      }
+
+      tbody tr:hover {
+        background-color: #f1f3f5;
+      }
+
+      .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+      }
+
+      .pagination button {
+        margin: 0 5px;
+        padding: 5px 10px;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+
+      .pagination button:disabled {
+        background-color: #bdc3c7;
+        cursor: not-allowed;
+      }
+
+      .date-range {  
+        display: flex;  
+        align-items: center;  
+      }  
+        
+      .date-range label {  
+        margin-right: 10px;  
+      }  
+        
+      .date-range input[type="date"] {  
+        margin-right: 20px;  
+      }
+
+      .loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .loading::after {
+        content: "";
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .filter-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .button-group {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .button-group .btn {
+          margin-bottom: 10px;
+        }
+
+        .chart-row {
+          flex-direction: column;
+        }
+
+        .chart-column {
+          margin: 10px 0;
+        }
+      }
+
+      .search-results-container {  
+        overflow-x: auto;  
+        overflow-y: auto;  
+        max-height: 500px; /* adjust the height to your liking */  
+        padding: 20px;  
+        border: 1px solid #ddd;  
+        border-radius: 10px;  
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);  
+      }  
+        
+      .search-results-container table {  
+        width: 100%;  
+        border-collapse: collapse;  
+      }  
+        
+      .search-results-container th, .search-results-container td {  
+        padding: 10px;  
+        border: 1px solid #ddd;  
+
+      }
+      .table-container {
+  max-height: 500px; /* Set the max height as needed */
+  overflow-y: auto; /* Enables vertical scrolling on the entire table */
+  overflow-x: auto; /* Horizontal scrolling in case of overflow */
+}
+
+#booking-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto; /* Allows automatic column width adjustment */
+}
+
+#booking-table thead th,
+#booking-table tbody td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap; /* Ensures single-line data */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#booking-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #f8f9fa;
+  color: #34495e;
+}
+
+/* Top bar container to manage entire layout */
+.top-bar {
+display: flex;
+justify-content: flex-end; /* Pushes content to the right */
+align-items: center;
+padding: 0 20px; /* Adjust the padding */
+        }
+.user-info {
+text-align: center;
+flex-grow: 1;
+}
+
+.search-bar input {
+width: 200px;
+padding: 8px;
+border: none;
+outline: none;
+font-size: 14px;
+}
+
+.search-bar button {
+padding: 8px 15px;
+background-color: #4682b4;
+color: white;
+border: none;
+border-radius: 20px;
+cursor: pointer;
+transition: background-color 0.3s;
+}
+
+.search-bar button:hover {
+background-color: #36648b;
+}
+
+/* Container for search and logout */
+.search-logout-container {
+display: flex;
+justify-content: space-between;
+align-items: center;
+width: 100%; /* Ensure it takes full width */
+}
+/* Search bar styles */
+.search-bar {
+display: flex;
+align-items: center;
+background-color: #ffffff;
+border-radius: 20px;
+padding: 5px 10px;
+margin-right: 80px;
+box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+} 
+
+/* Logout button styles */
+.logout-button {  
+position: absolute;  
+right: 13px;  
+top: 40px;  
+}
+
+.logout-button button {
+background-color: #ff4500;
+color: white;
+padding: 9px 18px;
+border: none;
+border-radius: 20px;
+cursor: pointer;
+transition: background-color 0.3s;
+}
+
+.logout-button button:hover {
+background-color: #e63900;
+}
+
+nav ul {
+  list-style-type: none;
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+nav ul li {
+  position: relative;
+}
+
+nav ul li a {
+  color: white;
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+nav ul li a:hover {
+  background-color: #3a6d8c;
+}
+
+nav ul li ul {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: #4682b4;
+  padding: 10px;
+  border-radius: 0 0 4px 4px;
+  z-index: 1000;
+}
+
+nav ul li:hover > ul {
+  display: block;
+}
+
+nav ul li ul li {
+  width: 200px;
+  padding: 5px 0;
+}
+
+nav ul li ul li a {
+  display: block;
+  padding: 5px 10px;
+}
+
+nav {
+  background-color: #4682b4;
+  padding: 10px 0;
+  z-index: 999; /* Ensure it's below the header */
+  
+  margin-top: 110px;
+
+  
+}
+
+
+
+    </style>
+  </head>
+  <body>    
+    <header>
+    <div class="container">
+      <div class="top-bar">
+        <div class="logo" style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">  
+          {% if dealer.photo %}  
+             <img src="{{ dealer.photo.url }}" alt="Dealer Photo" style="width: 100%; height: 100%; object-fit: cover">  
+          {% else %}  
+             <span style="font-size: 64px; line-height: 80px; text-align: center">😊</span>  
+          {% endif %}  
+       </div> 
+       <div class="user-info"> 
+        <p>Welcome {{ dealer.name }} ({{ dealer.city}} - {{ dealer.state}})</p><p id="currentDateTime"></p>  
+        <p id="currentDateTime"></p>  
+        
+       </div>  
+       <div class="search-bar">
+          <input type="text" id="searchCNote" placeholder="Search CNote Number" />
+          <button id="searchButton">Search</button>
+        </div>
+        <form action="{% url 'logout' %}" method="post" class="logout-button">
+          {% csrf_token %}
+          <button type="submit" id="logoutBtn">Logout</button>
+          
+        </form>
+        
+    </div>
+
+    
+  </header>
+  
+
+
+    <main class="container">
+      <nav>
+      
+        <ul>
+          <li>
+            <a href="#"><i class="fas fa-home"></i> Home</a>
+          </li>
+          <li>
+            <a href="#"><i class="fas fa-cogs"></i> Operations</a>
+            <ul>
+              <li>
+                <a href="{% url 'dealer:create_cnotes' %}"> Booking</a>
+              </li>
+              <li>
+                <a href="{% url 'dealer:loading_sheet' %}"> Loading Sheet</a>
+              </li>
+              <li>
+                <a href="#">Operation 3</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="{% url 'dealer:search' %}"><i class="fas fa-search"></i> Search</a>
+          </li>
+          <li>
+            <a href="{% url 'dealer:booking_register' %}"><i class="fas fa-chart-bar"></i> Report</a>
+            <ul>
+              <li><a href="{% url 'dealer:booking_register' %}">Booking Register</a></li>
+              <li><a href="#">Report 2</a></li>
+              <li><a href="#">Report 3</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="#"><i class="fas fa-user"></i> Profile</a>
+            <ul>
+              <li><a href="#">Edit Profile</a></li>
+              <li><a href="#">Change Password</a></li>
+              <li><a href="#">Logout</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="#"><i class="fas fa-tasks"></i> Masters</a>
+            <ul>
+              <li><a href="#">Master 1</a></li>
+              <li><a href="#">Master 2</a></li>
+              <li><a href="#">Master 3</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <ul>
+              <li><a href="#">Overview</a></li>
+              <li><a href="#">Analytics</a></li>
+              <li><a href="#">Reports</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+      <div class="filter-section" id="filter-section">
+        <div class="filter-grid">
+          <div class="filter-item">
+            <label for="date-from">From Date</label>
+            <input type="date" id="date-from" />
+          </div>
+          <div class="filter-item">
+            <label for="date-to">To Date</label>
+            <input type="date" id="date-to" />
+          </div>
+          <div class="filter-item">
+            <label for="from-region">From Region</label>
+            <select id="from-region">
+              <option value="">All</option>
+              <option>NAGPUR</option>
+              <option>MUMBAI</option>
+              <option>DELHI</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label for="from-branch">From Branch</label>
+            <select id="from-branch">
+              <option value="">All</option>
+              <option>BRANCH 1</option>
+              <option>BRANCH 2</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label for="from-city">From City</label>
+            <select id="from-city">
+              <option value="">All</option>
+              <option>CITY 1</option>
+              <option>CITY 2</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label for="to-city">To City</label>
+            <select id="to-city">
+              <option value="">All</option>
+              <option>CITY 1</option>
+              <option>CITY 2</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label for="select-type">Select Type</label>
+            <select id="select-type">
+              <option value="">All</option>
+              <option>INCOMING</option>
+              <option>OUTGOING</option>
+            </select>
+          </div>
+          <div class="filter-item">  
+            <label for="amount-min">Min Amount</label>  
+            <input type="number" id="amount-min" min="0" />  
+          </div>  
+          <div class="filter-item">  
+            <label for="amount-max">Max Amount</label>  
+            <input type="number" id="amount-max" min="0" />  
+          </div>
+        </div>
+
+
+
+
+
+
+        <div class="button-group">
+          <button class="btn btn-primary" id="search-btn">Search</button>
+          <button class="btn btn-primary" id="download-btn">
+            Download Excel
+          </button>
+          <button class="btn btn-danger" id="clear-btn">Clear Filters</button>
+        </div>
+      </div>
+    <div class="search-results-container">  
+      <table id="booking-table">
+          <thead>
+            <tr>
+              <th data-sort="id">Sr. No</th>  
+              <th data-sort="cnote_number">CNote Number</th>  
+              <th data-sort="booking_type">Booking Type</th>  
+              <th data-sort="delivery_destination">Delivery Destination</th>  
+              <th data-sort="consignor_name">Consignor Name</th>  
+              <th data-sort="consignee_name">Consignee Name</th>  
+              <th data-sort="payment_type">Payment Type</th>  
+              <th data-sort="grand_total">Grand Total</th>  
+              <th data-sort="created_at">Created At</th>  
+              <th data-sort="eway_bill_number">Eway Bill Number</th>  
+              <th data-sort="actual_weight">Actual Weight</th>  
+              <th data-sort="charged_weight">Charged Weight</th>  
+              <th data-sort="weight_rate">Weight Rate</th>  
+              <th data-sort="weight_amount">Weight Amount</th>  
+              <th data-sort="fix_amount">Fix Amount</th>  
+              <th data-sort="invoice_number">Invoice Number</th>  
+              <th data-sort="declared_value">Declared Value</th>  
+              <th data-sort="risk_type">Risk Type</th>  
+              <th data-sort="pod_required">POD Required</th>  
+              <th data-sort="freight">Freight</th>  
+              <th data-sort="docket_charge">Docket Charge</th>  
+              <th data-sort="door_delivery_charge">Door Delivery Charge</th>  
+              <th data-sort="handling_charge">Handling Charge</th>  
+              <th data-sort="pickup_charge">Pickup Charge</th>  
+              <th data-sort="transhipment_charge">Transhipment Charge</th>  
+              <th data-sort="insurance">Insurance</th>  
+              <th data-sort="fuel_surcharge">Fuel Surcharge</th>  
+              <th data-sort="commission">Commission</th>  
+              <th data-sort="other_charge">Other Charge</th>  
+              <th data-sort="carrier_risk">Carrier Risk</th>  
+              <th data-sort="booking_type">Booking Type</th>  
+              <th data-sort="delivery_type">Delivery Type</th>  
+              <th data-sort="delivery_method">Delivery Method</th>  
+              <th data-sort="status">Status</th>  
+              <th data-sort="art">Article</th>  
+              <th data-sort="artType">Art Type</th>  
+              <th data-sort="saidToCont">Said to Contain</th>  
+              <th data-sort="artAmt">Art Amount</th>  
+              <th data-sort="consignor_gst">Consignor GST</th>  
+              <th data-sort="consignee_gst">Consignee GST</th>
+
+            </tr>
+        </thead>
+        <tbody id="booking-data">  
+          {% for data in article_data %}  
+          <tr>  
+            <td>{{ forloop.counter }}</td>
+            <td>{{ data.cnote_number }}</td>
+            <td>{{ data.booking_type }}</td>   
+            <td>{{ data.delivery_destination }}</td>   
+            <td>{{ data.consignor_name }}</td>   
+            <td>{{ data.consignee_name }}</td>   
+            <td>{{ data.payment_type }}</td>   
+            <td>{{ data.grand_total }}</td>   
+            <td>{{ data.created_at }}</td>   
+            <td>{{ data.eway_bill_number }}</td>   
+            <td>{{ data.actual_weight }}</td>   
+            <td>{{ data.charged_weight }}</td>   
+            <td>{{ data.weight_rate }}</td>   
+            <td>{{ data.weight_amount }}</td>   
+            <td>{{ data.fix_amount }}</td>   
+            <td>{{ data.invoice_number }}</td>   
+            <td>{{ data.declared_value }}</td>   
+            <td>{{ data.risk_type }}</td>   
+            <td>{{ data.pod_required }}</td>   
+            <td>{{ data.freight }}</td>   
+            <td>{{ data.docket_charge }}</td>   
+            <td>{{ data.door_delivery_charge }}</td>   
+            <td>{{ data.handling_charge }}</td>   
+            <td>{{ data.pickup_charge }}</td>   
+            <td>{{ data.transhipment_charge }}</td>   
+            <td>{{ data.insurance }}</td>   
+            <td>{{ data.fuel_surcharge }}</td>   
+            <td>{{ data.commission }}</td>   
+            <td>{{ data.other_charge }}</td>   
+            <td>{{ data.carrier_risk }}</td>   
+            <td>{{ data.booking_type }}</td>   
+            <td>{{ data.delivery_type }}</td>   
+            <td>{{ data.delivery_method }}</td>
+            <td>{{ data.status }}</td>  
+            <td>{{ data.total_art }}</td>
+            <td>{{ data.art_types }}</td>   
+            <td>{{ data.said_to_contain }}</td>   
+            <td>{{ data.art_amounts }}</td>  
+            <td>{{ data.consignor_gst }}</td>   
+            <td>{{ data.consignee_gst }}</td>
+
+          </tr>  
+          {% endfor %}  
+        </tbody>
+    </table>
+
+      <div class="pagination" id="pagination"></div>
+
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Paid</th>
+            <th>To Pay</th>
+            <th>Billing</th>
+            <th>Total Amount</th>
+            <th>GST</th>
+            <th>Grand Total</th>
+          </tr>
+        </thead>
+        <tbody id="summary-data"></tbody>
+      </table>
+    </main>
+
+    <div id="loading" class="loading" style="display: none"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      // Fetch data from server
+      fetch("/dealer/booking_register_data")
+        .then((response) => response.text())
+        .then((data) => {
+          const bookingData = data.split("\n").map((row) => {
+            const values = row.split(",");
+            return {
+              id: values[0],
+              date: values[1],
+              lrNumber: values[2],
+              bookedBy: values[3],
+              lrType: values[4],
+              source: values[5],
+              dest: values[6],
+              cnor: values[7],
+              cnee: values[8],
+              art: values[9],
+              artType: values[10],
+              saidToContain: values[11],
+              artAmount: values[12],
+              actWgt: values[13],
+              chgWgt: values[14],
+              freight: values[15],
+              pickup: values[16],
+              other: values[17],
+              handling: values[18],
+              doorDly: values[19],
+              fuelSurch: values[20],
+              doc: values[21],
+            };
+          });
+          allBookingData = bookingData;
+          applyFilters();
+        })
+        .catch((error) => console.error("Error fetching data:", error));
+
+      let summaryData = [
+        {
+          type: "Auto",
+          paid: 214070,
+          toPay: 349530,
+          billing: 116303.38,
+          totalAmount: 681973.38,
+          gst: 0,
+          grandTotal: 681973.38,
+        },
+        {
+          type: "Manual",
+          paid: 7860,
+          toPay: 33870,
+          billing: 10668,
+          totalAmount: 52398,
+          gst: 0,
+          grandTotal: 52398,
+        },
+        {
+          type: "Total",
+          paid: 221930,
+          toPay: 383400,
+          billing: 126548.38,
+          totalAmount: 734268.38,
+          gst: 0,
+          grandTotal: 734268.38,
+        },
+      ];
+
+      // DOM elements
+      const filterSection = document.getElementById("filter-section");
+      const toggleFilters = document.getElementById("toggle-filters");
+      const searchBtn = document.getElementById("search-btn");
+      const downloadBtn = document.getElementById("download-btn");
+      const clearBtn = document.getElementById("clear-btn");
+      const logoutBtn = document.getElementById("logout-btn");
+      const lrSearch = document.getElementById("lr-search");
+      const bookingData = document.getElementById("booking-data");
+      const summaryDataElement = document.getElementById("summary-data");
+      const pagination = document.getElementById("pagination");
+      const loading = document.getElementById("loading");
+
+      // Chart initialization
+      const bookingTypeCtx = document
+        .getElementById("bookingTypeChart")
+        .getContext("2d");
+      const amountCtx = document.getElementById("amountChart").getContext("2d");
+      let bookingTypeChart, amountChart;
+
+      function initCharts() {
+        bookingTypeChart = new Chart(bookingTypeCtx, {
+          type: "pie",
+          data: {
+            labels: ["TO PAY", "PAID"],
+            datasets: [
+              {
+                data: [0, 0],
+                backgroundColor: [
+                  "rgba(255, 99, 132, 0.8)",
+                  "rgba(54, 162, 235, 0.8)",
+                ],
+                borderColor: ["rgba(255, 99, 132, 1)", "rgba(54, 162, 235, 1)"],
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              title: {
+                display: true,
+                text: "Booking Types Distribution",
+              },
+            },
+          },
+        });
+
+        amountChart = new Chart(amountCtx, {
+          type: "bar",
+          data: {
+            labels: [
+              "Freight",
+              "Pickup",
+              "Other",
+              "Handling",
+              "Door Dly.",
+              "Fuel Surcharge",
+              "Doc",
+            ],
+            datasets: [
+              {
+                label: "Average Amount",
+                data: [0, 0, 0, 0, 0, 0, 0],
+                backgroundColor: "rgba(75, 192, 192, 0.6)",
+                borderColor: "rgba(75, 192, 192, 1)",
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+              },
+            },
+            plugins: {
+              title: {
+                display: true,
+                text: "Average Amounts",
+              },
+            },
+          },
+        });
+      }
+
+      function updateCharts() {
+        const toPay = filteredData.filter(
+          (booking) => booking.lrType === "TO PAY"
+        ).length;
+        const paid = filteredData.filter(
+          (booking) => booking.lrType === "PAID"
+        ).length;
+        bookingTypeChart.data.datasets[0].data = [toPay, paid];
+        bookingTypeChart.update();
+
+        const avgFreight =
+          filteredData.reduce((sum, booking) => sum + booking.freight, 0) /
+          filteredData.length;
+        const avgPickup =
+          filteredData.reduce((sum, booking) => sum + booking.pickup, 0) /
+          filteredData.length;
+        const avgOther =
+          filteredData.reduce((sum, booking) => sum + booking.other, 0) /
+          filteredData.length;
+        const avgHandling =
+          filteredData.reduce((sum, booking) => sum + booking.handling, 0) /
+          filteredData.length;
+        const avgDoorDly =
+          filteredData.reduce((sum, booking) => sum + booking.doorDly, 0) /
+          filteredData.length;
+        const avgFuelSurch =
+          filteredData.reduce((sum, booking) => sum + booking.fuelSurch, 0) /
+          filteredData.length;
+        const avgDoc =
+          filteredData.reduce((sum, booking) => sum + booking.doc, 0) /
+          filteredData.length;
+
+        amountChart.data.datasets[0].data = [
+          avgFreight,
+          avgPickup,
+          avgOther,
+          avgHandling,
+          avgDoorDly,
+          avgFuelSurch,
+          avgDoc,
+        ];
+        amountChart.update();
+      }
+
+      function displayBookingData(page) {
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const pageData = filteredData.slice(startIndex, endIndex);
+
+        bookingData.innerHTML = "";
+        pageData.forEach((row) => {
+          const tr = document.createElement("tr");
+          Object.values(row).forEach((value) => {
+            const td = document.createElement("td");
+            td.textContent = value;
+            tr.appendChild(td);
+          });
+          bookingData.appendChild(tr);
+
+          // Add article data
+          const articleData = articleData.filter(
+            (article) => article.cnote_id === row.id
+          );
+          articleData.forEach((article) => {
+            const tr = document.createElement("tr");
+            Object.values(article).forEach((value) => {
+              const td = document.createElement("td");
+              td.textContent = value;
+              tr.appendChild(td);
+            });
+            bookingData.appendChild(tr);
+          });
+        });
+
+        updatePagination();
+      }
+      function updatePagination() {
+        const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+        pagination.innerHTML = "";
+
+        const prevButton = document.createElement("button");
+        prevButton.textContent = "Previous";
+        prevButton.disabled = currentPage === 1;
+        prevButton.addEventListener("click", () => {
+          if (currentPage > 1) {
+            currentPage--;
+            displayBookingData(currentPage);
+          }
+        });
+        pagination.appendChild(prevButton);
+
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, startPage + 4);
+
+        for (let i = startPage; i <= endPage; i++) {
+          const pageButton = document.createElement("button");
+          pageButton.textContent = i;
+          pageButton.disabled = i === currentPage;
+          pageButton.addEventListener("click", () => {
+            currentPage = i;
+            displayBookingData(currentPage);
+          });
+          pagination.appendChild(pageButton);
+        }
+
+        const nextButton = document.createElement("button");
+        nextButton.textContent = "Next";
+        nextButton.disabled = currentPage === totalPages;
+        nextButton.addEventListener("click", () => {
+          if (currentPage < totalPages) {
+            currentPage++;
+            displayBookingData(currentPage);
+          }
+        });
+        pagination.appendChild(nextButton);
+      }
+
+      function displaySummaryData() {
+        summaryDataElement.innerHTML = "";
+        summaryData.forEach((row, index) => {
+          const tr = document.createElement("tr");
+          if (index === summaryData.length - 1) {
+            tr.classList.add("summary-row");
+          }
+          Object.values(row).forEach((value) => {
+            const td = document.createElement("td");
+            td.textContent =
+              typeof value === "number" ? value.toFixed(2) : value;
+            tr.appendChild(td);
+          });
+          summaryDataElement.appendChild(tr);
+        });
+      }
+
+      function applyFilters() 
+      {  
+        const dateFrom = document.getElementById("date-from").value;  
+        const dateTo = document.getElementById("date-to").value;  
+        const fromRegion = document.getElementById("from-region").value;  
+        const fromBranch = document.getElementById("from-branch").value;  
+        const fromCity = document.getElementById("from-city").value;  
+        const toCity = document.getElementById("to-city").value;  
+        const selectType = document.getElementById("select-type").value;  
+        const amountMin = parseFloat(document.getElementById("amount-min").value) || 0;  
+        const amountMax = parseFloat(document.getElementById("amount-max").value) || Infinity;  
+        const searchTerm = lrSearch.value.toLowerCase();  
+        
+        filteredData = allBookingData.filter((row) => 
+        {  
+         const dateMatch = (!dateFrom || row.date >= dateFrom) && (!dateTo || row.date <= dateTo);  
+         const regionMatch = !fromRegion || row.source === fromRegion;  
+         const branchMatch = !fromBranch || row.bookedBy === fromBranch;  
+         const fromCityMatch = !fromCity || row.source === fromCity;  
+         const toCityMatch = !toCity || row.dest === toCity;  
+         const typeMatch = !selectType || row.lrType === selectType;  
+         const amountMatch = row.freight >= amountMin && row.freight <= amountMax;  
+         const searchMatch = !searchTerm || row.lrNumber.toLowerCase().includes(searchTerm) || row.bookedBy.toLowerCase().includes(searchTerm);  
+        
+         return dateMatch && regionMatch && branchMatch && fromCityMatch && toCityMatch && typeMatch && amountMatch && searchMatch;  
+        });  
+        
+        currentPage = 1;  
+        displayBookingData(currentPage);  
+        updateSummary();  
+        updateCharts();  
+      }
+
+      function updateSummary() {
+        const paid = filteredData.reduce(
+          (sum, row) => sum + (row.lrType === "PAID" ? row.freight : 0),
+          0
+        );
+        const toPay = filteredData.reduce(
+          (sum, row) => sum + (row.lrType === "TO PAY" ? row.freight : 0),
+          0
+        );
+        const totalAmount = paid + toPay;
+
+        summaryData = [
+          {
+            type: "Auto",
+            paid,
+            toPay,
+            billing: totalAmount * 0.1,
+            totalAmount,
+            gst: totalAmount * 0.18,
+            grandTotal: totalAmount * 1.18,
+          },
+          {
+            type: "Manual",
+            paid: 0,
+            toPay: 0,
+            billing: 0,
+            totalAmount: 0,
+            gst: 0,
+            grandTotal: 0,
+          },
+          {
+            type: "Total",
+            paid,
+            toPay,
+            billing: totalAmount * 0.1,
+            totalAmount,
+            gst: totalAmount * 0.18,
+            grandTotal: totalAmount * 1.18,
+          },
+        ];
+
+        displaySummaryData();
+      }
+
+      function simulateLoading(callback) {
+        loading.style.display = "flex";
+        setTimeout(() => {
+          loading.style.display = "none";
+          callback();
+        }, 1000);
+      }
+
+      function sortTable(column) {
+        filteredData.sort((a, b) => {
+          if (a[column] < b[column]) return -1;
+          if (a[column] > b[column]) return 1;
+          return 0;
+        });
+        displayBookingData(currentPage);
+      }
+
+      // Event listeners
+      toggleFilters.addEventListener("click", () => {
+        filterSection.classList.toggle("collapsed");
+      });
+
+      searchBtn.addEventListener("click", () => {  
+        simulateLoading(applyFilters);  
+        document.getElementById("booking-data").style.display = "block";  
+      });
+
+      downloadBtn.addEventListener("click", () => {
+        alert("Downloading Excel file...");
+        // In a real application, this would trigger a server request to generate and download the Excel file
+      });
+
+      clearBtn.addEventListener("click", () => {
+        document.getElementById("date-from").value = "";
+        document.getElementById("date-to").value = "";
+        document.getElementById("from-region").value = "";
+        document.getElementById("from-branch").value = "";
+        document.getElementById("from-city").value = "";
+        document.getElementById("to-city").value = "";
+        document.getElementById("select-type").value = "";
+        document.getElementById("amount-min").value = "";
+        document.getElementById("amount-max").value = "";
+        lrSearch.value = "";
+        filteredData = [...allBookingData];
+        currentPage = 1;
+        displayBookingData(currentPage);
+        updateSummary();
+        updateCharts();
+      });
+
+      const toCityDropdown = document.getElementById("to-city");  
+  
+      // Fetch destinations for the current dealer  
+      fetch(`/api/destinations/${dealerId}`)  
+        .then(response => response.json())  
+        .then(destinations => {  
+        // Populate the To City dropdown with destinations  
+        destinations.forEach(destination => {  
+        const option = document.createElement("option");  
+        option.value = destination.id;  
+        option.text = destination.name;  
+        toCityDropdown.appendChild(option);  
+       });  
+      });
+
+      const allOption = document.createElement("option");  
+      allOption.value = "";  
+      allOption.text = "All";  
+      toCityDropdown.appendChild(allOption);
+
+
+
+
+      logoutBtn.addEventListener("click", () => {
+        if (confirm("Are you sure you want to logout?")) {
+          alert("Logged out successfully");
+          // In a real application, this would clear session data and redirect to a login page
+        }
+      });
+
+      lrSearch.addEventListener("input", applyFilters);
+
+      [
+        "date-from",
+        "date-to",
+        "from-region",
+        "from-branch",
+        "from-city",
+        "to-city",
+        "select-type",
+        "amount-min",
+        "amount-max",
+      ].forEach((id) => {
+        document.getElementById(id).addEventListener("change", applyFilters);
+      });
+
+      document.querySelectorAll("th[data-sort]").forEach((th) => {
+        th.addEventListener("click", () => {
+          sortTable(th.dataset.sort);
+        });
+      });
+
+      // Responsive design
+      window.addEventListener("resize", () => {
+        if (window.innerWidth <= 768) {
+          filterSection.classList.add("collapsed");
+        } else {
+          filterSection.classList.remove("collapsed");
+        }
+      });
+
+      // Initial setup
+      initCharts();
+      displayBookingData(currentPage);
+      displaySummaryData();
+      updateCharts();
+
+      // Initial check for mobile view
+      if (window.innerWidth <= 768) {
+        filterSection.classList.add("collapsed");
+      }
+
+      // Automatic data refresh (simulated)
+      setInterval(() => {
+        // In a real application, this would fetch new data from the server
+        allBookingData = generateSampleData(100);
+        applyFilters();
+      }, 300000); // Refresh every 5 minutes
+    </script>
+  </body>
+</html>
