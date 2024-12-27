@@ -1,4 +1,4 @@
-/Git/
+git fetch origin/Git/
 /venv/
 *.dll
 *.exe
