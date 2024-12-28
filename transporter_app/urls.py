@@ -26,7 +26,7 @@ urlpatterns = [
     path('api/receivables/', views.fetch_receivables, name='fetch_receivables'),
     path('api/receive-shipment/', views.receive_shipment, name='receive_shipment'),
     path('api/dealers-with-loadingsheets/', views.get_dealers_with_loadingsheets, name='get_dealers_with_loadingsheets'),
-    path('receive/RECEIVED_CNOTES.HTML', TemplateView.as_view(template_name='transporter/RECEIVED_CNOTES.html'), name='received_cnotes'),
+    #path('receive/RECEIVED_CNOTES.HTML', TemplateView.as_view(template_name='transporter/RECEIVED_CNOTES.html'), name='received_cnotes'),
     path('receive/RECEIVED_CNOTES.HTML', received_cnote_view, name='received_cnote'),
     path('api/receive-cnotes/', receive_cnotes, name='receive_cnotes'),
     path('receive/', views.receive_view, name='receive'),
