@@ -148,7 +148,7 @@ def custom_login_redirect(request):
                 # Check if there's an associated Dealer record
                 try:
                     dealer = Dealer.objects.select_related('user').get(user=user)
-                    logger.info(f"Found dealer record for user {username}: {dealer.dealer_name}")
+                    logger.info(f"Found dealer record for user {username}: {dealer.name}")
                     login(request, user)
                     logger.info(f"Dealer login successful: {username}")
                     return redirect('dealer:create_cnotes')
