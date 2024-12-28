@@ -110,23 +110,19 @@ def user_owns_cnote(view_func):
         return view_func(request, cnote_id, *args, **kwargs)
     
     return wrapper
-
 logger = logging.getLogger(__name__)
+
 
 def custom_login_redirect(request):
     if request.method == 'POST':
         user_type = request.POST.get('user_type')
         username = request.POST.get('username')
         password = request.POST.get('password')
-        
         logger.info(f"Login attempt - User Type: {user_type}, Username: {username}")
-        
         # First, check if the user exists and credentials are correct
         user = authenticate(request, username=username, password=password)
-        
         if user is not None:
-            logger.info(f"User authenticated successfully: {user.username}")
-            
+            logger.info(f"User  authenticated successfully: {user.username}")
             # Debug query to check user flags
             with connection.cursor() as cursor:
                 cursor.execute("""
@@ -136,15 +132,13 @@ def custom_login_redirect(request):
                 """, [username])
                 row = cursor.fetchone()
                 if row:
-                    logger.info(f"User flags - is_dealer: {row[0]}, is_transporter: {row[1]}, is_active: {row[2]}, is_staff: {row[3]}")
-
+                    logger.info(f"User  flags - is_dealer: {row[0]}, is_transporter: {row[1]}, is_active: {row[2]}, is_staff: {row[3]}")
             if user_type == 'dealer':
-                # Check if user is marked as dealer in CustomUser model
+                # Check if user is marked as dealer in CustomUser  model
                 if not user.is_dealer:
-                    logger.warning(f"User {username} attempted dealer login but is_dealer=False")
+                    logger.warning(f"User  {username} attempted dealer login but is_dealer=False")
                     messages.error(request, 'Your account is not authorized as a dealer.')
                     return render(request, 'registration/login.html')
-                
                 # Check if there's an associated Dealer record
                 try:
                     dealer = Dealer.objects.select_related('user').get(user=user)
@@ -156,14 +150,13 @@ def custom_login_redirect(request):
                     logger.error(f"No Dealer record found for user {username} despite is_dealer=True")
                     messages.error(request, 'Dealer account not properly configured. Please contact support.')
                     return render(request, 'registration/login.html')
-                
+
             elif user_type == 'transporter':
-                # Check if user is marked as transporter in CustomUser model
+                # Check if user is marked as transporter in CustomUser  model
                 if not user.is_transporter:
-                    logger.warning(f"User {username} attempted transporter login but is_transporter=False")
+                    logger.warning(f"User  {username} attempted transporter login but is_transporter=False")
                     messages.error(request, 'Your account is not authorized as a transporter.')
                     return render(request, 'registration/login.html')
-                
                 # Check if there's an associated Transporter record
                 try:
                     transporter = Transporter.objects.select_related('user').get(user=user)
@@ -181,9 +174,8 @@ def custom_login_redirect(request):
         else:
             logger.warning(f"Authentication failed for username: {username}")
             messages.error(request, 'Invalid username or password.')
-
     return render(request, 'registration/login.html')
-
+    
 @login_required
 def login_redirect(request):
     if request.method == 'POST':
