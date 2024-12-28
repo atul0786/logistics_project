@@ -12,6 +12,10 @@ SECRET_KEY = 'django-insecure-@jcjdu2*cprnhxp1eim1c4td1p3ef55-v6wksl1*t&$a-da14)
   
 DEBUG = True  
 
+
+# Add this for static files handling
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
@@ -49,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',  
     'django.contrib.messages.middleware.MessageMiddleware',  
     'django.middleware.clickjacking.XFrameOptionsMiddleware',  
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this line
 ]  
   
 ROOT_URLCONF = 'logistics_project.urls'  
