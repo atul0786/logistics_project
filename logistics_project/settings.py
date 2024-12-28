@@ -11,6 +11,10 @@ BASE_DIR = Path(__file__).resolve().parent  # Now pointing to 'logistics'
 SECRET_KEY = 'django-insecure-@jcjdu2*cprnhxp1eim1c4td1p3ef55-v6wksl1*t&$a-da14)'  
   
 DEBUG = True  
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
   
 ALLOWED_HOSTS = [
     'logistics-project-4.onrender.com',
