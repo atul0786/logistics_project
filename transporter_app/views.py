@@ -662,29 +662,55 @@ def receive_lrs(request):
         }, status=500)
 
 
+logger = logging.getLogger(__name__)
+
+
 @login_required
+
 def received_cnote_view(request, ls_number):
+
     try:
+
         # Fetch the loading sheet summary
+
         loading_sheet_summary = get_object_or_404(LoadingSheetSummary, ls_number=ls_number)
+
         
+
         # Fetch the loading sheet details
-        loading_sheet_details = LoadingSheetDetail.objects.filter(loading_sheet_id=ls_number).select_related('cnote')
+
+        loading_sheet_details = LoadingSheetDetail.objects.filter(loading_sheet=loading_sheet_summary).select_related('cnote')
+
         
+
         # Fetch related CNotes
-        cnotes = CNotes.objects.filter(loadingsheetdetail__loading_sheet_id=ls_number).distinct()
+
+        cnotes = CNotes.objects.filter(loadingsheetdetail__loading_sheet=loading_sheet_summary).distinct()
+
 
         context = {
-            'loading_sheet_summary': loading_sheet_summary,
-            'loading_sheet_details': loading_sheet_details,
-            'cnotes': cnotes,
-        }
-        return render(request, 'transporter/RECEIVED_CNOTES.HTML', context)
-    except Exception as e:
-        # Handle exceptions and log errors
-        logger.error(f"Error fetching loading sheet details: {e}")
-        return render(request, 'transporter/RECEIVED_CNOTES.HTML', {'error': 'An error occurred while fetching loading sheet details.'})
 
+            'loading_sheet_summary': loading_sheet_summary,
+
+            'loading_sheet_details': loading_sheet_details,
+
+            'cnotes': cnotes,
+
+        }
+
+        return render(request, 'transporter/RECEIVED_CNOTES.html', context)  # Use lowercase .html
+
+    except LoadingSheetSummary.DoesNotExist:
+
+        logger.error(f"Loading sheet with LS number {ls_number} does not exist.")
+
+        return render(request, 'transporter/RECEIVED_CNOTES.html', {'error': 'Loading sheet not found.'})
+
+    except Exception as e:
+
+        logger.error(f"Error fetching loading sheet details: {e}")
+
+        return render(request, 'transporter/RECEIVED_CNOTES.html', {'error': 'An unexpected error occurred while fetching loading sheet details.'})
 
 logger = logging.getLogger(__name__)
 
