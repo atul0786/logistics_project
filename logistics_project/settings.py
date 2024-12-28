@@ -69,10 +69,10 @@ DATABASES = {
 'default': {  
 'ENGINE': 'django.db.backends.postgresql',  
 'NAME': 'good_way_express',  
-'USER': 'user1',  
-'PASSWORD': '0786',  
+'USER': 'good_way_express_user',  
+'PASSWORD': 'tCSwM28YhLcHJXVMLCeZO6GcEStk8iZ8',  
 'HOST': 'dpg-ctnest5umphs73c610og-a',  # Use the hostname you provided
-'PORT': '5433',  
+'PORT': '5432',  
 }  
 }  
   
