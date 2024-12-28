@@ -110,7 +110,6 @@ def user_owns_cnote(view_func):
         return view_func(request, cnote_id, *args, **kwargs)
     
     return wrapper
-
 logger = logging.getLogger(__name__)
 
 def custom_login_redirect(request):
@@ -125,25 +124,28 @@ def custom_login_redirect(request):
 
         if user is not None:
             logger.info(f"User authenticated: {user.username}")
-            login(request, user)
             
-            if user_type == 'dealer' and hasattr(user, 'dealer'):
-                logger.info(f"Dealer login successful: {user.username}")
-                return redirect('dealer:create_cnotes')
+            if user_type == 'dealer':
+                try:
+                    dealer = Dealer.objects.get(user=user)
+                    login(request, user)
+                    logger.info(f"Dealer login successful: {user.username}")
+                    return redirect('dealer:create_cnotes')
+                except Dealer.DoesNotExist:
+                    logger.warning(f"User {user.username} tried to log in as dealer but has no associated Dealer")
+                    messages.error(request, 'Your account is not set up as a dealer.')
             elif user_type == 'transporter':
                 try:
                     transporter = Transporter.objects.get(user=user)
+                    login(request, user)
                     logger.info(f"Transporter login successful: {user.username}")
                     return redirect('transporter:home')
                 except Transporter.DoesNotExist:
                     logger.warning(f"User {user.username} tried to log in as transporter but has no associated Transporter")
                     messages.error(request, 'Your account is not set up as a transporter.')
-                except Transporter.MultipleObjectsReturned:
-                    logger.error(f"Multiple Transporter objects found for user {user.username}")
-                    messages.error(request, 'There is a technical issue with your account. Please contact the administrator.')
             else:
                 logger.warning(f"Invalid account type for user: {user.username}")
-                messages.error(request, 'Your account type is not valid.')
+                messages.error(request, 'Invalid account type selected.')
         else:
             logger.warning(f"Authentication failed for username: {username}")
             messages.error(request, 'Invalid username or password.')
