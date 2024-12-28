@@ -111,41 +111,42 @@ def user_owns_cnote(view_func):
     
     return wrapper
 
+logger = logging.getLogger(__name__)
 
 def custom_login_redirect(request):
     if request.method == 'POST':
         user_type = request.POST.get('user_type')
-        username = request.POST['username']
-        password = request.POST['password']
+        username = request.POST.get('username')
+        password = request.POST.get('password')
         
-        logger.debug(f"Login attempt - User Type: {user_type}, Username: {username}")
+        logger.info(f"Login attempt - User Type: {user_type}, Username: {username}")
         
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            logger.debug(f"User authenticated: {user.username}")
-            auth_login(request, user)
+            logger.info(f"User authenticated: {user.username}")
+            login(request, user)
             
             if user_type == 'dealer' and hasattr(user, 'dealer'):
-                logger.debug(f"Dealer login successful: {user.username}")
+                logger.info(f"Dealer login successful: {user.username}")
                 return redirect('dealer:create_cnotes')
             elif user_type == 'transporter':
                 try:
                     transporter = Transporter.objects.get(user=user)
-                    logger.debug(f"Transporter login successful: {user.username}")
-                    return redirect('transporter:home')  # Use the namespace here
+                    logger.info(f"Transporter login successful: {user.username}")
+                    return redirect('transporter:home')
                 except Transporter.DoesNotExist:
                     logger.warning(f"User {user.username} tried to log in as transporter but has no associated Transporter")
-                    messages.error(request, 'आपका खाता ट्रांसपोर्टर के रूप में सेट नहीं है।')
+                    messages.error(request, 'Your account is not set up as a transporter.')
                 except Transporter.MultipleObjectsReturned:
                     logger.error(f"Multiple Transporter objects found for user {user.username}")
-                    messages.error(request, 'आपके खाते में एक तकनीकी समस्या है। कृपया व्यवस्थापक से संपर्क करें।')
+                    messages.error(request, 'There is a technical issue with your account. Please contact the administrator.')
             else:
                 logger.warning(f"Invalid account type for user: {user.username}")
-                messages.error(request, 'आपका खाता मान्य नहीं है।')
+                messages.error(request, 'Your account type is not valid.')
         else:
             logger.warning(f"Authentication failed for username: {username}")
-            messages.error(request, 'अमान्य उपयोगकर्ता नाम या पासवर्ड।')
+            messages.error(request, 'Invalid username or password.')
 
     return render(request, 'registration/login.html')
 
