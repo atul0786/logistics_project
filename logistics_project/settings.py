@@ -14,6 +14,7 @@ DEBUG = True
   
 ALLOWED_HOSTS = [
     'logistics-project-4.onrender.com',
+    'goodwayexpress.onrender.com',  # Add this line
     'localhost',
     '127.0.0.1',
     # Add any other hosts you want to allow
