@@ -496,7 +496,8 @@
                 <div class="info-row">
                     <div class="info-item">
                         <label>LR No:</label>
-                        <span id="displayLRNo"></span></div>
+                        <span id="displayLRNo"></span>
+                    </div>
                     <div class="info-item">
                         <label>Current Status:</label>
                         <span id="currentStatus" class="status-received"></span>
@@ -530,8 +531,6 @@
                             <select id="discountType">
                                 <option value="percentage">Percentage</option>
                                 <option value="amount">Amount</option>
-                            </select>
-                            <option value="amount">Amount</option>
                             </select>
                             <input type="number" id="discountValue" placeholder="Enter discount">
                             <button class="apply-discount-btn" onclick="applyDiscount()">Apply Discount</button>
@@ -744,9 +743,14 @@
             try {
                 const response = await fetch(`/transporter/api/search-cnote/?lrNumber=${lrNumber}`);
                 if (!response.ok) {
-                    throw new Error('CNotes not found');
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
+                console.log('Fetched data:', data); // Log the fetched data
+
+                if (!data || Object.keys(data).length === 0) {
+                    throw new Error('No data received from the server');
+                }
 
                 // Remove automatic discount calculation
                 data.charges.total = data.charges.freight + data.charges.other;
@@ -755,47 +759,123 @@
                 showNotification('LR details loaded successfully', 'success');
             } catch (error) {
                 console.error('Error fetching CNotes:', error);
-                showNotification('Error fetching LR details', 'error');
+                showNotification(`Error fetching LR details: ${error.message}`, 'error');
             }
         }
 
         // Display CNotes data
         function displayCNoteData(data) {
+            console.log('Displaying CNotes data:', data); // Log the data being displayed
+
             document.getElementById('deliveryDetails').style.display = 'block';
-            document.getElementById('displayLRNo').textContent = data.lrNumber;
-            document.getElementById('currentStatus').textContent = data.status;
-            document.getElementById('lrType').textContent = data.lrType;
+            document.getElementById('displayLRNo').textContent = data.lrNumber || 'N/A';
+            document.getElementById('currentStatus').textContent = data.status || 'N/A';
+            document.getElementById('lrType').textContent = data.lrType || 'N/A';
 
             // Populate consignor details
             const consignorDetails = document.getElementById('consignorDetails');
-            consignorDetails.innerHTML = `
-                <p>${data.consignor.name}</p>
-                <p>${data.consignor.address}</p>
-                <p>Contact: ${data.consignor.contact}</p>
-                <p>GST: ${data.consignor.gst}</p>
-            `;
+            consignorDetails.innerHTML = data.consignor ? `
+                <p>${data.consignor.name || 'N/A'}</p>
+                <p>${data.consignor.address || 'N/A'}</p>
+                <p>Contact: ${data.consignor.contact || 'N/A'}</p>
+                <p>GST: ${data.consignor.gst || 'N/A'}</p>
+            ` : '<p>No consignor details available</p>';
 
             // Populate consignee details
             const consigneeDetails = document.getElementById('consigneeDetails');
-            consigneeDetails.innerHTML = `
-                <p>${data.consignee.name}</p>
-                <p>${data.consignee.address}</p>
-                <p>Contact: ${data.consignee.contact}</p>
-                <p>GST: ${data.consignee.gst}</p>
-            `;
+            consigneeDetails.innerHTML = data.consignee ? `
+                <p>${data.consignee.name || 'N/A'}</p>
+                <p>${data.consignee.address || 'N/A'}</p>
+                <p>Contact: ${data.consignee.contact || 'N/A'}</p>
+                <p>GST: ${data.consignee.gst || 'N/A'}</p>
+            ` : '<p>No consignee details available</p>';
 
-            // Populate charges
-            document.getElementById('freightCharges').textContent = data.charges.freight.toFixed(2);
-            document.getElementById('otherCharges').textContent = data.charges.other.toFixed(2);
-            document.getElementById('discountAmount').textContent = '0.00';
-            document.getElementById('totalAmount').textContent = data.charges.total.toFixed(2);
+            const chargesSection = document.querySelector('.charges-section');
+            const deliveryForm = document.querySelector('.delivery-form');
+            const deliverButton = document.querySelector('.deliver-btn');
+
+            // Check if the status is "dispatched", "booked", or "Delivered"
+            if (data.status === 'dispatched' || data.status === 'booked') {
+                // Hide charges details, delivery details, and deliver button
+                chargesSection.style.display = 'none';
+                deliveryForm.style.display = 'none';
+                deliverButton.style.display = 'none';
+            } else {
+                // Show charges details, delivery details, and deliver button
+                chargesSection.style.display = 'block';
+                deliveryForm.style.display = 'block';
+                deliverButton.style.display = 'block';
+
+                // Populate charges
+                let chargesData = data.charges || {};
+                if (data.deliveryDetails && data.deliveryDetails.charges) {
+                    chargesData = data.deliveryDetails.charges;
+                }
+                document.getElementById('freightCharges').textContent = (chargesData.freight || 0).toFixed(2);
+                document.getElementById('otherCharges').textContent = (chargesData.other || 0).toFixed(2);
+                document.getElementById('discountAmount').textContent = (chargesData.discount || 0).toFixed(2);
+                document.getElementById('totalAmount').textContent = (chargesData.total || 0).toFixed(2);
+
+                // Populate delivery form fields if delivery details are available
+                if (data.deliveryDetails) {
+                    document.getElementById('paymentType').value = data.deliveryDetails.paymentType || '';
+                    document.getElementById('deliveredToName').value = data.deliveryDetails.deliveredToName || '';
+                    document.getElementById('phoneNumber').value = data.deliveryDetails.phoneNumber || '';
+                    document.getElementById('idProofType').value = data.deliveryDetails.idProofType || '';
+                    document.getElementById('idProofNumber').value = data.deliveryDetails.idProofNumber || '';
+                    document.getElementById('remarks').value = data.deliveryDetails.remarks || '';
+                    
+                    // Populate discount fields
+                    document.getElementById('discountType').value = data.deliveryDetails.discountType || 'percentage';
+                    document.getElementById('discountValue').value = data.deliveryDetails.discountValue || '';
+                } else {
+                    // Clear all form fields if no delivery details are available
+                    document.getElementById('paymentType').value = '';
+                    document.getElementById('deliveredToName').value = '';
+                    document.getElementById('phoneNumber').value = '';
+                    document.getElementById('idProofType').value = '';
+                    document.getElementById('idProofNumber').value = '';
+                    document.getElementById('remarks').value = '';
+                    
+                    // Clear discount fields
+                    document.getElementById('discountType').value = 'percentage';
+                    document.getElementById('discountValue').value = '';
+                    
+                    // Reset discount amount and total in the charges section
+                    document.getElementById('discountAmount').textContent = '0.00';
+                    document.getElementById('totalAmount').textContent = ((parseFloat(document.getElementById('freightCharges').textContent) || 0) + (parseFloat(document.getElementById('otherCharges').textContent) || 0)).toFixed(2);
+                }
+
+                // Disable the Deliver button and change text if status is "Delivered"
+                if (data.status === 'Delivered') {
+                    deliverButton.disabled = true;
+                    deliverButton.textContent = 'CNotes Already Delivered';
+                    deliverButton.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    deliverButton.disabled = false;
+                    deliverButton.textContent = 'Deliver';
+                    deliverButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
 
             // Store the original charges for discount calculations
             window.originalCharges = {
-                freight: data.charges.freight,
-                other: data.charges.other,
-                total: data.charges.total
+                freight: chargesData.freight || 0,
+                other: chargesData.other || 0,
+                total: chargesData.total || 0
             };
+
+            // Recalculate and display the updated total after clearing/populating fields
+            updateTotalAmount();
+        }
+
+        function updateTotalAmount() {
+            const freightCharges = parseFloat(document.getElementById('freightCharges').textContent) || 0;
+            const otherCharges = parseFloat(document.getElementById('otherCharges').textContent) || 0;
+            const discountAmount = parseFloat(document.getElementById('discountAmount').textContent) || 0;
+            
+            const totalAmount = freightCharges + otherCharges - discountAmount;
+            document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
         }
 
         // Apply discount
@@ -845,7 +925,6 @@
             return cookieValue;
         }
         
-
         // Submit delivery
         async function submitDelivery() {
             const paymentType = document.getElementById('paymentType').value;
@@ -911,11 +990,7 @@
                     throw new Error(errorData.error || 'Failed to update delivery');
                 }
                 showNotification('Delivery updated successfully!', 'success');
-                 
                 
-
-
-
                 // Reset form
                 document.getElementById('paymentType').value = '';
                 document.getElementById('deliveredToName').value = '';
@@ -958,3 +1033,4 @@
     </script>
 </body>
 </html>
+
