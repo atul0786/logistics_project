@@ -773,7 +773,6 @@ def mf_print_view(request, ls_number):
 def delivery_cnotes(request):
     return render(request, 'transporter/delivery_cnotes.html')
 
-
 @require_GET
 def search_cnote(request):
     cnote_number = request.GET.get('lrNumber')
@@ -782,6 +781,12 @@ def search_cnote(request):
 
     try:
         cnote = CNotes.objects.get(cnote_number=cnote_number)
+
+        # Try to get the corresponding DeliveryCNote
+        try:
+            delivery_cnote = DeliveryCNote.objects.get(lr_number=cnote_number)
+        except DeliveryCNote.DoesNotExist:
+            delivery_cnote = None
         
         # Calculate other charges
         other_charges = cnote.grand_total - cnote.freight if cnote.grand_total and cnote.freight else 0
@@ -822,6 +827,22 @@ def search_cnote(request):
             'createdAt': cnote.created_at.isoformat() if cnote.created_at else None,
             'statusUpdatedAt': cnote.status_updated_at.isoformat() if cnote.status_updated_at else None,
         }
+        # Add delivery details if available
+        if delivery_cnote:
+            data['deliveryDetails'] = {
+                'deliveredToName': delivery_cnote.delivered_to_name,
+                'phoneNumber': delivery_cnote.phone_number,
+                'idProofType': delivery_cnote.id_proof_type,
+                'idProofNumber': delivery_cnote.id_proof_number,
+                'remarks': delivery_cnote.remarks,
+                'paymentType': delivery_cnote.payment_type,
+                'charges': {
+                    'freight': float(delivery_cnote.freight_charges),
+                    'other': float(delivery_cnote.other_charges),
+                    'discount': float(delivery_cnote.discount_amount),
+                    'total': float(delivery_cnote.total_amount),
+                }
+            }
         return JsonResponse(data)
     except CNotes.DoesNotExist:
         return JsonResponse({'error': 'CNotes not found'}, status=404)
@@ -841,34 +862,42 @@ def submit_delivery(request):
         logger.info(f"Received data: {data}")  # Log the incoming data
 
         with transaction.atomic():
-            # Save to DeliveryCNote table
-            delivery_cnote = DeliveryCNote(
+            # Check if the CNotes exists and its current status
+            try:
+                cnote = CNotes.objects.get(cnote_number=data['lrNumber'])
+                if cnote.status == 'Delivered':
+                    return JsonResponse({'message': 'CNotes already delivered'}, status=400)
+            except CNotes.DoesNotExist:
+                return JsonResponse({'error': 'CNotes not found'}, status=404)
+
+            # Update or create DeliveryCNote
+            delivery_cnote, created = DeliveryCNote.objects.update_or_create(
                 lr_number=data['lrNumber'],
-                status='Delivered',  # Set status to Delivered
-                payment_type=data['paymentType'],
-                consignor_name=data['consignor']['name'],
-                consignor_address=data['consignor']['address'],
-                consignor_contact=data['consignor']['contact'],
-                consignor_gst=data['consignor']['gst'],
-                consignee_name=data['consignee']['name'],
-                consignee_address=data['consignee']['address'],
-                consignee_contact=data['consignee']['contact'],
-                consignee_gst=data['consignee']['gst'],
-                freight_charges=data['charges']['freight'],
-                other_charges=data['charges']['other'],
-                discount_amount=data['charges']['discount'],
-                total_amount=data['charges']['total'],
-                delivered_to_name=data['deliveredToName'],
-                phone_number=data['phoneNumber'],
-                id_proof_type=data['idProofType'],
-                id_proof_number=data['idProofNumber'],
-                remarks=data.get('remarks', ''),
-                delivered_status=True
+                defaults={
+                    'status': 'Delivered',
+                    'payment_type': data['paymentType'],
+                    'consignor_name': data['consignor']['name'],
+                    'consignor_address': data['consignor']['address'],
+                    'consignor_contact': data['consignor']['contact'],
+                    'consignor_gst': data['consignor']['gst'],
+                    'consignee_name': data['consignee']['name'],
+                    'consignee_address': data['consignee']['address'],
+                    'consignee_contact': data['consignee']['contact'],
+                    'consignee_gst': data['consignee']['gst'],
+                    'freight_charges': data['charges']['freight'],
+                    'other_charges': data['charges']['other'],
+                    'discount_amount': data['charges']['discount'],
+                    'total_amount': data['charges']['total'],
+                    'delivered_to_name': data['deliveredToName'],
+                    'phone_number': data['phoneNumber'],
+                    'id_proof_type': data['idProofType'],
+                    'id_proof_number': data['idProofNumber'],
+                    'remarks': data.get('remarks', ''),
+                    'delivered_status': True
+                }
             )
-            delivery_cnote.save()
 
             # Update status in CNotes table
-            cnote = CNotes.objects.get(cnote_number=data['lrNumber'])
             cnote.status = 'Delivered'
             cnote.save()
 
