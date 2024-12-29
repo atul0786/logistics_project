@@ -26,13 +26,12 @@ urlpatterns = [
     path('api/receivables/', views.fetch_receivables, name='fetch_receivables'),
     path('api/receive-shipment/', views.receive_shipment, name='receive_shipment'),
     path('api/dealers-with-loadingsheets/', views.get_dealers_with_loadingsheets, name='get_dealers_with_loadingsheets'),
-    path('receive/RECEIVED_CNOTES.HTML', TemplateView.as_view(template_name='transporter/RECEIVED_CNOTES.html'), name='received_cnotes'),
+    
+    # Updated URL pattern to match the exact filename
     path('receive/RECEIVED_CNOTES.HTML', views.received_cnote_view, name='received_cnote'),
 
-    #path('receive/RECEIVED_CNOTES.HTML', received_cnote_view, name='received_cnote'),
-    path('api/receive-cnotes/', receive_cnotes, name='receive_cnotes'),
+    path('api/receive-cnotes/', views.receive_cnotes, name='receive_cnotes'),
     path('receive/', views.receive_view, name='receive'),
-
 
     path('api/loading-sheet/<str:ls_number>/', views.get_loading_sheet_details, name='get_loading_sheet_details'),
     path('api/lr-details/<str:ls_number>/', views.get_lr_details, name='get_lr_details'),
@@ -41,10 +40,8 @@ urlpatterns = [
     path('api/excess-receive/', views.record_excess_receive, name='record_excess_receive'),
     path('api/receive-lrs/', views.receive_lrs, name='receive_lrs'),
 
-    #path('dealer/mf_print/<str:ls_number>/', views.mf_print_view, name='mf_print'),
     path('mf_print/<str:ls_number>/', views.mf_print_view, name='mf_print'),
 
-    # Optional: Add URLs for managing states and cities
     path('edit-state/<int:id>/', views.edit_state, name='edit_state'),
     path('delete-state/<int:id>/', views.delete_state, name='delete_state'),
     path('edit-city/<int:id>/', views.edit_city, name='edit_city'),
@@ -55,7 +52,4 @@ urlpatterns = [
     path('ddm/', views.ddm_view, name='ddm'),
 
     path('api/submit-delivery/', views.submit_delivery, name='submit_delivery'),
-
-    
-    ]
-
+]
