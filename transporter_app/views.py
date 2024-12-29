@@ -664,6 +664,7 @@ def receive_lrs(request):
 
 @login_required
 def received_cnote_view(request):
+    logger.debug(f"Attempting to render RECEIVED_CNOTES.html")
     ls_number = request.GET.get('lsNumber')
     if not ls_number:
         return render(request, 'transporter/RECEIVED_CNOTES.html', {'error': 'No loading sheet number provided.'})
