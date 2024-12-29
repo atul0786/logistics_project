@@ -661,55 +661,33 @@ def receive_lrs(request):
             'message': f'An error occurred while receiving LRs: {str(e)}'
         }, status=500)
 
+import logging
 
 logger = logging.getLogger(__name__)
 
-
 @login_required
-
-def received_cnote_view(request, ls_number):
+def received_cnote_view(request):
+    ls_number = request.GET.get('lsNumber')
+    if not ls_number:
+        logger.error("No LS number provided in the request.")
+        return render(request, 'transporter/RECEIVED_CNOTES.html', {'error': 'No loading sheet number provided.'})
 
     try:
-
-        # Fetch the loading sheet summary
-
         loading_sheet_summary = get_object_or_404(LoadingSheetSummary, ls_number=ls_number)
-
-        
-
-        # Fetch the loading sheet details
-
         loading_sheet_details = LoadingSheetDetail.objects.filter(loading_sheet=loading_sheet_summary).select_related('cnote')
-
-        
-
-        # Fetch related CNotes
-
         cnotes = CNotes.objects.filter(loadingsheetdetail__loading_sheet=loading_sheet_summary).distinct()
 
-
         context = {
-
             'loading_sheet_summary': loading_sheet_summary,
-
             'loading_sheet_details': loading_sheet_details,
-
             'cnotes': cnotes,
-
         }
-
-        return render(request, 'transporter/RECEIVED_CNOTES.html', context)  # Use lowercase .html
-
+        return render(request, 'transporter/RECEIVED_CNOTES.html', context)
     except LoadingSheetSummary.DoesNotExist:
-
         logger.error(f"Loading sheet with LS number {ls_number} does not exist.")
-
         return render(request, 'transporter/RECEIVED_CNOTES.html', {'error': 'Loading sheet not found.'})
-
     except Exception as e:
-
         logger.error(f"Error fetching loading sheet details: {e}")
-
         return render(request, 'transporter/RECEIVED_CNOTES.html', {'error': 'An unexpected error occurred while fetching loading sheet details.'})
 
 logger = logging.getLogger(__name__)
