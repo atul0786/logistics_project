@@ -11,7 +11,7 @@ from transporter_app.views import home as home
 from django.shortcuts import redirect
 from .views import send_pickup_request
 from .views import search_loading_sheets
-
+from .views import view_cnote, search_cnote
 
 app_name = 'dealer'  # Defines the namespace for this app
 
