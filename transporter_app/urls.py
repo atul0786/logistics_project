@@ -50,6 +50,8 @@ urlpatterns = [
     path('delivery-cnotes/', views.delivery_cnotes, name='delivery_cnotes'),
     path('api/search-cnote/', views.search_cnote, name='search_cnote'),
     path('ddm/', views.ddm_view, name='ddm'),
+    path('api/get-destinations/', views.get_destinations, name='get_destinations'),
+    path('api/search-cnotes-for-ddm/', views.search_cnotes_for_ddm, name='search_cnotes_for_ddm'),
 
     path('api/submit-delivery/', views.submit_delivery, name='submit_delivery'),
 ]
