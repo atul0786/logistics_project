@@ -759,7 +759,7 @@
                 data.charges.total = data.charges.freight + data.charges.other;
 
                 displayCNoteData(data);
-                showNotification('LR details loaded successfully', 'success');
+                // Removed success notification here
             } catch (error) {
                 console.error('Error fetching CNotes:', error);
                 showNotification(`Error fetching LR details: ${error.message}`, 'error');
@@ -1017,19 +1017,28 @@
                     const errorData = await response.json();
                     throw new Error(errorData.error || 'Failed to update delivery');
                 }
-                showNotification('Delivery updated successfully!', 'success');
+                
+                const result = await response.json();
+                showNotification(result.message || 'Delivery updated successfully!', 'success');
                 
                 // Reset form
-                document.getElementById('paymentType').value = '';
-                document.getElementById('deliveredToName').value = '';
-                document.getElementById('phoneNumber').value = '';
-                document.getElementById('idProofType').value = '';
-                document.getElementById('idProofNumber').value = '';
-                document.getElementById('remarks').value = '';
+                resetDeliveryForm();
+                
+                // Refresh the CNotes data
+                await searchLR();
             } catch (error) {
                 console.error('Error updating delivery:', error);
-                showNotification('Failed to update delivery', 'error');
+                showNotification(error.message || 'Failed to update delivery', 'error');
             }
+        }
+
+        function resetDeliveryForm() {
+            document.getElementById('paymentType').value = '';
+            document.getElementById('deliveredToName').value = '';
+            document.getElementById('phoneNumber').value = '';
+            document.getElementById('idProofType').value = '';
+            document.getElementById('idProofNumber').value = '';
+            document.getElementById('remarks').value = '';
         }
 
         // Print functionality
