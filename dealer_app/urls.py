@@ -32,6 +32,8 @@ urlpatterns = [
     #path('fetch-transporters/', views.fetch_transporters, name='fetch_transporters'),
     path('api/fetch_transporters/', views.fetch_transporters, name='fetch_transporters'),
     path('search/', views.search, name='search'),  # Add this line
+    path('search_cnote/', search_cnote, name='search_cnote'),  # Ensure this line is present
+
     #path('api/search_loading_sheets/', views.search_loading_sheet, name='search_loading_sheets'),
     #path('search-loading-sheet/', search_loading_sheet, name='search_loading_sheet'),
     #path('search-loading-sheets/', views.search_loading_sheets, name='search_loading_sheets'),
