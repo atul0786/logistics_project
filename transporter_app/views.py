@@ -871,6 +871,14 @@ def submit_delivery(request):
             except CNotes.DoesNotExist:
                 return JsonResponse({'error': 'CNotes not found'}, status=404)
 
+            # Calculate charges
+            freight_charges = Decimal(str(data['charges']['freight']))
+            other_charges = Decimal(str(data['charges']['other']))
+            discount_amount = Decimal(str(data['charges']['discount']))
+            
+            # Recalculate total amount
+            total_amount = freight_charges + other_charges - discount_amount
+
             # Update or create DeliveryCNote
             delivery_cnote, created = DeliveryCNote.objects.update_or_create(
                 lr_number=data['lrNumber'],
@@ -885,10 +893,10 @@ def submit_delivery(request):
                     'consignee_address': data['consignee']['address'],
                     'consignee_contact': data['consignee']['contact'],
                     'consignee_gst': data['consignee']['gst'],
-                    'freight_charges': data['charges']['freight'],
-                    'other_charges': data['charges']['other'],
-                    'discount_amount': data['charges']['discount'],
-                    'total_amount': data['charges']['total'],
+                    'freight_charges': freight_charges,
+                    'other_charges': other_charges,
+                    'discount_amount': discount_amount,
+                    'total_amount': total_amount,
                     'delivered_to_name': data['deliveredToName'],
                     'phone_number': data['phoneNumber'],
                     'id_proof_type': data['idProofType'],
@@ -908,12 +916,18 @@ def submit_delivery(request):
             # Update status in ReceivedStatesCnotes table
             ReceivedStatesCnotes.objects.filter(cnote_number=data['lrNumber']).update(status='Delivered')
 
-        return JsonResponse({'message': 'Delivery note saved successfully!'}, status=201)
+        return JsonResponse({
+            'message': 'Delivery note saved successfully!',
+            'delivery_details': {
+                'freight_charges': str(freight_charges),
+                'other_charges': str(other_charges),
+                'discount_amount': str(discount_amount),
+                'total_amount': str(total_amount)
+            }
+        }, status=201)
     except Exception as e:
         logger.error(f"Error saving delivery note: {str(e)}")
         return JsonResponse({'error': str(e)}, status=400)
-
-
 
 def get_destinations(request):
     destinations = DeliveryDestination.objects.filter(
