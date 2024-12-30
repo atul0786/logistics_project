@@ -911,3 +911,38 @@ def submit_delivery(request):
     except Exception as e:
         logger.error(f"Error saving delivery note: {str(e)}")
         return JsonResponse({'error': str(e)}, status=400)
+
+
+
+def get_destinations(request):
+    destinations = DeliveryDestination.objects.filter(
+        cnotes__status__in=['received', 'short', 'godown return', 'godown received', 'undelivered']
+    ).values_list('destination_name', flat=True).distinct()
+    
+    destination_list = list(filter(None, destinations))
+    
+    return JsonResponse(destination_list, safe=False)
+
+def search_cnotes_for_ddm(request):
+    destination = request.GET.get('destination')
+    delivery_for = request.GET.get('deliveryFor')
+    lr_number = request.GET.get('lrNumber')
+
+    query = CNotes.objects.filter(status__in=['received', 'short', 'godown return', 'godown received', 'undelivered'])
+
+    if destination and destination != "ALL":
+        query = query.filter(delivery_destination__destination_name=destination)
+
+    if delivery_for == 'DOOR':
+        query = query.filter(delivery_type='DOOR')
+    elif delivery_for == 'GODOWN':
+        query = query.filter(delivery_type='GODOWN')
+    # For 'BOTH', we don't need to filter
+
+    if lr_number:
+        query = query.filter(cnote_number__icontains=lr_number)
+
+    results = list(query.values('cnote_number', 'consignor_name', 'consignee_name', 'total_art', 'actual_weight', 'declared_value', 'status'))
+
+    return JsonResponse(results, safe=False)
+
