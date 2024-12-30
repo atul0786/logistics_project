@@ -853,31 +853,37 @@ def ddm_view(request):
     return render(request, 'transporter/ddm.html')
 
 
-logger = logging.getLogger(__name__)
+  logger = logging.getLogger(__name__)
 
-@csrf_exempt
-@require_POST
-def submit_delivery(request):
-    try:
-        data = json.loads(request.body)
-        logger.info(f"Received data: {data}")  # Log the incoming data
+  @csrf_exempt
+  @require_POST
+  def submit_delivery(request):
+      try:
+          data = json.loads(request.body)
+          logger.info(f"Received data: {data}")
 
-        with transaction.atomic():
-            # Check if the CNotes exists and its current status
-            try:
-                cnote = CNotes.objects.get(cnote_number=data['lrNumber'])
-                if cnote.status == 'Delivered':
-                    return JsonResponse({'message': 'CNotes already delivered'}, status=400)
-            except CNotes.DoesNotExist:
-                return JsonResponse({'error': 'CNotes not found'}, status=404)
+          with transaction.atomic():
+              # Validate CNotes
+              try:
+                  cnote = CNotes.objects.get(cnote_number=data['lrNumber'])
+                  if cnote.status == 'Delivered':
+                      return JsonResponse({'message': 'CNotes already delivered'}, status=400)
+              except CNotes.DoesNotExist:
+                  return JsonResponse({'error': 'CNotes not found'}, status=404)
 
-            # Calculate charges
-            freight_charges = Decimal(str(data['charges']['freight']))
-            other_charges = Decimal(str(data['charges']['other']))
-            discount_amount = Decimal(str(data['charges']['discount']))
-            
-            # Recalculate total amount
-            total_amount = freight_charges + other_charges - discount_amount
+              # Validate and convert charges
+              try:
+                  freight_charges = Decimal(str(data['charges']['freight']))
+                  other_charges = Decimal(str(data['charges']['other']))
+                  discount_amount = Decimal(str(data['charges']['discount']))
+                  if any(charge < 0 for charge in [freight_charges, other_charges, discount_amount]):
+                      raise ValueError("Charges cannot be negative")
+              except (InvalidOperation, ValueError, KeyError) as e:
+                  logger.error(f"Invalid charge data: {str(e)}")
+                  return JsonResponse({'error': 'Invalid charge data'}, status=400)
+
+              # Calculate total amount
+              total_amount = freight_charges + other_charges - discount_amount
 
             # Update or create DeliveryCNote
             delivery_cnote, created = DeliveryCNote.objects.update_or_create(
@@ -904,30 +910,35 @@ def submit_delivery(request):
                     'remarks': data.get('remarks', ''),
                     'delivered_status': True
                 }
-            )
+              # Update or create DeliveryCNote
+              delivery_cnote, created = DeliveryCNote.objects.update_or_create(
+                  lr_number=data['lrNumber'],
+                  defaults=delivery_data
+              )
 
-            # Update status in CNotes table
-            cnote.status = 'Delivered'
-            cnote.save()
+              # Update status in CNotes table
+              cnote.status = 'Delivered'
+              cnote.save()
 
-            # Update status in LoadingSheetDetail table
-            LoadingSheetDetail.objects.filter(cnote_id=cnote.id).update(status='Delivered')
+              # Update status in LoadingSheetDetail table
+              LoadingSheetDetail.objects.filter(cnote_id=cnote.id).update(status='Delivered')
 
-            # Update status in ReceivedStatesCnotes table
-            ReceivedStatesCnotes.objects.filter(cnote_number=data['lrNumber']).update(status='Delivered')
+              # Update status in ReceivedStatesCnotes table
+              ReceivedStatesCnotes.objects.filter(cnote_number=data['lrNumber']).update(status='Delivered')
 
-        return JsonResponse({
-            'message': 'Delivery note saved successfully!',
-            'delivery_details': {
-                'freight_charges': str(freight_charges),
-                'other_charges': str(other_charges),
-                'discount_amount': str(discount_amount),
-                'total_amount': str(total_amount)
-            }
-        }, status=201)
-    except Exception as e:
-        logger.error(f"Error saving delivery note: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=400)
+          return JsonResponse({
+              'message': 'Delivery note saved successfully!',
+              'delivery_details': {
+                  'freight_charges': str(freight_charges),
+                  'other_charges': str(other_charges),
+                  'discount_amount': str(discount_amount),
+                  'total_amount': str(total_amount)
+              }
+          }, status=201)
+
+      except Exception as e:
+          logger.error(f"Error saving delivery note: {str(e)}")
+          return JsonResponse({'error': str(e)}, status=500)
 
 def get_destinations(request):
     destinations = DeliveryDestination.objects.filter(
