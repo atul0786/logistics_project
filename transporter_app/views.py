@@ -11,6 +11,7 @@ from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.db.models import Sum
 from django.db import transaction
+from dealer_app.models import CNotes, DeliveryDestination
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.views.generic import TemplateView
