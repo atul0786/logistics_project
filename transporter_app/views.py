@@ -11,7 +11,6 @@ from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.db.models import Sum
 from django.db import transaction
-from dealer_app.models import CNotes, DeliveryDestination
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.views.generic import TemplateView
@@ -853,37 +852,23 @@ def ddm_view(request):
     return render(request, 'transporter/ddm.html')
 
 
+logger = logging.getLogger(__name__)
 
+@csrf_exempt
+@require_POST
+def submit_delivery(request):
+    try:
+        data = json.loads(request.body)
+        logger.info(f"Received data: {data}")  # Log the incoming data
 
-  @csrf_exempt
-  @require_POST
-  def submit_delivery(request):
-      try:
-          data = json.loads(request.body)
-          logger.info(f"Received data: {data}")
-
-          with transaction.atomic():
-              # Validate CNotes
-              try:
-                  cnote = CNotes.objects.get(cnote_number=data['lrNumber'])
-                  if cnote.status == 'Delivered':
-                      return JsonResponse({'message': 'CNotes already delivered'}, status=400)
-              except CNotes.DoesNotExist:
-                  return JsonResponse({'error': 'CNotes not found'}, status=404)
-
-              # Validate and convert charges
-              try:
-                  freight_charges = Decimal(str(data['charges']['freight']))
-                  other_charges = Decimal(str(data['charges']['other']))
-                  discount_amount = Decimal(str(data['charges']['discount']))
-                  if any(charge < 0 for charge in [freight_charges, other_charges, discount_amount]):
-                      raise ValueError("Charges cannot be negative")
-              except (InvalidOperation, ValueError, KeyError) as e:
-                  logger.error(f"Invalid charge data: {str(e)}")
-                  return JsonResponse({'error': 'Invalid charge data'}, status=400)
-
-              # Calculate total amount
-              total_amount = freight_charges + other_charges - discount_amount
+        with transaction.atomic():
+            # Check if the CNotes exists and its current status
+            try:
+                cnote = CNotes.objects.get(cnote_number=data['lrNumber'])
+                if cnote.status == 'Delivered':
+                    return JsonResponse({'message': 'CNotes already delivered'}, status=400)
+            except CNotes.DoesNotExist:
+                return JsonResponse({'error': 'CNotes not found'}, status=404)
 
             # Update or create DeliveryCNote
             delivery_cnote, created = DeliveryCNote.objects.update_or_create(
@@ -899,10 +884,10 @@ def ddm_view(request):
                     'consignee_address': data['consignee']['address'],
                     'consignee_contact': data['consignee']['contact'],
                     'consignee_gst': data['consignee']['gst'],
-                    'freight_charges': freight_charges,
-                    'other_charges': other_charges,
-                    'discount_amount': discount_amount,
-                    'total_amount': total_amount,
+                    'freight_charges': data['charges']['freight'],
+                    'other_charges': data['charges']['other'],
+                    'discount_amount': data['charges']['discount'],
+                    'total_amount': data['charges']['total'],
                     'delivered_to_name': data['deliveredToName'],
                     'phone_number': data['phoneNumber'],
                     'id_proof_type': data['idProofType'],
@@ -910,35 +895,24 @@ def ddm_view(request):
                     'remarks': data.get('remarks', ''),
                     'delivered_status': True
                 }
-              # Update or create DeliveryCNote
-              delivery_cnote, created = DeliveryCNote.objects.update_or_create(
-                  lr_number=data['lrNumber'],
-                  defaults=delivery_data
-              )
+            )
 
-              # Update status in CNotes table
-              cnote.status = 'Delivered'
-              cnote.save()
+            # Update status in CNotes table
+            cnote.status = 'Delivered'
+            cnote.save()
 
-              # Update status in LoadingSheetDetail table
-              LoadingSheetDetail.objects.filter(cnote_id=cnote.id).update(status='Delivered')
+            # Update status in LoadingSheetDetail table
+            LoadingSheetDetail.objects.filter(cnote_id=cnote.id).update(status='Delivered')
 
-              # Update status in ReceivedStatesCnotes table
-              ReceivedStatesCnotes.objects.filter(cnote_number=data['lrNumber']).update(status='Delivered')
+            # Update status in ReceivedStatesCnotes table
+            ReceivedStatesCnotes.objects.filter(cnote_number=data['lrNumber']).update(status='Delivered')
 
-          return JsonResponse({
-              'message': 'Delivery note saved successfully!',
-              'delivery_details': {
-                  'freight_charges': str(freight_charges),
-                  'other_charges': str(other_charges),
-                  'discount_amount': str(discount_amount),
-                  'total_amount': str(total_amount)
-              }
-          }, status=201)
+        return JsonResponse({'message': 'Delivery note saved successfully!'}, status=201)
+    except Exception as e:
+        logger.error(f"Error saving delivery note: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=400)
 
-      except Exception as e:
-          logger.error(f"Error saving delivery note: {str(e)}")
-          return JsonResponse({'error': str(e)}, status=500)
+
 
 def get_destinations(request):
     destinations = DeliveryDestination.objects.filter(
@@ -971,4 +945,3 @@ def search_cnotes_for_ddm(request):
     results = list(query.values('cnote_number', 'consignor_name', 'consignee_name', 'total_art', 'actual_weight', 'declared_value', 'status'))
 
     return JsonResponse(results, safe=False)
-
