@@ -534,6 +534,7 @@
                             </select>
                             <input type="number" id="discountValue" placeholder="Enter discount">
                             <button class="apply-discount-btn" onclick="applyDiscount()">Apply Discount</button>
+                            <button class="apply-discount-btn" onclick="resetDiscount()">Reset Discount</button>
                         </div>
                     </div>
                     <table class="charges-table">
@@ -727,6 +728,7 @@
 
             // Hide the delivery details section
             document.getElementById('deliveryDetails').style.display = 'none';
+            resetDiscount();
         }
 
         // Search LR functionality
@@ -860,9 +862,9 @@
 
             // Store the original charges for discount calculations
             window.originalCharges = {
-                freight: chargesData.freight || 0,
-                other: chargesData.other || 0,
-                total: chargesData.total || 0
+                freight: parseFloat(chargesData.freight || 0),
+                other: parseFloat(chargesData.other || 0),
+                total: parseFloat((chargesData.freight || 0) + (chargesData.other || 0))
             };
 
             // Recalculate and display the updated total after clearing/populating fields
@@ -882,25 +884,45 @@
         function applyDiscount() {
             const discountType = document.getElementById('discountType').value;
             const discountValue = parseFloat(document.getElementById('discountValue').value) || 0;
+            
+            if (!window.originalCharges) {
+                showNotification('Error: Original charges not found', 'error');
+                return;
+            }
+            
             const originalTotal = window.originalCharges.total;
-
+            
+            if (discountValue < 0 || (discountType === 'percentage' && discountValue > 100)) {
+                showNotification('Invalid discount value', 'error');
+                return;
+            }
+            
             let discountAmount = 0;
             if (discountType === 'percentage') {
                 discountAmount = originalTotal * (discountValue / 100);
             } else {
-                discountAmount = discountValue;
+                discountAmount = Math.min(discountValue, originalTotal);
             }
-
-            // Ensure discount doesn't exceed total amount
-            discountAmount = Math.min(discountAmount, originalTotal);
-
-            const newTotal = originalTotal - discountAmount;
-
-            // Update the display
+            
+            // Update the display with original values first
+            document.getElementById('freightCharges').textContent = window.originalCharges.freight.toFixed(2);
+            document.getElementById('otherCharges').textContent = window.originalCharges.other.toFixed(2);
             document.getElementById('discountAmount').textContent = discountAmount.toFixed(2);
+            
+            // Calculate and update total
+            const newTotal = originalTotal - discountAmount;
             document.getElementById('totalAmount').textContent = newTotal.toFixed(2);
-
+            
             showNotification(`Discount of ${discountAmount.toFixed(2)} applied successfully`, 'success');
+        }
+
+        function resetDiscount() {
+            if (window.originalCharges) {
+                document.getElementById('discountType').value = 'percentage';
+                document.getElementById('discountValue').value = '';
+                document.getElementById('discountAmount').textContent = '0.00';
+                document.getElementById('totalAmount').textContent = window.originalCharges.total.toFixed(2);
+            }
         }
 
         // Validate phone number
@@ -975,7 +997,7 @@
 
             try {
                 const csrftoken = getCookie('csrftoken');  // Get the CSRF token
-        
+
                 const response = await fetch('/transporter/api/submit-delivery/', {
                     method: 'POST',
                     headers: {
@@ -984,7 +1006,7 @@
                     },
                     body: JSON.stringify(deliveryData),
                 });
-        
+
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.error || 'Failed to update delivery');
