@@ -79,12 +79,18 @@ from django.contrib import messages
 from django.utils import timezone
 from .models import CNote, LoadingSheetSummary, LoadingSheetDetail
 from transporter_app.models import Transporter
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.http import Http404
+from .models import CNotes
+from django.shortcuts import get_object_or_404
+from django.db import connection
+
+
 
 
 # Set up logging   
 logger = logging.getLogger(__name__)   
-
-
 
 @login_required
 def render_to_pdf(template_src, context_dict):   
@@ -1178,6 +1184,9 @@ def create_cnotes(request):
     except Dealer.DoesNotExist:
         logger.error('Dealer not found.')
         return JsonResponse({'success': False, 'error': 'Dealer not found.'})
+     
+    # Fetch the last CNote created by the dealer
+    last_cnote = CNotes.objects.filter(dealer=dealer).order_by('-created_at').first()
 
     if request.method == 'POST':
         logger.info("POST request received.")
@@ -1281,5 +1290,21 @@ def create_cnotes(request):
         'dealer': request.user.dealer,
         'destinations': DeliveryDestination.objects.all(),
         'cities': City.objects.all(),
+        'last_cnote': last_cnote  # Pass the last CNote to the template
+
     }
     return render(request, 'dealer/create_cnotes.html', context)
+
+
+@login_required
+def search_cnote(request):
+    cnote_number = request.GET.get('cnote_number')
+    if cnote_number:
+        try:
+            cnote = get_object_or_404(CNotes, cnote_number=cnote_number)
+            return render(request, 'dealer/view_cnote.html', {'cnote': cnote})
+        except CNotes.DoesNotExist:
+            messages.error(request, 'CNote not found.')
+            return redirect('dealer:create_cnotes')  # Redirect back to the create CNotes page
+    messages.error(request, 'Please enter a CNote number.')
+    return redirect('dealer:create_cnotes')  # Redirect if no CNote number is provided
