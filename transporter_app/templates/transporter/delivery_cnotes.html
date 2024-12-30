@@ -913,6 +913,9 @@
             const newTotal = originalTotal - discountAmount;
             document.getElementById('totalAmount').textContent = newTotal.toFixed(2);
             
+            // Update the discount value input to show the applied discount
+            document.getElementById('discountValue').value = discountType === 'percentage' ? discountValue : discountAmount.toFixed(2);
+            
             showNotification(`Discount of ${discountAmount.toFixed(2)} applied successfully`, 'success');
         }
 
@@ -922,6 +925,8 @@
                 document.getElementById('discountValue').value = '';
                 document.getElementById('discountAmount').textContent = '0.00';
                 document.getElementById('totalAmount').textContent = window.originalCharges.total.toFixed(2);
+                document.getElementById('freightCharges').textContent = window.originalCharges.freight.toFixed(2);
+                document.getElementById('otherCharges').textContent = window.originalCharges.other.toFixed(2);
             }
         }
 
