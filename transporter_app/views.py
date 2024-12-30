@@ -853,7 +853,7 @@ def ddm_view(request):
     return render(request, 'transporter/ddm.html')
 
 
-  logger = logging.getLogger(__name__)
+
 
   @csrf_exempt
   @require_POST
