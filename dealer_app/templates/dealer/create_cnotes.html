@@ -606,16 +606,17 @@
                     <h3>Article Details</h3>
                     <div class="article-details">
                         <table id="articleTable">
-                            <thead>
-                                <tr>
-                                    <th>Article</th>
-                                    <th>Art</th>
-                                    <th>Art Type</th>
-                                    <th>Said To Cont</th>
-                                    <th>Art Amt</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
+                          <thead>
+                            <tr>
+                                <th>Article</th>
+                                <th>Art</th>
+                                <th>Art Type</th>
+                                <th>Said To Contain</th>
+                                <th>Per Pkt Amt</th>
+                                <th>Total Amt</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
                             <tbody>
                                 <tr>
                                     <td>
@@ -1108,8 +1109,16 @@
             }
 
             function calculateRowAmount(row) {
-                const artAmtInput = row.querySelector(".art-amt");
+               
+                const artInput = row.querySelector(".art-input");
+                const perPktAmtInput = row.querySelector(".per-pkt-amt");
+                const totalAmtInput = row.querySelector(".total-amt");
                 let amount = 0;
+                const art = parseFloat(artInput.value) || 0;
+                const perPktAmt = parseFloat(perPktAmtInput.value) || 0;
+
+                const totalAmt = art * perPktAmt;
+                totalAmtInput.value = totalAmt.toFixed(2);
 
                 switch (articleType) {
                     case "Article":
@@ -1124,6 +1133,21 @@
                     case "Fix":
                         amount = parseFloat(fixAmtInput.value) || 0;
                         break;
+                }
+
+                updateFreight();
+            }
+            function handleTotalAmtChange(row) {
+                const artInput = row.querySelector(".art-input");
+                const perPktAmtInput = row.querySelector(".per-pkt-amt");
+                const totalAmtInput = row.querySelector(".total-amt");
+
+                const art = parseFloat(artInput.value) || 0;
+                const totalAmt = parseFloat(totalAmtInput.value) || 0;
+
+                if (art !== 0) {
+                    const perPktAmt = totalAmt / art;
+                    perPktAmtInput.value = perPktAmt.toFixed(2);
                 }
 
                 updateFreight();
@@ -1192,7 +1216,7 @@
                             <option value="Fix">Fix</option>
                         </select>
                     </td>
-                    <td><input type="number" name="art" required></td>
+                    <td><input type="number" name="art" class="art-input" required></td>
                     <td>
                         <select name="artType" required>
                             <option value="">Select</option>
@@ -1200,8 +1224,9 @@
                             <option value="type2">Type 2</option>
                         </select>
                     </td>
-                    <td><input type="text" name="saidToCont" required></td>
-                    <td><input type="number" name="artAmt" class="art-amt" step="0.01" required></td>
+                    <td><input type="text" name="saidToContain" required></td>
+                    <td><input type="number" name="perPktAmt" class="per-pkt-amt" step="0.01" required></td>
+                    <td><input type="number" name="totalAmt" class="total-amt" step="0.01" readonly></td>
                     <td><button type="button" class="remove-article">Remove</button></td>
                 `;
 
@@ -1251,9 +1276,17 @@
             });
 
             function setupArticleRowListeners(row) {
-                row.querySelector(".remove-article").disabled = articleTable.rows.length <= 1;
-            }
+              const artInput = row.querySelector('.art-input');
+              const perPktAmtInput = row.querySelector('.per-pkt-amt');
+              const totalAmtInput = row.querySelector('.total-amt');
 
+              artInput.addEventListener('input', () => calculateRowAmount(row));
+              perPktAmtInput.addEventListener('input', () => calculateRowAmount(row));
+              totalAmtInput.addEventListener('input', () => handleTotalAmtChange(row));
+
+              row.querySelector(".remove-article").disabled = articleTable.rows.length <= 1;
+          }
+                
             setupArticleRowListeners(articleTable.rows[0]);
             calculateTotalFreight();
 
