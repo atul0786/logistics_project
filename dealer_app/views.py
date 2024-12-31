@@ -1175,6 +1175,9 @@ logger = logging.getLogger(__name__)
 
 @login_required
 def create_cnotes(request):
+    # Get the logged-in dealer
+    dealer = request.user.dealer  # Assuming you have a OneToOneField relationship
+    
     logger = logging.getLogger(__name__)
     logger.info("Create CNotes view called.")
     
@@ -1290,7 +1293,8 @@ def create_cnotes(request):
         'dealer': request.user.dealer,
         'destinations': DeliveryDestination.objects.all(),
         'cities': City.objects.all(),
-        'last_cnote': last_cnote  # Pass the last CNote to the template
+        'last_cnote': last_cnote,  # Pass the last CNote to the template
+        'dealer': dealer,
 
     }
     return render(request, 'dealer/create_cnotes.html', context)
