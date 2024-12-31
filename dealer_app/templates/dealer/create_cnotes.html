@@ -15,6 +15,28 @@
         padding: 0;
     }
 
+    /* Add this to your existing style section */
+.reset-consignor-btn {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    margin-left: 10px;
+    cursor: pointer;
+    font-size: 0.8em;
+}
+
+.reset-consignor-btn:hover {
+    background-color: #5a6268;
+}
+
+
+
+
+
+
+
     body {
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         line-height: 1.4;
@@ -593,6 +615,7 @@
               </div>
             </div>
             <div class="form-row">
+              <!-- Replace the existing consignor section with this updated version -->
               <div class="form-group">
                 <h3>Consignor (From)</h3>
                 <label for="consignorName" class="required">Consignor Name</label>
@@ -601,7 +624,7 @@
                   id="consignorName"
                   name="consignor_name"
                   required
-                  value="{{ consignor_data.name|default:'' }}"  
+                  value="{{ dealer.name }}"  <!-- Changed to use dealer.name -->
                 />
                 <label for="consignorMobile" class="required">Mobile No</label>
                 <input
@@ -610,23 +633,22 @@
                   name="consignor_mobile"
                   maxlength="10"
                   required
-                  value="{{ consignor_data.mobile|default:'' }}"
+                  value="{{ dealer.mobile_number_1 }}"  <!-- Changed to use dealer.mobile_number_1 -->
                 />
                 <label for="consignorGST">GST No</label>
                 <input
                   type="text"
                   id="consignorGST"
                   name="consignorGST"
-                  value="{{ consignor_data.gst|default:'' }}"
+                  value="{{ dealer.gstn }}"  <!-- Changed to use dealer.gstn -->
                 />
                 <label for="consignorAddress">Address</label>
                 <textarea
-                
                   id="consignorAddress"
                   name="consignorAddress"
                   rows="3"
-                >{{ consignor_data.address|default:'' }}</textarea>             
-               </div>
+                >{{ dealer.address }}</textarea>  <!-- Changed to use dealer.address -->
+              </div>
               
               <div class="form-group">
                 <h3>Consignee (To)</h3>
@@ -970,6 +992,18 @@
         destinationList.style.overflowY = "auto";
         deliveryDestinationInput.parentNode.insertBefore(destinationList, deliveryDestinationInput.nextSibling);
     }
+    document.addEventListener("DOMContentLoaded", function () {
+    // Get the original dealer values
+    const originalConsignorName = document.getElementById("consignorName").value;
+    const originalConsignorMobile = document.getElementById("consignorMobile").value;
+    const originalConsignorGST = document.getElementById("consignorGST").value;
+    const originalConsignorAddress = document.getElementById("consignorAddress").value;
+
+    
+    // Insert the reset button after the consignor section
+    document.querySelector(".form-group h3").appendChild(resetConsignorBtn);
+     });
+
 
 
     const validDestinations = ["MUMBAI", "DELHI", "BANGALORE", "CHENNAI", "KOLKATA"];
@@ -1001,6 +1035,114 @@
     deliveryDestinationInput.addEventListener("input", function () {
         showAutocompleteList(this);
     });
+
+    // Dealer data service
+    async function fetchDealerData() {
+        try {
+            const response = await fetch('/api/dealer/data');
+            if (!response.ok) {
+                throw new Error('Failed to fetch dealer data');
+            }
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching dealer data:', error);
+            return null;
+        }
+    }
+    // Populate consignor fields with dealer data
+    function populateConsignorFields(dealerData) {
+        if (!dealerData) return;
+
+        const fields = {
+            'consignorName': dealerData.name,
+            'consignorMobile': dealerData.mobile,
+            'consignorGST': dealerData.gst_number,
+            'consignorAddress': dealerData.address
+        };
+
+        Object.entries(fields).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.value = value || '';
+                // Make fields editable but pre-populated
+                element.readOnly = false;
+            }
+        });
+    }
+
+    export { fetchDealerData, populateConsignorFields };
+
+    // Payment mode handler
+    function initializePaymentMode() {
+        const paymentButtons = document.querySelectorAll('.payment-btn');
+        const paymentTypeInput = document.getElementById('paymentType');
+        const paymentTypeHeader = document.getElementById('paymentTypeHeader');
+
+        // Set TBB as default
+        function setDefaultPaymentMode() {
+            const tbbBtn = document.getElementById('tbbBtn');
+            if (tbbBtn) {
+                setActiveButton(tbbBtn);
+                updatePaymentType('TBB');
+            }
+        }
+
+        function setActiveButton(button) {
+            paymentButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+        }
+
+        function updatePaymentType(type) {
+            if (paymentTypeHeader) paymentTypeHeader.textContent = type;
+            if (paymentTypeInput) paymentTypeInput.value = type;
+        }
+
+        // Add click handlers to payment buttons
+        paymentButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                setActiveButton(button);
+                updatePaymentType(button.textContent.replace('F7 : ', '')
+                                                  .replace('F8 : ', '')
+                                                  .replace('F9 : ', '')
+                                                  .replace('F10 : ', ''));
+            });
+        });
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (event) => {
+            const keyMap = {
+                'F7': 'PAID',
+                'F8': 'TO PAY',
+                'F9': 'TBB',
+                'F10': 'FOC'
+            };
+
+            const type = keyMap[event.key];
+            if (type) {
+                event.preventDefault();
+                const button = document.getElementById(`${type.toLowerCase()}Btn`);
+                if (button) {
+                    setActiveButton(button);
+                    updatePaymentType(type);
+                }
+            }
+        });
+
+        // Set default mode on initialization
+        setDefaultPaymentMode();
+    }
+
+    export { initializePaymentMode };
+
+
+
+
+
+
+
+
+
 
     deliveryDestinationInput.addEventListener("keydown", function (e) {
         const items = destinationList.getElementsByTagName("li");
