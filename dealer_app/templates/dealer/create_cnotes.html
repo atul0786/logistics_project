@@ -611,9 +611,8 @@
                                     <th>Article</th>
                                     <th>Art</th>
                                     <th>Art Type</th>
-                                    <th>Said To Contain</th>
-                                    <th>Per Pkt Amt</th>
-                                    <th>Total Amt</th>
+                                    <th>Said To Cont</th>
+                                    <th>Art Amt</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -626,7 +625,7 @@
                                             <option value="Fix">Fix</option>
                                         </select>
                                     </td>
-                                    <td><input type="number" name="art" class="art-input" required /></td>
+                                    <td><input type="number" name="art" required /></td>
                                     <td>
                                         <select name="artType" required>
                                             <option value="">Select</option>
@@ -634,9 +633,10 @@
                                             <option value="type2">Type 2</option>
                                         </select>
                                     </td>
-                                    <td><input type="text" name="saidToContain" required /></td>
-                                    <td><input type="number" name="perPktAmt" class="per-pkt-amt" step="0.01" required /></td>
-                                    <td><input type="number" name="totalAmt" class="total-amt" step="0.01" readonly /></td>
+                                    <td><input type="text" name="saidToCont" required /></td>
+                                    <td>
+                                        <input type="number" name="artAmt" class="art-amt" step="0.01" required />
+                                    </td>
                                     <td>
                                         <button type="button" class="remove-article" disabled>Remove</button>
                                     </td>
@@ -1086,42 +1086,44 @@
             }
 
             function updateRowFields(row) {
-                const artInput = row.querySelector(".art-input");
-                const perPktAmtInput = row.querySelector(".per-pkt-amt");
-                const totalAmtInput = row.querySelector(".total-amt");
-                const saidToContainInput = row.querySelector("input[name='saidToContain']");
+                const artAmtInput = row.querySelector(".art-amt");
                 const selectedArticle = row.querySelector("select[name='article']").value;
 
-                [artInput, perPktAmtInput, totalAmtInput, saidToContainInput].forEach(input => input.disabled = false);
+                [artAmtInput, wtRateInput, wtAmtInput, fixAmtInput].forEach(input => input.disabled = true);
+                [wtRateInput, wtAmtInput, fixAmtInput].forEach(input => input.value = 0);
+
+                switch (selectedArticle) {
+                    case "Article":
+                        artAmtInput.disabled = false;
+                        break;
+                    case "Weight":
+                        wtRateInput.disabled = false;
+                        break;
+                    case "Fix":
+                        fixAmtInput.disabled = false;
+                        break;
+                }
 
                 calculateRowAmount(row);
             }
 
             function calculateRowAmount(row) {
-                const artInput = row.querySelector(".art-input");
-                const perPktAmtInput = row.querySelector(".per-pkt-amt");
-                const totalAmtInput = row.querySelector(".total-amt");
+                const artAmtInput = row.querySelector(".art-amt");
+                let amount = 0;
 
-                const art = parseFloat(artInput.value) || 0;
-                const perPktAmt = parseFloat(perPktAmtInput.value) || 0;
-
-                const totalAmt = art * perPktAmt;
-                totalAmtInput.value = totalAmt.toFixed(2);
-
-                updateFreight();
-            }
-
-            function handleTotalAmtChange(row) {
-                const artInput = row.querySelector(".art-input");
-                const perPktAmtInput = row.querySelector(".per-pkt-amt");
-                const totalAmtInput = row.querySelector(".total-amt");
-
-                const art = parseFloat(artInput.value) || 0;
-                const totalAmt = parseFloat(totalAmtInput.value) || 0;
-
-                if (art !== 0) {
-                    const perPktAmt = totalAmt / art;
-                    perPktAmtInput.value = perPktAmt.toFixed(2);
+                switch (articleType) {
+                    case "Article":
+                        amount = parseFloat(artAmtInput.value) || 0;
+                        break;
+                    case "Weight":
+                        const chargedWt = parseFloat(chargedWtInput.value) || 0;
+                        const wtRate = parseFloat(wtRateInput.value) || 0;
+                        amount = chargedWt * wtRate;
+                        wtAmtInput.value = amount.toFixed(2);
+                        break;
+                    case "Fix":
+                        amount = parseFloat(fixAmtInput.value) || 0;
+                        break;
                 }
 
                 updateFreight();
@@ -1139,8 +1141,22 @@
             function updateFreight() {
                 let totalFreight = 0;
                 Array.from(articleTable.rows).forEach(row => {
-                    const totalAmtInput = row.querySelector(".total-amt");
-                    totalFreight += parseFloat(totalAmtInput.value) || 0;
+                    const artAmtInput = row.querySelector(".art-amt");
+                    const selectedArticle = row.querySelector("select[name='article']").value;
+
+                    switch (selectedArticle) {
+                        case "Article":
+                            totalFreight += parseFloat(artAmtInput.value) || 0;
+                            break;
+                        case "Weight":
+                            const chargedWt = parseFloat(chargedWtInput.value) || 0;
+                            const wtRate = parseFloat(wtRateInput.value) || 0;
+                            totalFreight += chargedWt * wtRate;
+                            break;
+                        case "Fix":
+                            totalFreight += parseFloat(fixAmtInput.value) || 0;
+                            break;
+                    }
                 });
 
                 freightInput.value = totalFreight.toFixed(2);
@@ -1154,10 +1170,12 @@
                 chargesInputs.forEach(input => {
                     if (input.id !== "grandTotal") {
                         const value = parseFloat(input.value) || 0;
+                        console.log(`${input.name}: ${value}`);
                         grandTotal += value;
                     }
                 });
 
+                console.log(`Calculated Grand Total: ${grandTotal}`);
                 const grandTotalInput = document.getElementById("grandTotal");
                 if (grandTotalInput) {
                     grandTotalInput.value = grandTotal.toFixed(2);
@@ -1174,7 +1192,7 @@
                             <option value="Fix">Fix</option>
                         </select>
                     </td>
-                    <td><input type="number" name="art" class="art-input" required></td>
+                    <td><input type="number" name="art" required></td>
                     <td>
                         <select name="artType" required>
                             <option value="">Select</option>
@@ -1182,9 +1200,8 @@
                             <option value="type2">Type 2</option>
                         </select>
                     </td>
-                    <td><input type="text" name="saidToContain" required></td>
-                    <td><input type="number" name="perPktAmt" class="per-pkt-amt" step="0.01" required></td>
-                    <td><input type="number" name="totalAmt" class="total-amt" step="0.01" readonly></td>
+                    <td><input type="text" name="saidToCont" required></td>
+                    <td><input type="number" name="artAmt" class="art-amt" step="0.01" required></td>
                     <td><button type="button" class="remove-article">Remove</button></td>
                 `;
 
@@ -1196,15 +1213,8 @@
                     handleArticleTypeChange(this);
                 });
 
-                const artInput = newRow.querySelector('.art-input');
-                const perPktAmtInput = newRow.querySelector('.per-pkt-amt');
-                const totalAmtInput = newRow.querySelector('.total-amt');
-                const saidToContainInput = newRow.querySelector('input[name="saidToContain"]');
-
-                artInput.addEventListener('input', () => calculateRowAmount(newRow));
-                perPktAmtInput.addEventListener('input', () => calculateRowAmount(newRow));
-                totalAmtInput.addEventListener('input', () => handleTotalAmtChange(newRow));
-                saidToContainInput.addEventListener('input', () => calculateRowAmount(newRow)); //Added event listener for saidToContain
+                const newArtAmtInput = newRow.querySelector('.art-amt');
+                newArtAmtInput.addEventListener('input', updateFreight);
 
                 setupArticleRowListeners(newRow);
                 calculateTotalFreight();
@@ -1213,8 +1223,18 @@
             function calculateTotalFreight() {
                 let totalFreight = 0;
                 Array.from(articleTable.rows).forEach(row => {
-                    const totalAmtInput = row.querySelector(".total-amt");
-                    totalFreight += parseFloat(totalAmtInput.value) || 0;
+                    const artAmtInput = row.querySelector(".art-amt");
+                    switch (articleType) {
+                        case "Article":
+                            totalFreight += parseFloat(artAmtInput.value) || 0;
+                            break;
+                        case "Weight":
+                            totalFreight += parseFloat(wtAmtInput.value) || 0;
+                            break;
+                        case "Fix":
+                            totalFreight += parseFloat(fixAmtInput.value) || 0;
+                            break;
+                    }
                 });
 
                 freightInput.value = totalFreight.toFixed(2);
@@ -1231,16 +1251,6 @@
             });
 
             function setupArticleRowListeners(row) {
-                const artInput = row.querySelector('.art-input');
-                const perPktAmtInput = row.querySelector('.per-pkt-amt');
-                const totalAmtInput = row.querySelector('.total-amt');
-                const saidToContainInput = row.querySelector('input[name="saidToContain"]');
-
-                artInput.addEventListener('input', () => calculateRowAmount(row));
-                perPktAmtInput.addEventListener('input', () => calculateRowAmount(row));
-                totalAmtInput.addEventListener('input', () => handleTotalAmtChange(row));
-                saidToContainInput.addEventListener('input', () => calculateRowAmount(row)); //Added event listener for saidToContain
-
                 row.querySelector(".remove-article").disabled = articleTable.rows.length <= 1;
             }
 
@@ -1257,7 +1267,7 @@
             addInputListeners();
 
             function addInputListeners() {
-                const inputs = document.querySelectorAll('.art-input, .per-pkt-amt, .total-amt, .charges-container input[type="number"], input[name="saidToContain"]'); //Added input[name="saidToContain"]
+                const inputs = document.querySelectorAll('.art-amt, #wtRate, #chargedWt, #fixAmt, .charges-container input[type="number"]');
                 inputs.forEach(input => {
                     input.addEventListener('input', function() {
                         updateFreight();
@@ -1409,4 +1419,3 @@
     </script>
 </body>
 </html>
-
