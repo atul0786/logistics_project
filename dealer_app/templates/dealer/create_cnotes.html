@@ -968,7 +968,20 @@
             // Set default mode on initialization
             setDefaultPaymentMode();
         }
-            initializePaymentMode();
+           // Initialize payment mode
+
+            function initializePaymentMode() {
+                  const tbbBtn = document.getElementById('tbbBtn');
+                  if (tbbBtn) {
+                      // Simulate a click on the TBB button
+                      tbbBtn.click(); // This will trigger the click event for TBB button
+                  }
+               }
+
+               // Call the function to set the default payment type
+                initializePaymentMode();
+
+
             deliveryDestinationInput.addEventListener("keydown", function (e) {
                 const items = destinationList.getElementsByTagName("li");
                 if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -1282,10 +1295,18 @@
                 input.addEventListener('input', calculateGrandTotal);
             });
                       
+            // Add event listener for form submission
             form.addEventListener('submit', function(event) {
                 event.preventDefault();
                 calculateGrandTotal();
-                
+
+                // Ensure the payment type is set correctly
+                const selectedPaymentType = paymentTypeInput.value;
+                if (!selectedPaymentType) {
+                    alert("Please select a payment type.");
+                    return;
+                }
+                        
                 // Define all charge fields with their exact backend field names
                 const chargeFields = {
                     'freight': 'freight',
@@ -1324,13 +1345,14 @@
                     }
                 });
 
+                 // Proceed with form submission
                 const formData = new FormData(this);
                 console.log("Form data before submission:");
                 for (let [key, value] of formData.entries()) {
                     console.log(`${key}: ${value}`);
                 }
 
-                fetch(this.action, {
+                fetch(form.action, {
                     method: 'POST',
                     body: formData,
                     headers: {
