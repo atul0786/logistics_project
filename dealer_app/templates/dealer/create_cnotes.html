@@ -909,62 +909,63 @@
                 const paymentTypeInput = document.getElementById('paymentType');
                 const paymentTypeHeader = document.getElementById('paymentTypeHeader');
 
-                // Set TBB as default
-                function setDefaultPaymentMode() {
-                    const tbbBtn = document.getElementById('tbbBtn');
-                    if (tbbBtn) {
-                        updatePaymentType('TBB');
-                        tbbBtn.classList.add('active');
+              // Set TBB as default
+              function setDefaultPaymentMode() {
+                  const tbbBtn = document.getElementById('tbbBtn');
+                  if (tbbBtn) {
+                      updatePaymentType('TBB');
+                      tbbBtn.classList.add('active');
+                      // Ensure the hidden input is updated
+                      paymentTypeInput.value = 'TBB'; 
+                  }
+              }
+
+              function setActiveButton(button) {
+                  Object.keys(paymentButtons).forEach(btnId => 
+                      document.getElementById(btnId)?.classList.remove('active')
+                  );
+                  button.classList.add('active');
+              }
+
+              function updatePaymentType(type) {
+                  if (paymentTypeHeader) paymentTypeHeader.textContent = type;
+                  if (paymentTypeInput) paymentTypeInput.value = type;
+              }
+
+              // Add click handlers to payment buttons
+              Object.keys(paymentButtons).forEach(btnId => {
+                  const btn = document.getElementById(btnId);
+                  if (btn) {
+                      btn.addEventListener('click', () => {
+                          setActiveButton(btn);
+                          updatePaymentType(paymentButtons[btnId]);
+                      });
+                  }
+              });
+
+              // Add keyboard shortcuts
+              document.addEventListener('keydown', (event) => {
+                  const keyMap = {
+                      'F7': 'PAID',
+                      'F8': 'TO PAY',
+                      'F9': 'TBB',
+                      'F10': 'FOC'
+                  };
+
+                const type = keyMap[event.key];
+                if (type) {
+                    event.preventDefault();
+                    const button = document.getElementById(`${type.toLowerCase().replace(' ', '')}Btn`);
+                    if (button) {
+                        setActiveButton(button);
+                        updatePaymentType(type);
                     }
                 }
+            });
 
-                function setActiveButton(button) {
-                    Object.keys(paymentButtons).forEach(btnId => 
-                        document.getElementById(btnId)?.classList.remove('active')
-                    );
-                    button.classList.add('active');
-                }
-
-                function updatePaymentType(type) {
-                    if (paymentTypeHeader) paymentTypeHeader.textContent = type;
-                    if (paymentTypeInput) paymentTypeInput.value = type;
-                }
-
-                // Add click handlers to payment buttons
-                Object.keys(paymentButtons).forEach(btnId => {
-                    const btn = document.getElementById(btnId);
-                    if (btn) {
-                        btn.addEventListener('click', () => {
-                            setActiveButton(btn);
-                            updatePaymentType(paymentButtons[btnId]);
-                        });
-                    }
-                });
-
-                // Add keyboard shortcuts
-                document.addEventListener('keydown', (event) => {
-                    const keyMap = {
-                        'F7': 'PAID',
-                        'F8': 'TO PAY',
-                        'F9': 'TBB',
-                        'F10': 'FOC'
-                    };
-
-                    const type = keyMap[event.key];
-                    if (type) {
-                        event.preventDefault();
-                        const button = document.getElementById(`${type.toLowerCase().replace(' ', '')}Btn`);
-                        if (button) {
-                            setActiveButton(button);
-                            updatePaymentType(type);
-                        }
-                    }
-                });
-
-                // Set default mode on initialization
-                setDefaultPaymentMode();
-            }
-
+            // Set default mode on initialization
+            setDefaultPaymentMode();
+        }
             initializePaymentMode();
 
             deliveryDestinationInput.addEventListener("keydown", function (e) {
