@@ -838,6 +838,9 @@
             const originalConsignorMobile = document.getElementById("consignorMobile").value;
             const originalConsignorGST = document.getElementById("consignorGST").value;
             const originalConsignorAddress = document.getElementById("consignorAddress").value;
+            const paymentTypeInput = document.getElementById('paymentType');
+            const paymentTypeHeader = document.getElementById('paymentTypeHeader');
+
 
             let destinationList = document.getElementById("destinationList");
             if (!destinationList) {
@@ -913,10 +916,7 @@
               function setDefaultPaymentMode() {
                   const tbbBtn = document.getElementById('tbbBtn');
                   if (tbbBtn) {
-                      updatePaymentType('TBB');
-                      tbbBtn.classList.add('active');
-                      // Ensure the hidden input is updated
-                      paymentTypeInput.value = 'TBB'; 
+                      
                       // Simulate a click on the TBB button
                       tbbBtn.click(); // This will trigger the click event for TBB button
                   }
@@ -969,7 +969,6 @@
             setDefaultPaymentMode();
         }
             initializePaymentMode();
-
             deliveryDestinationInput.addEventListener("keydown", function (e) {
                 const items = destinationList.getElementsByTagName("li");
                 if (e.key === "ArrowDown" || e.key === "ArrowUp") {
