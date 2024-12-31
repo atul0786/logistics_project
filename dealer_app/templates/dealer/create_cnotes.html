@@ -620,36 +620,36 @@
                 <h3>Consignor (From)</h3>
                 <label for="consignorName" class="required">Consignor Name</label>
                 <input
-                  type="text"
-                  id="consignorName"
-                  name="consignor_name"
-                  required
-                  value="{{ dealer.name }}"  <!-- Changed to use dealer.name -->
+                    type="text"
+                    id="consignorName"
+                    name="consignor_name"
+                    required
+                    value="{{ dealer.name }}"
                 />
-                <label for="consignorMobile" class="required">Mobile No</label>
+
+                 <label for="consignorMobile" class="required">Mobile No</label>
                 <input
-                  type="tel"
-                  id="consignorMobile"
-                  name="consignor_mobile"
-                  maxlength="10"
-                  required
-                  value="{{ dealer.mobile_number_1 }}"  <!-- Changed to use dealer.mobile_number_1 -->
+                    type="tel"
+                    id="consignorMobile"
+                    name="consignor_mobile"
+                    maxlength="10"
+                    required
+                    value="{{ dealer.mobile_number_1 }}"
                 />
                 <label for="consignorGST">GST No</label>
                 <input
-                  type="text"
-                  id="consignorGST"
-                  name="consignorGST"
-                  value="{{ dealer.gstn }}"  <!-- Changed to use dealer.gstn -->
+                    type="text"
+                    id="consignorGST"
+                    name="consignorGST"
+                    value="{{ dealer.gstn }}"
                 />
                 <label for="consignorAddress">Address</label>
                 <textarea
-                  id="consignorAddress"
-                  name="consignorAddress"
-                  rows="3"
-                >{{ dealer.address }}</textarea>  <!-- Changed to use dealer.address -->
-              </div>
-              
+                    id="consignorAddress"
+                    name="consignorAddress"
+                    rows="3"
+                >{{ dealer.address }}</textarea>
+            </div>
               <div class="form-group">
                 <h3>Consignee (To)</h3>
                 <label for="consigneeName" class="required">Consignee Name</label>
@@ -980,6 +980,11 @@
     const manualCNoteNumber = document.getElementById("manualCNoteNumber");
     const manualCNoteType = document.getElementById("manualCNoteType");
     const deliveryDestinationInput = document.getElementById("deliveryDestination");
+    const originalConsignorName = document.getElementById("consignorName").value;
+    const originalConsignorMobile = document.getElementById("consignorMobile").value;
+    const originalConsignorGST = document.getElementById("consignorGST").value;
+    const originalConsignorAddress = document.getElementById("consignorAddress").value;
+
     let destinationList = document.getElementById("destinationList");
     if (!destinationList) {
         destinationList = document.createElement("ul");
@@ -992,13 +997,6 @@
         destinationList.style.overflowY = "auto";
         deliveryDestinationInput.parentNode.insertBefore(destinationList, deliveryDestinationInput.nextSibling);
     }
-    document.addEventListener("DOMContentLoaded", function () {
-    // Get the original dealer values
-    const originalConsignorName = document.getElementById("consignorName").value;
-    const originalConsignorMobile = document.getElementById("consignorMobile").value;
-    const originalConsignorGST = document.getElementById("consignorGST").value;
-    const originalConsignorAddress = document.getElementById("consignorAddress").value;
-
     
     // Insert the reset button after the consignor section
     document.querySelector(".form-group h3").appendChild(resetConsignorBtn);
@@ -1083,8 +1081,8 @@
         function setDefaultPaymentMode() {
             const tbbBtn = document.getElementById('tbbBtn');
             if (tbbBtn) {
-                setActiveButton(tbbBtn);
                 updatePaymentType('TBB');
+                tbbBtn.classList.add('active');
             }
         }
 
@@ -1135,13 +1133,58 @@
 
     export { initializePaymentMode };
 
+    // Add this new function for payment mode initialization
+    function initializePaymentMode() {
+        const paymentButtons = {
+            'paidBtn': 'PAID',
+            'toPayBtn': 'TO PAY', 
+            'tbbBtn': 'TBB',
+            'focBtn': 'FOC'
+        };
+
+
+        // Add click handlers to payment buttons
+        Object.keys(paymentButtons).forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    // Remove active class from all buttons
+                    Object.keys(paymentButtons).forEach(id => 
+                        document.getElementById(id)?.classList.remove('active')
+                    );
+                    // Add active class to clicked button
+                    btn.classList.add('active');
+                    updatePaymentType(paymentButtons[btnId]);
+                });
+            }
+        });
+
+        // Add this after the dealer data is loaded
+        function addResetButton() {
+            const resetBtn = document.createElement('button');
+            resetBtn.type = 'button';
+            resetBtn.className = 'reset-consignor-btn';
+            resetBtn.textContent = 'Reset to Dealer Info';
+            resetBtn.onclick = function() {
+                document.getElementById('consignorName').value = '{{ dealer.name }}';
+                document.getElementById('consignorMobile').value = '{{ dealer.mobile_number_1 }}';
+                document.getElementById('consignorGST').value = '{{ dealer.gstn }}';
+                document.getElementById('consignorAddress').value = '{{ dealer.address }}';
+            };
+
+            const consignorSection = document.querySelector('.form-group h3');
+            consignorSection.appendChild(resetBtn);
+          }
+
+          // Call this function after DOM is loaded
+          addResetButton();
 
 
 
 
 
 
-
+    
 
 
     deliveryDestinationInput.addEventListener("keydown", function (e) {
@@ -1379,6 +1422,8 @@
         setupArticleRowListeners(newRow);
         calculateTotalFreight();
     }
+
+
 
     function calculateTotalFreight() {
         let totalFreight = 0;
