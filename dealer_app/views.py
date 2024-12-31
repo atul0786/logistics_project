@@ -1299,7 +1299,6 @@ def create_cnotes(request):
     }
     return render(request, 'dealer/create_cnotes.html', context)
 
-
 @login_required
 def search_cnote(request):
     cnote_number = request.GET.get('cnote_number')
