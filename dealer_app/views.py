@@ -1172,7 +1172,6 @@ def cancel_loading_sheet(request, loading_sheet_id):
         return JsonResponse({'success': False, 'error': str(e)})
 
 logger = logging.getLogger(__name__)
-
 @login_required
 def create_cnotes(request):
     # Get the logged-in dealer
@@ -1257,22 +1256,42 @@ def create_cnotes(request):
             cnote.save()
             logger.info(f"CNotes saved successfully. ID: {cnote.id}")
 
-            # Create Article objects
-            articles = request.POST.getlist('article')
-            arts = request.POST.getlist('art')
-            art_types = request.POST.getlist('artType')
-            said_to_contains = request.POST.getlist('saidToCont')
-            art_amounts = request.POST.getlist('artAmt')
+            # Process article details from the new format
+            articles_data = []
+            index = 0
+            while True:
+                article_type = request.POST.get(f'articles[{index}][article]')
+                if article_type is None:
+                    break
+                
+                art = request.POST.get(f'articles[{index}][art]')
+                art_type = request.POST.get(f'articles[{index}][artType]')
+                said_to_contain = request.POST.get(f'articles[{index}][saidToContain]')
+                per_pkt_amt = request.POST.get(f'articles[{index}][perPktAmt]', '0')
+                total_amt = request.POST.get(f'articles[{index}][totalAmt]', '0')
+                
+                articles_data.append({
+                    'article_type': article_type,
+                    'art': art,
+                    'art_type': art_type,
+                    'said_to_contain': said_to_contain,
+                    'art_amount': float(total_amt)  # Using total_amt as art_amount
+                })
+                index += 1
 
-            for i in range(len(articles)):
+            # Create Article objects
+            for article_data in articles_data:
                 Article.objects.create(
                     cnote=cnote,
-                    article_type=articles[i],
-                    art=arts[i],
-                    art_type=ArtType.objects.get_or_create(art_type_name=art_types[i])[0],
-                    said_to_contain=said_to_contains[i],
-                    art_amount=float(art_amounts[i])
+                    article_type=article_data['article_type'],
+                    art=article_data['art'],
+                    art_type=ArtType.objects.get_or_create(
+                        art_type_name=article_data['art_type']
+                    )[0],
+                    said_to_contain=article_data['said_to_contain'],
+                    art_amount=article_data['art_amount']
                 )
+                logger.info(f"Created article: {article_data}")
 
             # Return success response with redirect URL
             return JsonResponse({
@@ -1295,9 +1314,9 @@ def create_cnotes(request):
         'cities': City.objects.all(),
         'last_cnote': last_cnote,  # Pass the last CNote to the template
         'dealer': dealer,
-
     }
     return render(request, 'dealer/create_cnotes.html', context)
+
 
 @login_required
 def search_cnote(request):
