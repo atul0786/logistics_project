@@ -1109,6 +1109,14 @@
                 totalAmtInput.value = totalAmt.toFixed(2);
 
                 updateFreight();
+                calculateWeightAmount();
+            }
+
+            function calculateWeightAmount() {
+                const chargedWt = parseFloat(chargedWtInput.value) || 0;
+                const wtRate = parseFloat(wtRateInput.value) || 0;
+                const wtAmount = chargedWt * wtRate;
+                wtAmtInput.value = wtAmount.toFixed(2);
             }
 
             function handleTotalAmtChange(row) {
@@ -1204,7 +1212,7 @@
                 artInput.addEventListener('input', () => calculateRowAmount(newRow));
                 perPktAmtInput.addEventListener('input', () => calculateRowAmount(newRow));
                 totalAmtInput.addEventListener('input', () => handleTotalAmtChange(newRow));
-                saidToContainInput.addEventListener('input', () => calculateRowAmount(newRow)); //Added event listener for saidToContain
+                saidToContainInput.addEventListener('input', () => calculateRowAmount(newRow));
 
                 setupArticleRowListeners(newRow);
                 calculateTotalFreight();
@@ -1239,7 +1247,7 @@
                 artInput.addEventListener('input', () => calculateRowAmount(row));
                 perPktAmtInput.addEventListener('input', () => calculateRowAmount(row));
                 totalAmtInput.addEventListener('input', () => handleTotalAmtChange(row));
-                saidToContainInput.addEventListener('input', () => calculateRowAmount(row)); //Added event listener for saidToContain
+                saidToContainInput.addEventListener('input', () => calculateRowAmount(row));
 
                 row.querySelector(".remove-article").disabled = articleTable.rows.length <= 1;
             }
@@ -1257,7 +1265,7 @@
             addInputListeners();
 
             function addInputListeners() {
-                const inputs = document.querySelectorAll('.art-input, .per-pkt-amt, .total-amt, .charges-container input[type="number"], input[name="saidToContain"]'); //Added input[name="saidToContain"]
+                const inputs = document.querySelectorAll('.art-input, .per-pkt-amt, .total-amt, .charges-container input[type="number"], input[name="saidToContain"]');
                 inputs.forEach(input => {
                     input.addEventListener('input', function() {
                         updateFreight();
@@ -1289,6 +1297,7 @@
             // Add event listener for form submission
             form.addEventListener('submit', function(event) {
                 event.preventDefault();
+                calculateWeightAmount();
                 calculateGrandTotal();
 
                 // Ensure the payment type is set correctly
@@ -1405,7 +1414,11 @@
             }
 
             document.querySelectorAll('input[type="number"]').forEach(validateNumericInput);
+
+            chargedWtInput.addEventListener('input', calculateWeightAmount);
+            wtRateInput.addEventListener('input', calculateWeightAmount);
         });
     </script>
 </body>
 </html>
+
