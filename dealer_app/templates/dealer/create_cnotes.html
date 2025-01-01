@@ -1081,37 +1081,26 @@
 
             function handleArticleTypeChange(select) {
                 const row = select.closest("tr");
-                const artInput = row.querySelector(".art-input");
-                const perPktAmtInput = row.querySelector(".per-pkt-amt");
-                const totalAmtInput = row.querySelector(".total-amt");
                 const wtRateInput = document.getElementById("wtRate");
                 const wtAmtInput = document.getElementById("wtAmt");
                 const fixAmtInput = document.getElementById("fixAmt");
-                const chargedWtInput = document.getElementById("chargedWt");
+                const perPktAmtInput = row.querySelector(".per-pkt-amt");
+                const totalAmtInput = row.querySelector(".total-amt");
 
-                // Reset all inputs
-                [artInput, perPktAmtInput, totalAmtInput, wtRateInput, wtAmtInput, fixAmtInput, chargedWtInput].forEach(input => {
+                // First, enable all inputs
+                [wtRateInput, wtAmtInput, fixAmtInput, perPktAmtInput, totalAmtInput].forEach(input => {
                     input.disabled = false;
                     input.value = '';
                 });
 
-                switch(select.value) {
-                    case 'Article':
-                        wtRateInput.disabled = true;
-                        wtAmtInput.disabled = true;
-                        fixAmtInput.disabled = true;
-                        break;
-                    case 'Weight':
-                        perPktAmtInput.disabled = true;
-                        totalAmtInput.disabled = true;
-                        fixAmtInput.disabled = true;
-                        break;
-                    case 'Fix':
-                        perPktAmtInput.disabled = true;
-                        totalAmtInput.disabled = true;
-                        wtRateInput.disabled = true;
-                        wtAmtInput.disabled = true;
-                        break;
+                // Handle Article type (default case)
+                if (select.value === 'Article' || !select.value) {
+                    wtRateInput.disabled = true;
+                    wtAmtInput.disabled = true;
+                    fixAmtInput.disabled = true;
+                    wtRateInput.value = '0';
+                    wtAmtInput.value = '0';
+                    fixAmtInput.value = '0';
                 }
 
                 updateRowFields(row);
@@ -1244,8 +1233,11 @@
                     <td><button type="button" class="remove-article">Remove</button></td>
                 `;
 
+                const select = newRow.querySelector("select[name='article']");
+                select.value = "Article"; // Set default value
+                handleArticleTypeChange(select); // Initialize the state
+
                 setupArticleRowListeners(newRow);
-                handleArticleTypeChange(newRow.querySelector('.article-select'));
                 calculateTotalFreight();
             }
 
@@ -1481,6 +1473,12 @@
                 const wtRate = parseFloat(wtRateInput.value) || 0;
                 wtAmtInput.value = (chargedWt * wtRate).toFixed(2);
                 calculateGrandTotal();
+            }
+
+            // Initialize the default state for the first row
+            const defaultArticleSelect = articleTable.querySelector("select[name='article']");
+            if (defaultArticleSelect) {
+                handleArticleTypeChange(defaultArticleSelect);
             }
         });
     </script>
