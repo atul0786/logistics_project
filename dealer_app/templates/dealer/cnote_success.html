@@ -163,6 +163,12 @@
             padding-top: 15px;
         }
 
+        .logo {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 1rem;
+        }
+
         @media print {
             body * {
                 visibility: hidden;
@@ -235,27 +241,58 @@
         });
 
         function fetchCNoteDetails(cnoteNumber) {
-            fetch(`/api/cnote-details/${cnoteNumber}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
+            // Simulating API call with mock data
+            const mockData = {
+                cnote_number: cnoteNumber,
+                created_at: new Date().toISOString(),
+                payment_type: "Cash on Delivery",
+                booking_type: "Standard",
+                delivery_type: "Door Delivery",
+                delivery_method: "Road",
+                delivery_destination: "Mumbai",
+                eway_bill_number: "EW12345678",
+                consignor_name: "John Doe",
+                consignor_mobile: "9876543210",
+                consignor_gst: "GSTIN1234567890",
+                consignor_address: "123 Sender St, Delhi",
+                consignee_name: "Jane Smith",
+                consignee_mobile: "9876543211",
+                consignee_gst: "GSTIN0987654321",
+                consignee_address: "456 Receiver Rd, Mumbai",
+                articles: [
+                    {
+                        name: "Electronics",
+                        quantity: 2,
+                        type: "Box",
+                        said_to_contain: "Laptops",
+                        amount: 50000
+                    },
+                    {
+                        name: "Clothing",
+                        quantity: 5,
+                        type: "Package",
+                        said_to_contain: "T-shirts",
+                        amount: 2500
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Fetched CNote data:', data);
-                    document.getElementById('printArea').innerHTML = generatePrintContent(data);
-                })
-                .catch(error => {
-                    console.error('Error fetching CNote details:', error);
-                    document.getElementById('printArea').innerHTML = '<p>Error loading CNote details. Please try again.</p>';
-                });
+                ],
+                freight: 1000,
+                docket_charge: 50,
+                door_delivery_charge: 200,
+                handling_charge: 100,
+                other_charge: 0,
+                grand_total: 53850
+            };
+
+            // Simulating API delay
+            setTimeout(() => {
+                document.getElementById('printArea').innerHTML = generatePrintContent(mockData);
+            }, 500);
         }
 
         function generatePrintContent(cnote) {
             return `
                 <div class="header">
-                    <img src="${cnote.dealer.logo_url || 'https://via.placeholder.com/150x50.png?text=Company+Logo'}" alt="Company Logo" class="logo">
+                    <img src="https://via.placeholder.com/150x50.png?text=Company+Logo" alt="Company Logo" class="logo">
                     <h1>Consignment Note</h1>
                 </div>
 
@@ -393,7 +430,7 @@
             buttonText.textContent = 'Saving...';
             buttonIcon.textContent = '⏳';
 
-            try {
+            try{
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 const printArea = document.getElementById('printArea');
@@ -410,10 +447,6 @@
                 const currentDate = new Date();
                 const folderName = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD
                 const fileName = `${document.getElementById('cnoteNumber').textContent}.pdf`;
-
-                // In a real-world scenario, you would send the PDF data to the server here
-                // The server would handle folder creation and file saving
-                console.log(`Saving PDF: ${folderName}/${fileName}`);
 
                 // Simulate saving to server
                 await new Promise(resolve => setTimeout(resolve, 1000));
