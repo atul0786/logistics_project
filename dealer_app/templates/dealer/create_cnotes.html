@@ -1080,8 +1080,41 @@
             }
 
             function handleArticleTypeChange(select) {
-                articleType = select.value;
-                updateRowFields(select.closest("tr"));
+                const row = select.closest("tr");
+                const artInput = row.querySelector(".art-input");
+                const perPktAmtInput = row.querySelector(".per-pkt-amt");
+                const totalAmtInput = row.querySelector(".total-amt");
+                const wtRateInput = document.getElementById("wtRate");
+                const wtAmtInput = document.getElementById("wtAmt");
+                const fixAmtInput = document.getElementById("fixAmt");
+                const chargedWtInput = document.getElementById("chargedWt");
+
+                // Reset all inputs
+                [artInput, perPktAmtInput, totalAmtInput, wtRateInput, wtAmtInput, fixAmtInput, chargedWtInput].forEach(input => {
+                    input.disabled = false;
+                    input.value = '';
+                });
+
+                switch(select.value) {
+                    case 'Article':
+                        wtRateInput.disabled = true;
+                        wtAmtInput.disabled = true;
+                        fixAmtInput.disabled = true;
+                        break;
+                    case 'Weight':
+                        perPktAmtInput.disabled = true;
+                        totalAmtInput.disabled = true;
+                        fixAmtInput.disabled = true;
+                        break;
+                    case 'Fix':
+                        perPktAmtInput.disabled = true;
+                        totalAmtInput.disabled = true;
+                        wtRateInput.disabled = true;
+                        wtAmtInput.disabled = true;
+                        break;
+                }
+
+                updateRowFields(row);
                 updateAllRows();
             }
 
@@ -1098,25 +1131,40 @@
             }
 
             function calculateRowAmount(row) {
+                const articleType = row.querySelector(".article-select").value;
                 const artInput = row.querySelector(".art-input");
                 const perPktAmtInput = row.querySelector(".per-pkt-amt");
                 const totalAmtInput = row.querySelector(".total-amt");
+                const wtRateInput = document.getElementById("wtRate");
+                const wtAmtInput = document.getElementById("wtAmt");
+                const fixAmtInput = document.getElementById("fixAmt");
+                const chargedWtInput = document.getElementById("chargedWt");
+                const freightInput = document.getElementById("freight");
 
-                const art = parseFloat(artInput.value) || 0;
-                const perPktAmt = parseFloat(perPktAmtInput.value) || 0;
+                let freight = 0;
 
-                const totalAmt = art * perPktAmt;
-                totalAmtInput.value = totalAmt.toFixed(2);
+                switch(articleType) {
+                    case 'Article':
+                        const art = parseFloat(artInput.value) || 0;
+                        const perPktAmt = parseFloat(perPktAmtInput.value) || 0;
+                        const totalAmt = art * perPktAmt;
+                        totalAmtInput.value = totalAmt.toFixed(2);
+                        freight = totalAmt;
+                        break;
+                    case 'Weight':
+                        const chargedWt = parseFloat(chargedWtInput.value) || 0;
+                        const wtRate = parseFloat(wtRateInput.value) || 0;
+                        const wtAmt = chargedWt * wtRate;
+                        wtAmtInput.value = wtAmt.toFixed(2);
+                        freight = wtAmt;
+                        break;
+                    case 'Fix':
+                        freight = parseFloat(fixAmtInput.value) || 0;
+                        break;
+                }
 
-                updateFreight();
-                calculateWeightAmount();
-            }
-
-            function calculateWeightAmount() {
-                const chargedWt = parseFloat(chargedWtInput.value) || 0;
-                const wtRate = parseFloat(wtRateInput.value) || 0;
-                const wtAmount = chargedWt * wtRate;
-                wtAmtInput.value = wtAmount.toFixed(2);
+                freightInput.value = freight.toFixed(2);
+                calculateGrandTotal();
             }
 
             function handleTotalAmtChange(row) {
@@ -1196,25 +1244,8 @@
                     <td><button type="button" class="remove-article">Remove</button></td>
                 `;
 
-                const select = newRow.querySelector("select[name='article']");
-                select.value = articleType;
-                updateRowFields(newRow);
-
-                select.addEventListener("change", function () {
-                    handleArticleTypeChange(this);
-                });
-
-                const artInput = newRow.querySelector('.art-input');
-                const perPktAmtInput = newRow.querySelector('.per-pkt-amt');
-                const totalAmtInput = newRow.querySelector('.total-amt');
-                const saidToContainInput = newRow.querySelector('input[name="saidToContain"]');
-
-                artInput.addEventListener('input', () => calculateRowAmount(newRow));
-                perPktAmtInput.addEventListener('input', () => calculateRowAmount(newRow));
-                totalAmtInput.addEventListener('input', () => handleTotalAmtChange(newRow));
-                saidToContainInput.addEventListener('input', () => calculateRowAmount(newRow));
-
                 setupArticleRowListeners(newRow);
+                handleArticleTypeChange(newRow.querySelector('.article-select'));
                 calculateTotalFreight();
             }
 
@@ -1239,15 +1270,23 @@
             });
 
             function setupArticleRowListeners(row) {
+                const articleSelect = row.querySelector('.article-select');
                 const artInput = row.querySelector('.art-input');
                 const perPktAmtInput = row.querySelector('.per-pkt-amt');
                 const totalAmtInput = row.querySelector('.total-amt');
                 const saidToContainInput = row.querySelector('input[name="saidToContain"]');
+                const wtRateInput = document.getElementById("wtRate");
+                const fixAmtInput = document.getElementById("fixAmt");
+                const chargedWtInput = document.getElementById("chargedWt");
 
+                articleSelect.addEventListener('change', () => handleArticleTypeChange(articleSelect));
                 artInput.addEventListener('input', () => calculateRowAmount(row));
                 perPktAmtInput.addEventListener('input', () => calculateRowAmount(row));
                 totalAmtInput.addEventListener('input', () => handleTotalAmtChange(row));
                 saidToContainInput.addEventListener('input', () => calculateRowAmount(row));
+                wtRateInput.addEventListener('input', () => calculateRowAmount(row));
+                fixAmtInput.addEventListener('input', () => calculateRowAmount(row));
+                chargedWtInput.addEventListener('input', () => calculateRowAmount(row));
 
                 row.querySelector(".remove-article").disabled = articleTable.rows.length <= 1;
             }
@@ -1306,7 +1345,21 @@
                     alert("Please select a payment type.");
                     return;
                 }
-                        
+
+                // Collect all article details
+                const articles = [];
+                const rows = articleTable.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    articles.push({
+                        article: row.querySelector('select[name="article"]').value,
+                        art: row.querySelector('input[name="art"]').value,
+                        artType: row.querySelector('select[name="artType"]').value,
+                        saidToContain: row.querySelector('input[name="saidToContain"]').value,
+                        perPktAmt: row.querySelector('input[name="perPktAmt"]').value,
+                        totalAmt: row.querySelector('input[name="totalAmt"]').value
+                    });
+                });
+
                 // Define all charge fields with their exact backend field names
                 const chargeFields = {
                     'freight': 'freight',
@@ -1322,31 +1375,32 @@
                     'carrierRisk': 'carrier_risk',
                     'grandTotal': 'grand_total'
                 };
-                
+
+                // Create FormData object
+                const formData = new FormData(this);
+
+                // Add articles to formData
+                formData.delete('article');
+                formData.delete('art');
+                formData.delete('artType');
+                formData.delete('saidToContain');
+                formData.delete('perPktAmt');
+                formData.delete('totalAmt');
+                articles.forEach((article, index) => {
+                    Object.entries(article).forEach(([key, value]) => {
+                        formData.append(`articles[${index}][${key}]`, value);
+                    });
+                });
+
                 // Add all charge fields to the form data
                 Object.entries(chargeFields).forEach(([frontendId, backendName]) => {
                     const input = document.getElementById(frontendId);
                     if (input) {
                         const value = parseFloat(input.value) || 0;
-                        console.log(`Adding ${backendName}: ${value}`);
-                        
-                        // Remove any existing hidden input with this name
-                        const existingInput = this.querySelector(`input[name="${backendName}"]`);
-                        if (existingInput) {
-                            existingInput.remove();
-                        }
-                        
-                        // Create new hidden input
-                        const hiddenInput = document.createElement('input');
-                        hiddenInput.type = 'hidden';
-                        hiddenInput.name = backendName;
-                        hiddenInput.value = value.toFixed(2);
-                        this.appendChild(hiddenInput);
+                        formData.set(backendName, value.toFixed(2));
                     }
                 });
 
-                 // Proceed with form submission
-                const formData = new FormData(this);
                 console.log("Form data before submission:");
                 for (let [key, value] of formData.entries()) {
                     console.log(`${key}: ${value}`);
@@ -1417,6 +1471,17 @@
 
             chargedWtInput.addEventListener('input', calculateWeightAmount);
             wtRateInput.addEventListener('input', calculateWeightAmount);
+
+            document.getElementById("wtRate").addEventListener('input', () => calculateRowAmount(articleTable.rows[0]));
+            document.getElementById("fixAmt").addEventListener('input', () => calculateRowAmount(articleTable.rows[0]));
+            document.getElementById("chargedWt").addEventListener('input', () => calculateRowAmount(articleTable.rows[0]));
+
+            function calculateWeightAmount() {
+                const chargedWt = parseFloat(chargedWtInput.value) || 0;
+                const wtRate = parseFloat(wtRateInput.value) || 0;
+                wtAmtInput.value = (chargedWt * wtRate).toFixed(2);
+                calculateGrandTotal();
+            }
         });
     </script>
 </body>
