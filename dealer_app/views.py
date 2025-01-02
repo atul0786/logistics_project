@@ -858,11 +858,16 @@ def get_cnote_details(request, cnote_number):
     }
     return JsonResponse(data)
 
-
+@login_required
 def cnote_success(request, cnote_number):
-    cnote = get_object_or_404(CNotes, cnote_number=cnote_number)
-    return render(request, 'dealer/cnote_success.html', {'cnote': cnote})
-
+    try:
+        # Directly fetch the CNotes object with related articles
+        cnote = CNotes.objects.prefetch_related('articles').get(cnote_number=cnote_number)
+        return render(request, 'dealer/cnote_success.html', {'cnote': cnote})
+    except CNotes.DoesNotExist:
+        messages.error(request, 'CNote not found.')
+        return redirect('dealer:create_cnotes')
+        
 @login_required
 def view_cnote(request, cnote_number):
     print(f"Searching for CNotes with number: {cnote_number}")
