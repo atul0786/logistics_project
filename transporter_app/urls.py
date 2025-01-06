@@ -54,4 +54,16 @@ urlpatterns = [
     path('api/search-cnotes-for-ddm/', views.search_cnotes_for_ddm, name='search_cnotes_for_ddm'),
 
     path('api/submit-delivery/', views.submit_delivery, name='submit_delivery'),
+    path('api/create-delivery-memo/', views.create_delivery_memo, name='create_delivery_memo'),
+    path('api/save-ddm-pdf/', views.save_ddm_pdf, name='save_ddm_pdf'),
+
+    path('api/submit-delivery/', views.submit_delivery, name='submit_delivery'),
+    path('api/get-ddm-details/<str:ddm_id>/', views.get_ddm_details, name='get_ddm_details'),
+    path('api/save-ddm-pdf/<str:ddm_id>/', views.save_ddm_pdf, name='save_ddm_pdf'),
+     
+     # Add the new URL pattern for ddm-details.html
+    #path('ddm-details/', TemplateView.as_view(template_name='transporter/ddm-details.html'), name='ddm_details'),
+
+    path('ddm-details/', views.ddm_details_view, name='ddm_details'),
+    
 ]
