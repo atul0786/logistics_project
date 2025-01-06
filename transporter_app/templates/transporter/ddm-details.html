@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DDM Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print {
+                display: none;
+            }
+            body {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+            table {
+                page-break-inside: auto;
+            }
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+        }
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .loading-spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error-message {
+            display: none;
+            margin-bottom: 1rem;
+        }
+        .error-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="loading" class="loading" style="display: none;">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-6 text-center">Door Delivery Memo Details</h1>
+        
+        <div id="errorMessage" class="error-message bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <strong class="font-bold">Error!</strong>
+            <span class="block sm:inline" id="errorText"></span>
+        </div>
+
+        {% if messages %}
+        <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4" role="alert">
+            {% for message in messages %}
+            <span class="block sm:inline">{{ message }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">DDM Number: <span id="ddmNumber" class="text-blue-600">{{ ddm_summary.ddm_no }}</span></h2>
+                <p class="text-sm text-gray-600">Date: <span id="ddmDate">{{ ddm_summary.creation_date|date:"M d, Y, g:i a" }}</span></p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-gray-50 p-4 rounded">
+                    <h3 class="text-lg font-semibold mb-2 text-gray-700">Vehicle Details</h3>
+                    <p><strong>Truck Number:</strong> <span id="truckNumber">{{ ddm_summary.truck_no }}</span></p>
+                    <p><strong>Driver Name:</strong> <span id="driverName">{{ ddm_summary.driver_name }}</span></p>
+                    <p><strong>Driver Number:</strong> <span id="driverNumber">{{ ddm_summary.driver_no }}</span></p>
+                </div>
+                
+            <div class="bg-gray-50 p-4 rounded">
+                <h3 class="text-lg font-semibold mb-2 text-gray-700">Loading Information</h3>
+                <p><strong>Lorry Hire:</strong> ₹<span id="lorryHire">{{ ddm_summary.lorry_hire }}</span></p>
+                <p><strong>Remarks:</strong> <span id="remarks">{{ ddm_summary.remarks }}</span></p>
+            </div>
+            
+        </div>
+
+            <h3 class="text-lg font-semibold mb-2 text-gray-700">CNotes List</h3>
+            {% if ddm_details %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border border-gray-300">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="py-2 px-4 border-b text-left">CNote Number</th>
+                            <th class="py-2 px-4 border-b text-left">Consignee Name</th>
+                            <th class="py-2 px-4 border-b text-left">Consignee Contact</th>
+                            <th class="py-2 px-4 border-b text-left">Destination</th>
+                            <th class="py-2 px-4 border-b text-left">Total Art</th>
+                            <th class="py-2 px-4 border-b text-left">Amount</th>
+                            <th class="py-2 px-4 border-b text-left">Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cnotesList">
+                        {% for detail in ddm_details %}
+                        <tr>
+                            <td class="py-2 px-4 border-b">{{ detail.cnote_number }}</td>
+                            <td class="py-2 px-4 border-b">{{ detail.consignee_name }}</td>
+                            <td class="py-2 px-4 border-b">{{ detail.contact_number }}</td>
+                            <td class="py-2 px-4 border-b">{{ detail.destination }}</td>
+                            <td class="py-2 px-4 border-b">{{ detail.total_pkt }}</td>
+                            <td class="py-2 px-4 border-b">₹{{ detail.amount }}</td>
+                        
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4 text-gray-600">
+                No CNotes found for this DDM.
+            </div>
+            {% endif %}
+
+            <div class="mt-6">
+                <h3 class="text-lg font-semibold mb-2 text-gray-700">Summary</h3>
+                <table class="min-w-full bg-white border border-gray-300">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="py-2 px-4 border-b text-left">Total CNotes</th>
+                            <th class="py-2 px-4 border-b text-left">Total Art</th>
+                            <th class="py-2 px-4 border-b text-left">Total Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="py-2 px-4 border-b">{{ ddm_details|length }}</td>
+                            <td class="py-2 px-4 border-b">{{ total_art }}</td>
+                            <td class="py-2 px-4 border-b">₹{{ total_amount }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-6">
+                <h3 class="text-lg font-semibold mb-2 text-gray-700">Signature and Stamp</h3>
+                <div class="border-2 border-dashed border-gray-300 p-4 text-center h-32">
+                    Space for Signature and Stamp
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end space-x-4 no-print">
+            <button id="savePdfBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+                Save PDF
+            </button>
+            <button id="printBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+                Print
+            </button>
+            <button id="createDdmBtn" class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded transition duration-300">
+                Create DDM
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loadingIndicator = document.getElementById('loading');
+            const errorMessage = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            const savePdfBtn = document.getElementById('savePdfBtn');
+            const printBtn = document.getElementById('printBtn');
+            const createDdmBtn = document.getElementById('createDdmBtn');
+
+            function showLoading() {
+                loadingIndicator.style.display = 'flex';
+            }
+
+            function hideLoading() {
+                loadingIndicator.style.display = 'none';
+            }
+
+            function showError(message) {
+                errorText.textContent = message;
+                errorMessage.classList.add('show');
+            }
+
+            function hideError() {
+                errorMessage.classList.remove('show');
+            }
+
+            // Get DDM ID from URL
+            const ddmId = new URLSearchParams(window.location.search).get('ddmId');
+            if (!ddmId) {
+                showError('DDM ID is missing in the URL.');
+                return;
+            }
+
+            // Initial load of DDM details
+            loadDDMDetails(ddmId);
+
+            // Event Listeners
+            savePdfBtn.addEventListener('click', () => savePDF(ddmId));
+            printBtn.addEventListener('click', printDDM);
+            createDdmBtn.addEventListener('click', () => window.location.href = '/transporter/ddm/');
+
+            function loadDDMDetails(ddmId) {
+                showLoading();
+                hideError();
+
+                fetch(`/transporter/api/get-ddm-details/${ddmId}/`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch DDM details');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Update DDM details
+                        document.getElementById('ddmNumber').textContent = data.ddm_no;
+                        document.getElementById('ddmDate').textContent = new Date(data.creation_date).toLocaleString();
+                        document.getElementById('truckNumber').textContent = data.truck_no;
+                        document.getElementById('driverName').textContent = data.driver_name;
+                        document.getElementById('driverNumber').textContent = data.driver_no;
+                        document.getElementById('lorryHire').textContent = data.lorry_hire;
+                        document.getElementById('remarks').textContent = data.remarks || '';
+
+                        // Update CNotes list if it's empty
+                        const cnotesList = document.getElementById('cnotesList');
+                        if (!cnotesList.children.length && data.cnotes && data.cnotes.length > 0) {
+                            data.cnotes.forEach(cnote => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td class="py-2 px-4 border-b">${cnote.cnote_number}</td>
+                                    <td class="py-2 px-4 border-b">${cnote.consignee_name}</td>
+                                    <td class="py-2 px-4 border-b">${cnote.consignee_contact}</td>
+                                    <td class="py-2 px-4 border-b">${cnote.delivery_destination}</td>
+                                    <td class="py-2 px-4 border-b">${cnote.total_art}</td>
+                                    <td class="py-2 px-4 border-b">₹${cnote.amount}</td>
+                                    <td class="py-2 px-4 border-b">${cnote.remarks || ''}</td>
+                                `;
+                                cnotesList.appendChild(row);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showError('Failed to load DDM details. Please try again.');
+                    })
+                    .finally(() => {
+                        hideLoading();
+                    });
+            }
+
+            function savePDF(ddmId) {
+                showLoading();
+                fetch(`/transporter/api/save-ddm-pdf/${ddmId}/`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Failed to generate PDF');
+                        return response.blob();
+                    })
+                    .then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        a.download = `DDM-${document.getElementById('ddmNumber').textContent}.pdf`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showError('Failed to generate PDF. Please try again.');
+                    })
+                    .finally(() => {
+                        hideLoading();
+                    });
+            }
+
+            function printDDM() {
+                window.print();
+            }
+        });
+    </script>
+</body>
+</html>
+
