@@ -200,3 +200,63 @@ class DeliveryCNote(models.Model):
 
     def __str__(self):
         return self.lr_number
+
+
+
+
+class DDMSummary(models.Model):
+    ddm_id = models.AutoField(primary_key=True)  # Unique ID for each DDM summary
+    ddm_no = models.CharField(max_length=20, unique=True)  # DDM number, must be unique
+    total_cnotes = models.IntegerField()
+    total_packages = models.IntegerField()
+    total_paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total_to_pay_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total_tbb_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    creation_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+
+    # New fields for loading information
+    truck_no = models.CharField(max_length=20, blank=True)
+    driver_name = models.CharField(max_length=100, blank=True)
+    driver_no = models.CharField(max_length=15, blank=True)
+    lorry_hire = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    remarks = models.TextField(blank=True, null=True)  # Add this line
+    def __str__(self):
+        return f"Summary for DDM {self.ddm_no} (ID: {self.ddm_id})"
+
+    class Meta:
+        verbose_name = "Door Delivery Memo Summary"
+        verbose_name_plural = "Door Delivery Memo Summaries"
+
+
+class DDMDetails(models.Model):
+    id = models.AutoField(primary_key=True)
+    ddm = models.ForeignKey(DDMSummary, on_delete=models.CASCADE, related_name='details', null=True, blank=True)
+    cnote_booking_date = models.DateField(null=True, blank=True)
+    cnote_number = models.CharField(max_length=20)
+    consignee_name = models.CharField(max_length=100)
+    contact_number = models.CharField(max_length=20)
+    destination = models.CharField(max_length=100)
+    total_pkt = models.IntegerField()
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_type = models.CharField(max_length=20)
+    remark = models.TextField(blank=True, null=True)
+    creation_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+    dealer_name = models.CharField(max_length=100)
+    transporter_name = models.CharField(max_length=100)
+    status = models.CharField(max_length=20, default='due delivered')
+    
+    # New fields for loading information
+    truck_no = models.CharField(max_length=20, blank=True)
+    driver_name = models.CharField(max_length=100, blank=True)
+    driver_no = models.CharField(max_length=15, blank=True)
+    lorry_hire = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def __str__(self):
+        return f"DDM Detail for CNote {self.cnote_number} (DDM ID: {self.ddm.ddm_id if self.ddm else 'N/A'})"
+
+    class Meta:
+        verbose_name = "Door Delivery Memo Details"
+        verbose_name_plural = "Door Delivery Memo Details"
