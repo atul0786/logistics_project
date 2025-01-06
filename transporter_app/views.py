@@ -1,7 +1,16 @@
 import json
 from datetime import datetime
 import logging
-from .models import DeliveryCNote
+from .models import DDMSummary, DeliveryCNote
+from .models import CNote# Assuming you have a CNotes model
+
+import json
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from .models import DDMDetails, DDMSummary
+from .serializers import DDMDetailsSerializer, DDMSummarySerializer
+from datetime import date
+
 from decimal import Decimal
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
@@ -10,9 +19,17 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 from django.db.models import Sum
-from django.db import transaction
+from django.db import IntegrityError, transaction
+from dealer_app.models import CNotes, DeliveryDestination
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+import io
+from django.http import FileResponse
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from django.db.models import F
+from django.shortcuts import redirect
+from django.urls import reverse
 from django.views.generic import TemplateView
 from dealer_app.models import CNotes, Dealer, LoadingSheetSummary
 from .models import Transporter, State, City, PartyMaster, Pickup, TransporterAppReceive
@@ -48,6 +65,7 @@ from dealer_app.models import CNotes
 from django.views.decorators.csrf import csrf_exempt
 from .models import DeliveryCNote, ReceivedStatesCnotes
 from dealer_app.models import LoadingSheetDetail, CNotes
+
 
 
 
@@ -923,6 +941,9 @@ def get_destinations(request):
     
     return JsonResponse(destination_list, safe=False)
 
+
+logger = logging.getLogger(__name__)
+
 def search_cnotes_for_ddm(request):
     destination = request.GET.get('destination')
     delivery_for = request.GET.get('deliveryFor')
@@ -942,6 +963,271 @@ def search_cnotes_for_ddm(request):
     if lr_number:
         query = query.filter(cnote_number__icontains=lr_number)
 
-    results = list(query.values('cnote_number', 'consignor_name', 'consignee_name', 'total_art', 'actual_weight', 'declared_value', 'status'))
+    results = list(query.values(
+    'cnote_number', 
+    'consignor_name', 
+    'consignee_name', 
+    'total_art', 
+    'actual_weight', 
+    'declared_value', 
+    'status',
+    delivery_destination_name=F('delivery_destination__destination_name')  # Include the actual name
+    ))
+    logger.info("Search Results: %s", results)  # Log the results for debugging
 
     return JsonResponse(results, safe=False)
+
+
+
+
+logger = logging.getLogger(__name__)
+@csrf_exempt
+@transaction.atomic
+def create_delivery_memo(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            logger.info(f"Received data for create_delivery_memo: {data}")
+
+            cnotes = data.get('cnotes', [])
+            truck_no = data.get('truckNo', '')
+            driver_name = data.get('driverName', '')
+            driver_no = data.get('driverNo', '')
+            lorry_hire = data.get('lorryHire', 0)
+            remarks = data.get('remarks', '')
+
+            if not cnotes:
+                return JsonResponse({'status': 'error', 'message': 'No cnotes provided.'}, status=400)
+
+            ddm_no = generate_sequential_ddm_number()
+            logger.info(f"Generated DDM number: {ddm_no}")
+
+            # Initialize totals
+            total_packages = 0
+            total_paid_amount = 0
+            total_to_pay_amount = 0
+            total_amount = 0
+
+            # Create DDM Summary
+            for cnote_number in cnotes:
+                cnote = CNotes.objects.get(cnote_number=cnote_number)
+                total_packages += cnote.total_art
+                total_amount += cnote.grand_total
+                if cnote.payment_type == 'paid':
+                    total_paid_amount += cnote.grand_total
+                elif cnote.payment_type == 'due':
+                    total_to_pay_amount += cnote.grand_total
+
+            ddm_summary = DDMSummary.objects.create(
+                ddm_no=ddm_no,
+                total_cnotes=len(cnotes),
+                total_packages=total_packages,
+                total_paid_amount=total_paid_amount,
+                total_to_pay_amount=total_to_pay_amount,
+                total_amount=total_amount,
+                creation_date=timezone.now(),
+                updated_date=timezone.now(),
+                truck_no=truck_no,
+                driver_name=driver_name,
+                driver_no=driver_no,
+                lorry_hire=lorry_hire
+            )
+            logger.info(f"Created DDM Summary: {ddm_summary.ddm_id}")
+
+            # Create DDM Details for each CNote
+            for cnote_number in cnotes:
+                cnote = CNotes.objects.get(cnote_number=cnote_number)
+                ddm_detail = DDMDetails.objects.create(
+                    ddm=ddm_summary,
+                    cnote_booking_date=cnote.manual_date,
+                    cnote_number=cnote.cnote_number,
+                    consignee_name=cnote.consignee_name,
+                    contact_number=cnote.consignee_mobile,
+                    destination=cnote.delivery_destination,
+                    total_pkt=cnote.total_art,
+                    amount=cnote.grand_total,
+                    payment_type=cnote.payment_type,
+                    remark=remarks,
+                    dealer_name=cnote.dealer.dealer_code,
+                    transporter_name=cnote.consignor_name,
+                    status='due delivered',
+                    truck_no=truck_no,
+                    driver_name=driver_name,
+                    driver_no=driver_no,
+                    lorry_hire=lorry_hire
+                )
+                logger.info(f"Created DDM Detail: {ddm_detail.id}")
+
+                # Update status in CNotes
+                cnote.status = 'due delivered'
+                cnote.save()
+
+                # Update status in LoadingSheetDetail
+                LoadingSheetDetail.objects.filter(cnote=cnote).update(status='due delivered')
+
+            return JsonResponse({'status': 'success', 'ddm_no': ddm_no, 'ddm_id': ddm_summary.ddm_id}, status=201)
+
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON format in request body.")
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON format.'}, status=400)
+        except CNotes.DoesNotExist:
+            logger.error("CNote not found.")
+            return JsonResponse({'status': 'error', 'message': 'CNote not found.'}, status=404)
+        except Exception as e:
+            logger.error(f"Error processing request: {str(e)}")
+            return JsonResponse({'status': 'error', 'message': 'Internal Server Error.'}, status=500)
+
+@csrf_exempt
+def save_ddm_pdf(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            ddm_id = data.get('ddm_id')
+            
+            ddm_summary = DDMSummary.objects.get(ddm_id=ddm_id)
+            ddm_details = DDMDetails.objects.filter(ddm=ddm_summary)
+
+            buffer = io.BytesIO()
+            p = canvas.Canvas(buffer, pagesize=letter)
+
+            # Add content to the PDF
+            p.drawString(100, 750, f"Door Delivery Memo - {ddm_summary.ddm_no}")
+            p.drawString(100, 730, f"Date: {ddm_summary.creation_date.strftime('%Y-%m-%d')}")
+            
+            y = 700
+            for detail in ddm_details:
+                p.drawString(100, y, f"CNote: {detail.cnote_number}")
+                p.drawString(100, y-15, f"Consignee: {detail.consignee_name}")
+                y -= 30
+
+            p.showPage()
+            p.save()
+
+            buffer.seek(0)
+            return FileResponse(buffer, as_attachment=True, filename=f'DDM-{ddm_summary.ddm_no}.pdf')
+
+        except Exception as e:
+            logger.error(f"Error generating PDF: {str(e)}")
+            return JsonResponse({'status': 'error', 'message': 'Error generating PDF'}, status=500)
+        
+
+class DDMDetailsViewSet(viewsets.ModelViewSet):
+    queryset = DDMDetails.objects.all()
+    serializer_class = DDMDetailsSerializer
+
+class DDMSummaryViewSet(viewsets.ModelViewSet):
+    queryset = DDMSummary.objects.all()
+    serializer_class = DDMSummarySerializer
+
+def generate_sequential_ddm_number():
+    # Implement your logic to generate a unique sequential DDM number
+    # This is a placeholder function
+    return "DDM-0001"  # Replace with actual logic to generate a unique number
+def generate_sequential_ddm_number():
+    with transaction.atomic():
+        last_ddm = DDMSummary.objects.select_for_update().order_by('-ddm_id').first()
+        
+        if last_ddm:
+            try:
+                last_number = int(last_ddm.ddm_no.split('-')[-1])  # Assuming format is 'DDM-1', 'DDM-2', etc.
+                new_number = last_number + 1
+            except (ValueError, IndexError):
+                raise ValueError(f"Invalid format in DDM number: {last_ddm.ddm_no}")
+        else:
+            new_number = 1  # Start with 1 if no DDM exists
+
+        while DDMSummary.objects.filter(ddm_no=f"DDM-{new_number}").exists():
+            new_number += 1
+
+        return f"DDM-{new_number}"  # Example format: DDM-1, DDM-2, etc.
+    
+@require_GET
+def get_ddm_details(request, ddm_id):
+    try:
+        ddm_summary = get_object_or_404(DDMSummary, ddm_id=ddm_id)
+        ddm_details = DDMDetails.objects.filter(ddm=ddm_summary)
+
+        cnotes_data = []
+        total_art = 0
+        total_amount = 0
+
+        for detail in ddm_details:
+            cnote_data = {
+                'cnote_number': detail.cnote_number,
+                'consignee_name': detail.consignee_name,
+                'consignee_contact': detail.contact_number,
+                'delivery_destination': detail.destination,
+                'total_art': detail.total_pkt,
+                'amount': float(detail.amount),
+                'remarks': detail.remark or '',
+            }
+            cnotes_data.append(cnote_data)
+            total_art += detail.total_pkt
+            total_amount += detail.amount
+
+        response_data = {
+            'ddm_no': ddm_summary.ddm_no,
+            'creation_date': ddm_summary.creation_date.strftime('%Y-%m-%d %H:%M:%S'),
+            'truck_no': ddm_summary.truck_no,
+            'driver_name': ddm_summary.driver_name,
+            'driver_no': ddm_summary.driver_no,
+            'lorry_hire': float(ddm_summary.lorry_hire),
+            'remarks': ddm_summary.remarks or '',
+            'cnotes': cnotes_data,
+            'total_art': total_art,
+            'total_amount': float(total_amount),
+        }
+
+        return JsonResponse(response_data)
+    except DDMSummary.DoesNotExist:
+        return JsonResponse({'error': 'DDM not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error in get_ddm_details: {str(e)}")
+        return JsonResponse({'error': 'Internal Server Error'}, status=500)
+
+
+
+    
+@require_GET
+def save_ddm_pdf(request, ddm_id):
+    # Implement PDF generation logic here
+    # For now, we'll just return a success message
+    return JsonResponse({'message': 'PDF saved successfully'})
+
+
+logger = logging.getLogger(__name__)
+
+def ddm_details_view(request):
+    try:
+        ddm_id = request.GET.get('ddmId')
+        if not ddm_id:
+            messages.error(request, 'DDM ID is required')
+            return redirect('transporter:ddm')
+            
+        # Get DDM summary
+        ddm_summary = get_object_or_404(DDMSummary, ddm_id=ddm_id)
+        
+        # Get all DDM details
+        ddm_details = DDMDetails.objects.filter(ddm=ddm_summary)
+        
+        total_art = sum(detail.total_pkt for detail in ddm_details)
+        total_amount = sum(detail.amount for detail in ddm_details)
+        
+        context = {
+            'ddm_summary': ddm_summary,
+            'ddm_details': ddm_details,
+            'total_art': total_art,
+            'total_amount': total_amount,
+            'remarks': ddm_summary.remarks or ''  # Use empty string if remarks is None
+        }
+        
+        return render(request, 'transporter/ddm-details.html', context)
+        
+    except DDMSummary.DoesNotExist:
+        messages.error(request, 'DDM not found')
+        return redirect('transporter:ddm')
+    except Exception as e:
+        logger.error(f"Error in ddm_details_view: {str(e)}")
+        messages.error(request, 'Error loading DDM details. Please try again.')
+        return redirect('transporter:ddm')
+
