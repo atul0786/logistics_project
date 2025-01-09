@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNotes Search System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f8ff;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .search-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: 2px solid #4682b4;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .search-button {
+            padding: 12px 30px;
+            background-color: #4682b4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .search-button:hover {
+            background-color: #3a6d8c;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .left-panel, .right-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .left-panel {
+            flex: 2;
+        }
+
+        .right-panel {
+            flex: 1;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4682b4;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #4682b4;
+            padding-bottom: 5px;
+        }
+
+        .details-group {
+            margin-bottom: 20px;
+        }
+
+        .details-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+
+        .details-label {
+            width: 150px;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .details-value {
+            flex: 1;
+        }
+
+        .charges-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .charges-table th,
+        .charges-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .charges-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .status-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .status-tab {
+            padding: 10px 20px;
+            background-color: #f5f5f5;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .status-tab.active {
+            background-color: #4682b4;
+            color: white;
+        }
+
+        .status-history {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .status-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .status-table th,
+        .status-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .status-table th {
+            background-color: #f5f5f5;
+            position: sticky;
+            top: 0;
+        }
+
+        .edit-button {
+            padding: 8px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+
+        .edit-button:hover {
+            background-color: #218838;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: relative;
+            background-color: white;
+            margin: 50px auto;
+            padding: 20px;
+            width: 80%;
+            max-width: 800px;
+            border-radius: 8px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close-button {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .save-button {
+            padding: 10px 25px;
+            background-color: #4682b4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .save-button:hover {
+            background-color: #3a6d8c;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-booked { background-color: #ffd700; color: #000; }
+        .status-dispatched { background-color: #1e90ff; color: #fff; }
+        .status-received { background-color: #32cd32; color: #fff; }
+        .status-delivered { background-color: #008000; color: #fff; }
+
+        .changes-history {
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .changes-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .changes-table th,
+        .changes-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .changes-table th {
+            background-color: #f5f5f5;
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255,255,255,0.9);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1100;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4682b4;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>CNotes Search System</h1>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" id="searchInput" class="search-input" placeholder="Enter CNotes Number">
+            </div>
+            <button id="searchButton" class="search-button">
+                <i class="fas fa-search"></i> Search
+            </button>
+        </div>
+
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="details-group">
+                    <h2 class="section-title">Consignor Details</h2>
+                    <div class="details-row">
+                        <span class="details-label">Name:</span>
+                        <span class="details-value" id="consignorName">-</span>
+                    </div>
+                    <div class="details-row">
+                        <span class="details-label">Address:</span>
+                        <span class="details-value" id="consignorAddress">-</span>
+                    </div>
+                    <div class="details-row">
+                        <span class="details-label">Mobile:</span>
+                        <span class="details-value" id="consignorMobile">-</span>
+                    </div>
+                    <div class="details-row">
+                        <span class="details-label">GST No:</span>
+                        <span class="details-value" id="consignorGst">-</span>
+                    </div>
+                </div>
+
+                <div class="details-group">
+                    <h2 class="section-title">Consignee Details</h2>
+                    <div class="details-row">
+                        <span class="details-label">Name:</span>
+                        <span class="details-value" id="consigneeName">-</span>
+                    </div>
+                    <div class="details-row">
+                        <span class="details-label">Address:</span>
+                        <span class="details-value" id="consigneeAddress">-</span>
+                    </div>
+                    <div class="details-row">
+                        <span class="details-label">Mobile:</span>
+                        <span class="details-value" id="consigneeMobile">-</span>
+                    </div>
+                    <div class="details-row">
+                        <span class="details-label">GST No:</span>
+                        <span class="details-value" id="consigneeGst">-</span>
+                    </div>
+                </div>
+
+                <div class="details-group">
+                    <h2 class="section-title">Article Details</h2>
+                    <table class="charges-table" id="articleTable">
+                        <thead>
+                            <tr>
+                                <th>Article Type</th>
+                                <th>Quantity</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4">No data available</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <button id="editButton" class="edit-button">
+                    <i class="fas fa-edit"></i> Edit CNotes
+                </button>
+            </div>
+
+            <div class="right-panel">
+                <h2 class="section-title">Charges Details</h2>
+                <table class="charges-table" id="chargesTable">
+                    <tr>
+                        <td>Freight</td>
+                        <td id="freightCharge">0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Door Delivery</td>
+                        <td id="doorDeliveryCharge">0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Handling</td>
+                        <td id="handlingCharge">0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Other Charges</td>
+                        <td id="otherCharges">0.00</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total</strong></td>
+                        <td id="totalCharges"><strong>0.00</strong></td>
+                    </tr>
+                </table>
+
+                <div class="status-tabs">
+                    <button class="status-tab active" data-tab="current">Current Status</button>
+                    <button class="status-tab" data-tab="history">Status History</button>
+                </div>
+
+                <div class="status-history">
+                    <table class="status-table" id="statusTable">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>User</th>
+                                <th>Branch</th>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Remark</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="7">No status history available</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Edit CNotes</h2>
+            <form id="editForm">
+                <!-- Consignor Details -->
+                <div class="form-group">
+                    <h3>Consignor Details</h3>
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-input" id="editConsignorName">
+                    <label class="form-label">Address</label>
+                    <input type="text" class="form-input" id="editConsignorAddress">
+                    <label class="form-label">Mobile</label>
+                    <input type="text" class="form-input" id="editConsignorMobile">
+                    <label class="form-label">GST No</label>
+                    <input type="text" class="form-input" id="editConsignorGst">
+                </div>
+
+                <!-- Consignee Details -->
+                <div class="form-group">
+                    <h3>Consignee Details</h3>
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-input" id="editConsigneeName">
+                    <label class="form-label">Address</label>
+                    <input type="text" class="form-input" id="editConsigneeAddress">
+                    <label class="form-label">Mobile</label>
+                    <input type="text" class="form-input" id="editConsigneeMobile">
+                    <label class="form-label">GST No</label>
+                    <input type="text" class="form-input" id="editConsigneeGst">
+                </div>
+
+                <!-- Charges -->
+                <div class="form-group">
+                    <h3>Charges</h3>
+                    <label class="form-label">Freight</label>
+                    <input type="number" class="form-input" id="editFreight">
+                    <label class="form-label">Door Delivery</label>
+                    <input type="number" class="form-input" id="editDoorDelivery">
+                    <label class="form-label">Handling</label>
+                    <input type="number" class="form-input" id="editHandling">
+                    <label class="form-label">Other Charges</label>
+                    <input type="number" class="form-input" id="editOtherCharges">
+                </div>
+
+                <button type="submit" class="save-button">Update CNotes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchButton');
+            const editButton = document.getElementById('editButton');
+            const editModal = document.getElementById('editModal');
+            const closeButton = document.querySelector('.close-button');
+            const editForm = document.getElementById('editForm');
+            const loading = document.getElementById('loading');
+            const statusTabs = document.querySelectorAll('.status-tab');
+            
+            let currentCNoteData = null;
+
+            // Search functionality
+            searchButton.addEventListener('click', async function() {
+                const cnoteNumber = searchInput.value.trim();
+                if (!cnoteNumber) {
+                    alert('Please enter a CNotes number');
+                    return;
+                }
+
+                loading.style.display = 'block';
+                try {
+                    const response = await fetch(`/api/cnotes/${cnoteNumber}`);
+                    if (!response.ok) throw new Error('CNotes not found');
+                    
+                    const data = await response.json();
+                    currentCNoteData = data;
+                    updateUIWithData(data);
+                } catch (error) {
+                    alert('Error fetching CNotes: ' + error.message);
+                } finally {
+                    loading.style.display = 'none';
+                }
+            });
+
+            // Update UI with CNotes data
+            function updateUIWithData(data) {
+                // Consignor details
+                document.getElementById('consignorName').textContent = data.consignor_name;
+                document.getElementById('consignorAddress').textContent = data.consignor_address;
+                document.getElementById('consignorMobile').textContent = data.consignor_mobile;
+                document.getElementById('consignorGst').textContent = data.consignor_gst;
+
+                // Consignee details
+                document.getElementById('consigneeName').textContent = data.consignee_name;
+                document.getElementById('consigneeAddress').textContent = data.consignee_address;
+                document.getElementById('consigneeMobile').textContent = data.consignee_mobile;
+                document.getElementById('consigneeGst').textContent = data.consignee_gst;
+
+                // Charges
+                document.getElementById('freightCharge').textContent = data.freight.toFixed(2);
+                document.getElementById('doorDeliveryCharge').textContent = data.door_delivery_charge.toFixed(2);
+                document.getElementById('handlingCharge').textContent = data.handling_charge.toFixed(2);
+                document.getElementById('otherCharges').textContent = data.other_charges.toFixed(2);
+                document.getElementById('totalCharges').textContent = data.total_amount.toFixed(2);
+
+                // Update status table
+                updateStatusTable(data.status_history);
+            }
+
+            // Update status table
+            function updateStatusTable(statusHistory) {
+                const statusTableBody = document.querySelector('#statusTable tbody');
+                if (!statusHistory || statusHistory.length === 0) {
+                    statusTableBody.innerHTML = '<tr><td colspan="7">No status history available</td></tr>';
+                    return;
+                }
+
+                statusTableBody.innerHTML = statusHistory.map(status => `
+                    <tr>
+                        <td><span class="status-badge status-${status.status.toLowerCase()}">${status.status}</span></td>
+                        <td>${status.date}</td>
+                        <td>${status.user}</td>
+                        <td>${status.branch}</td>
+                        <td>${status.from}</td>
+                        <td>${status.to}</td>
+                        <td>${status.remark || '-'}</td>
+                    </tr>
+                `).join('');
+            }
+
+            // Edit functionality
+            editButton.addEventListener('click', function() {
+                if (!currentCNoteData) {
+                    alert('Please search for a CNotes first');
+                    return;
+                }
+                populateEditForm(currentCNoteData);
+                editModal.style.display = 'block';
+            });
+
+            closeButton.addEventListener('click', function() {
+                editModal.style.display = 'none';
+            });
+
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target === editModal) {
+                    editModal.style.display = 'none';
+                }
+            });
+
+            // Populate edit form
+            function populateEditForm(data) {
+                document.getElementById('editConsignorName').value = data.consignor_name;
+                document.getElementById('editConsignorAddress').value = data.consignor_address;
+                document.getElementById('editConsignorMobile').value = data.consignor_mobile;
+                document.getElementById('editConsignorGst').value = data.consignor_gst;
+
+                document.getElementById('editConsigneeName').value = data.consignee_name;
+                document.getElementById('editConsigneeAddress').value = data.consignee_address;
+                document.getElementById('editConsigneeMobile').value = data.consignee_mobile;
+                document.getElementById('editConsigneeGst').value = data.consignee_gst;
+
+                document.getElementById('editFreight').value = data.freight;
+                document.getElementById('editDoorDelivery').value = data.door_delivery_charge;
+                document.getElementById('editHandling').value = data.handling_charge;
+                document.getElementById('editOtherCharges').value = data.other_charges;
+            }
+
+            // Handle form submission
+            editForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const updatedData = {
+                    consignor_name: document.getElementById('editConsignorName').value,
+                    consignor_address: document.getElementById('editConsignorAddress').value,
+                    consignor_mobile: document.getElementById('editConsignorMobile').value,
+                    consignor_gst: document.getElementById('editConsignorGst').value,
+                    consignee_name: document.getElementById('editConsigneeName').value,
+                    consignee_address: document.getElementById('editConsigneeAddress').value,
+                    consignee_mobile: document.getElementById('editConsigneeMobile').value,
+                    consignee_gst: document.getElementById('editConsigneeGst').value,
+                    freight: parseFloat(document.getElementById('editFreight').value),
+                    door_delivery_charge: parseFloat(document.getElementById('editDoorDelivery').value),
+                    handling_charge: parseFloat(document.getElementById('editHandling').value),
+                    other_charges: parseFloat(document.getElementById('editOtherCharges').value)
+                };
+
+                loading.style.display = 'block';
+                try {
+                    const response = await fetch(`/api/cnotes/${currentCNoteData.cnote_number}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify(updatedData)
+                    });
+
+                    if (!response.ok) throw new Error('Failed to update CNotes');
+                    
+                    const updatedCNote = await response.json();
+                    currentCNoteData = updatedCNote;
+                    updateUIWithData(updatedCNote);
+                    editModal.style.display = 'none';
+                    alert('CNotes updated successfully');
+                } catch (error) {
+                    alert('Error updating CNotes: ' + error.message);
+                } finally {
+                    loading.style.display = 'none';
+                }
+            });
+
+            // Status tabs functionality
+            statusTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    statusTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const tabType = this.dataset.tab;
+                    if (tabType === 'current' && currentCNoteData) {
+                        updateStatusTable([currentCNoteData.status_history[0]]);
+                    } else if (currentCNoteData) {
+                        updateStatusTable(currentCNoteData.status_history);
+                    }
+                });
+            });
+
+            // Helper function to get CSRF token
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+        });
+    </script>
+</body>
+</html>
