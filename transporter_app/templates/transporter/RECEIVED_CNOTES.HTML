@@ -141,6 +141,11 @@
             transform: translateY(-1px);
         }
 
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .table-responsive {
             overflow-x: auto;
             margin: 1rem 0;
@@ -175,7 +180,7 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
             margin-bottom: 1.5rem;
         }
@@ -300,6 +305,15 @@
             background-color: #1d4ed8;
             transform: translateY(-1px);
         }
+
+        .sort-icon {
+            cursor: pointer;
+            margin-left: 0.5rem;
+        }
+
+        .sort-icon.active {
+            color: var(--primary);
+        }
     </style>
 </head>
 <body>
@@ -378,13 +392,6 @@
                 </div>
                 <i class="fas fa-times-circle fa-2x" style="color: var(--danger)"></i>
             </div>
-            <div class="stat-card">
-                <div class="stat-info">
-                    <h3>Total Excess Entry</h3>
-                    <p id="excessEntryCount">0</p>
-                </div>
-                <i class="fas fa-plus-circle fa-2x" style="color: var(--success)"></i>
-            </div>
         </div>
 
         <div class="card">
@@ -430,16 +437,17 @@
                     <p>Loading LR details...</p>
                 </div>
                 <div class="table-responsive">
-                    <table>
+                    <table id="lrDetailsTable">
                         <thead>
                             <tr>
                                 <th><input type="checkbox" id="selectAll"></th>
-                                <th>LR No.</th>
-                                <th>To</th>
-                                <th>Consignee Name</th>
-                                <th>Articles</th>
-                                <th>Amount</th>
-                                <th>Cnote Type</th>
+                                <th>LR No. <i class="fas fa-sort sort-icon" data-column="lr_no"></i></th>
+                                <th>To <i class="fas fa-sort sort-icon" data-column="to"></i></th>
+                                <th>Consignee Name <i class="fas fa-sort sort-icon" data-column="consignee_name"></i></th>
+                                <th>Articles <i class="fas fa-sort sort-icon" data-column="articles"></i></th>
+                                <th>Amount <i class="fas fa-sort sort-icon" data-column="amount"></i></th>
+                                <th>Cnote Type <i class="fas fa-sort sort-icon" data-column="cnote_type"></i></th>
+                                <th>Status <i class="fas fa-sort sort-icon" data-column="status"></i></th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -468,11 +476,13 @@
     
         // Global variables
         let loadingSheetData = null;
+        let lrDetails = [];
         let stats = {
             shortEntry: 0,
-            damageEntry: 0,
-            excessEntry: 0
+            damageEntry: 0
         };
+        let currentSortColumn = 'lr_no';
+        let currentSortDirection = 'asc';
     
         // Function to get URL parameters
         function getUrlParameter(name) {
@@ -493,7 +503,8 @@
                 
                 if (response.data.status === 'success') {
                     populateLoadingSheetDetails(response.data.loading_sheet);
-                    populateLRDetails(response.data.lr_details);
+                    lrDetails = response.data.lr_details;
+                    populateLRDetails();
                 } else {
                     throw new Error(response.data.message || 'Failed to fetch loading sheet details');
                 }
@@ -502,7 +513,7 @@
                 showToast('Failed to fetch loading sheet details', 'error');
                 document.getElementById('tableBody').innerHTML = `
                     <tr>
-                        <td colspan="8" class="text-center text-red-600">
+                        <td colspan="9" class="text-center text-red-600">
                             Error loading LR details. Please try again.
                         </td>
                     </tr>
@@ -539,40 +550,40 @@
         }
     
         // Function to populate LR details table
-        function populateLRDetails(data) {
+        function populateLRDetails() {
             const tableBody = document.getElementById('tableBody');
-            if (!data || data.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="8" class="text-center">No pending LR details available</td></tr>';
+            if (!lrDetails || lrDetails.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="9" class="text-center">No pending LR details available</td></tr>';
                 return;
             }
     
-            tableBody.innerHTML = data.map(item => {
+            tableBody.innerHTML = lrDetails.map(item => {
                 const lr_no = item.lr_no || '-';
                 const to = item.to || 'N/A';
                 const consignee_name = item.consignee_name || 'N/A';
                 const articles = item.articles || 0;
                 const amount = item.amount || 0;
                 const cnote_type = item.cnote_type || 'N/A';
+                const status = item.status || 'Pending';
+                const isReceived = status.toLowerCase() === 'received';
     
                 return `
                     <tr>
-                        <td><input type="checkbox" class="selectItem" data-id="${lr_no}"></td>
+                        <td><input type="checkbox" class="selectItem" data-id="${lr_no}" ${isReceived ? 'disabled' : ''}></td>
                         <td>${lr_no}</td>
                         <td>${to}</td>
                         <td>${consignee_name}</td>
                         <td>${articles}</td>
                         <td>₹${amount}</td>
                         <td>${cnote_type}</td>
+                        <td>${status}</td>
                         <td>
                             <div class="action-buttons">
-                                <button class="btn btn-warning btn-sm" onclick="handleShort('${lr_no}')">
+                                <button class="btn btn-warning btn-sm" onclick="handleShort('${lr_no}')" ${isReceived ? 'disabled' : ''}>
                                     <i class="fas fa-exclamation-triangle"></i> Short
                                 </button>
-                                <button class="btn btn-danger btn-sm" onclick="handleDamage('${lr_no}')">
+                                <button class="btn btn-danger btn-sm" onclick="handleDamage('${lr_no}')" ${isReceived ? 'disabled' : ''}>
                                     <i class="fas fa-times-circle"></i> Damage
-                                </button>
-                                <button class="btn btn-success btn-sm" onclick="handleExcess('${lr_no}')">
-                                    <i class="fas fa-plus-circle"></i> Excess
                                 </button>
                             </div>
                         </td>
@@ -588,6 +599,7 @@
                 stats.shortEntry++;
                 updateStats();
                 showToast(`Short entry recorded for ${lrNo}`);
+                await fetchLoadingSheetDetails(loadingSheetData.ls_no);
             } catch (error) {
                 console.error('Error:', error);
                 showToast('Failed to record short entry', 'error');
@@ -601,27 +613,10 @@
                 stats.damageEntry++;
                 updateStats();
                 showToast(`Damage entry recorded for ${lrNo}`);
+                await fetchLoadingSheetDetails(loadingSheetData.ls_no);
             } catch (error) {
                 console.error('Error:', error);
                 showToast('Failed to record damage entry', 'error');
-            }
-        }
-    
-        // Function to handle excess entry
-        async function handleExcess(lrNo) {
-            try {
-                const quantity = prompt("Enter excess quantity:");
-                if (quantity === null) return; // User cancelled the prompt
-                const response = await axios.post('/transporter/api/excess-receive/', { 
-                    lr_no: lrNo,
-                    quantity: quantity
-                });
-                stats.excessEntry++;
-                updateStats();
-                showToast(`Excess entry recorded for ${lrNo}`);
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('Failed to record excess entry', 'error');
             }
         }
     
@@ -629,7 +624,6 @@
         function updateStats() {
             document.getElementById('shortEntryCount').textContent = stats.shortEntry;
             document.getElementById('damageEntryCount').textContent = stats.damageEntry;
-            document.getElementById('excessEntryCount').textContent = stats.excessEntry;
         }
     
         // Function to show toast notification
@@ -655,6 +649,43 @@
             }, 3000);
         }
     
+        // Function to sort LR details
+        function sortLRDetails(column) {
+            if (column === currentSortColumn) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortColumn = column;
+                currentSortDirection = 'asc';
+            }
+    
+            lrDetails.sort((a, b) => {
+                let valueA = a[column];
+                let valueB = b[column];
+    
+                if (typeof valueA === 'string') valueA = valueA.toLowerCase();
+                if (typeof valueB === 'string') valueB = valueB.toLowerCase();
+    
+                if (valueA < valueB) return currentSortDirection === 'asc' ? -1 : 1;
+                if (valueA > valueB) return currentSortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+    
+            populateLRDetails();
+            updateSortIcons();
+        }
+    
+        // Function to update sort icons
+        function updateSortIcons() {
+            document.querySelectorAll('.sort-icon').forEach(icon => {
+                icon.classList.remove('active');
+                icon.classList.remove('fa-sort-up', 'fa-sort-down');
+                if (icon.dataset.column === currentSortColumn) {
+                    icon.classList.add('active');
+                    icon.classList.add(currentSortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down');
+                }
+            });
+        }
+    
         // Event Listeners
         document.addEventListener('DOMContentLoaded', async function() {
             const lsNumber = getUrlParameter('lsNumber');
@@ -663,21 +694,28 @@
             } else {
                 showToast('No Loading Sheet number provided', 'error');
             }
+    
+            // Add event listeners for sorting
+            document.querySelectorAll('.sort-icon').forEach(icon => {
+                icon.addEventListener('click', () => sortLRDetails(icon.dataset.column));
+            });
         });
     
         document.getElementById('selectAll').addEventListener('change', function(e) {
-            document.querySelectorAll('.selectItem').forEach(checkbox => {
+            document.querySelectorAll('.selectItem:not(:disabled)').forEach(checkbox => {
                 checkbox.checked = e.target.checked;
             });
         });
     
         document.getElementById('searchInput').addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
-            const filteredData = Array.from(document.querySelectorAll('#tableBody tr')).filter(row => {
-                return row.textContent.toLowerCase().includes(searchTerm);
-            });
-            document.querySelectorAll('#tableBody tr').forEach(row => row.style.display = 'none');
-            filteredData.forEach(row => row.style.display = '');
+            const filteredData = lrDetails.filter(item => 
+                Object.values(item).some(val => 
+                    val.toString().toLowerCase().includes(searchTerm)
+                )
+            );
+            lrDetails = filteredData;
+            populateLRDetails();
         });
     
         // Receive button functionality
@@ -735,4 +773,3 @@
     </script>
 </body>
 </html>
-
