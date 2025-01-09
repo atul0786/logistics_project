@@ -65,5 +65,8 @@ urlpatterns = [
     #path('ddm-details/', TemplateView.as_view(template_name='transporter/ddm-details.html'), name='ddm_details'),
 
     path('ddm-details/', views.ddm_details_view, name='ddm_details'),
+    path('ddm-settlement/', views.ddm_settlement, name='ddm_settlement'),
+    path('api/update-ddm/', views.update_ddm, name='update_ddm'),
+
     
 ]
