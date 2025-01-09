@@ -69,6 +69,8 @@ urlpatterns = [
     path('api/update-ddm/', views.update_ddm, name='update_ddm'),
     path('api/ddm-details-for-update/', views.get_ddm_details_for_update, name='get_ddm_details_for_update'),
 
+    
+    path('cnotes-search/', views.cnotes_search, name='cnotes_search'),
 
     
 ]
