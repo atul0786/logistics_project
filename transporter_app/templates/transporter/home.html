@@ -457,6 +457,41 @@
         .close-popup:hover {
             color: var(--gray-700);
         }
+
+        .btn-search-cnotes {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-search-cnotes i {
+            font-size: 1.25rem;
+        }
+        
+        .btn-search-cnotes:hover {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .btn-search-cnotes:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+
+
+        
     </style>
 </head>
 <body>
@@ -520,6 +555,14 @@
                     <i data-lucide="search"></i>
                     <input type="text" placeholder="Search requests, drivers, or vehicles...">
                 </div>
+
+                 <section class="section">
+                    <button class="btn-search-cnotes" onclick="window.open('{% url 'transporter:cnotes_search' %}', '_blank')">
+                        <i data-lucide="search"></i> Search CNotes
+                    </button>
+                </section>
+               
+ 
                 <div class="user-profile">
                     <img src="{{ transporter_image }}" alt="{{ transporter_name }}">
                     <span>Welcome {{ transporter_name }}</span>
