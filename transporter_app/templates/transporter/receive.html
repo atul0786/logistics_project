@@ -457,21 +457,20 @@
             `;
         }
     
-        // Function to display data in the grid
         function displayData() {
             const tbody = document.getElementById('receivablesData');
             if (!allData || allData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8">No data available</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9">No data available</td></tr>';
                 return;
             }
-    
+        
             // Filter out rows where pendingLRs is 0
             const filteredData = allData.filter(row => row.pendingLRs > 0);
-    
+        
             const startIndex = (currentPage - 1) * itemsPerPage;
             const endIndex = startIndex + itemsPerPage;
             const pageData = filteredData.slice(startIndex, endIndex);
-    
+        
             tbody.innerHTML = pageData.map((row, index) => `
                 <tr>
                     <td>${startIndex + index + 1}</td>
@@ -490,7 +489,7 @@
                     </td>
                 </tr>
             `).join('');
-    
+        
             updatePagination(filteredData.length);
         }
     
