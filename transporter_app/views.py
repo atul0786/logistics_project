@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from .models import DDMDetails, DDMSummary
 from .serializers import DDMDetailsSerializer, DDMSummarySerializer
 from datetime import date
-
+from django.db.models import Count, Sum, F, Q
 from decimal import Decimal
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
@@ -310,8 +310,8 @@ def fetch_receivables(request):
         dealer_id = request.GET.get('dealerId')
         ls_number = request.GET.get('lsNumber')
 
-        # Base query - filter for dispatched and partial_received status
-        query = LoadingSheetSummary.objects.filter(status__in=['dispatched', 'partial_received'])
+        # Base query - filter for dispatched status only in LoadingSheetSummary
+        query = LoadingSheetSummary.objects.filter(status='dispatched')
 
         # Apply filters based on search parameters
         if search_type == 'dealer' and dealer_id:
@@ -329,35 +329,49 @@ def fetch_receivables(request):
         elif search_type == 'lsNumber' and ls_number:
             query = query.filter(ls_number__icontains=ls_number)
 
-        # Order by latest first and limit to 200 records
-        query = query.order_by('-created_at')[:200]
+        # Order by latest first
+        query = query.order_by('-created_at')
 
         receivables = []
         for sheet in query:
-            total_cnotes = sheet.details.count()
-            received_cnotes = sheet.details.filter(status='received').count()
-            pending_cnotes = total_cnotes - received_cnotes
+            # Get details for this loading sheet where CNotes are in 'dispatched' status
+            details = LoadingSheetDetail.objects.filter(loading_sheet=sheet, status='dispatched')
+            
+            # Only include this loading sheet if it has CNotes in 'dispatched' status
+            if details.exists():
+                total_cnotes = details.count()
+                total_art = details.aggregate(Sum('art'))['art__sum'] or 0
+                
+                receivables.append({
+                    'srNo': sheet.ls_number,
+                    'lsNo': sheet.ls_number,
+                    'lsDateTime': sheet.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                    'dealer': sheet.dealer.name if sheet.dealer else 'N/A',
+                    'totalLRs': total_cnotes,
+                    'pendingLRs': total_cnotes,  # All are pending as we're only including 'dispatched' status
+                    'totalArt': total_art,
+                    'pendingArt': total_art
+                })
 
-            receivables.append({
-                'srNo': sheet.ls_number,
-                'lsNo': sheet.ls_number,
-                'lsDateTime': sheet.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                'dealer': sheet.dealer.name if sheet.dealer else 'N/A',
-                'totalLRs': total_cnotes,
-                'pendingLRs': pending_cnotes,
-                'totalArt': sheet.total_art,
-                'pendingArt': sheet.total_art - received_cnotes  # Assuming each cnote has one article
-            })
+        # Limit to 200 records after filtering
+        receivables = receivables[:200]
 
-        # Calculate summary
+        # Calculate summary for pending items only
         summary = {
-            'lrCount': query.aggregate(Sum('total_cnote'))['total_cnote__sum'] or 0,
-            'totalQuantity': query.aggregate(Sum('total_art'))['total_art__sum'] or 0,
+            'lrCount': sum(item['pendingLRs'] for item in receivables),
+            'totalQuantity': sum(item['pendingArt'] for item in receivables),
             'totalReceivableWeight': 0,  # This field might need to be added to your model
-            'paid': query.aggregate(Sum('total_paid_amount'))['total_paid_amount__sum'] or 0,
-            'toPay': query.aggregate(Sum('total_topay_amount'))['total_topay_amount__sum'] or 0,
-            'tbb': query.aggregate(Sum('total_tbb_amount'))['total_tbb_amount__sum'] or 0,
+            'paid': 0,
+            'toPay': 0,
+            'tbb': 0,
         }
+
+        # Calculate payment type totals from LoadingSheetDetail
+        for sheet in query:
+            details = LoadingSheetDetail.objects.filter(loading_sheet=sheet, status='dispatched')
+            summary['paid'] += details.filter(payment_type='paid').aggregate(Sum('art'))['art__sum'] or 0
+            summary['toPay'] += details.filter(payment_type='to_pay').aggregate(Sum('art'))['art__sum'] or 0
+            summary['tbb'] += details.filter(payment_type='tbb').aggregate(Sum('art'))['art__sum'] or 0
 
         return JsonResponse({
             'status': 'success',
@@ -429,6 +443,7 @@ def receive_shipment(request):
         }, status=500)
 
 logger = logging.getLogger(__name__)
+
 @login_required
 @require_http_methods(["GET"])
 def get_loading_sheet_details(request, ls_number):
@@ -438,7 +453,7 @@ def get_loading_sheet_details(request, ls_number):
         # First check if loading sheet exists
         loading_sheet = get_object_or_404(LoadingSheetSummary, ls_number=ls_number)
         
-        # Get all loading sheet details without status filter
+        # Get all loading sheet details
         loading_sheet_details = LoadingSheetDetail.objects.filter(
             loading_sheet=loading_sheet
         ).select_related(
@@ -451,8 +466,8 @@ def get_loading_sheet_details(request, ls_number):
         logger.debug(f"Query: {loading_sheet_details.query}")
         logger.debug(f"Found {loading_sheet_details.count()} CNotes")
 
-        # Get total counts for the loading sheet
-        total_details = LoadingSheetDetail.objects.filter(loading_sheet=loading_sheet)
+        # Get total counts for the loading sheet (excluding received CNotes)
+        total_details = loading_sheet_details.exclude(status='Received')
         total_cnotes = total_details.count()
         total_art = sum(detail.art or 0 for detail in total_details)
         total_amount = sum(detail.amount or 0 for detail in total_details)
@@ -478,7 +493,7 @@ def get_loading_sheet_details(request, ls_number):
                 'articles': detail.art or 0,
                 'amount': float(detail.amount or 0),
                 'cnote_type': detail.payment_type or 'N/A',
-                'status': detail.status
+                'status': detail.status or 'Pending'  # Ensure status is always set
             })
 
         logger.info(f"Successfully fetched details for LS {ls_number}: {len(lr_details)} LRs found")
@@ -505,7 +520,7 @@ def get_loading_sheet_details(request, ls_number):
             'status': 'error',
             'message': f'An error occurred while fetching loading sheet details: {str(e)}'
         }, status=500)
-    
+
 @login_required
 @require_http_methods(["GET"])
 def get_lr_details(request, ls_number):
