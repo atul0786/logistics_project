@@ -1322,3 +1322,9 @@ def update_ddm(request):
         return JsonResponse({'status': 'error', 'message': 'DDM detail not found'}, status=404)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+
+
+def cnotes_search(request):
+    return render(request, 'transporter/cnotes_search.html')
