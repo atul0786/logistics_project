@@ -1246,3 +1246,79 @@ def ddm_details_view(request):
         messages.error(request, 'Error loading DDM details. Please try again.')
         return redirect('transporter:ddm')
 
+
+
+def ddm_settlement(request):
+    return render(request, 'transporter/ddm_update.html')  # Ensure the path is correct
+
+
+logger = logging.getLogger(__name__)
+
+@require_http_methods(["GET"])
+def get_ddm_details_for_update(request):
+    ddm_no = request.GET.get('ddmNo')
+    if not ddm_no:
+        return JsonResponse({'error': 'DDM number is required'}, status=400)
+
+    try:
+        ddm_summary = get_object_or_404(DDMSummary, ddm_no=ddm_no)
+        details = DDMDetails.objects.filter(ddm=ddm_summary)
+
+        data = {
+            'ddmNo': ddm_summary.ddm_no,
+            'date': ddm_summary.creation_date.isoformat(),
+            'totalAmount': float(ddm_summary.total_amount),
+            'truckNo': ddm_summary.truck_no,
+            'driverName': ddm_summary.driver_name,
+            'driverNo': ddm_summary.driver_no,
+            'lorryHire': float(ddm_summary.lorry_hire),
+            'remarks': ddm_summary.remarks,
+            'details': [
+                {
+                    'id': detail.id,
+                    'lrNo': detail.cnote_number,
+                    'from': detail.transporter_name,  # Using transporter_name as 'from'
+                    'cneeName': detail.consignee_name,
+                    'lrType': detail.payment_type,
+                    'bookingTotal': float(detail.amount),
+                    'art': detail.total_pkt,
+                    'rcvDlyAS': detail.status,
+                    'deliveryAmount': float(detail.amount),  # Using amount as deliveryAmount
+                    'status': detail.status,
+                }
+                for detail in details
+            ]
+        }
+        logger.info(f"Successfully fetched details for DDM No: {ddm_no}")
+        return JsonResponse(data)
+
+    except DDMSummary.DoesNotExist:
+        logger.error(f"DDM No {ddm_no} not found")
+        return JsonResponse({'error': 'DDM not found'}, status=404)
+
+    except Exception as e:
+        logger.error(f"Error fetching DDM details: {str(e)}")
+        return JsonResponse({'error': 'An unexpected error occurred'}, status=500)
+
+
+@csrf_exempt
+@require_POST
+def update_ddm(request):
+    try:
+        data = json.loads(request.body)
+        id = data.get('id')
+        status = data.get('status')
+        payment_type = data.get('paymentType')
+        reason = data.get('reason', '')
+
+        ddm_detail = DDMDetails.objects.get(id=id)
+        ddm_detail.status = status
+        ddm_detail.rcv_dly_as = payment_type
+        ddm_detail.remark = reason
+        ddm_detail.save()
+
+        return JsonResponse({'status': 'success', 'message': 'DDM detail updated successfully'})
+    except DDMDetails.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'DDM detail not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
