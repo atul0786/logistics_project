@@ -477,11 +477,14 @@
                 <a href="{% url 'transporter:receive' %}" class="nav-link" id="pending-requests-link" target="_blank" rel="noopener noreferrer">
                     <i data-lucide="clock"></i>
                     Pending Requests
-                </a>
-                <a href="{% url 'transporter:delivery_cnotes' %}" class="nav-link" target="_blank" rel="noopener noreferrer">
+                </a><a href="#" class="nav-link has-submenu">
                     <i data-lucide="clipboard-list"></i>
                     Delivery Management
                 </a>
+                <div class="submenu">
+                    <a href="{% url 'transporter:delivery_cnotes' %}" target="_blank" rel="noopener noreferrer">Single Delivery</a>
+                    <a href="{% url 'transporter:ddm_settlement' %}" target="_blank" rel="noopener noreferrer">DDM Settlements</a>                </div>
+                
                 <a href="#"  class="nav-link">
                     <i data-lucide="check-circle"></i>
                     Completed
