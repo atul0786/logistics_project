@@ -387,6 +387,10 @@
         .error {
             border: 1px solid red;
         }
+
+        input {
+            text-transform: uppercase; /* This will visually transform the text to uppercase */
+        }
     </style>
 </head>
 <body>
@@ -1480,6 +1484,11 @@
             if (defaultArticleSelect) {
                 handleArticleTypeChange(defaultArticleSelect);
             }
+        });
+        document.querySelectorAll('input, textarea').forEach(input => {
+            input.addEventListener('input', function() {
+                this.value = this.value.toUpperCase(); // Convert input to uppercase
+            });
         });
     </script>
 </body>
