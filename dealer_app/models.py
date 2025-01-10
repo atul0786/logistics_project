@@ -20,6 +20,7 @@ CITY_CHOICES = [
     ('HYDERABAD', 'Hyderabad'),
     ('PUNE', 'Pune'),
     ('AHMEDABAD', 'Ahmedabad'),
+    ('YAVATMAL', 'Yavatmal'),
 ]
 
 STATE_CHOICES = [
