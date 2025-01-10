@@ -3,6 +3,9 @@ from datetime import datetime
 import logging
 from .models import DDMSummary, DeliveryCNote
 from .models import CNote# Assuming you have a CNotes model
+from .serializers import DDMDetailsSerializer, DDMSummarySerializer
+from datetime import date
+from .models import DDMSummary, DDMDetails  # Corrected import
 
 import json
 from rest_framework import viewsets, status
