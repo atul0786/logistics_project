@@ -782,30 +782,37 @@
                     </tr>
                 </table>
                 
-                <div style="clear: both;"></div>
-                <div class="last-cnote-details" style="margin-top: 10px;">
-                    <h3 style="color: #4682b4; font-weight: bold; text-decoration: underline;">
-                        <a href="{% url 'dealer:view_cnote' last_cnote.cnote_number %}" style="color: #4682b4; text-decoration: underline;">
-                            Last CNote Details
-                        </a>
-                    </h3>
-                    {% if last_cnote %}
-                        <p><strong>CNote Number:</strong> {{ last_cnote.cnote_number }}</p>
-                        <p><strong>Destination:</strong> {{ last_cnote.delivery_destination }}</p>
-                        <p><strong>Payment Mode:</strong> {{ last_cnote.payment_type }}</p>
-                        <p><strong>Article:</strong> 
-                            {% for article in last_cnote.articles.all %}
-                                {{ article.article_type }} ({{ article.art }}){% if not forloop.last %}, {% endif %}
-                            {% endfor %}
-                        </p>
-                        <p><strong>Total Amount:</strong> {{ last_cnote.grand_total }}</p>
-                    {% else %}
-                        <p>No CNote available.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </main>
-    </div>
+<div style="clear: both;"></div>
+<div class="last-cnote-details" style="margin-top: 10px;">
+    <h3 style="color: #4682b4; font-weight: bold; text-decoration: underline;">
+        {% if last_cnote %}
+            <a href="{% url 'dealer:view_cnote' last_cnote.cnote_number %}" style="color: #4682b4; text-decoration: underline;">
+                Last CNote Details
+            </a>
+        {% else %}
+            Last CNote Details
+        {% endif %}
+    </h3>
+    {% if last_cnote %}
+        <p><strong>CNote Number:</strong> {{ last_cnote.cnote_number }}</p>
+        <p><strong>Destination:</strong> {{ last_cnote.delivery_destination }}</p>
+        <p><strong>Payment Mode:</strong> {{ last_cnote.payment_type }}</p>
+        <p><strong>Article:</strong> 
+            {% for article in last_cnote.articles.all %}
+                {{ article.article_type }} ({{ article.art }}){% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </p>
+        <p><strong>Total Amount:</strong> {{ last_cnote.grand_total }}</p>
+    {% else %}
+        <p><strong>CNote Number:</strong> 0</p>
+        <p><strong>Destination:</strong> -</p>
+        <p><strong>Payment Mode:</strong> -</p>
+        <p><strong>Article:</strong> -</p>
+        <p><strong>Total Amount:</strong> 0</p>
+    {% endif %}
+</div>
+</div>
+</main>    </div>
 
     <div class="status-update-container" style="margin-top: 20px;">
         <h3>Update CNote Status</h3>
