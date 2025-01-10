@@ -4,16 +4,16 @@ import logging
 from .models import DDMSummary, DeliveryCNote
 from .models import CNote# Assuming you have a CNotes model
 from .serializers import DDMDetailsSerializer, DDMSummarySerializer
-from datetime import date
-from .models import DDMSummary, DDMDetails  # Corrected import
-
 import json
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from .models import DDMDetails, DDMSummary
 from .serializers import DDMDetailsSerializer, DDMSummarySerializer
 from datetime import date
+from .models import DDMSummary, DDMDetails  # Corrected import
+
 from django.db.models import Count, Sum, F, Q
+from dealer_app.models import LoadingSheetSummary, LoadingSheetDetail
 from decimal import Decimal
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
@@ -29,6 +29,11 @@ from django.contrib.auth import get_user_model
 import io
 from django.http import FileResponse
 from reportlab.pdfgen import canvas
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from .models import DDMSummary, DDMDetails
+from django.core.exceptions import ValidationError
+
 from reportlab.lib.pagesizes import letter
 from django.db.models import F
 from django.shortcuts import redirect
@@ -49,6 +54,12 @@ from django.shortcuts import render
 from dealer_app.models import LoadingSheetSummary, Dealer
 from .models import TransporterAppReceive
 import logging
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.db.models import Prefetch
+from .models import CNote
+from dealer_app.models import Article, ArtType, LoadingSheetDetail
 import json
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -68,7 +79,6 @@ from dealer_app.models import CNotes
 from django.views.decorators.csrf import csrf_exempt
 from .models import DeliveryCNote, ReceivedStatesCnotes
 from dealer_app.models import LoadingSheetDetail, CNotes
-
 
 
 
