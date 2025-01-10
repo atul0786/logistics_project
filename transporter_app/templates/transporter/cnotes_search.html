@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CNotes Search System</title>
+    <title>CNotes Search and Management System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -34,12 +34,27 @@
 
         .search-section {
             display: flex;
+            justify-content: space-between;
+            align-items: center;
             gap: 10px;
             margin-bottom: 20px;
         }
 
-        .search-box {
+        .destination-box {
             flex: 1;
+        }
+
+        .destination-input {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: 2px solid #4682b4;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .search-box {
+            width: 200px;
             position: relative;
         }
 
@@ -116,20 +131,23 @@
             flex: 1;
         }
 
-        .charges-table {
+        .charges-table, .article-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
         }
 
         .charges-table th,
-        .charges-table td {
+        .charges-table td,
+        .article-table th,
+        .article-table td {
             padding: 8px;
             border: 1px solid #ddd;
             text-align: left;
         }
 
-        .charges-table th {
+        .charges-table th,
+        .article-table th {
             background-color: #f5f5f5;
             font-weight: bold;
         }
@@ -329,12 +347,15 @@
 <body>
     <div class="header">
         <div class="container">
-            <h1>CNotes Search System</h1>
+            <h1>CNotes Search and Management System</h1>
         </div>
     </div>
 
     <div class="container">
         <div class="search-section">
+            <div class="destination-box">
+                <input type="text" id="destinationInput" class="destination-input" placeholder="Enter Destination">
+            </div>
             <div class="search-box">
                 <input type="text" id="searchInput" class="search-input" placeholder="Enter CNotes Number">
             </div>
@@ -387,7 +408,7 @@
 
                 <div class="details-group">
                     <h2 class="section-title">Article Details</h2>
-                    <table class="charges-table" id="articleTable">
+                    <table class="article-table" id="articleTable">
                         <thead>
                             <tr>
                                 <th>Article Type</th>
@@ -450,11 +471,32 @@
                                 <th>From</th>
                                 <th>To</th>
                                 <th>Remark</th>
+                                <th>LS Remark</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="7">No status history available</td>
+                                <td colspan="8">No status history available</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="changes-history">
+                    <h2 class="section-title">Changes History</h2>
+                    <table class="changes-table" id="changesTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Field</th>
+                                <th>Old Value</th>
+                                <th>New Value</th>
+                                <th>User</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5">No changes history available</td>
                             </tr>
                         </tbody>
                     </table>
@@ -522,6 +564,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchInput');
+            const destinationInput = document.getElementById('destinationInput');
             const searchButton = document.getElementById('searchButton');
             const editButton = document.getElementById('editButton');
             const editModal = document.getElementById('editModal');
@@ -535,14 +578,21 @@
             // Search functionality
             searchButton.addEventListener('click', async function() {
                 const cnoteNumber = searchInput.value.trim();
-                if (!cnoteNumber) {
-                    alert('Please enter a CNotes number');
+                const destination = destinationInput.value.trim();
+                if (!cnoteNumber && !destination) {
+                    alert('Please enter a CNotes number or destination');
                     return;
                 }
 
                 loading.style.display = 'block';
                 try {
-                    const response = await fetch(`/api/cnotes/${cnoteNumber}`);
+                    let url = '/transporter/api/cnotes/';
+                    if (cnoteNumber) {
+                        url += `${cnoteNumber}/`;
+                    } else {
+                        url += `?destination=${encodeURIComponent(destination)}`;
+                    }
+                    const response = await fetch(url);
                     if (!response.ok) throw new Error('CNotes not found');
                     
                     const data = await response.json();
@@ -558,33 +608,60 @@
             // Update UI with CNotes data
             function updateUIWithData(data) {
                 // Consignor details
-                document.getElementById('consignorName').textContent = data.consignor_name;
-                document.getElementById('consignorAddress').textContent = data.consignor_address;
-                document.getElementById('consignorMobile').textContent = data.consignor_mobile;
-                document.getElementById('consignorGst').textContent = data.consignor_gst;
+                document.getElementById('consignorName').textContent = data.consignor_name || '-';
+                document.getElementById('consignorAddress').textContent = data.consignor_address || '-';
+                document.getElementById('consignorMobile').textContent = data.consignor_mobile || '-';
+                document.getElementById('consignorGst').textContent = data.consignor_gst || '-';
 
                 // Consignee details
-                document.getElementById('consigneeName').textContent = data.consignee_name;
-                document.getElementById('consigneeAddress').textContent = data.consignee_address;
-                document.getElementById('consigneeMobile').textContent = data.consignee_mobile;
-                document.getElementById('consigneeGst').textContent = data.consignee_gst;
+                document.getElementById('consigneeName').textContent = data.consignee_name || '-';
+                document.getElementById('consigneeAddress').textContent = data.consignee_address || '-';
+                document.getElementById('consigneeMobile').textContent = data.consignee_mobile || '-';
+                document.getElementById('consigneeGst').textContent = data.consignee_gst || '-';
+
+                // Destination
+                destinationInput.value = data.delivery_destination || '';
+
+                // Article details
+                updateArticleTable(data.articles);
 
                 // Charges
-                document.getElementById('freightCharge').textContent = data.freight.toFixed(2);
-                document.getElementById('doorDeliveryCharge').textContent = data.door_delivery_charge.toFixed(2);
-                document.getElementById('handlingCharge').textContent = data.handling_charge.toFixed(2);
-                document.getElementById('otherCharges').textContent = data.other_charges.toFixed(2);
-                document.getElementById('totalCharges').textContent = data.total_amount.toFixed(2);
+                document.getElementById('freightCharge').textContent = (data.freight || 0).toFixed(2);
+                document.getElementById('doorDeliveryCharge').textContent = (data.door_delivery_charge || 0).toFixed(2);
+                document.getElementById('handlingCharge').textContent = (data.handling_charge || 0).toFixed(2);
+                document.getElementById('otherCharges').textContent = (data.other_charge || 0).toFixed(2);
+                document.getElementById('totalCharges').textContent = (data.grand_total || 0).toFixed(2);
 
                 // Update status table
                 updateStatusTable(data.status_history);
+
+                // Update changes history
+                updateChangesHistory(data.changes_history);
+            }
+
+            // Update article table
+            function updateArticleTable(articles) {
+                const articleTableBody = document.querySelector('#articleTable tbody');
+                if (!articles || articles.length === 0) {
+                    articleTableBody.innerHTML = '<tr><td colspan="4">No articles available</td></tr>';
+                    return;
+                }
+
+                articleTableBody.innerHTML = articles.map(article => `
+                    <tr>
+                        <td>${article.article_type}</td>
+                        <td>${article.quantity}</td>
+                        <td>${article.description}</td>
+                        <td>${article.amount.toFixed(2)}</td>
+                    </tr>
+                `).join('');
             }
 
             // Update status table
             function updateStatusTable(statusHistory) {
                 const statusTableBody = document.querySelector('#statusTable tbody');
                 if (!statusHistory || statusHistory.length === 0) {
-                    statusTableBody.innerHTML = '<tr><td colspan="7">No status history available</td></tr>';
+                    statusTableBody.innerHTML = '<tr><td colspan="8">No status history available</td></tr>';
                     return;
                 }
 
@@ -597,6 +674,26 @@
                         <td>${status.from}</td>
                         <td>${status.to}</td>
                         <td>${status.remark || '-'}</td>
+                        <td>${status.ls_remark || '-'}</td>
+                    </tr>
+                `).join('');
+            }
+
+            // Update changes history
+            function updateChangesHistory(changesHistory) {
+                const changesTableBody = document.querySelector('#changesTable tbody');
+                if (!changesHistory || changesHistory.length === 0) {
+                    changesTableBody.innerHTML = '<tr><td colspan="5">No changes history available</td></tr>';
+                    return;
+                }
+
+                changesTableBody.innerHTML = changesHistory.map(change => `
+                    <tr>
+                        <td>${change.date}</td>
+                        <td>${change.field}</td>
+                        <td>${change.old_value}</td>
+                        <td>${change.new_value}</td>
+                        <td>${change.user}</td>
                     </tr>
                 `).join('');
             }
@@ -637,7 +734,7 @@
                 document.getElementById('editFreight').value = data.freight;
                 document.getElementById('editDoorDelivery').value = data.door_delivery_charge;
                 document.getElementById('editHandling').value = data.handling_charge;
-                document.getElementById('editOtherCharges').value = data.other_charges;
+                document.getElementById('editOtherCharges').value = data.other_charge;
             }
 
             // Handle form submission
@@ -656,12 +753,12 @@
                     freight: parseFloat(document.getElementById('editFreight').value),
                     door_delivery_charge: parseFloat(document.getElementById('editDoorDelivery').value),
                     handling_charge: parseFloat(document.getElementById('editHandling').value),
-                    other_charges: parseFloat(document.getElementById('editOtherCharges').value)
+                    other_charge: parseFloat(document.getElementById('editOtherCharges').value)
                 };
 
                 loading.style.display = 'block';
                 try {
-                    const response = await fetch(`/api/cnotes/${currentCNoteData.cnote_number}`, {
+                    const response = await fetch(`/transporter/api/cnotes/${currentCNoteData.cnote_number}/`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
@@ -718,3 +815,4 @@
     </script>
 </body>
 </html>
+
