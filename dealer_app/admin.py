@@ -45,7 +45,7 @@ class DealerAdmin(admin.ModelAdmin):
                 obj.transporter = None
         super().save_model(request, obj, form, change)
 
-class CNoteForm(forms.ModelForm):
+class CNotesForm(forms.ModelForm):
     class Meta:
         model = CNote
         fields = [
@@ -66,7 +66,7 @@ class CNoteForm(forms.ModelForm):
         }
 
 @admin.register(CNote)
-class CNoteAdmin(admin.ModelAdmin):
+class CNotesAdmin(admin.ModelAdmin):
     form = CNoteForm
     list_display = ('id', 'cnote_number', 'dealer', 'booking_type', 'delivery_type', 'consignor_name', 'consignee_name', 'payment_type', 'status', 'created_at')
     search_fields = ('cnote_number', 'dealer__name', 'consignor_name', 'consignee_name')
