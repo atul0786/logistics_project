@@ -67,7 +67,7 @@ class CNotesForm(forms.ModelForm):
 
 @admin.register(CNote)
 class CNotesAdmin(admin.ModelAdmin):
-    form = CNoteForm
+    form = CNotesForm
     list_display = ('id', 'cnote_number', 'dealer', 'booking_type', 'delivery_type', 'consignor_name', 'consignee_name', 'payment_type', 'status', 'created_at')
     search_fields = ('cnote_number', 'dealer__name', 'consignor_name', 'consignee_name')
     list_filter = ('created_at', 'booking_type', 'delivery_type', 'payment_type', 'status')
