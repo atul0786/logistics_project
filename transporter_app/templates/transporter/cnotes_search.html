@@ -38,24 +38,57 @@
             align-items: center;
             gap: 10px;
             margin-bottom: 20px;
+            flex-wrap: nowrap;
         }
 
-        .destination-box {
+        .info-boxes {
+            display: flex;
+            gap: 10px;
+            flex-grow: 1;
+            max-width: calc(100% - 320px); /* Adjust based on the width of search box and button */
+        }
+
+        .info-box {
             flex: 1;
+            min-width: 0;
         }
 
-        .destination-input {
+        .info-input {
             width: 100%;
             padding: 12px 20px;
             font-size: 16px;
             border: 2px solid #4682b4;
             border-radius: 5px;
             outline: none;
+            background-color: #f0f0f0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            /* Added placeholder style */
+            .info-input::placeholder {
+                color: #666;
+            }
+        }
+
+        .info-box label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 2px;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
         }
 
         .search-box {
             width: 200px;
-            position: relative;
+            margin-right: 10px;
         }
 
         .search-input {
@@ -76,6 +109,7 @@
             cursor: pointer;
             font-size: 16px;
             transition: background-color 0.3s;
+            flex-shrink: 0;
         }
 
         .search-button:hover {
@@ -342,6 +376,45 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .status-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1200;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+        }
+
+        .status-popup-close {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .status-popup table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .status-popup th, .status-popup td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .status-popup th {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 <body>
@@ -353,15 +426,25 @@
 
     <div class="container">
         <div class="search-section">
-            <div class="destination-box">
-                <input type="text" id="destinationInput" class="destination-input" placeholder="Enter Destination">
+            <div class="info-boxes">
+                <div class="info-box" id="destinationBox">
+                    <input type="text" id="destinationInput" class="info-input" placeholder="Destination" readonly>
+                </div>
+                <div class="info-box" id="ewayBillBox">
+                    <input type="text" id="ewayBillInput" class="info-input" placeholder="E-way Bill No" readonly>
+                </div>
+                <div class="info-box" id="deliveryMethodBox">
+                    <input type="text" id="deliveryMethodInput" class="info-input" placeholder="Delivery Method" readonly>
+                </div>
             </div>
-            <div class="search-box">
-                <input type="text" id="searchInput" class="search-input" placeholder="Enter CNotes Number">
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Enter CNotes Number">
+                </div>
+                <button id="searchButton" class="search-button">
+                    <i class="fas fa-search"></i> Search
+                </button>
             </div>
-            <button id="searchButton" class="search-button">
-                <i class="fas fa-search"></i> Search
-            </button>
         </div>
 
         <div class="main-content">
@@ -465,7 +548,10 @@
                         <thead>
                             <tr>
                                 <th>Status</th>
+                                <th>Status No</th>
+                                <th>Detail</th>
                                 <th>Date</th>
+                                <th>On Day</th>
                                 <th>User</th>
                                 <th>Branch</th>
                                 <th>From</th>
@@ -476,7 +562,7 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="8">No status history available</td>
+                                <td colspan="11">No status history available</td>
                             </tr>
                         </tbody>
                     </table>
@@ -548,11 +634,41 @@
                     <input type="number" class="form-input" id="editHandling">
                     <label class="form-label">Other Charges</label>
                     <input type="number" class="form-input" id="editOtherCharges">
+                    <label class="form-label">Destination</label>
+                    <input type="text" class="form-input" id="editDestination">
+                    <label class="form-label">E-way Bill</label>
+                    <input type="text" class="form-input" id="editEwayBill">
+                    <label class="form-label">Delivery Method</label>
+                    <input type="text" class="form-input" id="editDeliveryMethod">
                 </div>
 
                 <button type="submit" class="save-button">Update CNotes</button>
             </form>
         </div>
+    </div>
+
+    <!-- Status Popup -->
+    <div id="statusPopup" class="status-popup">
+        <span class="status-popup-close">&times;</span>
+        <h2>Status History</h2>
+        <table id="statusPopupTable">
+            <thead>
+                <tr>
+                    <th>Status</th>
+                    <th>Status No</th>
+                    <th>Detail</th>
+                    <th>Date</th>
+                    <th>On Day</th>
+                    <th>User</th>
+                    <th>Branch</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Remark</th>
+                    <th>LS Remark</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 
     <!-- Loading Spinner -->
@@ -564,7 +680,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchInput');
-            const destinationInput = document.getElementById('destinationInput');
             const searchButton = document.getElementById('searchButton');
             const editButton = document.getElementById('editButton');
             const editModal = document.getElementById('editModal');
@@ -572,27 +687,22 @@
             const editForm = document.getElementById('editForm');
             const loading = document.getElementById('loading');
             const statusTabs = document.querySelectorAll('.status-tab');
+            const statusPopup = document.getElementById('statusPopup');
+            const statusPopupClose = document.querySelector('.status-popup-close');
             
             let currentCNoteData = null;
 
             // Search functionality
             searchButton.addEventListener('click', async function() {
                 const cnoteNumber = searchInput.value.trim();
-                const destination = destinationInput.value.trim();
-                if (!cnoteNumber && !destination) {
-                    alert('Please enter a CNotes number or destination');
+                if (!cnoteNumber) {
+                    alert('Please enter a CNotes number');
                     return;
                 }
 
                 loading.style.display = 'block';
                 try {
-                    let url = '/transporter/api/cnotes/';
-                    if (cnoteNumber) {
-                        url += `${cnoteNumber}/`;
-                    } else {
-                        url += `?destination=${encodeURIComponent(destination)}`;
-                    }
-                    const response = await fetch(url);
+                    const response = await fetch(`/transporter/api/cnotes/${cnoteNumber}/`);
                     if (!response.ok) throw new Error('CNotes not found');
                     
                     const data = await response.json();
@@ -619,8 +729,10 @@
                 document.getElementById('consigneeMobile').textContent = data.consignee_mobile || '-';
                 document.getElementById('consigneeGst').textContent = data.consignee_gst || '-';
 
-                // Destination
-                destinationInput.value = data.delivery_destination || '';
+                // Destination, E-way Bill, and Delivery Method
+                document.getElementById('destinationInput').value = data.delivery_destination || '';
+                document.getElementById('ewayBillInput').value = data.eway_bill_number || '';
+                document.getElementById('deliveryMethodInput').value = data.delivery_method || '';
 
                 // Article details
                 updateArticleTable(data.articles);
@@ -634,6 +746,9 @@
 
                 // Update status table
                 updateStatusTable(data.status_history);
+
+                // Update current status
+                updateCurrentStatus(data.status_history[0]);
 
                 // Update changes history
                 updateChangesHistory(data.changes_history);
@@ -661,18 +776,21 @@
             function updateStatusTable(statusHistory) {
                 const statusTableBody = document.querySelector('#statusTable tbody');
                 if (!statusHistory || statusHistory.length === 0) {
-                    statusTableBody.innerHTML = '<tr><td colspan="8">No status history available</td></tr>';
+                    statusTableBody.innerHTML = '<tr><td colspan="11">No status history available</td></tr>';
                     return;
                 }
 
                 statusTableBody.innerHTML = statusHistory.map(status => `
                     <tr>
                         <td><span class="status-badge status-${status.status.toLowerCase()}">${status.status}</span></td>
+                        <td>${status.status_no || '-'}</td>
+                        <td>${status.detail || '-'}</td>
                         <td>${status.date}</td>
+                        <td>${status.on_day || '-'}</td>
                         <td>${status.user}</td>
                         <td>${status.branch}</td>
-                        <td>${status.from}</td>
-                        <td>${status.to}</td>
+                        <td>${status.from || '-'}</td>
+                        <td>${status.to || '-'}</td>
                         <td>${status.remark || '-'}</td>
                         <td>${status.ls_remark || '-'}</td>
                     </tr>
@@ -697,6 +815,31 @@
                     </tr>
                 `).join('');
             }
+
+            // Update current status
+            function updateCurrentStatus(currentStatus) {
+                const statusTableBody = document.querySelector('#statusTable tbody');
+                if (currentStatus) {
+                    statusTableBody.innerHTML = `
+                        <tr>
+                            <td><span class="status-badge status-${currentStatus.status.toLowerCase()}">${currentStatus.status}</span></td>
+                            <td>${currentStatus.status_no || '-'}</td>
+                            <td>${currentStatus.detail || '-'}</td>
+                            <td>${currentStatus.date}</td>
+                            <td>${currentStatus.on_day || '-'}</td>
+                            <td>${currentStatus.user}</td>
+                            <td>${currentStatus.branch}</td>
+                            <td>${currentStatus.from || '-'}</td>
+                            <td>${currentStatus.to || '-'}</td>
+                            <td>${currentStatus.remark || '-'}</td>
+                            <td>${currentStatus.ls_remark || '-'}</td>
+                        </tr>
+                    `;
+                } else {
+                    statusTableBody.innerHTML = '<tr><td colspan="11">No current status available</td></tr>';
+                }
+            }
+
 
             // Edit functionality
             editButton.addEventListener('click', function() {
@@ -735,6 +878,9 @@
                 document.getElementById('editDoorDelivery').value = data.door_delivery_charge;
                 document.getElementById('editHandling').value = data.handling_charge;
                 document.getElementById('editOtherCharges').value = data.other_charge;
+                document.getElementById('editDestination').value = data.delivery_destination;
+                document.getElementById('editEwayBill').value = data.eway_bill_number;
+                document.getElementById('editDeliveryMethod').value = data.delivery_method;
             }
 
             // Handle form submission
@@ -753,7 +899,10 @@
                     freight: parseFloat(document.getElementById('editFreight').value),
                     door_delivery_charge: parseFloat(document.getElementById('editDoorDelivery').value),
                     handling_charge: parseFloat(document.getElementById('editHandling').value),
-                    other_charge: parseFloat(document.getElementById('editOtherCharges').value)
+                    other_charge: parseFloat(document.getElementById('editOtherCharges').value),
+                    delivery_destination: document.getElementById('editDestination').value,
+                    eway_bill_number: document.getElementById('editEwayBill').value,
+                    delivery_method: document.getElementById('editDeliveryMethod').value
                 };
 
                 loading.style.display = 'block';
@@ -788,13 +937,44 @@
                     this.classList.add('active');
                     
                     const tabType = this.dataset.tab;
-                    if (tabType === 'current' && currentCNoteData) {
-                        updateStatusTable([currentCNoteData.status_history[0]]);
+                    if (tabType === 'current' && currentCNoteData && currentCNoteData.status_history.length > 0) {
+                        updateCurrentStatus(currentCNoteData.status_history[0]);
                     } else if (currentCNoteData) {
                         updateStatusTable(currentCNoteData.status_history);
                     }
                 });
             });
+
+            // Status popup functionality
+            document.querySelector('.status-tab[data-tab="history"]').addEventListener('click', function() {
+                if (currentCNoteData && currentCNoteData.status_history) {
+                    populateStatusPopup(currentCNoteData.status_history);
+                    statusPopup.style.display = 'block';
+                }
+            });
+
+            statusPopupClose.addEventListener('click', function() {
+                statusPopup.style.display = 'none';
+            });
+
+            function populateStatusPopup(statusHistory) {
+                const statusPopupTableBody = document.querySelector('#statusPopupTable tbody');
+                statusPopupTableBody.innerHTML = statusHistory.map(status => `
+                    <tr>
+                        <td><span class="status-badge status-${status.status.toLowerCase()}">${status.status}</span></td>
+                        <td>${status.status_no || '-'}</td>
+                        <td>${status.detail || '-'}</td>
+                        <td>${status.date}</td>
+                        <td>${status.on_day || '-'}</td>
+                        <td>${status.user}</td>
+                        <td>${status.branch}</td>
+                        <td>${status.from || '-'}</td>
+                        <td>${status.to || '-'}</td>
+                        <td>${status.remark || '-'}</td>
+                        <td>${status.ls_remark || '-'}</td>
+                    </tr>
+                `).join('');
+            }
 
             // Helper function to get CSRF token
             function getCookie(name) {
