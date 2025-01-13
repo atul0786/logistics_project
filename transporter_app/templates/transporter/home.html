@@ -457,7 +457,6 @@
         .close-popup:hover {
             color: var(--gray-700);
         }
-
         .btn-search-cnotes {
             display: inline-flex;
             align-items: center;
@@ -489,8 +488,6 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-
-
         
     </style>
 </head>
@@ -512,14 +509,14 @@
                 <a href="{% url 'transporter:receive' %}" class="nav-link" id="pending-requests-link" target="_blank" rel="noopener noreferrer">
                     <i data-lucide="clock"></i>
                     Pending Requests
-                </a><a href="#" class="nav-link has-submenu">
+                </a>
+                <a href="#" class="nav-link has-submenu">
                     <i data-lucide="clipboard-list"></i>
                     Delivery Management
                 </a>
                 <div class="submenu">
                     <a href="{% url 'transporter:delivery_cnotes' %}" target="_blank" rel="noopener noreferrer">Single Delivery</a>
                     <a href="{% url 'transporter:ddm_settlement' %}" target="_blank" rel="noopener noreferrer">DDM Settlements</a>                </div>
-                
                 <a href="#"  class="nav-link">
                     <i data-lucide="check-circle"></i>
                     Completed
@@ -529,9 +526,9 @@
                     Reports
                 </a>
                 <div class="submenu">
-                    <a href="#">Daily Reports</a>
-                    <a href="#">Weekly Reports</a>
-                    <a href="#">Monthly Reports</a>
+                    <a href="{% url 'transporter:all_booking_register' %}" target="_blank" rel="noopener noreferrer">Booking Register</a>
+                    <!-- <a href="#">Weekly Reports</a>
+                    <a href="#">Monthly Reports</a> -->
                 </div>
                 <a href="#" class="nav-link has-submenu">
                     <i data-lucide="settings"></i>
@@ -556,17 +553,15 @@
                     <input type="text" placeholder="Search requests, drivers, or vehicles...">
                 </div>
 
-                 <section class="section">
+                <section class="section">
                     <button class="btn-search-cnotes" onclick="window.open('{% url 'transporter:cnotes_search' %}', '_blank')">
                         <i data-lucide="search"></i> Search CNotes
                     </button>
                 </section>
-               
- 
-                <div class="user-profile">
-                    <img src="{{ transporter_image }}" alt="{{ transporter_name }}">
-                    <span>Welcome {{ transporter_name }}</span>
-                </div>
+                                    
+                
+
+                <span>Welcome {{ transporter_name }}</span>
             </header>
 
             <div class="stats-grid">
@@ -857,6 +852,17 @@
                 window.location.href = '/login/';
             }
         });
+        // Example AJAX call to fetch data when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/api/get_ddm_data/')  // Adjust the URL as needed
+                .then(response => response.json())
+                .then(data => {
+                    // Process the data
+                })
+                .catch(error => console.error('Error fetching DDM data:', error));
+        });
+
+        
 
         // Get CSRF token
         function getCookie(name) {
