@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>All Booking Register Report</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --accent-color: #e74c3c;
+            --background-color: #ecf0f1;
+            --text-color: #34495e;
+            --border-color: #bdc3c7;
+            --header-height: 60px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: #87CEEB;
+            color: #333;
+            padding: 1rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            width: 95%;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .transporter-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .transporter-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .transporter-name {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .transporter-city {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+        }
+
+        #lr-search {
+            padding: 0.5rem;
+            border: none;
+            border-radius: 4px 0 0 4px;
+            width: 200px;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #27ae60;
+        }
+
+        .btn-danger {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        main {
+            margin-top: calc(var(--header-height) + 40px); /* Increased margin-top */
+            padding: 20px;
+        }
+        
+        .filter-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            padding-top: 100px; /* Added padding-top */
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-item label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .filter-item select,
+        .filter-item input {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-results-container {
+            overflow-x: auto;
+            max-height: 500px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        #booking-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+        }
+
+        #booking-table th,
+        #booking-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        #booking-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            cursor: pointer;
+        }
+
+        #booking-table th:hover {
+            background-color: #e9ecef;
+        }
+
+        #booking-table tbody tr:hover {
+            background-color: #f1f3f5;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            margin: 0 5px;
+            padding: 5px 10px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .pagination button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading::after {
+            content: "";
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .summary-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        .summary-table th,
+        .summary-table td {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            text-align: right;
+        }
+
+        .summary-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .summary-row {
+            font-weight: bold;
+            background-color: #e9ecef;
+        }
+
+        @media (max-width: 768px) {
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .button-group .btn {
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="transporter-info">
+                    <div class="transporter-details">
+                        <span class="transporter-name" id="transporter-name"></span>
+                        <span class="transporter-city" id="transporter-city"></span>
+                    </div>
+                </div>
+                <h1>All Booking Register Report</h1>
+                <div class="search-container">
+                    <input type="text" id="lr-search" placeholder="Search CNote Number">
+                    <button class="btn btn-primary" id="searchButton">Search</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="filter-section" id="filter-section">
+            <div class="filter-grid">
+                <div class="filter-item">
+                    <label for="date-from">From Date</label>
+                    <input type="date" id="date-from" />
+                </div>
+                <div class="filter-item">
+                    <label for="date-to">To Date</label>
+                    <input type="date" id="date-to" />
+                </div>
+                <div class="filter-item">
+                    <label for="dealer">Dealer</label>
+                    <select id="dealer">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label for="from-city">From City</label>
+                    <select id="from-city">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label for="to-city">To City</label>
+                    <select id="to-city">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label for="amount-min">Min Amount</label>
+                    <input type="number" id="amount-min" min="0" />
+                </div>
+                <div class="filter-item">
+                    <label for="amount-max">Max Amount</label>
+                    <input type="number" id="amount-max" min="0" />
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-primary" id="search-btn">Search</button>
+                <button class="btn btn-primary" id="download-btn">Download Excel</button>
+                <button class="btn btn-danger" id="clear-btn">Clear Filters</button>
+            </div>
+        </div>
+        <div class="search-results-container">
+            <table id="booking-table">
+                <thead>
+                    <tr>
+                        <th data-sort="id">Sr. No</th>
+                        <th data-sort="cnote_number">CNote Number</th>
+                        <th data-sort="booking_type">Booking Type</th>
+                        <th data-sort="delivery_destination">Delivery Destination</th>
+                        <th data-sort="consignor_name">Consignor Name</th>
+                        <th data-sort="consignee_name">Consignee Name</th>
+                        <th data-sort="payment_type">Payment Type</th>
+                        <th data-sort="grand_total">Grand Total</th>
+                        <th data-sort="created_at">Created At</th>
+                        <th data-sort="eway_bill_number">Eway Bill Number</th>
+                        <th data-sort="actual_weight">Actual Weight</th>
+                        <th data-sort="charged_weight">Charged Weight</th>
+                        <th data-sort="weight_rate">Weight Rate</th>
+                        <th data-sort="weight_amount">Weight Amount</th>
+                        <th data-sort="fix_amount">Fix Amount</th>
+                        <th data-sort="invoice_number">Invoice Number</th>
+                        <th data-sort="declared_value">Declared Value</th>
+                        <th data-sort="risk_type">Risk Type</th>
+                        <th data-sort="pod_required">POD Required</th>
+                        <th data-sort="freight">Freight</th>
+                        <th data-sort="docket_charge">Docket Charge</th>
+                        <th data-sort="door_delivery_charge">Door Delivery Charge</th>
+                        <th data-sort="handling_charge">Handling Charge</th>
+                        <th data-sort="pickup_charge">Pickup Charge</th>
+                        <th data-sort="transhipment_charge">Transhipment Charge</th>
+                        <th data-sort="insurance">Insurance</th>
+                        <th data-sort="fuel_surcharge">Fuel Surcharge</th>
+                        <th data-sort="commission">Commission</th>
+                        <th data-sort="other_charge">Other Charge</th>
+                        <th data-sort="carrier_risk">Carrier Risk</th>
+                        <th data-sort="delivery_type">Delivery Type</th>
+                        <th data-sort="delivery_method">Delivery Method</th>
+                        <th data-sort="status">Status</th>
+                        <th data-sort="total_art">Total Article</th>
+                        <th data-sort="art_types">Art Types</th>
+                        <th data-sort="said_to_contain">Said to Contain</th>
+                        <th data-sort="art_amounts">Art Amounts</th>
+                        <th data-sort="consignor_gst">Consignor GST</th>
+                        <th data-sort="consignee_gst">Consignee GST</th>
+                        <th data-sort="user">User</th>
+                        <th data-sort="user_type">User Type</th>
+                    </tr>
+                </thead>
+                <tbody id="booking-data">
+                    <!-- Data will be populated dynamically -->
+                </tbody>
+            </table>
+        </div>
+        <div class="pagination" id="pagination"></div>
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Paid</th>
+                    <th>To Pay</th>
+                    <th>Billing</th>
+                    <th>Total Amount</th>
+                    <th>GST</th>
+                    <th>Grand Total</th>
+                </tr>
+            </thead>
+            <tbody id="summary-data">
+                <!-- Summary data will be populated dynamically -->
+            </tbody>
+        </table>
+    </main>
+
+    <div id="loading" class="loading" style="display: none"></div>
+
+    <script>
+        let allBookingData = [];
+        let filteredData = [];
+        let currentPage = 1;
+        const itemsPerPage = 20;
+
+        // Fetch data from server
+        function fetchBookingData() {
+            fetch("/transporter/booking_register_data/")
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    allBookingData = data.bookings;
+                    document.getElementById('transporter-name').textContent = data.transporter_name;
+                    document.getElementById('transporter-city').textContent = data.transporter_city;
+                    populateFilters(data.bookings);
+                    applyFilters();
+                })
+                .catch((error) => console.error("Error fetching data:", error));
+        }
+
+        function populateFilters(data) {
+            const dealer = document.getElementById("dealer");
+            const fromCity = document.getElementById("from-city");
+            const toCity = document.getElementById("to-city");
+
+            const dealers = [...new Set(data.map(item => item.user))];
+            const fromCities = [...new Set(data.map(item => item.delivery_destination.split(' - ')[0]))];
+            const toCities = [...new Set(data.map(item => item.delivery_destination.split(' - ')[1]))];
+
+            populateSelect(dealer, dealers);
+            populateSelect(fromCity, fromCities);
+            populateSelect(toCity, toCities);
+        }
+
+        function populateSelect(select, options) {
+            select.innerHTML = '<option value="">All</option>';
+            options.forEach(option => {
+                const optionElement = document.createElement("option");
+                optionElement.value = option;
+                optionElement.textContent = option;
+                select.appendChild(optionElement);
+            });
+        }
+
+        function applyFilters() {
+            const dateFrom = document.getElementById("date-from").value;
+            const dateTo = document.getElementById("date-to").value;
+            const dealer = document.getElementById("dealer").value;
+            const fromCity = document.getElementById("from-city").value;
+            const toCity = document.getElementById("to-city").value;
+            const amountMin = parseFloat(document.getElementById("amount-min").value) || 0;
+            const amountMax = parseFloat(document.getElementById("amount-max").value) || Infinity;
+            const searchTerm = document.getElementById("lr-search").value.toLowerCase();
+
+            filteredData = allBookingData.filter((row) => {
+                const dateMatch = (!dateFrom || row.created_at >= dateFrom) && (!dateTo || row.created_at <= dateTo);
+                const dealerMatch = !dealer || row.user === dealer;
+                const fromCityMatch = !fromCity || row.delivery_destination.split(' - ')[0] === fromCity;
+                const toCityMatch = !toCity || row.delivery_destination.split(' - ')[1] === toCity;
+                const amountMatch = row.grand_total >= amountMin && row.grand_total <= amountMax;
+                const searchMatch = !searchTerm || 
+                    row.cnote_number.toLowerCase().includes(searchTerm) || 
+                    row.consignor_name.toLowerCase().includes(searchTerm) ||
+                    row.consignee_name.toLowerCase().includes(searchTerm) ||
+                    row.user.toLowerCase().includes(searchTerm) ||
+                    row.user_type.toLowerCase().includes(searchTerm);
+
+                return dateMatch && dealerMatch && fromCityMatch && toCityMatch && amountMatch && searchMatch;
+            });
+
+            currentPage = 1;
+            displayBookingData(currentPage);
+            updateSummary();
+        }
+
+        function displayBookingData(page) {
+            const startIndex = (page - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            const bookingData = document.getElementById("booking-data");
+            bookingData.innerHTML = "";
+            pageData.forEach((row, index) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${startIndex + index + 1}</td>
+                    <td>${row.cnote_number}</td>
+                    <td>${row.booking_type}</td>
+                    <td>${row.delivery_destination}</td>
+                    <td>${row.consignor_name}</td>
+                    <td>${row.consignee_name}</td>
+                    <td>${row.payment_type}</td>
+                    <td>${row.grand_total.toFixed(2)}</td>
+                    <td>${new Date(row.created_at).toLocaleString()}</td>
+                    <td>${row.eway_bill_number}</td>
+                    <td>${row.actual_weight.toFixed(2)}</td>
+                    <td>${row.charged_weight.toFixed(2)}</td>
+                    <td>${row.weight_rate.toFixed(2)}</td>
+                    <td>${row.weight_amount.toFixed(2)}</td>
+                    <td>${row.fix_amount.toFixed(2)}</td>
+                    <td>${row.invoice_number}</td>
+                    <td>${row.declared_value.toFixed(2)}</td>
+                    <td>${row.risk_type}</td>
+                    <td>${row.pod_required}</td>
+                    <td>${row.freight.toFixed(2)}</td>
+                    <td>${row.docket_charge.toFixed(2)}</td>
+                    <td>${row.door_delivery_charge.toFixed(2)}</td>
+                    <td>${row.handling_charge.toFixed(2)}</td>
+                    <td>${row.pickup_charge.toFixed(2)}</td>
+                    <td>${row.transhipment_charge.toFixed(2)}</td>
+                    <td>${row.insurance.toFixed(2)}</td>
+                    <td>${row.fuel_surcharge.toFixed(2)}</td>
+                    <td>${row.commission.toFixed(2)}</td>
+                    <td>${row.other_charge.toFixed(2)}</td>
+                    <td>${row.carrier_risk}</td>
+                    <td>${row.delivery_type}</td>
+                    <td>${row.delivery_method}</td>
+                    <td>${row.status}</td>
+                    <td>${row.total_art}</td>
+                    <td>${row.art_types}</td>
+                    <td>${row.said_to_contain}</td>
+                    <td>${row.art_amounts}</td>
+                    <td>${row.consignor_gst}</td>
+                    <td>${row.consignee_gst}</td>
+                    <td>${row.user}</td>
+                    <td>${row.user_type}</td>
+                `;
+                bookingData.appendChild(tr);
+            });
+
+            updatePagination();
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            const pagination = document.getElementById("pagination");
+            pagination.innerHTML = "";
+
+            const prevButton = document.createElement("button");
+            prevButton.textContent = "Previous";
+            prevButton.disabled = currentPage === 1;
+            prevButton.addEventListener("click", () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    displayBookingData(currentPage);
+                }
+            });
+            pagination.appendChild(prevButton);
+
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, startPage + 4);
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageButton = document.createElement("button");
+                pageButton.textContent = i;
+                pageButton.disabled = i === currentPage;
+                pageButton.addEventListener("click", () => {
+                    currentPage = i;
+                    displayBookingData(currentPage);
+                });
+                pagination.appendChild(pageButton);
+            }
+
+            const nextButton = document.createElement("button");
+            nextButton.textContent = "Next";
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.addEventListener("click", () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    displayBookingData(currentPage);
+                }
+            });
+            pagination.appendChild(nextButton);
+        }
+
+        function updateSummary() {
+            const paid = filteredData.reduce((sum, row) => sum + (row.payment_type === "PAID" ? row.grand_total : 0), 0);
+            const toPay = filteredData.reduce((sum, row) => sum + (row.payment_type === "TO PAY" ? row.grand_total : 0), 0);
+            const totalAmount = paid + toPay;
+            const gst = totalAmount * 0.18;
+            const grandTotal = totalAmount + gst;
+
+            const summaryData = document.getElementById("summary-data");
+            summaryData.innerHTML = `
+                <tr>
+                    <td>Auto</td>
+                    <td>${paid.toFixed(2)}</td>
+                    <td>${toPay.toFixed(2)}</td>
+                    <td>${(totalAmount * 0.1).toFixed(2)}</td>
+                    <td>${totalAmount.toFixed(2)}</td>
+                    <td>${gst.toFixed(2)}</td>
+                    <td>${grandTotal.toFixed(2)}</td>
+                </tr>
+                <tr>
+                    <td>Manual</td>
+                    <td>0.00</td>
+                    <td>0.00</td>
+                    <td>0.00</td>
+                    <td>0.00</td>
+                    <td>0.00</td>
+                    <td>0.00</td>
+                </tr>
+                <tr class="summary-row">
+                    <td>Total</td>
+                    <td>${paid.toFixed(2)}</td>
+                    <td>${toPay.toFixed(2)}</td>
+                    <td>${(totalAmount * 0.1).toFixed(2)}</td>
+                    <td>${totalAmount.toFixed(2)}</td>
+                    <td>${gst.toFixed(2)}</td>
+                    <td>${grandTotal.toFixed(2)}</td>
+                </tr>
+            `;
+        }
+
+        function sortTable(column) {
+            filteredData.sort((a, b) => {
+                if (a[column] < b[column]) return -1;
+                if (a[column] > b[column]) return 1;
+                return 0;
+            });
+            displayBookingData(currentPage);
+        }
+
+        function simulateLoading(callback) {
+            document.getElementById("loading").style.display = "flex";
+            setTimeout(() => {
+                document.getElementById("loading").style.display = "none";
+                callback();
+            }, 1000);
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchBookingData();
+
+            document.getElementById("search-btn").addEventListener("click", () => {
+                simulateLoading(applyFilters);
+            });
+
+            document.getElementById("clear-btn").addEventListener("click", () => {
+                document.querySelectorAll('.filter-item input, .filter-item select').forEach(el => {
+                    el.value = '';
+                });
+                document.getElementById("lr-search").value = '';
+                fetchBookingData();
+            });
+
+            document.getElementById("download-btn").addEventListener("click", () => {
+                // Implement Excel download functionality here
+                window.location.href = "/transporter/download_excel/";
+            });
+
+            document.querySelectorAll("th[data-sort]").forEach((th) => {
+                th.addEventListener("click", () => {
+                    sortTable(th.dataset.sort);
+                });
+            });
+
+            document.querySelectorAll('.filter-item input, .filter-item select').forEach(el => {
+                el.addEventListener('change', applyFilters);
+            });
+
+            document.getElementById("lr-search").addEventListener('input', applyFilters);
+        });
+    </script>
+</body>
+</html>
+
