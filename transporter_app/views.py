@@ -27,13 +27,19 @@ from dealer_app.models import CNotes, DeliveryDestination
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 import io
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
+
+
 from django.http import FileResponse
 from reportlab.pdfgen import canvas
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from .models import DDMSummary, DDMDetails
 from django.core.exceptions import ValidationError
-
+from django.http import HttpResponse
+import pandas as pd
 from reportlab.lib.pagesizes import letter
 from django.db.models import F
 from django.shortcuts import redirect
@@ -54,6 +60,12 @@ from django.shortcuts import render
 from dealer_app.models import LoadingSheetSummary, Dealer
 from .models import TransporterAppReceive
 import logging
+from django.shortcuts import render
+from django.http import JsonResponse, HttpResponse
+from .models import Transporter
+from django.db.models import Q
+import csv
+import datetime
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
@@ -79,6 +91,27 @@ from dealer_app.models import CNotes
 from django.views.decorators.csrf import csrf_exempt
 from .models import DeliveryCNote, ReceivedStatesCnotes
 from dealer_app.models import LoadingSheetDetail, CNotes
+from django.shortcuts import render
+from django.http import JsonResponse, HttpResponse
+from django.contrib.auth.decorators import login_required
+from .models import Transporter
+from django.core.serializers.json import DjangoJSONEncoder
+import csv
+import json
+from django.http import HttpResponse
+import pandas as pd
+from django.contrib.auth.decorators import login_required
+from django.db import connections
+from django.utils.timezone import make_naive
+from pandas import DataFrame
+from django.utils.timezone import make_naive
+from pandas import DataFrame
+from io import BytesIO
+from django.http import HttpResponse
+import pandas as pd
+from io import BytesIO
+from django.http import HttpResponse
+import pandas as pd
 
 
 
@@ -1425,17 +1458,15 @@ def get_cnote(request, cnote_number):
         return JsonResponse({'error': 'CNotes not found'}, status=404)
 
 
-@require_http_methods(["PUT"])
-def update_cnote(request, cnote_number):
+def update_cnote(request, cnote):
     try:
-        cnote = get_object_or_404(CNotes, cnote_number=cnote_number)
         data = json.loads(request.body)
 
-        # Update CNotes fields
         fields_to_update = [
             'consignor_name', 'consignor_address', 'consignor_mobile', 'consignor_gst',
             'consignee_name', 'consignee_address', 'consignee_mobile', 'consignee_gst',
-            'freight', 'door_delivery_charge', 'handling_charge', 'other_charge'
+            'freight', 'door_delivery_charge', 'handling_charge', 'other_charge',
+            'delivery_destination', 'eway_bill_number', 'delivery_method'
         ]
 
         changes = []
@@ -1447,10 +1478,10 @@ def update_cnote(request, cnote_number):
                     'field': field,
                     'old_value': str(old_value),
                     'new_value': str(data[field]),
-                    'user': request.user.username  # Assuming you're using authentication
+                    'user': request.user.username if request.user.is_authenticated else 'Anonymous',
+                    'date': timezone.now().strftime('%Y-%m-%d %H:%M:%S')
                 })
 
-        # Recalculate grand_total
         cnote.grand_total = (
             float(cnote.freight) +
             float(cnote.door_delivery_charge) +
@@ -1459,12 +1490,79 @@ def update_cnote(request, cnote_number):
         )
         cnote.save()
 
-        return JsonResponse({
-            'message': 'CNotes updated successfully',
-            'changes': changes
-        })
+        updated_data = get_cnote(request, cnote).content
+        updated_data = json.loads(updated_data)
+        updated_data['changes'] = changes
+
+        return JsonResponse(updated_data)
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+    
 
+@login_required
+def all_booking_register(request):
+    return render(request, 'transporter/all_booking_register.html')
+@login_required
+
+
+@login_required
+def booking_register_data(request):
+    try:
+        # Fetch all data from the dealer_app_cnotes table, ordered by creation time
+        with connections['default'].cursor() as cursor:
+            cursor.execute("""
+                SELECT * FROM dealer_app_cnotes
+                ORDER BY created_at DESC
+            """)
+            columns = [col[0] for col in cursor.description]
+            cnotes = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+        # Convert Decimal fields to float for JSON serialization
+        for cnote in cnotes:
+            for key, value in cnote.items():
+                if isinstance(value, Decimal):
+                    cnote[key] = float(value)
+
+        return JsonResponse({'bookings': cnotes}, encoder=DjangoJSONEncoder)
+    except Exception as e:
+        print(f"Error: {str(e)}")  # Log error for debugging
+        return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
+def booking_register_view(request):
+    return render(request, 'transporter/booking_register.html')
+
+
+@login_required
+def download_excel(request):
+    try:
+        # Fetch all booking data
+        with connections['default'].cursor() as cursor:
+            cursor.execute("""
+                SELECT * FROM dealer_app_cnotes
+                ORDER BY created_at DESC
+            """)
+            columns = [col[0] for col in cursor.description]
+            bookings = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+        # Convert to DataFrame
+        df = DataFrame(bookings)
+
+        # Convert timezone-aware datetimes to timezone-naive
+        for col in df.select_dtypes(include=['datetime64[ns, UTC]']).columns:
+            df[col] = df[col].apply(lambda x: make_naive(x))
+
+        # Create an HTTP response with the Excel file
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="bookings.xlsx"'
+
+        # Use Pandas to write the DataFrame to the response
+        with pd.ExcelWriter(response, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Bookings')
+
+        return response
+    except Exception as e:
+        print(f"Error: {str(e)}")  # Debugging line
+        return HttpResponse(f"Error generating Excel: {e}", status=500)
