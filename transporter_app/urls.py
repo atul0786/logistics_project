@@ -70,8 +70,15 @@ urlpatterns = [
     path('api/ddm-details-for-update/', views.get_ddm_details_for_update, name='get_ddm_details_for_update'),
 
     path('cnotes-search/', views.cnotes_search, name='cnotes_search'),
-    path('api/cnotes/<str:cnote_number>/', views.get_cnote, name='get_cnote'),
+    #path('api/cnotes/<str:cnote_number>/', views.get_cnote, name='get_cnote'),
     path('api/cnotes/<str:cnote_number>/update/', views.update_cnote, name='update_cnote'),
+    path('api/cnotes/<str:cnote_number>/', views.cnote_detail, name='cnote_detail'),
+    path('all-booking-register/', views.all_booking_register, name='all_booking_register'),
+    path('booking-register-data/', views.booking_register_data, name='booking_register_data'),
+    #path('download-excel/', views.download_excel, name='download_excel'),
+    path('download_excel/', views.download_excel, name='download_excel'),
 
-    
+    path('booking-register/', views.booking_register_view, name='booking_register'),
+    path('booking_register_data/', views.booking_register_data, name='booking_register_data'),
+        
 ]
