@@ -1368,95 +1368,97 @@ def update_ddm(request):
         return JsonResponse({'status': 'error', 'message': 'DDM detail not found'}, status=404)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-
+    
 
 def cnotes_search(request):
     return render(request, 'transporter/cnotes_search.html')
 
-@require_http_methods(["GET"])
-def get_cnote(request, cnote_number):
-    try:
-        cnote = CNotes.objects.prefetch_related(
-            Prefetch('articles', queryset=Article.objects.select_related('art_type')),
-            'loading_sheet_details'
-        ).select_related('delivery_destination', 'dealer').get(cnote_number=cnote_number)
+@csrf_exempt
+@require_http_methods(["GET", "PUT"])
+def cnote_detail(request, cnote_number):
+    cnote = get_object_or_404(CNotes, cnote_number=cnote_number)
 
-        articles = [
-            {
-                'article_type': article.article_type,
-                'quantity': article.art,
-                'description': article.said_to_contain,
-                'amount': float(article.art_amount) if article.art_amount else 0
-            } for article in cnote.articles.all()
-        ]
+    if request.method == "GET":
+        return get_cnote(request, cnote)
+    elif request.method == "PUT":
+        return update_cnote(request, cnote)
 
-        status_history = [
-            {
-                'status': detail.status,
-                'date': detail.loading_sheet.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                'user': detail.loading_sheet.dealer.name,
-                'branch': detail.loading_sheet.dealer.company_name,
-                'from': detail.loading_sheet.dealer.city,
-                'to': detail.destination,
-                'remark': detail.remark,
-                'ls_remark': f"LS Number: {detail.loading_sheet.ls_number}"
-            } for detail in cnote.loading_sheet_details.all().order_by('-loading_sheet__created_at')
-        ]
+def get_cnote(request, cnote):
+    articles = [
+        {
+            'article_type': article.article_type,
+            'quantity': article.art,
+            'description': article.said_to_contain,
+            'amount': float(article.art_amount) if article.art_amount else 0
+        } for article in cnote.articles.all()
+    ]
 
-        response_data = {
-            'cnote_number': cnote.cnote_number,
-            'created_at': cnote.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'booking_type': cnote.booking_type,
-            'delivery_type': cnote.delivery_type,
-            'delivery_method': cnote.delivery_method,
-            'delivery_destination': cnote.delivery_destination.destination_name if cnote.delivery_destination else None,
-            'eway_bill_number': cnote.eway_bill_number,
-            'manual_date': cnote.manual_date.strftime('%Y-%m-%d') if cnote.manual_date else None,
-            'manual_cnote_number': cnote.manual_cnote_number,
-            'manual_cnote_type': cnote.manual_cnote_type,
-            'payment_type': cnote.payment_type,
-            'consignor_name': cnote.consignor_name,
-            'consignor_address': cnote.consignor_address,
-            'consignor_mobile': cnote.consignor_mobile,
-            'consignor_gst': cnote.consignor_gst,
-            'consignee_name': cnote.consignee_name,
-            'consignee_address': cnote.consignee_address,
-            'consignee_mobile': cnote.consignee_mobile,
-            'consignee_gst': cnote.consignee_gst,
-            'actual_weight': float(cnote.actual_weight) if cnote.actual_weight else 0,
-            'charged_weight': float(cnote.charged_weight) if cnote.charged_weight else 0,
-            'weight_rate': float(cnote.weight_rate) if cnote.weight_rate else 0,
-            'weight_amount': float(cnote.weight_amount) if cnote.weight_amount else 0,
-            'fix_amount': float(cnote.fix_amount) if cnote.fix_amount else 0,
-            'invoice_number': cnote.invoice_number,
-            'declared_value': float(cnote.declared_value) if cnote.declared_value else 0,
-            'risk_type': cnote.risk_type,
-            'pod_required': cnote.pod_required,
-            'freight': float(cnote.freight) if cnote.freight else 0,
-            'docket_charge': float(cnote.docket_charge) if cnote.docket_charge else 0,
-            'door_delivery_charge': float(cnote.door_delivery_charge) if cnote.door_delivery_charge else 0,
-            'handling_charge': float(cnote.handling_charge) if cnote.handling_charge else 0,
-            'pickup_charge': float(cnote.pickup_charge) if cnote.pickup_charge else 0,
-            'transhipment_charge': float(cnote.transhipment_charge) if cnote.transhipment_charge else 0,
-            'insurance': float(cnote.insurance) if cnote.insurance else 0,
-            'fuel_surcharge': float(cnote.fuel_surcharge) if cnote.fuel_surcharge else 0,
-            'commission': float(cnote.commission) if cnote.commission else 0,
-            'other_charge': float(cnote.other_charge) if cnote.other_charge else 0,
-            'carrier_risk': float(cnote.carrier_risk) if cnote.carrier_risk else 0,
-            'grand_total': float(cnote.grand_total) if cnote.grand_total else 0,
-            'status': cnote.status,
-            'status_updated_at': cnote.status_updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'total_art': cnote.total_art,
-            'articles': articles,
-            'status_history': status_history,
-            'changes_history': []  # Placeholder for changes history
-        }
+    status_history = [
+        {
+            'status': detail.status,
+            'status_no': detail.loading_sheet.ls_number,
+            'detail': f"LR No.: {cnote.cnote_number}",
+            'date': detail.loading_sheet.created_at.strftime('%d-%m-%y %I:%M %p'),
+            'on_day': (detail.loading_sheet.created_at.date() - cnote.created_at.date()).days + 1,
+            'user': detail.loading_sheet.dealer.name,
+            'branch': detail.loading_sheet.dealer.company_name,
+            'from': detail.loading_sheet.dealer.city,
+            'to': detail.destination,
+            'remark': detail.remark,
+            'ls_remark': f"LS Number: {detail.loading_sheet.ls_number}"
+        } for detail in cnote.loading_sheet_details.all().order_by('-loading_sheet__created_at')
+    ]
 
-        return JsonResponse(response_data)
-    except CNotes.DoesNotExist:
-        return JsonResponse({'error': 'CNotes not found'}, status=404)
+    response_data = {
+        'cnote_number': cnote.cnote_number,
+        'created_at': cnote.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        'booking_type': cnote.booking_type,
+        'delivery_type': cnote.delivery_type,
+        'delivery_method': cnote.delivery_method,
+        'delivery_destination': cnote.delivery_destination.destination_name if cnote.delivery_destination else None,
+        'eway_bill_number': cnote.eway_bill_number,
+        'manual_date': cnote.manual_date.strftime('%Y-%m-%d') if cnote.manual_date else None,
+        'manual_cnote_number': cnote.manual_cnote_number,
+        'manual_cnote_type': cnote.manual_cnote_type,
+        'payment_type': cnote.payment_type,
+        'consignor_name': cnote.consignor_name,
+        'consignor_address': cnote.consignor_address,
+        'consignor_mobile': cnote.consignor_mobile,
+        'consignor_gst': cnote.consignor_gst,
+        'consignee_name': cnote.consignee_name,
+        'consignee_address': cnote.consignee_address,
+        'consignee_mobile': cnote.consignee_mobile,
+        'consignee_gst': cnote.consignee_gst,
+        'actual_weight': float(cnote.actual_weight) if cnote.actual_weight else 0,
+        'charged_weight': float(cnote.charged_weight) if cnote.charged_weight else 0,
+        'weight_rate': float(cnote.weight_rate) if cnote.weight_rate else 0,
+        'weight_amount': float(cnote.weight_amount) if cnote.weight_amount else 0,
+        'fix_amount': float(cnote.fix_amount) if cnote.fix_amount else 0,
+        'invoice_number': cnote.invoice_number,
+        'declared_value': float(cnote.declared_value) if cnote.declared_value else 0,
+        'risk_type': cnote.risk_type,
+        'pod_required': cnote.pod_required,
+        'freight': float(cnote.freight) if cnote.freight else 0,
+        'docket_charge': float(cnote.docket_charge) if cnote.docket_charge else 0,
+        'door_delivery_charge': float(cnote.door_delivery_charge) if cnote.door_delivery_charge else 0,
+        'handling_charge': float(cnote.handling_charge) if cnote.handling_charge else 0,
+        'pickup_charge': float(cnote.pickup_charge) if cnote.pickup_charge else 0,
+        'transhipment_charge': float(cnote.transhipment_charge) if cnote.transhipment_charge else 0,
+        'insurance': float(cnote.insurance) if cnote.insurance else 0,
+        'fuel_surcharge': float(cnote.fuel_surcharge) if cnote.fuel_surcharge else 0,
+        'commission': float(cnote.commission) if cnote.commission else 0,
+        'other_charge': float(cnote.other_charge) if cnote.other_charge else 0,
+        'carrier_risk': float(cnote.carrier_risk) if cnote.carrier_risk else 0,
+        'grand_total': float(cnote.grand_total) if cnote.grand_total else 0,
+        'status': cnote.status,
+        'status_updated_at': cnote.status_updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+        'total_art': cnote.total_art,
+        'articles': articles,
+        'status_history': status_history,
+        'changes_history': []  # Placeholder for changes history
+    }
 
+    return JsonResponse(response_data)
 
 def update_cnote(request, cnote):
     try:
