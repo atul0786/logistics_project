@@ -95,3 +95,5 @@ xhtml2pdf==0.2.16
 yarg==0.1.9
 zopfli==0.2.3
 whitenoise==6.6.0
+pandas==1.5.3  # or the latest version you want to use
+openpyxl==3.1.2  # or the latest version you want to use
