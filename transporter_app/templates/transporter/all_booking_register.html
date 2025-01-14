@@ -437,8 +437,8 @@
                     console.log("Received data:", data);  // Add this line for debugging
                     if (data.bookings && Array.isArray(data.bookings)) {
                         allBookingData = data.bookings;
-                        document.getElementById('transporter-name').textContent = data.transporter_name || 'N/A';
-                        document.getElementById('transporter-city').textContent = data.transporter_city || 'N/A';
+                        document.getElementById('transporter-name').textContent = data.transporter_name || 'GoodWayExpress';
+                        document.getElementById('transporter-city').textContent = data.transporter_city || 'Yavatmal';
                         populateFilters(data.bookings);
                         applyFilters();
                     } else {
