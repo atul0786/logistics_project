@@ -1508,11 +1508,13 @@ def booking_register_data(request):
                     d.name as dealer_name,
                     d.dealer_code as dealer_type,
                     dd.destination_name as delivery_destination,
-                    CASE
-                        WHEN d.dealer_code = 'dealer_app_dealer' THEN 'Dealer'
-                        WHEN d.dealer_code = 'transporter' THEN 'Transporter'
-                        ELSE 'Unknown'
-                    END as user_type,
+                   CASE 
+                        WHEN EXISTS (
+                            SELECT 1 FROM dealer_app_dealer 
+                            WHERE name = d.name
+                        ) THEN 'Dealer'
+                        ELSE 'Transporter'
+                    END as user_type
                     ls.ls_number as loading_sheet_number,
                     ddm.ddm_no as ddm_number
                 FROM dealer_app_cnotes c
