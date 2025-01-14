@@ -1,123 +1,62 @@
 import json
-from datetime import datetime
 import logging
-from .models import DDMSummary, DeliveryCNote
-from .models import CNote# Assuming you have a CNotes model
-from .serializers import DDMDetailsSerializer, DDMSummarySerializer
-import json
+import csv
+import io
+from decimal import Decimal
+import datetime
+import pandas as pd
+from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
+from django.core.serializers.json import DjangoJSONEncoder
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError, connection, connections, transaction
+from django.db.models import Count, Sum, F, Q, Exists, OuterRef, Prefetch
+from django.http import JsonResponse, HttpResponse, FileResponse
+from django.shortcuts import get_object_or_404, render, redirect
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.timezone import make_naive
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.views.decorators.http import require_http_methods, require_POST, require_GET
+from django.views.generic import TemplateView
+
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from .models import DDMDetails, DDMSummary
-from .serializers import DDMDetailsSerializer, DDMSummarySerializer
-from datetime import date
-from .models import DDMSummary, DDMDetails  # Corrected import
 
-from django.db.models import Count, Sum, F, Q
-from dealer_app.models import LoadingSheetSummary, LoadingSheetDetail
-from decimal import Decimal
-from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.views.decorators.http import require_http_methods
-from django.http import JsonResponse
-from django.db.models import Sum
-from django.db import IntegrityError, transaction
-from dealer_app.models import CNotes, DeliveryDestination
-from django.utils import timezone
-from django.contrib.auth import get_user_model
-import io
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from django.db.models import Sum
-
-
-from django.http import FileResponse
-from reportlab.pdfgen import canvas
-from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
-from .models import DDMSummary, DDMDetails
-from django.core.exceptions import ValidationError
-from django.http import HttpResponse
-import pandas as pd
-from reportlab.lib.pagesizes import letter
-from django.db.models import F
-from django.shortcuts import redirect
-from django.urls import reverse
-from django.views.generic import TemplateView
-from dealer_app.models import CNotes, Dealer, LoadingSheetSummary
-from .models import Transporter, State, City, PartyMaster, Pickup, TransporterAppReceive
 from .forms import StateForm, CityForm, PartyMasterForm
-from django.db.models import Sum, Q, Exists, OuterRef
-from django.utils import timezone
-from datetime import datetime
-from django.core.paginator import Paginator
-from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.shortcuts import render
-from dealer_app.models import LoadingSheetSummary, Dealer
-from .models import TransporterAppReceive
-import logging
-from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse
-from .models import Transporter
-from django.db.models import Q
-import csv
-import datetime
-from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
-from django.db.models import Prefetch
-from .models import CNote
-from dealer_app.models import Article, ArtType, LoadingSheetDetail
-import json
-from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from dealer_app.models import LoadingSheetSummary, LoadingSheetDetail, CNotes
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.utils import timezone
-from .models import ReceivedStatesCnotes
-from dealer_app.models import LoadingSheetSummary, LoadingSheetDetail, CNotes
-from django.db import transaction
-from django.shortcuts import render, get_object_or_404
-from dealer_app.models import LoadingSheetSummary, LoadingSheetDetail
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.views.decorators.http import require_GET
-from dealer_app.models import CNotes
-from django.views.decorators.csrf import csrf_exempt
-from .models import DeliveryCNote, ReceivedStatesCnotes
-from dealer_app.models import LoadingSheetDetail, CNotes
-from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse
-from django.contrib.auth.decorators import login_required
-from .models import Transporter
-from django.core.serializers.json import DjangoJSONEncoder
-import csv
-import json
-from django.http import HttpResponse
-import pandas as pd
-from django.contrib.auth.decorators import login_required
-from django.db import connections
-from django.utils.timezone import make_naive
-from pandas import DataFrame
-from django.utils.timezone import make_naive
-from pandas import DataFrame
-from io import BytesIO
-from django.http import HttpResponse
-import pandas as pd
-from io import BytesIO
-from django.http import HttpResponse
-import pandas as pd
+from .models import (
+    DDMSummary,
+    DDMDetails,
+    DeliveryCNote,
+    ReceivedStatesCnotes,
+    Transporter,
+    State,
+    City,
+    PartyMaster,
+    Pickup,
+    TransporterAppReceive,
+    CNote,
+)
+from .serializers import DDMDetailsSerializer, DDMSummarySerializer
+from dealer_app.models import (
+    LoadingSheetSummary,
+    LoadingSheetDetail,
+    CNotes,
+    Dealer,
+    DeliveryDestination,
+    Article,
+    ArtType,
+)
 
-
-
+# Logging configuration
 logger = logging.getLogger(__name__)
 
-User = get_user_model()  # This will refer to your CustomUser model
+# User model reference
+User = get_user_model()
 
 @login_required
 def home(request):
@@ -1506,31 +1445,95 @@ def update_cnote(request, cnote):
 @login_required
 def all_booking_register(request):
     return render(request, 'transporter/all_booking_register.html')
-@login_required
 
+
+
+logger = logging.getLogger(__name__)
 
 @login_required
 def booking_register_data(request):
+    class CustomJSONEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, Decimal):
+                return float(obj)
+            elif isinstance(obj, datetime):
+                return obj.isoformat()
+            return super(CustomJSONEncoder, self).default(obj)
+
     try:
-        # Fetch all data from the dealer_app_cnotes table, ordered by creation time
-        with connections['default'].cursor() as cursor:
+        logger.info("Starting booking_register_data function")
+        
+        with connection.cursor() as cursor:
+            logger.info("Executing SQL query")
             cursor.execute("""
-                SELECT * FROM dealer_app_cnotes
-                ORDER BY created_at DESC
+                SELECT 
+                    c.*,
+                    STRING_AGG(DISTINCT a.art_type_id::text, '/') as art_types,
+                    STRING_AGG(DISTINCT a.said_to_contain, '/') as said_to_contain,
+                    STRING_AGG(DISTINCT a.art_amount::text, '/') as art_amounts,
+                    d.name as dealer_name,
+                    d.dealer_code as dealer_type,
+                    dd.destination_name as delivery_destination,
+                    CASE
+                        WHEN d.dealer_code = 'DEALER' THEN 'Dealer'
+                        WHEN d.dealer_code = 'TRANSPORTER' THEN 'Transporter'
+                        ELSE 'Unknown'
+                    END as user_type
+                FROM dealer_app_cnotes c
+                LEFT JOIN dealer_app_article a ON c.id = a.cnote_id
+                LEFT JOIN dealer_app_dealer d ON c.dealer_id = d.dealer_id
+                LEFT JOIN dealer_app_deliverydestination dd ON c.delivery_destination_id = dd.id
+                GROUP BY 
+                    c.id,
+                    d.name,
+                    d.dealer_code,
+                    dd.destination_name
+                ORDER BY c.created_at DESC
             """)
-            columns = [col[0] for col in cursor.description]
-            cnotes = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            cnotes = cursor.fetchall()
+            logger.info(f"Fetched {len(cnotes)} records from the database")
 
-        # Convert Decimal fields to float for JSON serialization
-        for cnote in cnotes:
-            for key, value in cnote.items():
+        cnotes_data = []
+        for index, cnote in enumerate(cnotes):
+            logger.debug(f"Processing record {index + 1}")
+            cnote_data = dict(zip([col[0] for col in cursor.description], cnote))
+            
+            art_types = cnote_data.get('art_types')
+            said_to_contain = cnote_data.get('said_to_contain')
+            art_amounts = cnote_data.get('art_amounts')
+
+            cnote_data['art_types'] = art_types.split('/') if art_types else []
+            cnote_data['said_to_contain'] = said_to_contain.split('/') if said_to_contain else []
+            cnote_data['art_amounts'] = [float(x) if x.replace('.', '').isdigit() else 0 for x in art_amounts.split('/')] if art_amounts else []
+
+            cnote_data['user'] = cnote_data.get('dealer_name') or 'N/A'
+            cnote_data['user_type'] = cnote_data.get('user_type') or 'Unknown'
+
+            for key, value in cnote_data.items():
+                logger.debug(f"Processing key: {key}, value type: {type(value)}")
                 if isinstance(value, Decimal):
-                    cnote[key] = float(value)
+                    logger.debug(f"Converting Decimal: {key}: {value} to float")
+                    cnote_data[key] = float(value)
+                elif isinstance(value, type(datetime.datetime.now())):
+                    logger.debug(f"Converting datetime: {key}: {value} to ISO format")
+                    cnote_data[key] = value.isoformat()
 
-        return JsonResponse({'bookings': cnotes}, encoder=DjangoJSONEncoder)
+            cnotes_data.append(cnote_data)
+
+        logger.info(f"Processed {len(cnotes_data)} records")
+        logger.debug(f"First record: {json.dumps(cnotes_data[0], indent=2, cls=CustomJSONEncoder)}")
+
+        response_data = {'bookings': cnotes_data}
+        logger.info("Preparing JSON response")
+        json_data = json.dumps(response_data, cls=CustomJSONEncoder)
+        logger.info("JSON response prepared successfully")
+
+        return HttpResponse(json_data, content_type='application/json')
     except Exception as e:
-        print(f"Error: {str(e)}")  # Log error for debugging
+        logger.error(f"Error in booking_register_data: {str(e)}", exc_info=True)
         return JsonResponse({'error': str(e)}, status=500)
+
+
 
 @login_required
 def booking_register_view(request):
@@ -1550,7 +1553,7 @@ def download_excel(request):
             bookings = [dict(zip(columns, row)) for row in cursor.fetchall()]
 
         # Convert to DataFrame
-        df = DataFrame(bookings)
+        df = pd.DataFrame(bookings)
 
         # Convert timezone-aware datetimes to timezone-naive
         for col in df.select_dtypes(include=['datetime64[ns, UTC]']).columns:
