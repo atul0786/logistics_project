@@ -1296,18 +1296,53 @@ def update_ddm(request):
         payment_type = data.get('paymentType')
         reason = data.get('reason', '')
 
-        ddm_detail = DDMDetails.objects.get(id=id)
-        ddm_detail.status = status
-        ddm_detail.rcv_dly_as = payment_type
-        ddm_detail.remark = reason
-        ddm_detail.save()
+        with transaction.atomic():
+            # Update DDM Details
+            ddm_detail = DDMDetails.objects.get(id=id)
+            ddm_detail.status = status
+            ddm_detail.rcv_dly_as = payment_type
+            ddm_detail.remark = reason
+            ddm_detail.save()
 
-        return JsonResponse({'status': 'success', 'message': 'DDM detail updated successfully'})
+            # Update CNotes status
+            cnote = CNotes.objects.get(cnote_number=ddm_detail.cnote_number)
+            cnote.status = status
+            cnote.save()
+
+            # Update LoadingSheetDetail status
+            LoadingSheetDetail.objects.filter(
+                cnote=cnote
+            ).update(status=status)
+
+            # Update ReceivedStatesCnotes status
+            ReceivedStatesCnotes.objects.filter(
+                cnote_number=ddm_detail.cnote_number
+            ).update(status=status)
+
+            # Update DeliveryCNote if it exists
+            DeliveryCNote.objects.filter(
+                lr_number=ddm_detail.cnote_number
+            ).update(status=status)
+
+        return JsonResponse({
+            'status': 'success', 
+            'message': 'DDM detail and related records updated successfully'
+        })
     except DDMDetails.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'DDM detail not found'}, status=404)
+        return JsonResponse({
+            'status': 'error', 
+            'message': 'DDM detail not found'
+        }, status=404)
+    except CNotes.DoesNotExist:
+        return JsonResponse({
+            'status': 'error', 
+            'message': 'CNotes record not found'
+        }, status=404)
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-    
+        return JsonResponse({
+            'status': 'error', 
+            'message': str(e)
+        }, status=500)
 
 def cnotes_search(request):
     return render(request, 'transporter/cnotes_search.html')
