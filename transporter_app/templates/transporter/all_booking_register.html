@@ -390,6 +390,8 @@
                         <th data-sort="consignee_gst">Consignee GST</th>
                         <th data-sort="user">User</th>
                         <th data-sort="user_type">User Type</th>
+                        <th data-sort="loading_sheet_number">LS Number</th>
+                        <th data-sort="ddm_number">DDM Number</th>
                     </tr>
                 </thead>
                 <tbody id="booking-data">
@@ -558,6 +560,8 @@
                     <td>${row.consignee_gst || 'N/A'}</td>
                     <td>${row.user || 'N/A'}</td>
                     <td>${row.user_type || 'N/A'}</td>
+                    <td>${row.loading_sheet_number || 'N/A'}</td>
+                    <td>${row.ddm_number || 'N/A'}</td>
                 `;
                 bookingData.appendChild(tr);
             });
