@@ -1506,15 +1506,14 @@ def booking_register_data(request):
                     STRING_AGG(DISTINCT a.said_to_contain, '/') as said_to_contain,
                     STRING_AGG(DISTINCT a.art_amount::text, '/') as art_amounts,
                     d.name as dealer_name,
-                    d.dealer_code as dealer_type,
                     dd.destination_name as delivery_destination,
-                   CASE 
+                    CASE 
                         WHEN EXISTS (
                             SELECT 1 FROM dealer_app_dealer 
                             WHERE name = d.name
                         ) THEN 'Dealer'
                         ELSE 'Transporter'
-                    END as user_type
+                    END as user_type,
                     ls.ls_number as loading_sheet_number,
                     ddm.ddm_no as ddm_number
                 FROM dealer_app_cnotes c
@@ -1528,7 +1527,6 @@ def booking_register_data(request):
                 GROUP BY 
                     c.id,
                     d.name,
-                    d.dealer_code,
                     dd.destination_name,
                     ls.ls_number,
                     ddm.ddm_no
