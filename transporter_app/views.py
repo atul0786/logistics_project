@@ -1500,16 +1500,6 @@ def booking_register_data(request):
         with connection.cursor() as cursor:
             logger.info("Executing SQL query")
             cursor.execute("""
-                WITH user_type_check AS (
-                    SELECT 
-                        name,
-                        CASE 
-                            WHEN EXISTS (SELECT 1 FROM dealer_app_dealer WHERE name = d.name) THEN 'Dealer'
-                            WHEN EXISTS (SELECT 1 FROM transporter_app_transporter WHERE name = d.name) THEN 'Transporter'
-                            ELSE 'Unknown'
-                        END as determined_user_type
-                    FROM dealer_app_dealer d
-                )
                 SELECT 
                     c.*,
                     STRING_AGG(DISTINCT a.art_type_id::text, '/') as art_types,
@@ -1518,13 +1508,16 @@ def booking_register_data(request):
                     d.name as dealer_name,
                     d.dealer_code as dealer_type,
                     dd.destination_name as delivery_destination,
-                    utc.determined_user_type as user_type,
+                    CASE
+                        WHEN d.dealer_code = 'dealer_app_dealer' THEN 'Dealer'
+                        WHEN d.dealer_code = 'transporter' THEN 'Transporter'
+                        ELSE 'Unknown'
+                    END as user_type,
                     ls.ls_number as loading_sheet_number,
                     ddm.ddm_no as ddm_number
                 FROM dealer_app_cnotes c
                 LEFT JOIN dealer_app_article a ON c.id = a.cnote_id
                 LEFT JOIN dealer_app_dealer d ON c.dealer_id = d.dealer_id
-                LEFT JOIN user_type_check utc ON d.name = utc.name
                 LEFT JOIN dealer_app_deliverydestination dd ON c.delivery_destination_id = dd.id
                 LEFT JOIN dealer_app_loadingsheetdetail lsd ON c.id = lsd.cnote_id
                 LEFT JOIN dealer_app_loadingsheetsummary ls ON lsd.loading_sheet_id = ls.ls_number
@@ -1535,7 +1528,6 @@ def booking_register_data(request):
                     d.name,
                     d.dealer_code,
                     dd.destination_name,
-                    utc.determined_user_type,
                     ls.ls_number,
                     ddm.ddm_no
                 ORDER BY c.created_at DESC
@@ -1548,7 +1540,6 @@ def booking_register_data(request):
             logger.debug(f"Processing record {index + 1}")
             cnote_data = dict(zip([col[0] for col in cursor.description], cnote))
             
-            # Process art types, said to contain, and art amounts
             art_types = cnote_data.get('art_types')
             said_to_contain = cnote_data.get('said_to_contain')
             art_amounts = cnote_data.get('art_amounts')
@@ -1557,36 +1548,27 @@ def booking_register_data(request):
             cnote_data['said_to_contain'] = said_to_contain.split('/') if said_to_contain else []
             cnote_data['art_amounts'] = [float(x) if x.replace('.', '').isdigit() else 0 for x in art_amounts.split('/')] if art_amounts else []
 
-            # Set user and user type
             cnote_data['user'] = cnote_data.get('dealer_name') or 'N/A'
             cnote_data['user_type'] = cnote_data.get('user_type') or 'Unknown'
             cnote_data['loading_sheet_number'] = cnote_data.get('loading_sheet_number') or 'N/A'
             cnote_data['ddm_number'] = cnote_data.get('ddm_number') or 'N/A'
 
-            # Convert decimal and datetime values
             for key, value in cnote_data.items():
-                logger.debug(f"Processing key: {key}, value type: {type(value)}")
                 if isinstance(value, Decimal):
-                    logger.debug(f"Converting Decimal: {key}: {value} to float")
                     cnote_data[key] = float(value)
                 elif isinstance(value, type(datetime.datetime.now())):
-                    logger.debug(f"Converting datetime: {key}: {value} to ISO format")
                     cnote_data[key] = value.isoformat()
 
             cnotes_data.append(cnote_data)
 
-        logger.info(f"Processed {len(cnotes_data)} records")
-        logger.debug(f"First record: {json.dumps(cnotes_data[0], indent=2, cls=CustomJSONEncoder)}")
-
         response_data = {'bookings': cnotes_data}
-        logger.info("Preparing JSON response")
         json_data = json.dumps(response_data, cls=CustomJSONEncoder)
-        logger.info("JSON response prepared successfully")
 
         return HttpResponse(json_data, content_type='application/json')
     except Exception as e:
         logger.error(f"Error in booking_register_data: {str(e)}", exc_info=True)
         return JsonResponse({'error': str(e)}, status=500)
+
 
 @login_required
 def booking_register_view(request):
