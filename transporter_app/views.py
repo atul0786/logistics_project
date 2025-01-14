@@ -1484,7 +1484,6 @@ def all_booking_register(request):
 
 
 logger = logging.getLogger(__name__)
-
 @login_required
 def booking_register_data(request):
     class CustomJSONEncoder(json.JSONEncoder):
@@ -1513,16 +1512,24 @@ def booking_register_data(request):
                         WHEN d.dealer_code = 'DEALER' THEN 'Dealer'
                         WHEN d.dealer_code = 'TRANSPORTER' THEN 'Transporter'
                         ELSE 'Unknown'
-                    END as user_type
+                    END as user_type,
+                    ls.ls_number as loading_sheet_number,
+                    ddm.ddm_no as ddm_number
                 FROM dealer_app_cnotes c
                 LEFT JOIN dealer_app_article a ON c.id = a.cnote_id
                 LEFT JOIN dealer_app_dealer d ON c.dealer_id = d.dealer_id
                 LEFT JOIN dealer_app_deliverydestination dd ON c.delivery_destination_id = dd.id
+                LEFT JOIN dealer_app_loadingsheetdetail lsd ON c.id = lsd.cnote_id
+                LEFT JOIN dealer_app_loadingsheetsummary ls ON lsd.loading_sheet_id = ls.ls_number
+                LEFT JOIN transporter_app_ddmdetails ddmd ON c.cnote_number = ddmd.cnote_number
+                LEFT JOIN transporter_app_ddmsummary ddm ON ddmd.ddm_id = ddm.ddm_id
                 GROUP BY 
                     c.id,
                     d.name,
                     d.dealer_code,
-                    dd.destination_name
+                    dd.destination_name,
+                    ls.ls_number,
+                    ddm.ddm_no
                 ORDER BY c.created_at DESC
             """)
             cnotes = cursor.fetchall()
@@ -1543,6 +1550,8 @@ def booking_register_data(request):
 
             cnote_data['user'] = cnote_data.get('dealer_name') or 'N/A'
             cnote_data['user_type'] = cnote_data.get('user_type') or 'Unknown'
+            cnote_data['loading_sheet_number'] = cnote_data.get('loading_sheet_number') or 'N/A'
+            cnote_data['ddm_number'] = cnote_data.get('ddm_number') or 'N/A'
 
             for key, value in cnote_data.items():
                 logger.debug(f"Processing key: {key}, value type: {type(value)}")
@@ -1567,7 +1576,6 @@ def booking_register_data(request):
     except Exception as e:
         logger.error(f"Error in booking_register_data: {str(e)}", exc_info=True)
         return JsonResponse({'error': str(e)}, status=500)
-
 
 
 @login_required
