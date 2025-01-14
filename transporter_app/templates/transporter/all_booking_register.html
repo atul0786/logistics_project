@@ -423,7 +423,7 @@
         let filteredData = [];
         let currentPage = 1;
         const itemsPerPage = 20;
-
+    
         // Fetch data from server
         function fetchBookingData() {
             fetch("/transporter/booking_register_data/")
@@ -434,13 +434,22 @@
                     return response.json();
                 })
                 .then((data) => {
-                    allBookingData = data.bookings;
-                    document.getElementById('transporter-name').textContent = data.transporter_name;
-                    document.getElementById('transporter-city').textContent = data.transporter_city;
-                    populateFilters(data.bookings);
-                    applyFilters();
+                    console.log("Received data:", data);  // Add this line for debugging
+                    if (data.bookings && Array.isArray(data.bookings)) {
+                        allBookingData = data.bookings;
+                        document.getElementById('transporter-name').textContent = data.transporter_name || 'N/A';
+                        document.getElementById('transporter-city').textContent = data.transporter_city || 'N/A';
+                        populateFilters(data.bookings);
+                        applyFilters();
+                    } else {
+                        console.error("Unexpected data format:", data);
+                        throw new Error('Unexpected data format');
+                    }
                 })
-                .catch((error) => console.error("Error fetching data:", error));
+                .catch((error) => {
+                    console.error("Error fetching data:", error);
+                    document.getElementById("booking-data").innerHTML = `<tr><td colspan="42">Error loading data: ${error.message}</td></tr>`;
+                });
         }
 
         function populateFilters(data) {
@@ -502,57 +511,57 @@
             const startIndex = (page - 1) * itemsPerPage;
             const endIndex = startIndex + itemsPerPage;
             const pageData = filteredData.slice(startIndex, endIndex);
-
+    
             const bookingData = document.getElementById("booking-data");
             bookingData.innerHTML = "";
             pageData.forEach((row, index) => {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
                     <td>${startIndex + index + 1}</td>
-                    <td>${row.cnote_number}</td>
-                    <td>${row.booking_type}</td>
-                    <td>${row.delivery_destination}</td>
-                    <td>${row.consignor_name}</td>
-                    <td>${row.consignee_name}</td>
-                    <td>${row.payment_type}</td>
-                    <td>${row.grand_total.toFixed(2)}</td>
-                    <td>${new Date(row.created_at).toLocaleString()}</td>
-                    <td>${row.eway_bill_number}</td>
-                    <td>${row.actual_weight.toFixed(2)}</td>
-                    <td>${row.charged_weight.toFixed(2)}</td>
-                    <td>${row.weight_rate.toFixed(2)}</td>
-                    <td>${row.weight_amount.toFixed(2)}</td>
-                    <td>${row.fix_amount.toFixed(2)}</td>
-                    <td>${row.invoice_number}</td>
-                    <td>${row.declared_value.toFixed(2)}</td>
-                    <td>${row.risk_type}</td>
-                    <td>${row.pod_required}</td>
-                    <td>${row.freight.toFixed(2)}</td>
-                    <td>${row.docket_charge.toFixed(2)}</td>
-                    <td>${row.door_delivery_charge.toFixed(2)}</td>
-                    <td>${row.handling_charge.toFixed(2)}</td>
-                    <td>${row.pickup_charge.toFixed(2)}</td>
-                    <td>${row.transhipment_charge.toFixed(2)}</td>
-                    <td>${row.insurance.toFixed(2)}</td>
-                    <td>${row.fuel_surcharge.toFixed(2)}</td>
-                    <td>${row.commission.toFixed(2)}</td>
-                    <td>${row.other_charge.toFixed(2)}</td>
-                    <td>${row.carrier_risk}</td>
-                    <td>${row.delivery_type}</td>
-                    <td>${row.delivery_method}</td>
-                    <td>${row.status}</td>
-                    <td>${row.total_art}</td>
-                    <td>${row.art_types}</td>
-                    <td>${row.said_to_contain}</td>
-                    <td>${row.art_amounts}</td>
-                    <td>${row.consignor_gst}</td>
-                    <td>${row.consignee_gst}</td>
-                    <td>${row.user}</td>
-                    <td>${row.user_type}</td>
+                    <td>${row.cnote_number || 'N/A'}</td>
+                    <td>${row.booking_type || 'N/A'}</td>
+                    <td>${row.delivery_destination || 'N/A'}</td>
+                    <td>${row.consignor_name || 'N/A'}</td>
+                    <td>${row.consignee_name || 'N/A'}</td>
+                    <td>${row.payment_type || 'N/A'}</td>
+                    <td>${(row.grand_total || 0).toFixed(2)}</td>
+                    <td>${row.created_at ? new Date(row.created_at).toLocaleString() : 'N/A'}</td>
+                    <td>${row.eway_bill_number || 'N/A'}</td>
+                    <td>${(row.actual_weight || 0).toFixed(2)}</td>
+                    <td>${(row.charged_weight || 0).toFixed(2)}</td>
+                    <td>${(row.weight_rate || 0).toFixed(2)}</td>
+                    <td>${(row.weight_amount || 0).toFixed(2)}</td>
+                    <td>${(row.fix_amount || 0).toFixed(2)}</td>
+                    <td>${row.invoice_number || 'N/A'}</td>
+                    <td>${(row.declared_value || 0).toFixed(2)}</td>
+                    <td>${row.risk_type || 'N/A'}</td>
+                    <td>${row.pod_required || 'N/A'}</td>
+                    <td>${(row.freight || 0).toFixed(2)}</td>
+                    <td>${(row.docket_charge || 0).toFixed(2)}</td>
+                    <td>${(row.door_delivery_charge || 0).toFixed(2)}</td>
+                    <td>${(row.handling_charge || 0).toFixed(2)}</td>
+                    <td>${(row.pickup_charge || 0).toFixed(2)}</td>
+                    <td>${(row.transhipment_charge || 0).toFixed(2)}</td>
+                    <td>${(row.insurance || 0).toFixed(2)}</td>
+                    <td>${(row.fuel_surcharge || 0).toFixed(2)}</td>
+                    <td>${(row.commission || 0).toFixed(2)}</td>
+                    <td>${(row.other_charge || 0).toFixed(2)}</td>
+                    <td>${row.carrier_risk || 'N/A'}</td>
+                    <td>${row.delivery_type || 'N/A'}</td>
+                    <td>${row.delivery_method || 'N/A'}</td>
+                    <td>${row.status || 'N/A'}</td>
+                    <td>${row.total_art || 'N/A'}</td>
+                    <td>${Array.isArray(row.art_types) ? row.art_types.join('/') : 'N/A'}</td>
+                    <td>${Array.isArray(row.said_to_contain) ? row.said_to_contain.join('/') : 'N/A'}</td>
+                    <td>${Array.isArray(row.art_amounts) ? row.art_amounts.map(amt => parseFloat(amt).toFixed(2)).join('/') : 'N/A'}</td>
+                    <td>${row.consignor_gst || 'N/A'}</td>
+                    <td>${row.consignee_gst || 'N/A'}</td>
+                    <td>${row.user || 'N/A'}</td>
+                    <td>${row.user_type || 'N/A'}</td>
                 `;
                 bookingData.appendChild(tr);
             });
-
+    
             updatePagination();
         }
 
