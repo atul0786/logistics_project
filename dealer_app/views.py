@@ -660,7 +660,6 @@ def loading_sheet(request):
 
     return render(request, 'dealer/loading_sheet.html', context)
 
-
 @login_required
 def booking_register_view(request):
     # Get the logged-in dealer
@@ -686,9 +685,14 @@ def booking_register_view(request):
             total_art = 0
             
             for article in articles:
-                # Handle art_type safely
+                # Handle art_type safely - use the actual art type name from the selection
                 try:
                     art_type_name = article.art_type.art_type_name if article.art_type else 'N/A'
+                    # Convert database value to display value
+                    if art_type_name == 'type1':
+                        art_type_name = 'SMALL BOX'
+                    elif art_type_name == 'type2':
+                        art_type_name = 'BIG BOX'
                     art_types.append(art_type_name)
                 except AttributeError:
                     art_types.append('N/A')
