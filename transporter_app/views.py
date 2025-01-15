@@ -1203,7 +1203,10 @@ def ddm_details_view(request):
         if not ddm_id:
             messages.error(request, 'DDM ID is required')
             return redirect('transporter:ddm')
-            
+
+        # Remove 'DDM-' prefix if present
+        ddm_id = ddm_id.replace('DDM-', '')
+        
         # Get DDM summary
         ddm_summary = get_object_or_404(DDMSummary, ddm_id=ddm_id)
         
@@ -1230,8 +1233,6 @@ def ddm_details_view(request):
         logger.error(f"Error in ddm_details_view: {str(e)}")
         messages.error(request, 'Error loading DDM details. Please try again.')
         return redirect('transporter:ddm')
-
-
 
 def ddm_settlement(request):
     return render(request, 'transporter/ddm_update.html')  # Ensure the path is correct
@@ -1476,6 +1477,7 @@ def update_cnote(request, cnote):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
     
+
 
 @login_required
 def all_booking_register(request):
