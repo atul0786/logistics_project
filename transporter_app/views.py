@@ -1478,7 +1478,6 @@ def update_cnote(request, cnote):
         return JsonResponse({'error': str(e)}, status=500)
     
 
-
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Decimal):
@@ -1642,13 +1641,9 @@ def booking_register_data(request):
         logger.error(f"Error in booking_register_data: {str(e)}", exc_info=True)
         return JsonResponse({'error': str(e)}, status=500)
 
-
-@login_required
-
 @login_required
 def booking_register_view(request):
     return render(request, 'transporter/booking_register.html')
-
 
 @login_required
 def download_excel(request):
