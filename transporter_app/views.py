@@ -1478,6 +1478,19 @@ def update_cnote(request, cnote):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
     
+import json
+import logging
+from decimal import Decimal
+from datetime import datetime
+from django.http import JsonResponse, HttpResponse
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.db import connection, connections
+import pandas as pd
+from django.utils.timezone import make_naive
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -1609,6 +1622,7 @@ def booking_register_data(request):
             logger.debug(f"Processing record {index + 1}")
             cnote_data = dict(zip([col[0] for col in cursor.description], cnote))
             
+            # Process aggregated fields
             art_types = cnote_data.get('art_types')
             said_to_contain = cnote_data.get('said_to_contain')
             art_amounts = cnote_data.get('art_amounts')
@@ -1616,6 +1630,9 @@ def booking_register_data(request):
             cnote_data['art_types'] = art_types.split('/') if art_types else []
             cnote_data['said_to_contain'] = said_to_contain.split('/') if said_to_contain else []
             cnote_data['art_amounts'] = [float(x) if x and x.replace('.', '').isdigit() else 0 for x in art_amounts.split('/')] if art_amounts else []
+
+            # Calculate total articles
+            cnote_data['total_art'] = sum(cnote_data['art_amounts'])
 
             cnote_data['user'] = cnote_data.get('dealer_name') or 'N/A'
             cnote_data['user_type'] = cnote_data.get('user_type') or 'Unknown'
