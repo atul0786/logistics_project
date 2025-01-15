@@ -1530,7 +1530,7 @@ def booking_register_data(request):
                     STRING_AGG(DISTINCT a.art_type_id::text, '/') as art_types,
                     STRING_AGG(DISTINCT a.said_to_contain, '/') as said_to_contain,
                     STRING_AGG(CAST(a.art_amount AS TEXT), '/') as art_amounts,
-                    STRING_AGG(DISTINCT a.art_type::text, '/') as art_type_names,
+                    STRING_AGG(DISTINCT a.art_type_id::text, '/') as art_type_names,
                     SUM(a.art) as total_articles,
                     SUM(a.art_amount) as total_amount,
                     d.name as dealer_name,
@@ -1680,7 +1680,7 @@ def download_excel(request):
                     STRING_AGG(DISTINCT a.art_type_id::text, '/') as art_types,
                     STRING_AGG(DISTINCT a.said_to_contain, '/') as said_to_contain,
                     STRING_AGG(CAST(a.art_amount AS TEXT), '/') as art_amounts,
-                    STRING_AGG(DISTINCT a.art_type::text, '/') as art_type_names,
+                    STRING_AGG(DISTINCT a.art_type_id::text, '/') as art_type_names,
                     d.name as dealer_name,
                     dd.destination_name as delivery_destination,
                     CASE 
@@ -1741,4 +1741,3 @@ def download_excel(request):
     except Exception as e:
         logger.error(f"Error in download_excel: {str(e)}", exc_info=True)
         return HttpResponse(f"Error generating Excel: {e}", status=500)
-
