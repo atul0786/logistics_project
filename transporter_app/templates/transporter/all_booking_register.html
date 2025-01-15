@@ -112,7 +112,7 @@
         }
 
         main {
-            margin-top: calc(var(--header-height) + 40px); /* Increased margin-top */
+            margin-top: calc(var(--header-height) + 40px);
             padding: 20px;
         }
         
@@ -122,7 +122,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
-            padding-top: 100px; /* Added padding-top */
+            padding-top: 100px;
         }
 
         .filter-grid {
@@ -280,6 +280,31 @@
                 margin-bottom: 10px;
             }
         }
+
+        /* New CSS for sort indicators */
+        th[data-sort]::after {
+            content: '\25B2';
+            margin-left: 5px;
+            opacity: 0.5;
+        }
+
+        th[data-sort].sort-desc::after {
+            content: '\25BC';
+        }
+
+        th[data-sort].sort-asc::after {
+            opacity: 1;
+        }
+
+        /* Added CSS for links in table cells */
+        #booking-table td a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        #booking-table td a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -337,6 +362,19 @@
                 <div class="filter-item">
                     <label for="amount-max">Max Amount</label>
                     <input type="number" id="amount-max" min="0" />
+                </div>
+                <!-- New filter items -->
+                <div class="filter-item">
+                    <label for="cnote-number">CNote Number</label>
+                    <input type="text" id="cnote-number" />
+                </div>
+                <div class="filter-item">
+                    <label for="ls-number">LS Number</label>
+                    <input type="text" id="ls-number" />
+                </div>
+                <div class="filter-item">
+                    <label for="ddm-number">DDM Number</label>
+                    <input type="text" id="ddm-number" />
                 </div>
             </div>
             <div class="button-group">
@@ -425,32 +463,35 @@
         let filteredData = [];
         let currentPage = 1;
         const itemsPerPage = 20;
+        let currentSortColumn = '';
+        let currentSortOrder = 'asc';
+
+        // Remove or comment out this line
+        // const sampleData = [ ... ];
     
         // Fetch data from server
         function fetchBookingData() {
+            document.getElementById("loading").style.display = "flex";
             fetch("/transporter/booking_register_data/")
-                .then((response) => {
+                .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
                     }
                     return response.json();
                 })
-                .then((data) => {
-                    console.log("Received data:", data);  // Add this line for debugging
-                    if (data.bookings && Array.isArray(data.bookings)) {
-                        allBookingData = data.bookings;
-                        document.getElementById('transporter-name').textContent = data.transporter_name || 'GoodWayExpress';
-                        document.getElementById('transporter-city').textContent = data.transporter_city || 'Yavatmal';
-                        populateFilters(data.bookings);
-                        applyFilters();
-                    } else {
-                        console.error("Unexpected data format:", data);
-                        throw new Error('Unexpected data format');
-                    }
+                .then(data => {
+                    allBookingData = data.bookings;
+                    document.getElementById('transporter-name').textContent = data.transporter_name || 'GoodWayExpress';
+                    document.getElementById('transporter-city').textContent = data.transporter_city || 'Yavatmal';
+                    populateFilters(allBookingData);
+                    applyFilters();
                 })
-                .catch((error) => {
-                    console.error("Error fetching data:", error);
-                    document.getElementById("booking-data").innerHTML = `<tr><td colspan="42">Error loading data: ${error.message}</td></tr>`;
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById("booking-data").innerHTML = `<tr><td colspan="44">Error loading data: ${error.message}</td></tr>`;
+                })
+                .finally(() => {
+                    document.getElementById("loading").style.display = "none";
                 });
         }
 
@@ -487,12 +528,15 @@
             const amountMin = parseFloat(document.getElementById("amount-min").value) || 0;
             const amountMax = parseFloat(document.getElementById("amount-max").value) || Infinity;
             const searchTerm = document.getElementById("lr-search").value.toLowerCase();
+            const cnoteNumber = document.getElementById("cnote-number").value.toLowerCase();
+            const lsNumber = document.getElementById("ls-number").value.toLowerCase();
+            const ddmNumber = document.getElementById("ddm-number").value.toLowerCase();
 
             filteredData = allBookingData.filter((row) => {
-                const dateMatch = (!dateFrom || row.created_at >= dateFrom) && (!dateTo || row.created_at <= dateTo);
-                const dealerMatch = !dealer || row.user === dealer;
-                const fromCityMatch = !fromCity || row.delivery_destination.split(' - ')[0] === fromCity;
-                const toCityMatch = !toCity || row.delivery_destination.split(' - ')[1] === toCity;
+                const dateMatch = (!dateFrom || new Date(row.created_at) >= new Date(dateFrom)) && (!dateTo || new Date(row.created_at) <= new Date(dateTo));
+                const dealerMatch = !dealer || row.user.toLowerCase() === dealer.toLowerCase();
+                const fromCityMatch = !fromCity || row.delivery_destination.split(' - ')[0].toLowerCase() === fromCity.toLowerCase();
+                const toCityMatch = !toCity || row.delivery_destination.split(' - ')[1].toLowerCase() === toCity.toLowerCase();
                 const amountMatch = row.grand_total >= amountMin && row.grand_total <= amountMax;
                 const searchMatch = !searchTerm || 
                     row.cnote_number.toLowerCase().includes(searchTerm) || 
@@ -500,27 +544,29 @@
                     row.consignee_name.toLowerCase().includes(searchTerm) ||
                     row.user.toLowerCase().includes(searchTerm) ||
                     row.user_type.toLowerCase().includes(searchTerm);
+                const cnoteMatch = !cnoteNumber || row.cnote_number.toLowerCase().includes(cnoteNumber);
+                const lsMatch = !lsNumber || (row.loading_sheet_number && row.loading_sheet_number.toString().toLowerCase().includes(lsNumber));
+                const ddmMatch = !ddmNumber || (row.ddm_number && row.ddm_number.toString().toLowerCase().includes(ddmNumber));
 
-                return dateMatch && dealerMatch && fromCityMatch && toCityMatch && amountMatch && searchMatch;
+                return dateMatch && dealerMatch && fromCityMatch && toCityMatch && amountMatch && searchMatch && cnoteMatch && lsMatch && ddmMatch;
             });
 
             currentPage = 1;
             displayBookingData(currentPage);
             updateSummary();
         }
-
         function displayBookingData(page) {
             const startIndex = (page - 1) * itemsPerPage;
             const endIndex = startIndex + itemsPerPage;
             const pageData = filteredData.slice(startIndex, endIndex);
-    
+
             const bookingData = document.getElementById("booking-data");
             bookingData.innerHTML = "";
             pageData.forEach((row, index) => {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
                     <td>${startIndex + index + 1}</td>
-                    <td>${row.cnote_number || 'N/A'}</td>
+                    <td><a href="/transporter/cnotes-search/?cnote=${row.cnote_number}" target="_blank">${row.cnote_number || 'N/A'}</a></td>
                     <td>${row.booking_type || 'N/A'}</td>
                     <td>${row.delivery_destination || 'N/A'}</td>
                     <td>${row.consignor_name || 'N/A'}</td>
@@ -560,12 +606,12 @@
                     <td>${row.consignee_gst || 'N/A'}</td>
                     <td>${row.user || 'N/A'}</td>
                     <td>${row.user_type || 'N/A'}</td>
-                    <td>${row.loading_sheet_number || 'N/A'}</td>
-                    <td>${row.ddm_number || 'N/A'}</td>
+                    <td>${row.loading_sheet_number ? `<a href="/dealer/mf_print/${row.loading_sheet_number}/" target="_blank">${row.loading_sheet_number}</a>` : 'N/A'}</td>
+                    <td>${row.ddm_number ? `<a href="/transporter/ddm-details/?ddmId=${row.ddm_number.replace('DDM-', '')}" target="_blank">${row.ddm_number}</a>` : 'N/A'}</td>
                 `;
                 bookingData.appendChild(tr);
             });
-    
+
             updatePagination();
         }
 
@@ -651,11 +697,29 @@
         }
 
         function sortTable(column) {
+            if (currentSortColumn === column) {
+                currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortOrder = 'asc';
+            }
+
+            document.querySelectorAll('th[data-sort]').forEach(el => {
+                el.classList.remove('sort-asc', 'sort-desc');
+            });
+
+            const th = document.querySelector(`th[data-sort="${column}"]`);
+            th.classList.add(`sort-${currentSortOrder}`);
+
             filteredData.sort((a, b) => {
-                if (a[column] < b[column]) return -1;
-                if (a[column] > b[column]) return 1;
+                const valueA = a[column];
+                const valueB = b[column];
+
+                if (valueA < valueB) return currentSortOrder === 'asc' ? -1 : 1;
+                if (valueA > valueB) return currentSortOrder === 'asc' ? 1 : -1;
                 return 0;
             });
+
+            currentSortColumn = column;
             displayBookingData(currentPage);
         }
 
@@ -684,7 +748,6 @@
             });
 
             document.getElementById("download-btn").addEventListener("click", () => {
-                // Implement Excel download functionality here
                 window.location.href = "/transporter/download_excel/";
             });
 
@@ -699,7 +762,27 @@
             });
 
             document.getElementById("lr-search").addEventListener('input', applyFilters);
+            document.getElementById("cnote-number").addEventListener('input', applyFilters);
+            document.getElementById("ls-number").addEventListener('input', applyFilters);
+            document.getElementById("ddm-number").addEventListener('input', applyFilters);
         });
+        // Update this section to include all filter inputs
+    const filterInputs = [
+        "date-from", "date-to", "dealer", "from-city", "to-city",
+        "amount-min", "amount-max", "lr-search", "cnote-number",
+        "ls-number", "ddm-number"
+    ];
+
+    filterInputs.forEach(id => {
+        document.getElementById(id).addEventListener('input', applyFilters);
+    });
+
+    document.getElementById("dealer").addEventListener('change', applyFilters);
+    document.getElementById("from-city").addEventListener('change', applyFilters);
+    document.getElementById("to-city").addEventListener('change', applyFilters);
+    ;
+        
+        
     </script>
 </body>
 </html>
