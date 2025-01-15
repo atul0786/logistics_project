@@ -519,9 +519,9 @@
         function applyFilters() {
             const dateFrom = document.getElementById("date-from").value;
             const dateTo = document.getElementById("date-to").value;
-            const dealer = document.getElementById("dealer").value;
-            const fromCity = document.getElementById("from-city").value;
-            const toCity = document.getElementById("to-city").value;
+            const dealer = document.getElementById("dealer").value.toLowerCase();
+            const fromCity = document.getElementById("from-city").value.toLowerCase();
+            const toCity = document.getElementById("to-city").value.toLowerCase();
             const amountMin = parseFloat(document.getElementById("amount-min").value) || 0;
             const amountMax = parseFloat(document.getElementById("amount-max").value) || Infinity;
             const searchTerm = document.getElementById("lr-search").value.toLowerCase();
@@ -531,9 +531,9 @@
 
             filteredData = allBookingData.filter((row) => {
                 const dateMatch = (!dateFrom || new Date(row.created_at) >= new Date(dateFrom)) && (!dateTo || new Date(row.created_at) <= new Date(dateTo));
-                const dealerMatch = !dealer || row.user.toLowerCase() === dealer.toLowerCase();
-                const fromCityMatch = !fromCity || row.delivery_destination.split(' - ')[0].toLowerCase() === fromCity.toLowerCase();
-                const toCityMatch = !toCity || row.delivery_destination.split(' - ')[1].toLowerCase() === toCity.toLowerCase();
+                const dealerMatch = !dealer || row.user.toLowerCase().includes(dealer);
+                const fromCityMatch = !fromCity || row.delivery_destination.split(' - ')[0].toLowerCase().includes(fromCity);
+                const toCityMatch = !toCity || row.delivery_destination.split(' - ')[1].toLowerCase().includes(toCity);
                 const amountMatch = row.grand_total >= amountMin && row.grand_total <= amountMax;
                 const searchMatch = !searchTerm || 
                     row.cnote_number.toLowerCase().includes(searchTerm) || 
@@ -742,6 +742,9 @@
                     el.value = '';
                 });
                 document.getElementById("lr-search").value = '';
+                fetchCertainly, I'll continue the text stream from the cut-off point:
+
+document.getElementById("lr-search").value = '';
                 fetchBookingData();
             });
 
