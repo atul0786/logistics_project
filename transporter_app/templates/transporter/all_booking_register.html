@@ -476,6 +476,9 @@
                     return response.json();
                 })
                 .then(data => {
+                    if (!Array.isArray(data.bookings)) {
+                        throw new Error('Invalid data format: bookings is not an array');
+                    }
                     allBookingData = data.bookings;
                     document.getElementById('transporter-name').textContent = data.transporter_name || 'GoodWayExpress';
                     document.getElementById('transporter-city').textContent = data.transporter_city || 'Yavatmal';
@@ -557,6 +560,11 @@
             const endIndex = startIndex + itemsPerPage;
             const pageData = filteredData.slice(startIndex, endIndex);
 
+            if (!Array.isArray(pageData)) {
+                console.error('Invalid pageData:', pageData);
+                return;
+            }
+
             const bookingData = document.getElementById("booking-data");
             bookingData.innerHTML = "";
             pageData.forEach((row, index) => {
@@ -596,8 +604,8 @@
                     <td>${row.delivery_method || 'N/A'}</td>
                     <td>${row.status || 'N/A'}</td>
                     <td>${row.total_art || 'N/A'}</td>
-                    <td>${Array.isArray(row.art_types) ? row.art_types.join('/') : 'N/A'}</td>
-                    <td>${Array.isArray(row.said_to_contain) ? row.said_to_contain.join('/') : 'N/A'}</td>
+                    <td>${Array.isArray(row.art_types) ? row.art_types.join(' / ') : 'N/A'}</td>
+                    <td>${Array.isArray(row.said_to_contain) ? row.said_to_contain.join(' / ') : 'N/A'}</td>
                     <td>${Array.isArray(row.art_amounts) ? row.art_amounts.map(amt => parseFloat(amt).toFixed(2)).join('/') : 'N/A'}</td>
                     <td>${row.consignor_gst || 'N/A'}</td>
                     <td>${row.consignee_gst || 'N/A'}</td>
@@ -772,3 +780,4 @@
     </script>
 </body>
 </html>
+
