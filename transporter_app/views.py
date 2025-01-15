@@ -1479,8 +1479,6 @@ def update_cnote(request, cnote):
     
 
 
-logger = logging.getLogger(__name__)
-
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Decimal):
@@ -1498,9 +1496,22 @@ def booking_register_data(request):
     try:
         logger.info("Starting booking_register_data function")
         
+        # Get search parameters from the request
+        search_term = request.GET.get('search', '').lower()
+        date_from = request.GET.get('date_from')
+        date_to = request.GET.get('date_to')
+        dealer = request.GET.get('dealer', '').lower()
+        from_city = request.GET.get('from_city', '').lower()
+        to_city = request.GET.get('to_city', '').lower()
+        amount_min = request.GET.get('amount_min')
+        amount_max = request.GET.get('amount_max')
+        cnote_number = request.GET.get('cnote_number', '').lower()
+        ls_number = request.GET.get('ls_number', '').lower()
+        ddm_number = request.GET.get('ddm_number', '').lower()
+
         with connection.cursor() as cursor:
             logger.info("Executing SQL query")
-            cursor.execute("""
+            query = """
                 SELECT 
                     c.*,
                     STRING_AGG(DISTINCT a.art_type_id::text, '/') as art_types,
@@ -1525,6 +1536,61 @@ def booking_register_data(request):
                 LEFT JOIN dealer_app_loadingsheetsummary ls ON lsd.loading_sheet_id = ls.ls_number
                 LEFT JOIN transporter_app_ddmdetails ddmd ON c.cnote_number = ddmd.cnote_number
                 LEFT JOIN transporter_app_ddmsummary ddm ON ddmd.ddm_id = ddm.ddm_id
+                WHERE 1=1
+            """
+            
+            params = []
+
+            if search_term:
+                query += """ AND (
+                    LOWER(c.cnote_number) LIKE %s OR
+                    LOWER(c.consignor_name) LIKE %s OR
+                    LOWER(c.consignee_name) LIKE %s OR
+                    LOWER(d.name) LIKE %s
+                )"""
+                params.extend(['%' + search_term + '%'] * 4)
+
+            if date_from:
+                query += " AND c.created_at >= %s"
+                params.append(date_from)
+
+            if date_to:
+                query += " AND c.created_at <= %s"
+                params.append(date_to)
+
+            if dealer:
+                query += " AND LOWER(d.name) LIKE %s"
+                params.append('%' + dealer + '%')
+
+            if from_city:
+                query += " AND LOWER(SPLIT_PART(dd.destination_name, ' - ', 1)) LIKE %s"
+                params.append('%' + from_city + '%')
+
+            if to_city:
+                query += " AND LOWER(SPLIT_PART(dd.destination_name, ' - ', 2)) LIKE %s"
+                params.append('%' + to_city + '%')
+
+            if amount_min:
+                query += " AND c.grand_total >= %s"
+                params.append(float(amount_min))
+
+            if amount_max:
+                query += " AND c.grand_total <= %s"
+                params.append(float(amount_max))
+
+            if cnote_number:
+                query += " AND LOWER(c.cnote_number) LIKE %s"
+                params.append('%' + cnote_number + '%')
+
+            if ls_number:
+                query += " AND LOWER(ls.ls_number::text) LIKE %s"
+                params.append('%' + ls_number + '%')
+
+            if ddm_number:
+                query += " AND LOWER(ddm.ddm_no) LIKE %s"
+                params.append('%' + ddm_number + '%')
+
+            query += """
                 GROUP BY 
                     c.id,
                     d.name,
@@ -1532,7 +1598,9 @@ def booking_register_data(request):
                     ls.ls_number,
                     ddm.ddm_no
                 ORDER BY c.created_at DESC
-            """)
+            """
+
+            cursor.execute(query, params)
             cnotes = cursor.fetchall()
             logger.info(f"Fetched {len(cnotes)} records from the database")
 
@@ -1573,6 +1641,7 @@ def booking_register_data(request):
     except Exception as e:
         logger.error(f"Error in booking_register_data: {str(e)}", exc_info=True)
         return JsonResponse({'error': str(e)}, status=500)
+
 
 @login_required
 
@@ -1651,4 +1720,3 @@ def download_excel(request):
     except Exception as e:
         logger.error(f"Error in download_excel: {str(e)}", exc_info=True)
         return HttpResponse(f"Error generating Excel: {e}", status=500)
-
