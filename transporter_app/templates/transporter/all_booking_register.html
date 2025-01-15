@@ -465,9 +465,6 @@
         const itemsPerPage = 20;
         let currentSortColumn = '';
         let currentSortOrder = 'asc';
-
-        // Remove or comment out this line
-        // const sampleData = [ ... ];
     
         // Fetch data from server
         function fetchBookingData() {
@@ -555,6 +552,7 @@
             displayBookingData(currentPage);
             updateSummary();
         }
+
         function displayBookingData(page) {
             const startIndex = (page - 1) * itemsPerPage;
             const endIndex = startIndex + itemsPerPage;
@@ -766,23 +764,21 @@
             document.getElementById("ls-number").addEventListener('input', applyFilters);
             document.getElementById("ddm-number").addEventListener('input', applyFilters);
         });
+
         // Update this section to include all filter inputs
-    const filterInputs = [
-        "date-from", "date-to", "dealer", "from-city", "to-city",
-        "amount-min", "amount-max", "lr-search", "cnote-number",
-        "ls-number", "ddm-number"
-    ];
+        const filterInputs = [
+            "date-from", "date-to", "dealer", "from-city", "to-city",
+            "amount-min", "amount-max", "lr-search", "cnote-number",
+            "ls-number", "ddm-number"
+        ];
 
-    filterInputs.forEach(id => {
-        document.getElementById(id).addEventListener('input', applyFilters);
-    });
+        filterInputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', applyFilters);
+        });
 
-    document.getElementById("dealer").addEventListener('change', applyFilters);
-    document.getElementById("from-city").addEventListener('change', applyFilters);
-    document.getElementById("to-city").addEventListener('change', applyFilters);
-    ;
-        
-        
+        document.getElementById("dealer").addEventListener('change', applyFilters);
+        document.getElementById("from-city").addEventListener('change', applyFilters);
+        document.getElementById("to-city").addEventListener('change', applyFilters);
     </script>
 </body>
 </html>
