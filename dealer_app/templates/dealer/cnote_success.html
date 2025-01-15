@@ -6,6 +6,7 @@
     <title>CNote Created Successfully!</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
@@ -198,8 +199,8 @@
                 <tr>
                     <th>Payment Type</th>
                     <td>{{ cnote.payment_type }}</td>
-                    <th>Booking Type</th>
-                    <td>{{ cnote.booking_type }}</td>
+                    <th>Destination</th>
+                    <td>{{ cnote.delivery_destination }}</td>
                 </tr>
             </table>
         </div>
@@ -269,6 +270,10 @@
                     <td>₹{{ cnote.freight|floatformat:2 }}</td>
                 </tr>
                 <tr>
+                    <td>Docket Charge</td>
+                    <td>₹{{ cnote.docket_charge|floatformat:2 }}</td>
+                </tr>
+                <tr>
                     <td>Door Delivery Charge</td>
                     <td>₹{{ cnote.door_delivery_charge|floatformat:2 }}</td>
                 </tr>
@@ -277,8 +282,32 @@
                     <td>₹{{ cnote.handling_charge|floatformat:2 }}</td>
                 </tr>
                 <tr>
+                    <td>Pickup Charge</td>
+                    <td>₹{{ cnote.pickup_charge|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Transhipment Charge</td>
+                    <td>₹{{ cnote.transhipment_charge|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Insurance</td>
+                    <td>₹{{ cnote.insurance|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Fuel Surcharge</td>
+                    <td>₹{{ cnote.fuel_surcharge|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Commission</td>
+                    <td>₹{{ cnote.commission|floatformat:2 }}</td>
+                </tr>
+                <tr>
                     <td>Other Charges</td>
                     <td>₹{{ cnote.other_charge|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Carrier Risk</td>
+                    <td>₹{{ cnote.carrier_risk|floatformat:2 }}</td>
                 </tr>
                 <tr>
                     <td><strong>Grand Total</strong></td>
@@ -286,7 +315,7 @@
                 </tr>
             </table>
         </div>
-
+        
         <div class="footer">
             <p>This is a computer-generated document. No signature is required.</p>
             <p>Generated on: {% now "d/m/Y H:i:s" %}</p>
@@ -339,8 +368,8 @@
                         <tr>
                             <th>Payment Type</th>
                             <td>${cnote.payment_type}</td>
-                            <th>Booking Type</th>
-                            <td>${cnote.booking_type}</td>
+                            <th>Destination</th>
+                            <td>${cnote.delivery_destination}</td>
                         </tr>
                     </table>
                 </div>
@@ -414,6 +443,10 @@
                             <td>₹${parseFloat(cnote.freight).toFixed(2)}</td>
                         </tr>
                         <tr>
+                            <td>Docket Charge</td>
+                            <td>₹${parseFloat(cnote.docket_charge).toFixed(2)}</td>
+                        </tr>
+                        <tr>
                             <td>Door Delivery Charge</td>
                             <td>₹${parseFloat(cnote.door_delivery_charge).toFixed(2)}</td>
                         </tr>
@@ -422,8 +455,32 @@
                             <td>₹${parseFloat(cnote.handling_charge).toFixed(2)}</td>
                         </tr>
                         <tr>
+                            <td>Pickup Charge</td>
+                            <td>₹${parseFloat(cnote.pickup_charge).toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td>Transhipment Charge</td>
+                            <td>₹${parseFloat(cnote.transhipment_charge).toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td>Insurance</td>
+                            <td>₹${parseFloat(cnote.insurance).toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td>Fuel Surcharge</td>
+                            <td>₹${parseFloat(cnote.fuel_surcharge).toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td>Commission</td>
+                            <td>₹${parseFloat(cnote.commission).toFixed(2)}</td>
+                        </tr>
+                        <tr>
                             <td>Other Charges</td>
                             <td>₹${parseFloat(cnote.other_charge).toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td>Carrier Risk</td>
+                            <td>₹${parseFloat(cnote.carrier_risk).toFixed(2)}</td>
                         </tr>
                         <tr>
                             <td><strong>Grand Total</strong></td>
@@ -461,10 +518,18 @@
                 
                 doc.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
                 
-                const fileName = `${document.getElementById('cnoteNumber').textContent}.pdf`;
-                doc.save(fileName);
+                const cnoteNumber = document.getElementById('cnoteNumber').textContent;
+                const today = new Date().toISOString().split('T')[0];
+                
+                // Use FileSaver.js to save the PDF
+                const blob = doc.output('blob');
+                const fileName = `${cnoteNumber}.pdf`;
+                saveAs(blob, fileName);
+
+                window.location.href = "/dealer/create_cnotes";
             } catch (error) {
                 console.error('Error saving PDF:', error);
+                console.error('Error details:', error.message);
                 showError('Error saving PDF. Please try again.');
             } finally {
                 resetButton(saveButton, 'Save PDF', '📥');
