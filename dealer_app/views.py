@@ -672,54 +672,98 @@ def booking_register_view(request):
 
     # Filter CNotes for the logged-in dealer
     dealer_cnotes = CNotes.objects.filter(dealer=dealer).order_by('-created_at')
-
+    
     # Get article data for each CNotes
     article_data = []
     for cnote in dealer_cnotes:
-        articles = Article.objects.filter(cnote=cnote)
-        article_data.append({
-            'cnote_id': cnote.id,
-            'articles': articles,
-            'total_art': sum(article.art for article in articles),
-            'art_types': '/'.join(article.art_type.art_type_name for article in articles),
-            'said_to_contain': '/'.join(f'{article.said_to_contain} - {article.art}' for article in articles),
-            'art_amounts': '/'.join(str(article.art_amount) for article in articles),
-            'cnote_number': cnote.cnote_number,
-            'booking_type': cnote.booking_type,
-            'delivery_destination': cnote.delivery_destination,
-            'consignor_name': cnote.consignor_name,
-            'consignee_name': cnote.consignee_name,
-            'payment_type': cnote.payment_type,
-            'grand_total': cnote.grand_total,
-            'created_at': cnote.created_at,
-            'eway_bill_number': cnote.eway_bill_number,
-            'actual_weight': cnote.actual_weight,
-            'charged_weight': cnote.charged_weight,
-            'weight_rate': cnote.weight_rate,
-            'weight_amount': cnote.weight_amount,
-            'fix_amount': cnote.fix_amount,
-            'invoice_number': cnote.invoice_number,
-            'declared_value': cnote.declared_value,
-            'risk_type': cnote.risk_type,
-            'pod_required': cnote.pod_required,
-            'freight': cnote.freight,
-            'docket_charge': cnote.docket_charge,
-            'door_delivery_charge': cnote.door_delivery_charge,
-            'handling_charge': cnote.handling_charge,
-            'pickup_charge': cnote.pickup_charge,
-            'transhipment_charge': cnote.transhipment_charge,
-            'insurance': cnote.insurance,
-            'fuel_surcharge': cnote.fuel_surcharge,
-            'commission': cnote.commission,
-            'other_charge': cnote.other_charge,
-            'carrier_risk': cnote.carrier_risk,
-            'booking_type': cnote.booking_type,
-            'delivery_type': cnote.delivery_type,
-            'delivery_method': cnote.delivery_method,
-            'status': cnote.status,
-            'consignor_gst': cnote.consignor_gst,
-            'consignee_gst': cnote.consignee_gst,
-        })
+        try:
+            articles = Article.objects.filter(cnote=cnote)
+            
+            # Safely collect article data with proper null checks
+            art_types = []
+            said_to_contain_list = []
+            art_amounts = []
+            total_art = 0
+            
+            for article in articles:
+                # Handle art_type safely
+                try:
+                    art_type_name = article.art_type.art_type_name if article.art_type else 'N/A'
+                    art_types.append(art_type_name)
+                except AttributeError:
+                    art_types.append('N/A')
+                
+                # Handle said_to_contain safely
+                try:
+                    art_value = str(article.art) if article.art is not None else '0'
+                    said_to_contain = str(article.said_to_contain) if article.said_to_contain else 'N/A'
+                    said_to_contain_list.append(f'{said_to_contain} - {art_value}')
+                except AttributeError:
+                    said_to_contain_list.append('N/A - 0')
+                
+                # Handle art_amount safely
+                try:
+                    art_amount = str(article.art_amount) if article.art_amount is not None else '0'
+                    art_amounts.append(art_amount)
+                except AttributeError:
+                    art_amounts.append('0')
+                
+                # Calculate total_art safely
+                try:
+                    total_art += article.art if article.art is not None else 0
+                except AttributeError:
+                    pass
+            
+            # Create article data dictionary with safe default values
+            article_entry = {
+                'cnote_id': cnote.id,
+                'articles': articles,
+                'total_art': total_art,
+                'art_types': '/'.join(art_types),
+                'said_to_contain': '/'.join(said_to_contain_list),
+                'art_amounts': '/'.join(art_amounts),
+                'cnote_number': getattr(cnote, 'cnote_number', 'N/A'),
+                'booking_type': getattr(cnote, 'booking_type', 'N/A'),
+                'delivery_destination': getattr(cnote, 'delivery_destination', 'N/A'),
+                'consignor_name': getattr(cnote, 'consignor_name', 'N/A'),
+                'consignee_name': getattr(cnote, 'consignee_name', 'N/A'),
+                'payment_type': getattr(cnote, 'payment_type', 'N/A'),
+                'grand_total': getattr(cnote, 'grand_total', 0),
+                'created_at': getattr(cnote, 'created_at', None),
+                'eway_bill_number': getattr(cnote, 'eway_bill_number', 'N/A'),
+                'actual_weight': getattr(cnote, 'actual_weight', 0),
+                'charged_weight': getattr(cnote, 'charged_weight', 0),
+                'weight_rate': getattr(cnote, 'weight_rate', 0),
+                'weight_amount': getattr(cnote, 'weight_amount', 0),
+                'fix_amount': getattr(cnote, 'fix_amount', 0),
+                'invoice_number': getattr(cnote, 'invoice_number', 'N/A'),
+                'declared_value': getattr(cnote, 'declared_value', 0),
+                'risk_type': getattr(cnote, 'risk_type', 'N/A'),
+                'pod_required': getattr(cnote, 'pod_required', 'N/A'),
+                'freight': getattr(cnote, 'freight', 0),
+                'docket_charge': getattr(cnote, 'docket_charge', 0),
+                'door_delivery_charge': getattr(cnote, 'door_delivery_charge', 0),
+                'handling_charge': getattr(cnote, 'handling_charge', 0),
+                'pickup_charge': getattr(cnote, 'pickup_charge', 0),
+                'transhipment_charge': getattr(cnote, 'transhipment_charge', 0),
+                'insurance': getattr(cnote, 'insurance', 0),
+                'fuel_surcharge': getattr(cnote, 'fuel_surcharge', 0),
+                'commission': getattr(cnote, 'commission', 0),
+                'other_charge': getattr(cnote, 'other_charge', 0),
+                'carrier_risk': getattr(cnote, 'carrier_risk', 0),
+                'delivery_type': getattr(cnote, 'delivery_type', 'N/A'),
+                'delivery_method': getattr(cnote, 'delivery_method', 'N/A'),
+                'status': getattr(cnote, 'status', 'N/A'),
+                'consignor_gst': getattr(cnote, 'consignor_gst', 'N/A'),
+                'consignee_gst': getattr(cnote, 'consignee_gst', 'N/A'),
+            }
+            
+            article_data.append(article_entry)
+            
+        except Exception as e:
+            # Log the error and continue with the next CNotes
+            logger.error(f"Error processing CNotes {cnote.id}: {str(e)}")
+            continue
 
     # Pass the required data to the template
     context = {
@@ -729,7 +773,6 @@ def booking_register_view(request):
     }
 
     return render(request, 'dealer/booking_register.html', context)
-
 
 @login_required
 def cnote_options(request, cnote_id):
