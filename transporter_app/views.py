@@ -1479,23 +1479,22 @@ def update_cnote(request, cnote):
     
 
 
+logger = logging.getLogger(__name__)
+
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        elif isinstance(obj, datetime):
+            return obj.isoformat()
+        return super(CustomJSONEncoder, self).default(obj)
+
 @login_required
 def all_booking_register(request):
     return render(request, 'transporter/all_booking_register.html')
 
-
-
-logger = logging.getLogger(__name__)
 @login_required
 def booking_register_data(request):
-    class CustomJSONEncoder(json.JSONEncoder):
-        def default(self, obj):
-            if isinstance(obj, Decimal):
-                return float(obj)
-            elif isinstance(obj, datetime):
-                return obj.isoformat()
-            return super(CustomJSONEncoder, self).default(obj)
-
     try:
         logger.info("Starting booking_register_data function")
         
@@ -1548,7 +1547,7 @@ def booking_register_data(request):
 
             cnote_data['art_types'] = art_types.split('/') if art_types else []
             cnote_data['said_to_contain'] = said_to_contain.split('/') if said_to_contain else []
-            cnote_data['art_amounts'] = [float(x) if x.replace('.', '').isdigit() else 0 for x in art_amounts.split('/')] if art_amounts else []
+            cnote_data['art_amounts'] = [float(x) if x and x.replace('.', '').isdigit() else 0 for x in art_amounts.split('/')] if art_amounts else []
 
             cnote_data['user'] = cnote_data.get('dealer_name') or 'N/A'
             cnote_data['user_type'] = cnote_data.get('user_type') or 'Unknown'
@@ -1558,12 +1557,16 @@ def booking_register_data(request):
             for key, value in cnote_data.items():
                 if isinstance(value, Decimal):
                     cnote_data[key] = float(value)
-                elif isinstance(value, type(datetime.datetime.now())):
+                elif isinstance(value, datetime):
                     cnote_data[key] = value.isoformat()
 
             cnotes_data.append(cnote_data)
 
-        response_data = {'bookings': cnotes_data}
+        response_data = {
+            'bookings': cnotes_data,
+            'transporter_name': request.user.transporter.name if hasattr(request.user, 'transporter') else 'N/A',
+            'transporter_city': request.user.transporter.city if hasattr(request.user, 'transporter') else 'N/A'
+        }
         json_data = json.dumps(response_data, cls=CustomJSONEncoder)
 
         return HttpResponse(json_data, content_type='application/json')
@@ -1571,6 +1574,7 @@ def booking_register_data(request):
         logger.error(f"Error in booking_register_data: {str(e)}", exc_info=True)
         return JsonResponse({'error': str(e)}, status=500)
 
+@login_required
 
 @login_required
 def booking_register_view(request):
@@ -1580,21 +1584,59 @@ def booking_register_view(request):
 @login_required
 def download_excel(request):
     try:
-        # Fetch all booking data
+        logger.info("Starting download_excel function")
+        
         with connections['default'].cursor() as cursor:
             cursor.execute("""
-                SELECT * FROM dealer_app_cnotes
-                ORDER BY created_at DESC
+                SELECT 
+                    c.*,
+                    STRING_AGG(DISTINCT a.art_type_id::text, '/') as art_types,
+                    STRING_AGG(DISTINCT a.said_to_contain, '/') as said_to_contain,
+                    STRING_AGG(DISTINCT a.art_amount::text, '/') as art_amounts,
+                    d.name as dealer_name,
+                    dd.destination_name as delivery_destination,
+                    CASE 
+                        WHEN EXISTS (
+                            SELECT 1 FROM dealer_app_dealer 
+                            WHERE name = d.name
+                        ) THEN 'Dealer'
+                        ELSE 'Transporter'
+                    END as user_type,
+                    ls.ls_number as loading_sheet_number,
+                    ddm.ddm_no as ddm_number
+                FROM dealer_app_cnotes c
+                LEFT JOIN dealer_app_article a ON c.id = a.cnote_id
+                LEFT JOIN dealer_app_dealer d ON c.dealer_id = d.dealer_id
+                LEFT JOIN dealer_app_deliverydestination dd ON c.delivery_destination_id = dd.id
+                LEFT JOIN dealer_app_loadingsheetdetail lsd ON c.id = lsd.cnote_id
+                LEFT JOIN dealer_app_loadingsheetsummary ls ON lsd.loading_sheet_id = ls.ls_number
+                LEFT JOIN transporter_app_ddmdetails ddmd ON c.cnote_number = ddmd.cnote_number
+                LEFT JOIN transporter_app_ddmsummary ddm ON ddmd.ddm_id = ddm.ddm_id
+                GROUP BY 
+                    c.id,
+                    d.name,
+                    dd.destination_name,
+                    ls.ls_number,
+                    ddm.ddm_no
+                ORDER BY c.created_at DESC
             """)
             columns = [col[0] for col in cursor.description]
             bookings = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+        logger.info(f"Fetched {len(bookings)} records for Excel download")
+
+        # Process the data
+        for booking in bookings:
+            booking['art_types'] = booking['art_types'].split('/') if booking['art_types'] else []
+            booking['said_to_contain'] = booking['said_to_contain'].split('/') if booking['said_to_contain'] else []
+            booking['art_amounts'] = [float(x) if x and x.replace('.', '').isdigit() else 0 for x in booking['art_amounts'].split('/')] if booking['art_amounts'] else []
 
         # Convert to DataFrame
         df = pd.DataFrame(bookings)
 
         # Convert timezone-aware datetimes to timezone-naive
         for col in df.select_dtypes(include=['datetime64[ns, UTC]']).columns:
-            df[col] = df[col].apply(lambda x: make_naive(x))
+            df[col] = df[col].apply(lambda x: make_naive(x) if x is not pd.NaT else x)
 
         # Create an HTTP response with the Excel file
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -1604,7 +1646,9 @@ def download_excel(request):
         with pd.ExcelWriter(response, engine='openpyxl') as writer:
             df.to_excel(writer, index=False, sheet_name='Bookings')
 
+        logger.info("Excel file generated successfully")
         return response
     except Exception as e:
-        print(f"Error: {str(e)}")  # Debugging line
+        logger.error(f"Error in download_excel: {str(e)}", exc_info=True)
         return HttpResponse(f"Error generating Excel: {e}", status=500)
+
