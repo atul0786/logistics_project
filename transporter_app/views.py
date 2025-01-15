@@ -1503,7 +1503,6 @@ class CustomJSONEncoder(json.JSONEncoder):
 @login_required
 def all_booking_register(request):
     return render(request, 'transporter/all_booking_register.html')
-
 @login_required
 def booking_register_data(request):
     try:
@@ -1529,7 +1528,8 @@ def booking_register_data(request):
                     c.*,
                     STRING_AGG(DISTINCT a.art_type_id::text, '/') as art_types,
                     STRING_AGG(DISTINCT a.said_to_contain, '/') as said_to_contain,
-                    STRING_AGG(DISTINCT a.art_amount::text, '/') as art_amounts,
+                    SUM(a.art) as total_articles,  -- Sum of articles
+                    SUM(a.art_amount) as total_amount,  -- Sum of amounts
                     d.name as dealer_name,
                     dd.destination_name as delivery_destination,
                     CASE 
@@ -1601,7 +1601,7 @@ def booking_register_data(request):
 
             if ddm_number:
                 query += " AND LOWER(ddm.ddm_no) LIKE %s"
-                params.append('%' + ddm_number + '%')
+                params.append ('%' + ddm_number + '%')
 
             query += """
                 GROUP BY 
@@ -1625,14 +1625,10 @@ def booking_register_data(request):
             # Process aggregated fields
             art_types = cnote_data.get('art_types')
             said_to_contain = cnote_data.get('said_to_contain')
-            art_amounts = cnote_data.get('art_amounts')
 
             cnote_data['art_types'] = art_types.split('/') if art_types else []
             cnote_data['said_to_contain'] = said_to_contain.split('/') if said_to_contain else []
-            cnote_data['art_amounts'] = [float(x) if x and x.replace('.', '').isdigit() else 0 for x in art_amounts.split('/')] if art_amounts else []
-
-            # Calculate total articles
-            cnote_data['total_art'] = sum(cnote_data['art_amounts'])
+            cnote_data['total_art'] = cnote_data.get('total_articles', 0)  # Total articles from aggregation
 
             cnote_data['user'] = cnote_data.get('dealer_name') or 'N/A'
             cnote_data['user_type'] = cnote_data.get('user_type') or 'Unknown'
@@ -1658,7 +1654,6 @@ def booking_register_data(request):
     except Exception as e:
         logger.error(f"Error in booking_register_data: {str(e)}", exc_info=True)
         return JsonResponse({'error': str(e)}, status=500)
-
 @login_required
 def booking_register_view(request):
     return render(request, 'transporter/booking_register.html')
