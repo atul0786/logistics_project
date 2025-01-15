@@ -363,7 +363,6 @@
                     <label for="amount-max">Max Amount</label>
                     <input type="number" id="amount-max" min="0" />
                 </div>
-                <!-- New filter items -->
                 <div class="filter-item">
                     <label for="cnote-number">CNote Number</label>
                     <input type="text" id="cnote-number" />
@@ -742,9 +741,6 @@
                     el.value = '';
                 });
                 document.getElementById("lr-search").value = '';
-                fetchCertainly, I'll continue the text stream from the cut-off point:
-
-document.getElementById("lr-search").value = '';
                 fetchBookingData();
             });
 
@@ -758,30 +754,21 @@ document.getElementById("lr-search").value = '';
                 });
             });
 
-            document.querySelectorAll('.filter-item input, .filter-item select').forEach(el => {
-                el.addEventListener('change', applyFilters);
+            // Add event listeners for all filter inputs
+            const filterInputs = [
+                "date-from", "date-to", "dealer", "from-city", "to-city",
+                "amount-min", "amount-max", "lr-search", "cnote-number",
+                "ls-number", "ddm-number"
+            ];
+
+            filterInputs.forEach(id => {
+                document.getElementById(id).addEventListener('input', applyFilters);
             });
 
-            document.getElementById("lr-search").addEventListener('input', applyFilters);
-            document.getElementById("cnote-number").addEventListener('input', applyFilters);
-            document.getElementById("ls-number").addEventListener('input', applyFilters);
-            document.getElementById("ddm-number").addEventListener('input', applyFilters);
+            document.getElementById("dealer").addEventListener('change', applyFilters);
+            document.getElementById("from-city").addEventListener('change', applyFilters);
+            document.getElementById("to-city").addEventListener('change', applyFilters);
         });
-
-        // Update this section to include all filter inputs
-        const filterInputs = [
-            "date-from", "date-to", "dealer", "from-city", "to-city",
-            "amount-min", "amount-max", "lr-search", "cnote-number",
-            "ls-number", "ddm-number"
-        ];
-
-        filterInputs.forEach(id => {
-            document.getElementById(id).addEventListener('input', applyFilters);
-        });
-
-        document.getElementById("dealer").addEventListener('change', applyFilters);
-        document.getElementById("from-city").addEventListener('change', applyFilters);
-        document.getElementById("to-city").addEventListener('change', applyFilters);
     </script>
 </body>
 </html>
