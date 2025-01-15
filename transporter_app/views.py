@@ -1530,6 +1530,7 @@ def booking_register_data(request):
                     STRING_AGG(DISTINCT a.art_type_id::text, '/') as art_types,
                     STRING_AGG(DISTINCT a.said_to_contain, '/') as said_to_contain,
                     STRING_AGG(CAST(a.art_amount AS TEXT), '/') as art_amounts,
+                    STRING_AGG(DISTINCT a.art_type::text, '/') as art_type_names,
                     SUM(a.art) as total_articles,
                     SUM(a.art_amount) as total_amount,
                     d.name as dealer_name,
@@ -1628,8 +1629,10 @@ def booking_register_data(request):
             art_types = cnote_data.get('art_types')
             said_to_contain = cnote_data.get('said_to_contain')
             art_amounts = cnote_data.get('art_amounts')
+            art_type_names = cnote_data.get('art_type_names', '')
 
-            cnote_data['art_types'] = art_types.split('/') if art_types else []
+            art_type_names = cnote_data.get('art_type_names', '')
+            cnote_data['art_types'] = [f"{name} ({id})" for name, id in zip(art_type_names.split('/'), art_types.split('/'))] if art_types and art_type_names else []
             cnote_data['said_to_contain'] = said_to_contain.split('/') if said_to_contain else []
             cnote_data['art_amounts'] = [float(amount) for amount in art_amounts.split('/')] if art_amounts else []
             cnote_data['total_art'] = cnote_data.get('total_articles', 0)
@@ -1645,8 +1648,10 @@ def booking_register_data(request):
                 elif isinstance(value, datetime):
                     cnote_data[key] = value.isoformat()
 
+            logger.debug(f"Processed cnote_data: {json.dumps(cnote_data, cls=CustomJSONEncoder)}")
             cnotes_data.append(cnote_data)
 
+        logger.info(f"Returning {len(cnotes_data)} records")
         response_data = {
             'bookings': cnotes_data,
             'transporter_name': request.user.transporter.name if hasattr(request.user, 'transporter') else 'N/A',
@@ -1675,6 +1680,7 @@ def download_excel(request):
                     STRING_AGG(DISTINCT a.art_type_id::text, '/') as art_types,
                     STRING_AGG(DISTINCT a.said_to_contain, '/') as said_to_contain,
                     STRING_AGG(CAST(a.art_amount AS TEXT), '/') as art_amounts,
+                    STRING_AGG(DISTINCT a.art_type::text, '/') as art_type_names,
                     d.name as dealer_name,
                     dd.destination_name as delivery_destination,
                     CASE 
@@ -1709,7 +1715,9 @@ def download_excel(request):
 
         # Process the data
         for booking in bookings:
-            booking['art_types'] = booking['art_types'].split('/') if booking['art_types'] else []
+            art_types = booking['art_types'].split('/') if booking['art_types'] else []
+            art_type_names = booking['art_type_names'].split('/') if booking['art_type_names'] else []
+            booking['art_types'] = [f"{name} ({id})" for name, id in zip(art_type_names, art_types)] if art_types and art_type_names else []
             booking['said_to_contain'] = booking['said_to_contain'].split('/') if booking['said_to_contain'] else []
             booking['art_amounts'] = [float(x) if x and x.replace('.', '').isdigit() else 0 for x in booking['art_amounts'].split('/')] if booking['art_amounts'] else []
 
@@ -1733,3 +1741,4 @@ def download_excel(request):
     except Exception as e:
         logger.error(f"Error in download_excel: {str(e)}", exc_info=True)
         return HttpResponse(f"Error generating Excel: {e}", status=500)
+
