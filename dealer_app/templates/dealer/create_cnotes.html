@@ -1507,91 +1507,170 @@
         });
 
         // Function to fetch party suggestions
-        function fetchPartySuggestions(query) {
-            fetch(`/api/party-suggestions/?query=${encodeURIComponent(query)}`)
-                .then(response => response.json())
-                .then(data => {
-                    const suggestionsList = document.createElement('ul');
-                    suggestionsList.className = 'party-suggestions';
+function fetchPartySuggestions(query) {
+    fetch(`/api/party-suggestions/?query=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            const suggestionsList = document.createElement('ul');
+            suggestionsList.className = 'party-suggestions';
 
-                    data.forEach(party => {
-                        const li = document.createElement('li');
-                        li.textContent = party.party_name;
-                        li.addEventListener('click', () => {
-                            fillConsigneeDetails(party);
-                            suggestionsList.remove();
-                        });
-                        suggestionsList.appendChild(li);
-                    });
-
-                    const consigneeName = document.getElementById('consigneeName');
-                    const existingList = document.querySelector('.party-suggestions');
-                    if (existingList) {
-                        existingList.remove();
-                    }
-                    consigneeName.parentNode.appendChild(suggestionsList);
+            data.forEach(party => {
+                const li = document.createElement('li');
+                // Enhanced display of party information
+                li.innerHTML = `
+                    <strong>${party.party_name}</strong>
+                    <br>Code: ${party.party_code}
+                    ${party.mobile_number_1 ? `<br>Mobile: ${party.mobile_number_1}` : ''}
+                    ${party.gst_no ? `<br>GST: ${party.gst_no}` : ''}
+                    ${party.city ? `<br>City: ${party.city}` : ''}
+                `;
+                li.addEventListener('click', () => {
+                    fillConsigneeDetails(party);
+                    suggestionsList.remove();
                 });
-        }
+                suggestionsList.appendChild(li);
+            });
 
-// Function to fill consignee details from selected party
-function fillConsigneeDetails(party) {
-    document.getElementById('consigneeName').value = party.party_name;
-    document.getElementById('consigneeMobile').value = party.mobile_number_1 || '';
-    document.getElementById('consigneeGST').value = party.gst_no || '';
-    document.getElementById('consigneeAddress').value = party.address || '';
+            const consigneeName = document.getElementById('consigneeName');
+            const existingList = document.querySelector('.party-suggestions');
+            if (existingList) {
+                existingList.remove();
+            }
+            consigneeName.parentNode.appendChild(suggestionsList);
+        })
+        .catch(error => {
+            console.error('Error fetching party suggestions:', error);
+            alert('Error fetching party suggestions. Please try again.');
+        });
 }
 
-// Add event listener to consignee name input
+// Enhanced function to fill consignee details from selected party
+function fillConsigneeDetails(party) {
+    // Fill in the main fields
+    document.getElementById('consigneeName').value = party.party_name || '';
+    document.getElementById('consigneeMobile').value = party.mobile_number_1 || '';
+    document.getElementById('consigneeGST').value = party.gst_no || '';
+    
+    // Format address with all available components
+    const addressParts = [];
+    if (party.address) addressParts.push(party.address);
+    
+    const cityLine = [
+        party.city,
+        party.pincode
+    ].filter(Boolean).join(' - ');
+    if (cityLine) addressParts.push(cityLine);
+    
+    const stateLine = [
+        party.state,
+        party.country || 'INDIA'
+    ].filter(Boolean).join(', ');
+    if (stateLine) addressParts.push(stateLine);
+    
+    document.getElementById('consigneeAddress').value = addressParts.join('\n');
+}
+
+// Add event listener to consignee name input with debouncing
+let debounceTimer;
 document.getElementById('consigneeName').addEventListener('input', function(e) {
     const query = e.target.value.trim();
-    if (query.length >= 2) {
-        fetchPartySuggestions(query);
-    } else {
+    
+    // Clear existing timer
+    clearTimeout(debounceTimer);
+    
+    // Clear suggestions if query is too short
+    if (query.length < 2) {
         const suggestionsList = document.querySelector('.party-suggestions');
         if (suggestionsList) {
             suggestionsList.remove();
         }
+        return;
     }
+    
+    // Set new timer for debouncing
+    debounceTimer = setTimeout(() => {
+        fetchPartySuggestions(query);
+    }, 300); // 300ms delay
 });
 
-// Modify the existing form submit handler to include party master saving
-const existingFormSubmit = form.onsubmit;
-form.onsubmit = async function(e) {
-    e.preventDefault();
+// Enhanced form submit handler with complete party data
+const form = document.getElementById('bookingForm');
+if (form) {
+    const existingFormSubmit = form.onsubmit;
+    form.onsubmit = async function(e) {
+        e.preventDefault();
 
-    // Get consignee details
-    const consigneeData = {
-        party_name: document.getElementById('consigneeName').value,
-        mobile_number_1: document.getElementById('consigneeMobile').value,
-        gst_no: document.getElementById('consigneeGST').value,
-        address: document.getElementById('consigneeAddress').value
+        // Get full consignee details
+        const addressLines = document.getElementById('consigneeAddress').value.split('\n');
+        let city = '', pincode = '', state = '', country = 'INDIA';
+        
+        // Parse address lines for city, pincode, state, and country
+        if (addressLines.length > 1) {
+            const cityLine = addressLines[1].split(' - ');
+            city = cityLine[0] || '';
+            pincode = cityLine[1] || '';
+            
+            if (addressLines.length > 2) {
+                const stateLine = addressLines[2].split(', ');
+                state = stateLine[0] || '';
+                country = stateLine[1] || 'INDIA';
+            }
+        }
+
+        const consigneeData = {
+            party_name: document.getElementById('consigneeName').value.trim().toUpperCase(),
+            display_name: document.getElementById('consigneeName').value.trim().toUpperCase(),
+            mobile_number_1: document.getElementById('consigneeMobile').value.trim(),
+            gst_no: document.getElementById('consigneeGST').value.trim().toUpperCase(),
+            address: addressLines[0] || '',
+            city: city,
+            pincode: pincode,
+            state: state,
+            country: country,
+            party_type: 'CUSTOMER',
+            is_tbb: false,
+            email: '', // Optional field
+            marketing_person: '', // Optional field
+            remark: '' // Optional field
+        };
+
+        try {
+            // Validate required fields
+            if (!consigneeData.party_name) {
+                throw new Error('Party name is required');
+            }
+            if (!consigneeData.mobile_number_1) {
+                throw new Error('Mobile number is required');
+            }
+
+            // Save/update party data
+            const partyResponse = await fetch('/api/save-party/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(consigneeData)
+            });
+
+            const responseData = await partyResponse.json();
+
+            if (!partyResponse.ok) {
+                throw new Error(responseData.error || 'Failed to save party data');
+            }
+
+            // Proceed with original form submission
+            if (existingFormSubmit) {
+                existingFormSubmit.call(this, e);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert(error.message || 'An error occurred while saving the data');
+        }
     };
+}
 
-    try {
-        // First try to save/update party data
-        const partyResponse = await fetch('/api/save-party/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: JSON.stringify(consigneeData)
-        });
-
-        if (!partyResponse.ok) {
-            throw new Error('Failed to save party data');
-        }
-
-        // Then proceed with the original form submission
-        if (existingFormSubmit) {
-            existingFormSubmit.call(this, e);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('An error occurred while saving the data');
-    }
-};
-// Add this to the existing document.addEventListener('DOMContentLoaded', function () {...}) block
+// Close suggestions list when clicking outside
 document.addEventListener('click', function(e) {
     if (!e.target.matches('#consigneeName')) {
         const suggestionsList = document.querySelector('.party-suggestions');
@@ -1601,6 +1680,15 @@ document.addEventListener('click', function(e) {
     }
 });
 
+// Add input validation for mobile number
+document.getElementById('consigneeMobile')?.addEventListener('input', function(e) {
+    this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+});
+
+// Add input validation for GST number
+document.getElementById('consigneeGST')?.addEventListener('input', function(e) {
+    this.value = this.value.replace(/[^0-9A-Z]/g, '').slice(0, 15);
+});
 
     </script>
 </body>
