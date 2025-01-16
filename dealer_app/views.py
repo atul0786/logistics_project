@@ -1413,6 +1413,10 @@ def party_suggestions(request):
                 Q(gst_no__istartswith=query)
             )[:10]
             
+            if not parties.exists():
+                logger.info(f"No parties found for query: {query}")
+                return JsonResponse([], safe=False)
+            
             data = [{
                 'party_code': party.party_code,
                 'party_name': party.party_name,
@@ -1437,10 +1441,12 @@ def party_suggestions(request):
             
             logger.info(f"Found {len(data)} matching parties")
             return JsonResponse(data, safe=False)
+            
         return JsonResponse([], safe=False)
+        
     except Exception as e:
-        logger.exception(f"Error in party_suggestions")
-        return JsonResponse({'error': 'An unexpected error occurred'}, status=500)
+        logger.exception(f"Error in party_suggestions: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
 
 @csrf_exempt
 @require_POST
@@ -1450,13 +1456,22 @@ def save_party(request):
         party_name = data.get('party_name', '').strip().upper()
         
         if not party_name:
-            return JsonResponse({'success': False, 'error': 'Party name is required'}, status=400)
+            return JsonResponse({
+                'success': False, 
+                'error': 'Party name is required'
+            }, status=400)
         
         logger.info(f"Attempting to save/update party: {party_name}")
         
+        # Generate a unique party code if not provided
         party_code = data.get('party_code', '').strip().upper()
         if not party_code:
-            party_code = generate_unique_party_code()
+            last_party = PartyMaster.objects.order_by('-party_code').first()
+            if last_party and last_party.party_code.startswith('P'):
+                last_number = int(last_party.party_code[1:])
+                party_code = f"P{last_number + 1:04d}"
+            else:
+                party_code = "P0001"
         
         defaults = {
             'display_name': data.get('display_name', party_name).strip().upper(),
@@ -1478,26 +1493,41 @@ def save_party(request):
             'remark': data.get('remark', '').strip().upper()
         }
         
-        party, created = PartyMaster.objects.update_or_create(
-            party_code=party_code,
-            defaults={**defaults, 'party_name': party_name}
-        )
+        try:
+            party = PartyMaster.objects.get(party_code=party_code)
+            for key, value in defaults.items():
+                setattr(party, key, value)
+            party.party_name = party_name
+            party.save()
+            created = False
+        except PartyMaster.DoesNotExist:
+            party = PartyMaster.objects.create(
+                party_code=party_code,
+                party_name=party_name,
+                **defaults
+            )
+            created = True
         
-        action = 'created' if created else 'updated'
-        logger.info(f"Successfully {action} party: {party_name}")
+        logger.info(f"Successfully {'created' if created else 'updated'} party: {party_name}")
         return JsonResponse({
-            'success': True, 
-            'message': f"Party {action} successfully",
+            'success': True,
+            'message': f"Party {'created' if created else 'updated'} successfully",
             'party_code': party.party_code
         })
         
     except json.JSONDecodeError:
         logger.error("Invalid JSON data received")
-        return JsonResponse({'success': False, 'error': 'Invalid JSON data'}, status=400)
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON data'
+        }, status=400)
+        
     except Exception as e:
-        logger.exception(f"Error in save_party")
-        return JsonResponse({'success': False, 'error': 'An unexpected error occurred'}, status=500)
-
+        logger.exception(f"Error in save_party: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 def generate_unique_party_code():
     # Implement your logic to generate a unique party code
     # This is a simple example and might need to be adjusted based on your requirements
