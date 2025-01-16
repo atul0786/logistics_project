@@ -1396,6 +1396,8 @@ def search_cnote(request):
 
 
 
+
+# Set up logging
 logger = logging.getLogger(__name__)
 
 @require_GET
@@ -1441,7 +1443,7 @@ def party_suggestions(request):
             
             logger.info(f"Found {len(data)} matching parties")
             return JsonResponse(data, safe=False)
-            
+        
         return JsonResponse([], safe=False)
         
     except Exception as e:
@@ -1452,7 +1454,10 @@ def party_suggestions(request):
 @require_POST
 def save_party(request):
     try:
+        logger.info("Received request to save party.")
         data = json.loads(request.body)
+        logger.info(f"Request data: {data}")
+        
         party_name = data.get('party_name', '').strip().upper()
         
         if not party_name:
@@ -1488,7 +1493,8 @@ def save_party(request):
             'state': data.get('state', '').strip().upper(),
             'city': data.get('city', '').strip().upper(),
             'pincode': data.get('pincode', '').strip(),
-            'address': data.get('address', '').strip().upper(),
+            'address': data.get('address', '').strip().```python
+            .upper(),
             'is_tbb': data.get('is_tbb', False),
             'remark': data.get('remark', '').strip().upper()
         }
@@ -1528,9 +1534,8 @@ def save_party(request):
             'success': False,
             'error': str(e)
         }, status=500)
+
 def generate_unique_party_code():
-    # Implement your logic to generate a unique party code
-    # This is a simple example and might need to be adjusted based on your requirements
     last_party = PartyMaster.objects.order_by('-party_code').first()
     if last_party:
         last_number = int(last_party.party_code[1:])
