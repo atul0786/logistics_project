@@ -1506,17 +1506,22 @@
             });
         });
 
-        // Function to fetch party suggestions
+let debounceTimer;
+
 function fetchPartySuggestions(query) {
     fetch(`/api/party-suggestions/?query=${encodeURIComponent(query)}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             const suggestionsList = document.createElement('ul');
             suggestionsList.className = 'party-suggestions';
 
             data.forEach(party => {
                 const li = document.createElement('li');
-                // Enhanced display of party information
                 li.innerHTML = `
                     <strong>${party.party_name}</strong>
                     <br>Code: ${party.party_code}
@@ -1544,34 +1549,16 @@ function fetchPartySuggestions(query) {
         });
 }
 
-// Enhanced function to fill consignee details from selected party
 function fillConsigneeDetails(party) {
-    // Fill in the main fields
-    document.getElementById('consigneeName').value = party.party_name || '';
+    // Fill the form fields with party details
+    document.getElementById('consigneeName').value = party.party_name;
     document.getElementById('consigneeMobile').value = party.mobile_number_1 || '';
     document.getElementById('consigneeGST').value = party.gst_no || '';
-    
-    // Format address with all available components
-    const addressParts = [];
-    if (party.address) addressParts.push(party.address);
-    
-    const cityLine = [
-        party.city,
-        party.pincode
-    ].filter(Boolean).join(' - ');
-    if (cityLine) addressParts.push(cityLine);
-    
-    const stateLine = [
-        party.state,
-        party.country || 'INDIA'
-    ].filter(Boolean).join(', ');
-    if (stateLine) addressParts.push(stateLine);
-    
-    document.getElementById('consigneeAddress').value = addressParts.join('\n');
+    document.getElementById('consigneeAddress').value = party.address || '';
+    // ... fill other fields ...
 }
 
-// Add event listener to consignee name input with debouncing
-let debounceTimer;
+
 document.getElementById('consigneeName').addEventListener('input', function(e) {
     const query = e.target.value.trim();
     
@@ -1593,7 +1580,6 @@ document.getElementById('consigneeName').addEventListener('input', function(e) {
     }, 300); // 300ms delay
 });
 
-// Enhanced form submit handler with complete party data
 const form = document.getElementById('bookingForm');
 if (form) {
     const existingFormSubmit = form.onsubmit;
