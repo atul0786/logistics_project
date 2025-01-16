@@ -391,6 +391,36 @@
         input {
             text-transform: uppercase; /* This will visually transform the text to uppercase */
         }
+        /* Add this to the existing <style> section */
+        .party-suggestions {
+            position: absolute;
+            z-index: 1000;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            width: 100%;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .party-suggestions li {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+        .party-suggestions li:hover {
+            background-color: #f0f0f0;
+        }
+
+        .party-suggestions li:last-child {
+            border-bottom: none;
+        }
+
     </style>
 </head>
 <body>
@@ -1475,6 +1505,103 @@
                 this.value = this.value.toUpperCase(); // Convert input to uppercase
             });
         });
+
+        // Function to fetch party suggestions
+        function fetchPartySuggestions(query) {
+            fetch(`/api/party-suggestions/?query=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    const suggestionsList = document.createElement('ul');
+                    suggestionsList.className = 'party-suggestions';
+
+                    data.forEach(party => {
+                        const li = document.createElement('li');
+                        li.textContent = party.party_name;
+                        li.addEventListener('click', () => {
+                            fillConsigneeDetails(party);
+                            suggestionsList.remove();
+                        });
+                        suggestionsList.appendChild(li);
+                    });
+
+                    const consigneeName = document.getElementById('consigneeName');
+                    const existingList = document.querySelector('.party-suggestions');
+                    if (existingList) {
+                        existingList.remove();
+                    }
+                    consigneeName.parentNode.appendChild(suggestionsList);
+                });
+        }
+
+// Function to fill consignee details from selected party
+function fillConsigneeDetails(party) {
+    document.getElementById('consigneeName').value = party.party_name;
+    document.getElementById('consigneeMobile').value = party.mobile_number_1 || '';
+    document.getElementById('consigneeGST').value = party.gst_no || '';
+    document.getElementById('consigneeAddress').value = party.address || '';
+}
+
+// Add event listener to consignee name input
+document.getElementById('consigneeName').addEventListener('input', function(e) {
+    const query = e.target.value.trim();
+    if (query.length >= 2) {
+        fetchPartySuggestions(query);
+    } else {
+        const suggestionsList = document.querySelector('.party-suggestions');
+        if (suggestionsList) {
+            suggestionsList.remove();
+        }
+    }
+});
+
+// Modify the existing form submit handler to include party master saving
+const existingFormSubmit = form.onsubmit;
+form.onsubmit = async function(e) {
+    e.preventDefault();
+
+    // Get consignee details
+    const consigneeData = {
+        party_name: document.getElementById('consigneeName').value,
+        mobile_number_1: document.getElementById('consigneeMobile').value,
+        gst_no: document.getElementById('consigneeGST').value,
+        address: document.getElementById('consigneeAddress').value
+    };
+
+    try {
+        // First try to save/update party data
+        const partyResponse = await fetch('/api/save-party/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(consigneeData)
+        });
+
+        if (!partyResponse.ok) {
+            throw new Error('Failed to save party data');
+        }
+
+        // Then proceed with the original form submission
+        if (existingFormSubmit) {
+            existingFormSubmit.call(this, e);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while saving the data');
+    }
+};
+// Add this to the existing document.addEventListener('DOMContentLoaded', function () {...}) block
+document.addEventListener('click', function(e) {
+    if (!e.target.matches('#consigneeName')) {
+        const suggestionsList = document.querySelector('.party-suggestions');
+        if (suggestionsList) {
+            suggestionsList.remove();
+        }
+    }
+});
+
+
     </script>
 </body>
 </html>
