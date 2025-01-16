@@ -1493,7 +1493,7 @@ def save_party(request):
             'state': data.get('state', '').strip().upper(),
             'city': data.get('city', '').strip().upper(),
             'pincode': data.get('pincode', '').strip(),
-            'address': data.get('address', '').strip()..upper(),
+            'address': data.get('address', '').strip().upper(),
             'is_tbb': data.get('is_tbb', False),
             'remark': data.get('remark', '').strip().upper()
         }
