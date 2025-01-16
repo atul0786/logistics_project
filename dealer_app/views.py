@@ -85,6 +85,10 @@ from django.http import Http404
 from .models import CNotes
 from django.shortcuts import get_object_or_404
 from django.db import connection
+from django.http import JsonResponse
+from transporter_app.models import PartyMaster
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 
 
@@ -1382,3 +1386,48 @@ def search_cnote(request):
             return redirect('dealer:create_cnotes')  # Redirect back to the create CNotes page
     messages.error(request, 'Please enter a CNote number.')
     return redirect('dealer:create_cnotes')  # Redirect if no CNote number is provided
+
+
+
+
+def party_suggestions(request):
+    query = request.GET.get('query', '').upper()
+    if len(query) >= 2:
+        parties = PartyMaster.objects.filter(party_name__istartswith=query)
+        data = [{
+            'party_name': party.party_name,
+            'mobile_number_1': party.mobile_number_1,
+            'gst_no': party.gst_no,
+            'address': party.address
+        } for party in parties]
+        return JsonResponse(data, safe=False)
+    return JsonResponse([], safe=False)
+
+@csrf_exempt
+def save_party(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            party_name = data.get('party_name')
+            
+            # Try to find existing party
+            party, created = PartyMaster.objects.get_or_create(
+                party_name=party_name,
+                defaults={
+                    'mobile_number_1': data.get('mobile_number_1'),
+                    'gst_no': data.get('gst_no'),
+                    'address': data.get('address')
+                }
+            )
+            
+            # If party exists, update its details
+            if not created:
+                party.mobile_number_1 = data.get('mobile_number_1')
+                party.gst_no = data.get('gst_no')
+                party.address = data.get('address')
+                party.save()
+                
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
