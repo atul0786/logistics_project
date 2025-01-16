@@ -93,6 +93,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 import json
 import logging
+from django.views.decorators.http import require_GET, require_POST
 
 
 
@@ -1397,6 +1398,7 @@ def search_cnote(request):
 
 logger = logging.getLogger(__name__)
 
+@require_GET
 def party_suggestions(request):
     try:
         query = request.GET.get('query', '').upper()
@@ -1437,69 +1439,72 @@ def party_suggestions(request):
             return JsonResponse(data, safe=False)
         return JsonResponse([], safe=False)
     except Exception as e:
-        logger.error(f"Error in party_suggestions: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
+        logger.exception(f"Error in party_suggestions")
+        return JsonResponse({'error': 'An unexpected error occurred'}, status=500)
 
 @csrf_exempt
+@require_POST
 def save_party(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            party_name = data.get('party_name', '').strip().upper()
-            
-            if not party_name:
-                return JsonResponse({'success': False, 'error': 'Party name is required'})
-            
-            logger.info(f"Attempting to save/update party: {party_name}")
-            
-            # Generate a unique party code if not provided
-            party_code = data.get('party_code', '').strip().upper()
-            if not party_code:
-                # You might want to implement your own party code generation logic
-                party_code = f"P{PartyMaster.objects.count() + 1:04d}"
-            
-            defaults = {
-                'display_name': data.get('display_name', party_name).strip().upper(),
-                'mobile_number_1': data.get('mobile_number_1', '').strip(),
-                'mobile_number_2': data.get('mobile_number_2', '').strip(),
-                'phone_number_1': data.get('phone_number_1', '').strip(),
-                'phone_number_2': data.get('phone_number_2', '').strip(),
-                'gst_no': data.get('gst_no', '').strip().upper(),
-                'pan_no': data.get('pan_no', '').strip().upper(),
-                'email': data.get('email', '').strip().lower(),
-                'marketing_person': data.get('marketing_person', '').strip().upper(),
-                'party_type': data.get('party_type', 'CUSTOMER').strip().upper(),
-                'country': data.get('country', 'INDIA').strip().upper(),
-                'state': data.get('state', '').strip().upper(),
-                'city': data.get('city', '').strip().upper(),
-                'pincode': data.get('pincode', '').strip(),
-                'address': data.get('address', '').strip().upper(),
-                'is_tbb': data.get('is_tbb', False),
-                'remark': data.get('remark', '').strip().upper()
-            }
-            
-            # Try to find existing party by party_code or create new one
-            party, created = PartyMaster.objects.get_or_create(
-                party_code=party_code,
-                defaults={**defaults, 'party_name': party_name}
-            )
-            
-            # If party exists, update its details
-            if not created:
-                for key, value in defaults.items():
-                    setattr(party, key, value)
-                party.party_name = party_name
-                party.save()
-                
-            logger.info(f"Successfully {'created' if created else 'updated'} party: {party_name}")
-            return JsonResponse({
-                'success': True, 
-                'message': f"Party {'created' if created else 'updated'} successfully",
-                'party_code': party.party_code
-            })
-            
-        except Exception as e:
-            logger.error(f"Error in save_party: {str(e)}")
-            return JsonResponse({'success': False, 'error': str(e)})
-            
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+    try:
+        data = json.loads(request.body)
+        party_name = data.get('party_name', '').strip().upper()
+        
+        if not party_name:
+            return JsonResponse({'success': False, 'error': 'Party name is required'}, status=400)
+        
+        logger.info(f"Attempting to save/update party: {party_name}")
+        
+        party_code = data.get('party_code', '').strip().upper()
+        if not party_code:
+            party_code = generate_unique_party_code()
+        
+        defaults = {
+            'display_name': data.get('display_name', party_name).strip().upper(),
+            'mobile_number_1': data.get('mobile_number_1', '').strip(),
+            'mobile_number_2': data.get('mobile_number_2', '').strip(),
+            'phone_number_1': data.get('phone_number_1', '').strip(),
+            'phone_number_2': data.get('phone_number_2', '').strip(),
+            'gst_no': data.get('gst_no', '').strip().upper(),
+            'pan_no': data.get('pan_no', '').strip().upper(),
+            'email': data.get('email', '').strip().lower(),
+            'marketing_person': data.get('marketing_person', '').strip().upper(),
+            'party_type': data.get('party_type', 'CUSTOMER').strip().upper(),
+            'country': data.get('country', 'INDIA').strip().upper(),
+            'state': data.get('state', '').strip().upper(),
+            'city': data.get('city', '').strip().upper(),
+            'pincode': data.get('pincode', '').strip(),
+            'address': data.get('address', '').strip().upper(),
+            'is_tbb': data.get('is_tbb', False),
+            'remark': data.get('remark', '').strip().upper()
+        }
+        
+        party, created = PartyMaster.objects.update_or_create(
+            party_code=party_code,
+            defaults={**defaults, 'party_name': party_name}
+        )
+        
+        action = 'created' if created else 'updated'
+        logger.info(f"Successfully {action} party: {party_name}")
+        return JsonResponse({
+            'success': True, 
+            'message': f"Party {action} successfully",
+            'party_code': party.party_code
+        })
+        
+    except json.JSONDecodeError:
+        logger.error("Invalid JSON data received")
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        logger.exception(f"Error in save_party")
+        return JsonResponse({'success': False, 'error': 'An unexpected error occurred'}, status=500)
+
+def generate_unique_party_code():
+    # Implement your logic to generate a unique party code
+    # This is a simple example and might need to be adjusted based on your requirements
+    last_party = PartyMaster.objects.order_by('-party_code').first()
+    if last_party:
+        last_number = int(last_party.party_code[1:])
+        new_number = last_number + 1
+    else:
+        new_number = 1
+    return f"P{new_number:04d}"
