@@ -3,8 +3,8 @@
 echo "Installing dependencies..."
 pip install -r requirements.txt
 
-echo "Running migrations with --fake-initial to avoid conflicts..."
-python manage.py migrate --fake-initial
-
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
+
+echo "Faking initial migrations to avoid table conflicts..."
+python manage.py migrate --fake-initial
