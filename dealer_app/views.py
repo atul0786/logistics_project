@@ -1233,22 +1233,20 @@ def cancel_loading_sheet(request, loading_sheet_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
+
+
 logger = logging.getLogger(__name__)
+
 @login_required
 def create_cnotes(request):
     # Get the logged-in dealer
-    dealer = request.user.dealer  # Assuming you have a OneToOneField relationship
-    
-    logger = logging.getLogger(__name__)
-    logger.info("Create CNotes view called.")
-    
     try:
-        dealer = Dealer.objects.get(user=request.user)
+        dealer = request.user.dealer  # Assuming you have a OneToOneField relationship
         logger.info(f"Dealer: {dealer}")
     except Dealer.DoesNotExist:
         logger.error('Dealer not found.')
         return JsonResponse({'success': False, 'error': 'Dealer not found.'})
-     
+
     # Fetch the last CNote created by the dealer
     last_cnote = CNotes.objects.filter(dealer=dealer).order_by('-created_at').first()
 
@@ -1281,7 +1279,7 @@ def create_cnotes(request):
                     logger.info(f"Processed {field}: {charges[db_field]}")
                 except (ValueError, TypeError) as e:
                     logger.warning(f"Error converting {field}: {str(e)}")
-                    charges[db_field] = 0.0
+                    charges[db_field] = 0.0  # Default to 0.0 if conversion fails
 
             # Create CNotes object with all fields
             cnote = CNotes(
@@ -1329,7 +1327,6 @@ def create_cnotes(request):
                 art = request.POST.get(f'articles[{index}][art]')
                 art_type = request.POST.get(f'articles[{index}][artType]')
                 said_to_contain = request.POST.get(f'articles[{index}][saidToContain]')
-                per_pkt_amt = request.POST.get(f'articles[{index}][perPktAmt]', '0')
                 total_amt = request.POST.get(f'articles[{index}][totalAmt]', '0')
                 
                 articles_data.append({
@@ -1371,14 +1368,12 @@ def create_cnotes(request):
 
     # GET request - render the form
     context = {
-        'dealer': request.user.dealer,
+        'dealer': dealer,
         'destinations': DeliveryDestination.objects.all(),
         'cities': City.objects.all(),
         'last_cnote': last_cnote,  # Pass the last CNote to the template
-        'dealer': dealer,
     }
     return render(request, 'dealer/create_cnotes.html', context)
-
 
 @login_required
 def search_cnote(request):
