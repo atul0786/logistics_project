@@ -1396,7 +1396,6 @@ def search_cnote(request):
 
 
 
-
 # Set up logging
 logger = logging.getLogger(__name__)
 
