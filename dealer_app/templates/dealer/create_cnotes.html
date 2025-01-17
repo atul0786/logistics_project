@@ -391,7 +391,9 @@
         input {
             text-transform: uppercase; /* This will visually transform the text to uppercase */
         }
-        /* Add this to the existing <style> section */
+        .consignee-input-wrapper {
+            position: relative;
+        }
         .party-suggestions {
             position: absolute;
             z-index: 1000;
@@ -405,22 +407,22 @@
             padding: 0;
             margin: 0;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: none; /* Added from my previous suggestion */
         }
-
         .party-suggestions li {
             padding: 8px 12px;
             cursor: pointer;
             border-bottom: 1px solid #eee;
         }
-
-        .party-suggestions li:hover {
-            background-color: #f0f0f0;
-        }
-
         .party-suggestions li:last-child {
             border-bottom: none;
         }
-
+        .party-suggestions li:hover {
+            background-color: #f0f0f0;
+        }
+        .party-suggestions .selected {
+            background-color: #e0e0e0;
+        }
     </style>
 </head>
 <body>
@@ -604,7 +606,10 @@
                         <div class="form-group">
                             <h3>Consignee (To)</h3>
                             <label for="consigneeName" class="required">Consignee Name</label>
-                            <input type="text" id="consigneeName" name="consignee_name" required value="{{ consignee_data.name|default:'' }}" />
+                            <div class="consignee-input-wrapper">
+                                <input type="text" id="consigneeName" name="consignee_name" required value="{{ consignee_data.name|default:'' }}" />
+                                <ul id="consigneeSuggestions" class="party-suggestions"></ul>
+                            </div>
                             <label for="consigneeMobile" class="required">Mobile No</label>
                             <input type="tel" id="consigneeMobile" name="consignee_mobile" maxlength="10" required value="{{ consignee_data.mobile|default:'' }}" />
                             <label for="consigneeGST">GST No</label>
@@ -1345,8 +1350,8 @@
             });
                       
             // Add event listener for form submission
-            form.addEventListener('submit', function(event) {
-                event.preventDefault();
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
                 calculateWeightAmount();
                 calculateGrandTotal();
 
@@ -1417,23 +1422,31 @@
                     console.log(`${key}: ${value}`);
                 }
 
-                fetch(form.action, {
+                fetch(this.action, {
                     method: 'POST',
                     body: formData,
                     headers: {
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Accept': 'application/json'
                     }
                 })
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        return response.text().then(text => {
+                            try {
+                                // Try to parse as JSON
+                                return Promise.reject(JSON.parse(text));
+                            } catch (e) {
+                                // If not JSON, return the text itself
+                                return Promise.reject({ error: text });
+                            }
+                        });
                     }
                     return response.json();
                 })
                 .then(data => {
                     if (data.success) {
-                        console.log('CNote created successfully:', data);
-                        alert('CNote created successfully!');
+                        // Redirect without showing alert
                         window.location.href = data.redirect_url;
                     } else {
                         console.error('Error in server response:', data.error);
@@ -1442,7 +1455,10 @@
                 })
                 .catch(error => {
                     console.error('Error during form submission:', error);
-                    alert('An error occurred while submitting the form. Please check the console for more details.');
+                    // Only show alert if it's a real error, not a redirect
+                    if (!error.redirect_url) {
+                        alert('An error occurred while saving the data. Please try again.');
+                    }
                 });
             });
 
@@ -1506,176 +1522,186 @@
             });
         });
 
-let debounceTimer;
-
-function fetchPartySuggestions(query) {
-    fetch(`/api/party-suggestions/?query=${encodeURIComponent(query)}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            const suggestionsList = document.createElement('ul');
-            suggestionsList.className = 'party-suggestions';
-
-            data.forEach(party => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <strong>${party.party_name}</strong>
-                    <br>Code: ${party.party_code}
-                    ${party.mobile_number_1 ? `<br>Mobile: ${party.mobile_number_1}` : ''}
-                    ${party.gst_no ? `<br>GST: ${party.gst_no}` : ''}
-                    ${party.city ? `<br>City: ${party.city}` : ''}
-                `;
-                li.addEventListener('click', () => {
-                    fillConsigneeDetails(party);
-                    suggestionsList.remove();
-                });
-                suggestionsList.appendChild(li);
-            });
-
-            const consigneeName = document.getElementById('consigneeName');
-            const existingList = document.querySelector('.party-suggestions');
-            if (existingList) {
-                existingList.remove();
-            }
-            consigneeName.parentNode.appendChild(suggestionsList);
-        })
-        .catch(error => {
-            console.error('Error fetching party suggestions:', error);
-            alert('Error fetching party suggestions. Please try again.');
-        });
-}
-
-function fillConsigneeDetails(party) {
-    // Fill the form fields with party details
-    document.getElementById('consigneeName').value = party.party_name;
-    document.getElementById('consigneeMobile').value = party.mobile_number_1 || '';
-    document.getElementById('consigneeGST').value = party.gst_no || '';
-    document.getElementById('consigneeAddress').value = party.address || '';
-    // ... fill other fields ...
-}
-
-
-document.getElementById('consigneeName').addEventListener('input', function(e) {
-    const query = e.target.value.trim();
-    
-    // Clear existing timer
-    clearTimeout(debounceTimer);
-    
-    // Clear suggestions if query is too short
-    if (query.length < 2) {
-        const suggestionsList = document.querySelector('.party-suggestions');
-        if (suggestionsList) {
-            suggestionsList.remove();
-        }
-        return;
-    }
-    
-    // Set new timer for debouncing
-    debounceTimer = setTimeout(() => {
-        fetchPartySuggestions(query);
-    }, 300); // 300ms delay
-});
-
-const form = document.getElementById('bookingForm');
-if (form) {
-    const existingFormSubmit = form.onsubmit;
-    form.onsubmit = async function(e) {
-        e.preventDefault();
-
-        // Get full consignee details
-        const addressLines = document.getElementById('consigneeAddress').value.split('\n');
-        let city = '', pincode = '', state = '', country = 'INDIA';
+        document.addEventListener('DOMContentLoaded', function() {
+            const consigneeNameInput = document.getElementById('consigneeName');
+            const consigneeSuggestions = document.getElementById('consigneeSuggestions');
+            const consigneeMobileInput = document.getElementById('consigneeMobile');
+            const consigneeGSTInput = document.getElementById('consigneeGST');
+            const consigneeAddressInput = document.getElementById('consigneeAddress');
+            const form = document.getElementById('bookingForm');
         
-        // Parse address lines for city, pincode, state, and country
-        if (addressLines.length > 1) {
-            const cityLine = addressLines[1].split(' - ');
-            city = cityLine[0] || '';
-            pincode = cityLine[1] || '';
-            
-            if (addressLines.length > 2) {
-                const stateLine = addressLines[2].split(', ');
-                state = stateLine[0] || '';
-                country = stateLine[1] || 'INDIA';
-            }
-        }
-
-        const consigneeData = {
-            party_name: document.getElementById('consigneeName').value.trim().toUpperCase(),
-            display_name: document.getElementById('consigneeName').value.trim().toUpperCase(),
-            mobile_number_1: document.getElementById('consigneeMobile').value.trim(),
-            gst_no: document.getElementById('consigneeGST').value.trim().toUpperCase(),
-            address: addressLines[0] || '',
-            city: city,
-            pincode: pincode,
-            state: state,
-            country: country,
-            party_type: 'CUSTOMER',
-            is_tbb: false,
-            email: '', // Optional field
-            marketing_person: '', // Optional field
-            remark: '' // Optional field
-        };
-
-        try {
-            // Validate required fields
-            if (!consigneeData.party_name) {
-                throw new Error('Party name is required');
-            }
-            if (!consigneeData.mobile_number_1) {
-                throw new Error('Mobile number is required');
-            }
-
-            // Save/update party data
-            const partyResponse = await fetch('/api/save-party/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                },
-                body: JSON.stringify(consigneeData)
+            let debounceTimer;
+            let selectedIndex = -1;
+        
+            consigneeNameInput.addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => fetchPartySuggestions(this.value), 300);
             });
-
-            const responseData = await partyResponse.json();
-
-            if (!partyResponse.ok) {
-                throw new Error(responseData.error || 'Failed to save party data');
+        
+            consigneeNameInput.addEventListener('keydown', function(e) {
+                const items = consigneeSuggestions.getElementsByTagName('li');
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedIndex = (selectedIndex < items.length - 1) ? selectedIndex + 1 : 0;
+                    updateSelectedItem(items);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedIndex = (selectedIndex > 0) ? selectedIndex - 1 : items.length - 1;
+                    updateSelectedItem(items);
+                } else if (e.key === 'Enter' && selectedIndex > -1) {
+                    e.preventDefault();
+                    items[selectedIndex].click();
+                }
+            });
+        
+            function updateSelectedItem(items) {
+                Array.from(items).forEach((item, index) => {
+                    item.classList.toggle('selected', index === selectedIndex);
+                });
+                if (items[selectedIndex]) {
+                    items[selectedIndex].scrollIntoView({ block: 'nearest' });
+                }
             }
-
-            // Proceed with original form submission
-            if (existingFormSubmit) {
-                existingFormSubmit.call(this, e);
+        
+            function fetchPartySuggestions(query) {
+                if (query.length < 2) {
+                    consigneeSuggestions.style.display = 'none';
+                    return;
+                }
+        
+                fetch(`/dealer/api/party-suggestions/?query=${encodeURIComponent(query)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            console.error(`Error: HTTP ${response.status} - ${response.statusText}`);
+                            throw new Error('Failed to fetch suggestions');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (!Array.isArray(data)) {
+                            console.error('Invalid response format:', data);
+                            throw new Error('Invalid response format');
+                        }
+        
+                        consigneeSuggestions.innerHTML = '';
+                        
+                        data.forEach(party => {
+                            const li = document.createElement('li');
+                            li.innerHTML = `
+                                <strong>${party.party_name}</strong>
+                                <br>Code: ${party.party_code}
+                                ${party.mobile_number_1 ? `<br>Mobile: ${party.mobile_number_1}` : ''}
+                                ${party.gst_no ? `<br>GST: ${party.gst_no}` : ''}
+                                ${party.city ? `<br>City: ${party.city}` : ''}
+                            `;
+                            li.addEventListener('click', () => {
+                                fillConsigneeDetails(party);
+                                consigneeSuggestions.style.display = 'none';
+                            });
+                            consigneeSuggestions.appendChild(li);
+                        });
+        
+                        consigneeSuggestions.style.display = data.length > 0 ? 'block' : 'none';
+                    })
+                    .catch(error => {
+                        console.error('Error fetching party suggestions:', error);
+                        consigneeSuggestions.style.display = 'none';
+                    });
             }
-        } catch (error) {
-            console.error('Error:', error);
-            alert(error.message || 'An error occurred while saving the data');
-        }
-    };
-}
-
-// Close suggestions list when clicking outside
-document.addEventListener('click', function(e) {
-    if (!e.target.matches('#consigneeName')) {
-        const suggestionsList = document.querySelector('.party-suggestions');
-        if (suggestionsList) {
-            suggestionsList.remove();
-        }
-    }
-});
-
-// Add input validation for mobile number
-document.getElementById('consigneeMobile')?.addEventListener('input', function(e) {
-    this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
-});
-
-// Add input validation for GST number
-document.getElementById('consigneeGST')?.addEventListener('input', function(e) {
-    this.value = this.value.replace(/[^0-9A-Z]/g, '').slice(0, 15);
-});
-
+        
+            function fillConsigneeDetails(party) {
+                consigneeNameInput.value = party.party_name;
+                consigneeMobileInput.value = party.mobile_number_1 || '';
+                consigneeGSTInput.value = party.gst_no || '';
+                consigneeAddressInput.value = party.address || '';
+            }
+        
+            if (form) {
+                const existingFormSubmit = form.onsubmit;
+                form.onsubmit = async function (e) {
+                    e.preventDefault();
+        
+                    const addressLines = consigneeAddressInput.value.split('\n');
+                    let city = '', pincode = '', state = '', country = 'INDIA';
+        
+                    if (addressLines.length > 1) {
+                        const cityLine = addressLines[1]?.split(' - ') || [];
+                        city = cityLine[0]?.trim() || '';
+                        pincode = cityLine[1]?.trim() || '';
+        
+                        if (addressLines.length > 2) {
+                            const stateLine = addressLines[2]?.split(', ') || [];
+                            state = stateLine[0]?.trim() || '';
+                            country = stateLine[1]?.trim() || 'INDIA';
+                        }
+                    }
+        
+                    const consigneeData = {
+                        party_name: consigneeNameInput.value.trim().toUpperCase(),
+                        display_name: consigneeNameInput.value.trim().toUpperCase(),
+                        mobile_number_1: consigneeMobileInput.value.trim(),
+                        gst_no: consigneeGSTInput.value.trim().toUpperCase(),
+                        address: addressLines[0] || '',
+                        city: city,
+                        pincode: pincode,
+                        state: state,
+                        country: country,
+                        party_type: 'CUSTOMER',
+                        is_tbb: false,
+                        email: '',
+                        marketing_person: '',
+                        remark: ''
+                    };
+        
+                    try {
+                        if (!consigneeData.party_name) {
+                            throw new Error('Party name is required');
+                        }
+                        if (!consigneeData.mobile_number_1) {
+                            throw new Error('Mobile number is required');
+                        }
+        
+                        const partyResponse = await fetch('/api/save-party/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                            },
+                            body: JSON.stringify(consigneeData)
+                        });
+        
+                        const responseData = await partyResponse.json();
+        
+                        if (!partyResponse.ok) {
+                            console.error('Error saving party:', responseData);
+                            throw new Error(responseData.error || 'Failed to save party data');
+                        }
+        
+                        if (existingFormSubmit) {
+                            existingFormSubmit.call(this, e);
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert(error.message || 'An error occurred while saving the data');
+                    }
+                };
+            }
+        
+            document.addEventListener('click', function (e) {
+                if (!e.target.matches('#consigneeName')) {
+                    consigneeSuggestions.style.display = 'none';
+                }
+            });
+        
+            consigneeMobileInput?.addEventListener('input', function (e) {
+                this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+            });
+        
+            consigneeGSTInput?.addEventListener('input', function (e) {
+                this.value = this.value.replace(/[^0-9A-Z]/g, '').slice(0, 15);
+            });
+        });
+        
     </script>
 </body>
 </html>
