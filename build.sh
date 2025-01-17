@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
-# Exit on error
+
+# Exit immediately if a command exits with a non-zero status
 set -o errexit
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Collect static files
-python manage.py collectstatic --no-input
-
-# Make and run migrations, handling conflicts
-python manage.py makemigrations
+# Run database migrations safely
 python manage.py migrate --fake-initial
+
+# Run migrations to apply pending changes
+python manage.py migrate
+
+# Collect static files without user input
+python manage.py collectstatic --noinput
