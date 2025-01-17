@@ -104,18 +104,19 @@ class Pickup(models.Model):
         self.status = 'cancelled'
         self.save()
 
+
 class PartyMaster(models.Model):
-    party_code = models.CharField(max_length=50, unique=True)
-    party_name = models.CharField(max_length=100)
-    display_name = models.CharField(max_length=100)
+    party_code = models.CharField(max_length=50, null=True, blank=True)  # Optional
+    party_name = models.CharField(max_length=255, null=False, blank=False)
+    display_name = models.CharField(max_length=255, null=False, blank=False)
     mobile_number_1 = models.CharField(max_length=15)
     mobile_number_2 = models.CharField(max_length=15, blank=True)
     phone_number_1 = models.CharField(max_length=15, blank=True)
     phone_number_2 = models.CharField(max_length=15, blank=True)
-    gst_no = models.CharField(max_length=15, blank=True)
-    pan_no = models.CharField(max_length=15, blank=True)
+    gst_no = models.CharField(max_length=15, null=True, blank=True)  # Optional
+    pan_no = models.CharField(max_length=10, null=True, blank=True)  # Optional
     email = models.EmailField(blank=True)
-    marketing_person = models.CharField(max_length=100, blank=True)
+    marketing_person = models.CharField(max_length=255, null=True, blank=True)  # Optional
     party_type = models.CharField(max_length=50)
     country = models.CharField(max_length=50, default="INDIA")
     state = models.CharField(max_length=50, blank=True)
