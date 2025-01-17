@@ -152,6 +152,7 @@ def delete_city(request, id):
         return redirect('transporter:manage_location')
     return render(request, 'transporter/confirm_delete_city.html', {'city': city})
 
+
 @login_required
 def party_master(request):
     form = PartyMasterForm()
