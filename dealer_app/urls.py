@@ -68,7 +68,7 @@ urlpatterns = [
     #path('api/create_loading_sheet/', views.create_loading_sheet, name='create_loading_sheet'),
 
     path('api/party-suggestions/', views.party_suggestions, name='party_suggestions'),
-    path('api/save-party/', views.save_party, name='save_party'),
+    #path('api/save-party/', views.save_party, name='save_party'),
 
 
 
