@@ -1661,32 +1661,7 @@
                             throw new Error('Mobile number is required');
                         }
                     
-                        const partyResponse = await fetch('/api/save-party/', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                            },
-                            body: JSON.stringify(consigneeData)
-                        });
-                    
-                        // Check if the response is OK
-                        if (!partyResponse.ok) {
-                            const errorText = await partyResponse.text(); // Get the error response text
-                            console.error('Error saving party:', errorText); // Log the error response
-                            throw new Error('Failed to save party data: ' + errorText);
-                        }
-                    
-                        const responseData = await partyResponse.json(); // Parse the JSON response
-                    
-                        if (responseData.success) {
-                            // Handle success
-                            if (existingFormSubmit) {
-                                existingFormSubmit.call(this, e);
-                            }
-                        } else {
-                            alert('Error: ' + responseData.error); // Show error message
-                        }
+                       
                     } catch (error) {
                         console.error('Error:', error);
                         alert(error.message || 'An error occurred while saving the data');
@@ -1712,4 +1687,3 @@
     </script>
 </body>
 </html>
-
