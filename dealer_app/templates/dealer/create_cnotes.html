@@ -1652,7 +1652,7 @@
                         marketing_person: '',
                         remark: ''
                     };
-        
+                    
                     try {
                         if (!consigneeData.party_name) {
                             throw new Error('Party name is required');
@@ -1660,7 +1660,7 @@
                         if (!consigneeData.mobile_number_1) {
                             throw new Error('Mobile number is required');
                         }
-        
+                    
                         const partyResponse = await fetch('/api/save-party/', {
                             method: 'POST',
                             headers: {
@@ -1669,16 +1669,23 @@
                             },
                             body: JSON.stringify(consigneeData)
                         });
-        
-                        const responseData = await partyResponse.json();
-        
+                    
+                        // Check if the response is OK
                         if (!partyResponse.ok) {
-                            console.error('Error saving party:', responseData);
-                            throw new Error(responseData.error || 'Failed to save party data');
+                            const errorText = await partyResponse.text(); // Get the error response text
+                            console.error('Error saving party:', errorText); // Log the error response
+                            throw new Error('Failed to save party data: ' + errorText);
                         }
-        
-                        if (existingFormSubmit) {
-                            existingFormSubmit.call(this, e);
+                    
+                        const responseData = await partyResponse.json(); // Parse the JSON response
+                    
+                        if (responseData.success) {
+                            // Handle success
+                            if (existingFormSubmit) {
+                                existingFormSubmit.call(this, e);
+                            }
+                        } else {
+                            alert('Error: ' + responseData.error); // Show error message
                         }
                     } catch (error) {
                         console.error('Error:', error);
