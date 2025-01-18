@@ -992,13 +992,23 @@ def get_cities(request):
         return JsonResponse(list(cities), safe=False)
     return JsonResponse([], safe=False)
 
-def fetch_cities(request):
-    query = request.GET.get('query', '').upper()
-    if len(query) >= 2:
-        cities = City.objects.filter(name__istartswith=query).values_list('name', flat=True)[:10]
-        return JsonResponse(list(cities), safe=False)
-    return JsonResponse([], safe=False)
 
+def fetch_cities(request):
+    """
+    Fetches all city names from the City model and returns them as a JSON response.
+    """
+    if request.method == "GET":
+        try:
+            # Fetch city names from the City model
+            cities = City.objects.values_list('name', flat=True).order_by('name')  # Order by name for better usability
+            city_list = list(cities)  # Convert QuerySet to a list
+            return JsonResponse({'success': True, 'cities': city_list}, safe=False)
+        except Exception as e:
+            # Handle any unexpected errors
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    else:
+        # Return a 405 error for non-GET requests
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
 logger = logging.getLogger(__name__)
 
 @login_required
