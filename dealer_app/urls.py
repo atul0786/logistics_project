@@ -50,7 +50,11 @@ urlpatterns = [
     path('delivery/<int:delivery_id>/update/', views.update_delivery, name='update_delivery'),
     path('cnote/<int:cnote_id>/cancel/', views.cancel_cnote, name='cancel_cnote'),
     path('get_cities/', get_cities, name='get_cities'),  # Add this line
-    path('fetch-cities/', fetch_cities, name='fetch_cities'),
+    #path('fetch-cities/', fetch_cities, name='fetch_cities'),
+    path('fetch_cities/', views.fetch_cities, name='fetch_cities'),
+
+
+    
     #path('api/send_pickup_request/', views.send_pickup_request, name='send_pickup_request'),  # Added this line
     path('send-pickup-request/', views.send_pickup_request, name='send_pickup_request'),    
     #path('create-loading-sheet/', views.create_loading_sheet, name='loading_sheet'),
