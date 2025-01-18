@@ -993,9 +993,11 @@ def get_cities(request):
     return JsonResponse([], safe=False)
 
 def fetch_cities(request):
-    # Get all city names from the City model
-    cities = City.objects.values_list('name', flat=True)
-    return JsonResponse(list(cities), safe=False)
+    query = request.GET.get('query', '').upper()
+    if len(query) >= 2:
+        cities = City.objects.filter(name__istartswith=query).values_list('name', flat=True)[:10]
+        return JsonResponse(list(cities), safe=False)
+    return JsonResponse([], safe=False)
 
 logger = logging.getLogger(__name__)
 
