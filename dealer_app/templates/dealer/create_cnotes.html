@@ -389,7 +389,7 @@
         }
 
         input {
-            text-transform: uppercase; /* This will visually transform the text to uppercase */
+            text-transform: uppercase;
         }
         .consignee-input-wrapper {
             position: relative;
@@ -407,7 +407,7 @@
             padding: 0;
             margin: 0;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: none; /* Added from my previous suggestion */
+            display: none;
         }
         .party-suggestions li {
             padding: 8px 12px;
@@ -422,6 +422,47 @@
         }
         .party-suggestions .selected {
             background-color: #e0e0e0;
+        }
+        /* Updated styles for the destination search box */
+        .search-container {
+            position: relative;
+            width: 100%;
+        }
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            padding-right: 30px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .dropdown-arrow {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            cursor: pointer;
+        }
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            border-top: none;
+            background: white;
+            z-index: 1000;
+            display: none;
+        }
+        .dropdown-item {
+            padding: 10px;
+            cursor: pointer;
+        }
+        .dropdown-item:hover,
+        .dropdown-item.active {
+            background-color: #f0f0f0;
         }
     </style>
 </head>
@@ -556,12 +597,20 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="deliveryDestination" class="required">Delivery Destination</label>
-                            <select id="deliveryDestination" name="delivery_destination" required>
-                                <option value="">Select a City</option>
-                                {% for city in cities %}
-                                    <option value="{{ city.name }}">{{ city.name }}</option>
-                                {% endfor %}
-                            </select>
+                            <div class="search-container">
+                                <input 
+                                    type="text" 
+                                    class="search-input" 
+                                    placeholder="Search or select destination" 
+                                    id="deliveryDestination"
+                                    name="delivery_destination"
+                                    required
+                                >
+                                <span class="dropdown-arrow" id="dropdownArrow">&#9662;</span>
+                                <div class="dropdown-list" id="dropdownList">
+                                    <!-- Dropdown items will be populated dynamically -->
+                                </div>
+                            </div>
                         </div>
                     
                         <div class="form-group">
@@ -866,19 +915,11 @@
             const paymentTypeInput = document.getElementById('paymentType');
             const paymentTypeHeader = document.getElementById('paymentTypeHeader');
 
-
-            let destinationList = document.getElementById("destinationList");
-            if (!destinationList) {
-                destinationList = document.createElement("ul");
-                destinationList.id = "destinationList";
-                destinationList.style.display = "none";
-                destinationList.style.position = "absolute";
-                destinationList.style.background = "white";
-                destinationList.style.border = "1px solid #ddd";
-                destinationList.style.maxHeight = "150px";
-                destinationList.style.overflowY = "auto";
-                deliveryDestinationInput.parentNode.insertBefore(destinationList, deliveryDestinationInput.nextSibling);
-            }
+            const dropdownList = document.getElementById("dropdownList");
+            const dropdownArrow = document.getElementById("dropdownArrow");
+            let cities = []; // Dynamic cities list fetched from the backend
+            let activeIndex = -1;
+            let isFullListVisible = false;
 
             // Create reset button
             const resetConsignorBtn = document.createElement('button');
@@ -895,146 +936,112 @@
             // Insert the reset button after the consignor section
             document.querySelector(".form-group h3").appendChild(resetConsignorBtn);
 
-            const validDestinations = [];
-            let selectedIndex = -1;
-            let articleType = "Article";
-
-            function showAutocompleteList(input) {
-                const value = input.value.toUpperCase();
-                const filteredDestinations = validDestinations.filter((dest) => dest.startsWith(value));
-                destinationList.innerHTML = "";
-
-                if (filteredDestinations.length > 0) {
-                    filteredDestinations.forEach((dest) => {
-                        const li = document.createElement("li");
-                        li.textContent = dest;
-                        li.addEventListener("click", () => {
-                            input.value = dest;
-                            destinationList.style.display = "none";
-                        });
-                        destinationList.appendChild(li);
+            // Function to fetch cities from the backend
+            function fetchCities() {
+                fetch("/dealer/fetch_cities/") // Adjust this URL if needed
+                    .then((response) => {
+                        if (!response.ok) {
+                            throw new Error(`Failed to fetch cities: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then((data) => {
+                        if (data.success) {
+                            cities = data.cities; // Update the cities list with fetched data
+                        } else {
+                            console.error("Error fetching cities:", data.error);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error fetching cities:", error);
                     });
-                    destinationList.style.display = "block";
-                } else {
-                    destinationList.style.display = "none";
-                }
-                selectedIndex = -1;
             }
 
-            deliveryDestinationInput.addEventListener("input", function () {
-                showAutocompleteList(this);
-            });
+            // Function to populate the dropdown based on a filter
+            function populateDropdown(filter = "") {
+                dropdownList.innerHTML = "";
+                const filteredCities = filter
+                    ? cities.filter(city => city.toLowerCase().includes(filter.toLowerCase()))
+                    : cities;
 
-            // Payment mode handler
-            function initializePaymentMode() {
-                const paymentButtons = {
-                    'paidBtn': 'PAID',
-                    'toPayBtn': 'TO PAY', 
-                    'tbbBtn': 'TBB',
-                    'focBtn': 'FOC'
-                };
-
-                const paymentTypeInput = document.getElementById('paymentType');
-                const paymentTypeHeader = document.getElementById('paymentTypeHeader');
-
-              // Set TBB as default
-              function setDefaultPaymentMode() {
-                  const tbbBtn = document.getElementById('tbbBtn');
-                  if (tbbBtn) {
-                      
-                      // Simulate a click on the TBB button
-                      tbbBtn.click(); // This will trigger the click event for TBB button
-                  }
-              }
-
-              function setActiveButton(button) {
-                  Object.keys(paymentButtons).forEach(btnId => 
-                      document.getElementById(btnId)?.classList.remove('active')
-                  );
-                  button.classList.add('active');
-              }
-
-              function updatePaymentType(type) {
-                  if (paymentTypeHeader) paymentTypeHeader.textContent = type;
-                  if (paymentTypeInput) paymentTypeInput.value = type;
-              }
-
-              // Add click handlers to payment buttons
-              Object.keys(paymentButtons).forEach(btnId => {
-                  const btn = document.getElementById(btnId);
-                  if (btn) {
-                      btn.addEventListener('click', () => {
-                          setActiveButton(btn);
-                          updatePaymentType(paymentButtons[btnId]);
-                      });
-                  }
-              });
-
-              // Add keyboard shortcuts
-              document.addEventListener('keydown', (event) => {
-                  const keyMap = {
-                      'F7': 'PAID',
-                      'F8': 'TO PAY',
-                      'F9': 'TBB',
-                      'F10': 'FOC'
-                  };
-
-                const type = keyMap[event.key];
-                if (type) {
-                    event.preventDefault();
-                    const button = document.getElementById(`${type.toLowerCase().replace(' ', '')}Btn`);
-                    if (button) {
-                        setActiveButton(button);
-                        updatePaymentType(type);
-                    }
-                }
-            });
-
-            // Set default mode on initialization
-            setDefaultPaymentMode();
-        }
-           // Initialize payment mode
-
-            function initializePaymentMode() {
-                  const tbbBtn = document.getElementById('tbbBtn');
-                  if (tbbBtn) {
-                      // Simulate a click on the TBB button
-                      tbbBtn.click(); // This will trigger the click event for TBB button
-                  }
-               }
-
-               // Call the function to set the default payment type
-                initializePaymentMode();
-
-
-            deliveryDestinationInput.addEventListener("keydown", function (e) {
-                const items = destinationList.getElementsByTagName("li");
-                if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-                    e.preventDefault();
-                    selectedIndex = e.key === "ArrowDown" 
-                        ? (selectedIndex < items.length - 1 ? selectedIndex + 1 : 0)
-                        : (selectedIndex > 0 ? selectedIndex - 1 : items.length - 1);
-                    updateSelectedItem(items);
-                } else if (e.key === "Enter" && selectedIndex > -1) {
-                    e.preventDefault();
-                    if (items[selectedIndex]) {
-                        this.value = items[selectedIndex].textContent;
-                        destinationList.style.display = "none";
-                    }
-                }
-            });
-
-            function updateSelectedItem(items) {
-                Array.from(items).forEach((item, index) => {
-                    item.classList.toggle("selected", index === selectedIndex);
+                filteredCities.forEach((city, index) => {
+                    const div = document.createElement("div");
+                    div.classList.add("dropdown-item");
+                    div.textContent = city;
+                    div.addEventListener("click", () => {
+                        deliveryDestinationInput.value = city;
+                        dropdownList.style.display = "none";
+                        isFullListVisible = false;
+                    });
+                    dropdownList.appendChild(div);
                 });
+
+                dropdownList.style.display = filteredCities.length > 0 ? "block" : "none";
+                activeIndex = -1;
             }
 
-            document.addEventListener("click", function (e) {
-                if (e.target !== deliveryDestinationInput) {
-                    destinationList.style.display = "none";
+                // Event listeners
+                deliveryDestinationInput.addEventListener("input", (e) => {
+                    if (isFullListVisible) {
+                        isFullListVisible = false;
+                    }
+                    populateDropdown(e.target.value);
+                });
+
+
+                dropdownArrow.addEventListener("click", () => {
+                    if (dropdownList.style.display === "block" && isFullListVisible) {
+                        dropdownList.style.display = "none";
+                        isFullListVisible = false;
+                    } else {
+                        populateDropdown();
+                        dropdownList.style.display = "block";
+                        isFullListVisible = true;
+                    }
+                });
+        
+                document.addEventListener("click", (e) => {
+                    if (!e.target.closest(".search-container")) {
+                        dropdownList.style.display = "none";
+                        isFullListVisible = false;
+                    }
+                });
+
+                deliveryDestinationInput.addEventListener("keydown", (e) => {
+                    const items = Array.from(dropdownList.querySelectorAll(".dropdown-item"));
+        
+                    if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        activeIndex = (activeIndex + 1) % items.length;
+                        updateActiveItem(items);
+                    } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        activeIndex = (activeIndex - 1 + items.length) % items.length;
+                        updateActiveItem(items);
+                    } else if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (activeIndex >= 0 && items[activeIndex]) {
+                            deliveryDestinationInput.value = items[activeIndex].textContent;
+                            dropdownList.style.display = "none";
+                            isFullListVisible = false;
+                        } else if (items.length === 1) {
+                            deliveryDestinationInput.value = items[0].textContent;
+                            dropdownList.style.display = "none";
+                            isFullListVisible = false;
+                        }
+                    }
+                });
+
+                function updateActiveItem(items) {
+                    items.forEach(item => item.classList.remove("active"));
+                    if (activeIndex >= 0 && items[activeIndex]) {
+                        items[activeIndex].classList.add("active");
+                        items[activeIndex].scrollIntoView({ block: "nearest" });
+                    }
                 }
-            });
+
+                // Fetch cities on page load
+                fetchCities();
 
             function updateDateTime() {
                 const now = new Date();
@@ -1613,77 +1620,20 @@
                 consigneeNameInput.value = party.party_name;
                 consigneeMobileInput.value = party.mobile_number_1 || '';
                 consigneeGSTInput.value = party.gst_no || '';
-                consigneeAddressInput.value = party.address || '';
+                consigneeAddressInput.value = `${party.address || ''}\n${party.city || ''}\n${party.state || ''}`.trim();
             }
         
-            if (form) {
-                const existingFormSubmit = form.onsubmit;
-                form.onsubmit = async function (e) {
-                    e.preventDefault();
-        
-                    const addressLines = consigneeAddressInput.value.split('\n');
-                    let city = '', pincode = '', state = '', country = 'INDIA';
-        
-                    if (addressLines.length > 1) {
-                        const cityLine = addressLines[1]?.split(' - ') || [];
-                        city = cityLine[0]?.trim() || '';
-                        pincode = cityLine[1]?.trim() || '';
-        
-                        if (addressLines.length > 2) {
-                            const stateLine = addressLines[2]?.split(', ') || [];
-                            state = stateLine[0]?.trim() || '';
-                            country = stateLine[1]?.trim() || 'INDIA';
-                        }
-                    }
-        
-                    const consigneeData = {
-                        party_name: consigneeNameInput.value.trim().toUpperCase(),
-                        display_name: consigneeNameInput.value.trim().toUpperCase(),
-                        mobile_number_1: consigneeMobileInput.value.trim(),
-                        gst_no: consigneeGSTInput.value.trim().toUpperCase(),
-                        address: addressLines[0] || '',
-                        city: city,
-                        pincode: pincode,
-                        state: state,
-                        country: country,
-                        party_type: 'CUSTOMER',
-                        is_tbb: false,
-                        email: '',
-                        marketing_person: '',
-                        remark: ''
-                    };
-                    
-                    try {
-                        if (!consigneeData.party_name) {
-                            throw new Error('Party name is required');
-                        }
-                        if (!consigneeData.mobile_number_1) {
-                            throw new Error('Mobile number is required');
-                        }
-                    
-                       
-                    } catch (error) {
-                        console.error('Error:', error);
-                        alert(error.message || 'An error occurred while saving the data');
-                    }
-                };
-            }
-        
-            document.addEventListener('click', function (e) {
-                if (!e.target.matches('#consigneeName')) {
+            document.addEventListener('click', function(e) {
+                if (!consigneeNameInput.contains(e.target) && !consigneeSuggestions.contains(e.target)) {
                     consigneeSuggestions.style.display = 'none';
                 }
             });
         
-            consigneeMobileInput?.addEventListener('input', function (e) {
-                this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
-            });
-        
-            consigneeGSTInput?.addEventListener('input', function (e) {
-                this.value = this.value.replace(/[^0-9A-Z]/g, '').slice(0, 15);
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Your form submission logic here
             });
         });
-        
     </script>
 </body>
 </html>
