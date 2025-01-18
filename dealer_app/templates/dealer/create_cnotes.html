@@ -389,7 +389,7 @@
         }
 
         input {
-            text-transform: uppercase;
+            text-transform: uppercase; /* This will visually transform the text to uppercase */
         }
         .consignee-input-wrapper {
             position: relative;
@@ -407,7 +407,7 @@
             padding: 0;
             margin: 0;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: none;
+            display: none; /* Added from my previous suggestion */
         }
         .party-suggestions li {
             padding: 8px 12px;
@@ -421,35 +421,6 @@
             background-color: #f0f0f0;
         }
         .party-suggestions .selected {
-            background-color: #e0e0e0;
-        }
-        .suggestions-list {
-            position: absolute;
-            z-index: 1000;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            max-height: 200px;
-            overflow-y: auto;
-            width: 100%;
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: none;
-        }
-        .suggestions-list li {
-            padding: 8px 12px;
-            cursor: pointer;
-            border-bottom: 1px solid #eee;
-        }
-        .suggestions-list li:last-child {
-            border-bottom: none;
-        }
-        .suggestions-list li:hover {
-            background-color: #f0f0f0;
-        }
-        .suggestions-list .selected {
             background-color: #e0e0e0;
         }
     </style>
@@ -585,8 +556,12 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="deliveryDestination" class="required">Delivery Destination</label>
-                            <input type="text" id="deliveryDestination" name="delivery_destination" required autocomplete="off">
-                            <ul id="destinationSuggestions" class="suggestions-list"></ul>
+                            <select id="deliveryDestination" name="delivery_destination" required>
+                                <option value="">Select a City</option>
+                                {% for city in cities %}
+                                    <option value="{{ city.name }}">{{ city.name }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     
                         <div class="form-group">
@@ -891,60 +866,19 @@
             const paymentTypeInput = document.getElementById('paymentType');
             const paymentTypeHeader = document.getElementById('paymentTypeHeader');
 
-            const destinationSuggestions = document.getElementById("destinationSuggestions");
-            let selectedIndex = -1;
 
-            deliveryDestinationInput.addEventListener("input", function() {
-                const value = this.value.toUpperCase();
-                fetch(`/dealer/fetch-cities/?query=${encodeURIComponent(value)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        destinationSuggestions.innerHTML = "";
-                        if (data.length > 0) {
-                            data.forEach((dest) => {
-                                const li = document.createElement("li");
-                                li.textContent = dest;
-                                li.addEventListener("click", () => {
-                                    deliveryDestinationInput.value = dest;
-                                    destinationSuggestions.style.display = "none";
-                                });
-                                destinationSuggestions.appendChild(li);
-                            });
-                            destinationSuggestions.style.display = "block";
-                        } else {
-                            destinationSuggestions.style.display = "none";
-                        }
-                    });
-            });
-
-            deliveryDestinationInput.addEventListener("keydown", function(e) {
-                const items = destinationSuggestions.getElementsByTagName("li");
-                if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-                    e.preventDefault();
-                    selectedIndex = e.key === "ArrowDown" 
-                        ? (selectedIndex < items.length - 1 ? selectedIndex + 1 : 0)
-                        : (selectedIndex > 0 ? selectedIndex - 1 : items.length - 1);
-                    updateSelectedItem(items);
-                } else if (e.key === "Enter" && selectedIndex > -1) {
-                    e.preventDefault();
-                    if (items[selectedIndex]) {
-                        this.value = items[selectedIndex].textContent;
-                        destinationSuggestions.style.display = "none";
-                    }
-                }
-            });
-
-            function updateSelectedItem(items) {
-                Array.from(items).forEach((item, index) => {
-                    item.classList.toggle("selected", index === selectedIndex);
-                });
+            let destinationList = document.getElementById("destinationList");
+            if (!destinationList) {
+                destinationList = document.createElement("ul");
+                destinationList.id = "destinationList";
+                destinationList.style.display = "none";
+                destinationList.style.position = "absolute";
+                destinationList.style.background = "white";
+                destinationList.style.border = "1px solid #ddd";
+                destinationList.style.maxHeight = "150px";
+                destinationList.style.overflowY = "auto";
+                deliveryDestinationInput.parentNode.insertBefore(destinationList, deliveryDestinationInput.nextSibling);
             }
-
-            document.addEventListener("click", function(e) {
-                if (e.target !== deliveryDestinationInput) {
-                    destinationSuggestions.style.display = "none";
-                }
-            });
 
             // Create reset button
             const resetConsignorBtn = document.createElement('button');
@@ -960,6 +894,147 @@
 
             // Insert the reset button after the consignor section
             document.querySelector(".form-group h3").appendChild(resetConsignorBtn);
+
+            const validDestinations = [];
+            let selectedIndex = -1;
+            let articleType = "Article";
+
+            function showAutocompleteList(input) {
+                const value = input.value.toUpperCase();
+                const filteredDestinations = validDestinations.filter((dest) => dest.startsWith(value));
+                destinationList.innerHTML = "";
+
+                if (filteredDestinations.length > 0) {
+                    filteredDestinations.forEach((dest) => {
+                        const li = document.createElement("li");
+                        li.textContent = dest;
+                        li.addEventListener("click", () => {
+                            input.value = dest;
+                            destinationList.style.display = "none";
+                        });
+                        destinationList.appendChild(li);
+                    });
+                    destinationList.style.display = "block";
+                } else {
+                    destinationList.style.display = "none";
+                }
+                selectedIndex = -1;
+            }
+
+            deliveryDestinationInput.addEventListener("input", function () {
+                showAutocompleteList(this);
+            });
+
+            // Payment mode handler
+            function initializePaymentMode() {
+                const paymentButtons = {
+                    'paidBtn': 'PAID',
+                    'toPayBtn': 'TO PAY', 
+                    'tbbBtn': 'TBB',
+                    'focBtn': 'FOC'
+                };
+
+                const paymentTypeInput = document.getElementById('paymentType');
+                const paymentTypeHeader = document.getElementById('paymentTypeHeader');
+
+              // Set TBB as default
+              function setDefaultPaymentMode() {
+                  const tbbBtn = document.getElementById('tbbBtn');
+                  if (tbbBtn) {
+                      
+                      // Simulate a click on the TBB button
+                      tbbBtn.click(); // This will trigger the click event for TBB button
+                  }
+              }
+
+              function setActiveButton(button) {
+                  Object.keys(paymentButtons).forEach(btnId => 
+                      document.getElementById(btnId)?.classList.remove('active')
+                  );
+                  button.classList.add('active');
+              }
+
+              function updatePaymentType(type) {
+                  if (paymentTypeHeader) paymentTypeHeader.textContent = type;
+                  if (paymentTypeInput) paymentTypeInput.value = type;
+              }
+
+              // Add click handlers to payment buttons
+              Object.keys(paymentButtons).forEach(btnId => {
+                  const btn = document.getElementById(btnId);
+                  if (btn) {
+                      btn.addEventListener('click', () => {
+                          setActiveButton(btn);
+                          updatePaymentType(paymentButtons[btnId]);
+                      });
+                  }
+              });
+
+              // Add keyboard shortcuts
+              document.addEventListener('keydown', (event) => {
+                  const keyMap = {
+                      'F7': 'PAID',
+                      'F8': 'TO PAY',
+                      'F9': 'TBB',
+                      'F10': 'FOC'
+                  };
+
+                const type = keyMap[event.key];
+                if (type) {
+                    event.preventDefault();
+                    const button = document.getElementById(`${type.toLowerCase().replace(' ', '')}Btn`);
+                    if (button) {
+                        setActiveButton(button);
+                        updatePaymentType(type);
+                    }
+                }
+            });
+
+            // Set default mode on initialization
+            setDefaultPaymentMode();
+        }
+           // Initialize payment mode
+
+            function initializePaymentMode() {
+                  const tbbBtn = document.getElementById('tbbBtn');
+                  if (tbbBtn) {
+                      // Simulate a click on the TBB button
+                      tbbBtn.click(); // This will trigger the click event for TBB button
+                  }
+               }
+
+               // Call the function to set the default payment type
+                initializePaymentMode();
+
+
+            deliveryDestinationInput.addEventListener("keydown", function (e) {
+                const items = destinationList.getElementsByTagName("li");
+                if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                    e.preventDefault();
+                    selectedIndex = e.key === "ArrowDown" 
+                        ? (selectedIndex < items.length - 1 ? selectedIndex + 1 : 0)
+                        : (selectedIndex > 0 ? selectedIndex - 1 : items.length - 1);
+                    updateSelectedItem(items);
+                } else if (e.key === "Enter" && selectedIndex > -1) {
+                    e.preventDefault();
+                    if (items[selectedIndex]) {
+                        this.value = items[selectedIndex].textContent;
+                        destinationList.style.display = "none";
+                    }
+                }
+            });
+
+            function updateSelectedItem(items) {
+                Array.from(items).forEach((item, index) => {
+                    item.classList.toggle("selected", index === selectedIndex);
+                });
+            }
+
+            document.addEventListener("click", function (e) {
+                if (e.target !== deliveryDestinationInput) {
+                    destinationList.style.display = "none";
+                }
+            });
 
             function updateDateTime() {
                 const now = new Date();
@@ -1560,10 +1635,6 @@
                             country = stateLine[1]?.trim() || 'INDIA';
                         }
                     }
-        
-                    const consigneeData = {
-                        party_name: consigneeNameInput.value.trim().toUpperCase(),
-                        display_name: consigneeNameInput.value.trim().toUpperCase(),
         
                     const consigneeData = {
                         party_name: consigneeNameInput.value.trim().toUpperCase(),
