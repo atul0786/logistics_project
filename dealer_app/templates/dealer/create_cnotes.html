@@ -615,7 +615,7 @@
                     
                         <div class="form-group">
                             <label for="ewayBillNumber">EWAYBILL NUMBER</label>
-                            <input type="text" id="ewayBillNumber" name="ewayBillNumber" />
+                            <input type="text" id="ewayBillNumber" name="ewayBillNumber" style="padding-bottom: 9px;padding-top: 9px;"/>
                         </div>
                     </div>
 
@@ -653,7 +653,7 @@
                             <textarea id="consignorAddress" name="consignorAddress" rows="3">{{ dealer.address }}</textarea>
                         </div>
                         <div class="form-group">
-                            <h3>Consignee (To)</h3>
+                            <h3 style="padding-bottom: 2.1px;">Consignee (To)</h3>
                             <label for="consigneeName" class="required">Consignee Name</label>
                             <div class="consignee-input-wrapper">
                                 <input type="text" id="consigneeName" name="consignee_name" required value="{{ consignee_data.name|default:'' }}" />
