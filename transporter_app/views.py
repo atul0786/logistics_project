@@ -182,11 +182,62 @@ def search_party(request):
         return render(request, 'transporter/search_results.html', {'parties': parties})
     return render(request, 'transporter/search_party.html')
 
-@login_required
+@require_http_methods(["GET"])
+def get_party_master_records(request):
+    records = PartyMaster.objects.all().values()
+    return JsonResponse(list(records), safe=False, encoder=DjangoJSONEncoder)
+
+@require_http_methods(["GET"])
 def get_party(request, party_id):
-    party = get_object_or_404(PartyMaster, id=party_id)
-    form = PartyMasterForm(instance=party)
-    return render(request, 'transporter/edit_party.html', {'form': form, 'party': party})
+    try:
+        party = PartyMaster.objects.get(id=party_id)
+        data = {
+            'id': party.id,
+            'party_code': party.party_code,
+            'party_name': party.party_name,
+            'display_name': party.display_name,
+            'mobile_number_1': party.mobile_number_1,
+            'mobile_number_2': party.mobile_number_2,
+            'phone_number_1': party.phone_number_1,
+            'phone_number_2': party.phone_number_2,
+            'gst_no': party.gst_no,
+            'pan_no': party.pan_no,
+            'email': party.email,
+            'marketing_person': party.marketing_person,
+            'party_type': party.party_type,
+            'country': party.country,
+            'state': party.state,
+            'city': party.city,
+            'pincode': party.pincode,
+            'address': party.address,
+            'is_tbb': party.is_tbb,
+            'remark': party.remark,
+            'created_at': party.created_at.isoformat(),
+            'updated_at': party.updated_at.isoformat(),
+        }
+        return JsonResponse(data)
+    except PartyMaster.DoesNotExist:
+        return JsonResponse({'error': 'Party not found'}, status=404)
+
+@require_http_methods(["POST"])
+def delete_party(request, party_id):
+    try:
+        party = PartyMaster.objects.get(id=party_id)
+        party.delete()
+        return JsonResponse({
+            'success': True,
+            'message': 'Party successfully deleted'
+        })
+    except PartyMaster.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Party not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 @login_required
 def update_party(request, party_id):
@@ -201,14 +252,57 @@ def update_party(request, party_id):
         form = PartyMasterForm(instance=party)
     return render(request, 'transporter/edit_party.html', {'form': form, 'party': party})
 
-@login_required
-def delete_party(request, party_id):
-    party = get_object_or_404(PartyMaster, id=party_id)
-    if request.method == 'POST':
-        party.delete()
-        messages.success(request, "Party deleted successfully!")
-        return redirect('transporter:party_list')
-    return render(request, 'transporter/confirm_delete_party.html', {'party': party})
+@require_http_methods(["GET", "POST"])
+def edit_party(request, party_id):
+    try:
+        party = PartyMaster.objects.get(id=party_id)
+        
+        if request.method == "GET":
+            data = {
+                'id': party.id,
+                'party_code': party.party_code,
+                'party_name': party.party_name,
+                'display_name': party.display_name,
+                'mobile_number_1': party.mobile_number_1,
+                'mobile_number_2': party.mobile_number_2,
+                'phone_number_1': party.phone_number_1,
+                'phone_number_2': party.phone_number_2,
+                'gst_no': party.gst_no,
+                'pan_no': party.pan_no,
+                'email': party.email,
+                'marketing_person': party.marketing_person,
+                'party_type': party.party_type,
+                'country': party.country,
+                'state': party.state,
+                'city': party.city,
+                'pincode': party.pincode,
+                'address': party.address,
+                'is_tbb': party.is_tbb,
+                'remark': party.remark,
+            }
+            return JsonResponse(data)
+        
+        elif request.method == "POST":
+            data = json.loads(request.body)
+            for key, value in data.items():
+                setattr(party, key, value)
+            party.save()
+            return JsonResponse({
+                'success': True,
+                'message': 'Party successfully updated'
+            })
+    
+    except PartyMaster.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Party not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
 
 @login_required
 def save_config(request):
