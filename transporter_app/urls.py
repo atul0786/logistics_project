@@ -80,5 +80,11 @@ urlpatterns = [
 
     path('booking-register/', views.booking_register_view, name='booking_register'),
     path('booking_register_data/', views.booking_register_data, name='booking_register_data'),
+
+    path('get-party-master-records/', views.get_party_master_records, name='get_party_master_records'),
+    path('get-party/<int:party_id>/', views.get_party, name='get_party'),
+    path('delete-party/<int:party_id>/', views.delete_party, name='delete_party'),
+    path('edit-party/<int:party_id>/', views.edit_party, name='edit_party'),
+
         
 ]
