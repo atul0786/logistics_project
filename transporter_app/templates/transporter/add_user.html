@@ -30,18 +30,6 @@
             width: 90%;
             max-width: 500px;
             padding: 20px;
-            animation: fadeIn 1s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         h1 {
@@ -98,6 +86,11 @@
             border: 1px solid #f5c6cb;
         }
 
+        .bulk-actions {
+            display: flex;
+            justify-content: space-between;
+        }
+
         @media (max-width: 480px) {
             .container {
                 width: 100%;
@@ -116,6 +109,9 @@
                 <option value="dealer">Dealer</option>
                 <option value="transporter">Transporter</option>
             </select>
+
+            <label for="dealer_code">Dealer Code:</label>
+            <input type="text" id="dealer_code" name="dealer_code" maxlength="4" placeholder="Enter 4-digit dealer code" pattern="\d{4}" title="Dealer code must be 4 digits" required>
 
             <label for="username">Username:</label>
             <input type="text" id="username" name="username" placeholder="Enter username" required>
@@ -143,16 +139,25 @@
 
             <button type="submit">Add User</button>
         </form>
+
+        <div class="bulk-actions">
+            <button id="exportDealers">Export Template</button>
+            <form id="importForm" enctype="multipart/form-data">
+                <input type="file" id="dealer_file" name="dealer_file" accept=".xlsx" required>
+                <button type="submit">Import Dealers</button>
+            </form>
+        </div>
     </div>
 
     <script>
+        // Handle Add User Form Submission
         document.getElementById('userForm').addEventListener('submit', async function (e) {
             e.preventDefault();
             const alertBox = document.getElementById('alert');
             const formData = new FormData(this);
 
             try {
-                const response = await fetch("{% url 'transporter:add_user' %}", {
+                const response = await fetch("{% url 'add_user' %}", {
                     method: 'POST',
                     body: formData,
                     headers: {
@@ -168,6 +173,42 @@
                     this.reset();
                 } else {
                     throw new Error(data.message || 'Failed to add user.');
+                }
+            } catch (error) {
+                alertBox.textContent = error.message;
+                alertBox.className = 'alert error';
+                alertBox.style.display = 'block';
+                console.error('Error:', error);
+            }
+        });
+
+        // Export Template
+        document.getElementById('exportDealers').addEventListener('click', function () {
+            window.location.href = "{% url 'export_dealers_template' %}";
+        });
+
+        // Handle Import Dealers
+        document.getElementById('importForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const alertBox = document.getElementById('alert');
+
+            try {
+                const response = await fetch("{% url 'import_dealers' %}", {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                });
+
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    alertBox.textContent = data.message;
+                    alertBox.className = 'alert success';
+                    alertBox.style.display = 'block';
+                } else {
+                    throw new Error(data.message || 'Failed to import dealers.');
                 }
             } catch (error) {
                 alertBox.textContent = error.message;
