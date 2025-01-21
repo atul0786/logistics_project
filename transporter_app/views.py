@@ -1914,3 +1914,60 @@ def add_user(request):
             return JsonResponse({'success': False, 'message': f"Error: {str(e)}"}, status=500)
 
     return render(request, 'transporter/add_user.html')
+
+
+
+import pandas as pd
+from django.http import HttpResponse
+
+@login_required
+def export_dealers_template(request):
+    # Define column headers
+    columns = ["Dealer Code", "Name", "Username", "Password", "Email", "Phone Number", "Address", "State", "City"]
+
+    # Create DataFrame
+    df = pd.DataFrame(columns=columns)
+
+    # Prepare response
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="dealers_template.xlsx"'
+
+    # Write to Excel
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Dealers Template')
+
+    return response
+
+import pandas as pd
+from django.contrib.auth.models import User
+
+@login_required
+def import_dealers(request):
+    if request.method == "POST" and request.FILES.get("dealer_file"):
+        try:
+            # Read the Excel file
+            file = request.FILES["dealer_file"]
+            df = pd.read_excel(file)
+
+            # Validate columns
+            required_columns = ["Dealer Code", "Name", "Username", "Password", "Email", "Phone Number", "Address", "State", "City"]
+            if not all(col in df.columns for col in required_columns):
+                return JsonResponse({'success': False, 'message': 'Invalid file format.'}, status=400)
+
+            # Prepare data for bulk creation
+            dealers = []
+            for _, row in df.iterrows():
+                dealers.append(CustomUser(
+                    username=row["Username"],
+                    email=row["Email"],
+                    password=row["Password"],  # Make sure to hash passwords
+                    is_dealer=True,
+                ))
+
+            # Bulk create users
+            CustomUser.objects.bulk_create(dealers)
+
+            return JsonResponse({'success': True, 'message': 'Dealers imported successfully!'}, status=201)
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+    return JsonResponse({'success': False, 'message': 'Invalid request.'}, status=400)
