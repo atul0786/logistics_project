@@ -1854,6 +1854,12 @@ def add_user(request):
         state = request.POST.get('state')
         city = request.POST.get('city')
 
+        if role == "dealer":
+            dealer_code = request.POST.get('dealer_code', '').strip()
+            if len(dealer_code) != 4 or not dealer_code.isdigit():
+                return JsonResponse({'success': False, 'message': 'Dealer code must be a 4-digit number.'}, status=400)
+
+
         # Check if email is provided
         if not email:
             return JsonResponse({'success': False, 'message': 'Email is required.'}, status=400)
