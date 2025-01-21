@@ -207,7 +207,7 @@
             const alertBox = document.getElementById('alert');
 
             try {
-                const response = await fetch("{% url 'import_dealers' %}", {
+                const response = await fetch("{% url 'transporter:import_dealers' %}", {
                     method: 'POST',
                     body: formData,
                     headers: {
