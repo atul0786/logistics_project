@@ -4,7 +4,6 @@ import csv
 import io
 from decimal import Decimal
 from django.db import IntegrityError
-
 import datetime
 import pandas as pd
 from datetime import datetime  # Import the datetime class
@@ -24,11 +23,12 @@ from django.utils.timezone import make_naive
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods, require_POST, require_GET
 from django.views.generic import TemplateView
-
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from dealer_app.models import CustomUser  # Replace `your_app_name` with your app's actual name
+
 
 from .forms import StateForm, CityForm, PartyMasterForm
 from .models import (
