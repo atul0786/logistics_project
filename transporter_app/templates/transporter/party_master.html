@@ -197,11 +197,6 @@
             color: var(--error-color);
         }
 
-        .branch-mapping {
-            height: 100px;
-            overflow-y: auto;
-        }
-
         .save-btn {
             display: inline-block;
             padding: 12px 24px;
@@ -232,70 +227,16 @@
             text-align: center;
         }
 
-        .search-results {
-            margin-top: 20px;
-        }
-
-        .search-result-item {
-            background-color: #f1f5f9;
-            padding: 10px;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .search-result-item:hover {
-            background-color: #e2e8f0;
-        }
-
-        @media (max-width: 768px) {
-            .form-container {
-                grid-template-columns: 1fr;
-            }
-        }
-        .modal {
-            display: flex;
-            position: fixed;
-            z-index: 1001;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-        
-        .modal-content {
-            background-color: #fefefe;
-            margin: auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 300px;
-            text-align: center;
-        }
-        
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-        
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        /* Add or update these styles in your existing CSS */
         .party-records-table {
             margin-top: 20px;
-            overflow-x: auto;
+            overflow-x: auto; /* Horizontal scrolling */
+            overflow-y: auto; /* Vertical scrolling */
+            max-height: 400px; /* Optional for vertical scrolling limit */
+            border: 1px solid var(--border-color); /* Optional: Add border to the table container */
         }
 
-        .party-records-table h3 {
-            margin-bottom: 10px;
+        .table-container {
+            min-width: 800px; /* Set a minimum width for the table to enable horizontal scrolling */
         }
 
         #partyMasterTable {
@@ -337,6 +278,47 @@
 
         #partyMasterTable button:hover {
             background-color: var(--primary-dark);
+        }
+
+        .modal {
+            display: flex;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 300px;
+            text-align: center;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .form-container {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -516,11 +498,12 @@
                                 <input type="text" id="search-party" name="search_party" placeholder="Enter Party Name or Code">
                             </div>
                         </div>
-                        <!-- <button type="submit" class="save-btn">Search</button> -->
+                        <button type="button" id="fetchPartyDetails" class="save-btn">Show Party Details</button>
+                        <div id="loadingIndicator" style="display:none; text-align:center; margin:10px;">Loading...</div>
                     </form>
-
+                
                     <div id="searchResults" class="search-results"></div>
-
+                
                     <!-- Party Master Records Table -->
                     <div class="party-records-table">
                         <h3>Party Master Records</h3>
@@ -558,150 +541,149 @@
                             </table>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Edit Party Form -->
-                    <form id="editPartyForm" action="{% url 'transporter:update_party' 0 %}" method="POST" style="display: none;">
-                        {% csrf_token %}
-                        <input type="hidden" id="edit_party_id" name="party_id">
-                        <div class="form-container">
-                            <!-- Include all form fields here (same as in the Add New Party form) -->
-                            <div class="form-group">
-                                <label for="party_name">Party Name <span class="required">*</span></label>
-                                <input type="text" id="party_name" name="party_name" placeholder="ENTER PARTY NAME" required>
-                            </div>
+                <!-- Edit Party Form -->
+                <form id="editPartyForm" action="{% url 'transporter:update_party' 0 %}" method="POST" style="display: none;">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_party_id" name="party_id">
+                    <div class="form-container">
+                        <div class="form-group">
+                            <label for="party_name">Party Name <span class="required">*</span></label>
+                            <input type="text" id="party_name" name="party_name" placeholder="ENTER PARTY NAME" required>
+                        </div>
 
-                            <div class="form-group">
-                                <label for="display_name">Display Name <span class="required">*</span></label>
-                                <input type="text" id="display_name" name="display_name" placeholder="DISPLAY NAME" required>
-                            </div>
+                        <div class="form-group">
+                            <label for="display_name">Display Name <span class="required">*</span></label>
+                            <input type="text" id="display_name" name="display_name" placeholder="DISPLAY NAME" required>
+                        </div>
 
-                            <div class="form-group checkbox-group">
-                                <input type="checkbox" id="is_tbb" name="is_tbb">
-                                <label for="is_tbb">Is TBB?</label>
-                            </div>
+                        <div class="form-group checkbox-group">
+                            <input type="checkbox" id="is_tbb" name="is_tbb">
+                            <label for="is_tbb">Is TBB?</label>
+                        </div>
 
-                            <div class="form-group">
-                                <label for="mobile_number_1">Mobile Number 1 <span class="required">*</span></label>
-                                <div class="input-icon">
-                                    <i class="fas fa-mobile-alt"></i>
-                                    <input type="tel" id="mobile_number_1" name="mobile_number_1" placeholder="Enter Mobile Number" required pattern="[0-9]{10}" title="Enter a valid 10-digit mobile number">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="mobile_number_2">Mobile Number 2</label>
-                                <div class="input-icon">
-                                    <i class="fas fa-mobile-alt"></i>
-                                    <input type="tel" id="mobile_number_2" name="mobile_number_2" placeholder="Enter Mobile Number" pattern="[0-9]{10}" title="Enter a valid 10-digit mobile number">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="phone_number_1">Phone Number 1</label>
-                                <div class="input-icon">
-                                    <i class="fas fa-phone"></i>
-                                    <input type="tel" id="phone_number_1" name="phone_number_1" placeholder="Enter Phone Number" pattern="[0-9]{10}" title="Enter a valid 10-digit phone number">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="phone_number_2">Phone Number 2</label>
-                                <div class="input-icon">
-                                    <i class="fas fa-phone"></i>
-                                    <input type="tel" id="phone_number_2" name="phone_number_2" placeholder="Enter Phone Number" pattern="[0-9]{10}" title="Enter a valid 10-digit phone number">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="party_code">Party Code</label>
-                                <input type="text" id="party_code" name="party_code" placeholder="Party Code">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="gst_no">Party GST No.</label>
-                                <div class="input-icon">
-                                    <i class="fas fa-file-invoice"></i>
-                                    <input type="text" id="gst_no" name="gst_no" placeholder="Party GST No" pattern="^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$" title="Enter a valid GST number">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="pan_no">PAN No.</label>
-                                <div class="input-icon">
-                                    <i class="fas fa-id-card"></i>
-                                    <input type="text" id="pan_no" name="pan_no" placeholder="ENTER PAN NUMBER" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" title="Enter a valid PAN number">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                <div class="input-icon">
-                                    <i class="fas fa-envelope"></i>
-                                    <input type="email" id="email" name="email" placeholder="Enter Email">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="marketing_person">Marketing Person</label>
-                                <div class="input-icon">
-                                    <i class="fas fa-user-tie"></i>
-                                    <input type="text" id="marketing_person" name="marketing_person" placeholder="Enter Marketing Person">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="party_type">Party Type <span class="required">*</span></label>
-                                <select id="party_type" name="party_type" required>
-                                    <option value="">Select Party Type</option>
-                                    <option value="booking">Booking</option>
-                                    <option value="delivery">Delivery</option>
-                                    <option value="both">Booking & Delivery Both</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="country">Country</label>
-                                <input type="text" id="country" name="country" value="INDIA" readonly>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="state">State</label>
-                                <div class="input-icon">
-                                    <i class="fas fa-map"></i>
-                                    <input type="text" id="state" name="state" placeholder="Enter State">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="city">City <span class="required">*</span></label>
-                                <div class="input-icon">
-                                    <i class="fas fa-city"></i>
-                                    <input type="text" id="city" name="city" placeholder="Enter City" required>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="pincode">Pincode</label>
-                                <input type="text" id="pincode" name="pincode" placeholder="Enter Pincode" pattern="[0-9]{6}" title="Enter a valid 6-digit pincode">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="address">Address <span class="required">*</span></label>
-                                <div class="input-icon">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <textarea id="address" name="address" placeholder="Enter Address" required rows="3"></textarea>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="remark">Remark</label>
-                                <textarea id="remark" name="remark" placeholder="Enter Remark" rows="3"></textarea>
+                        <div class="form-group">
+                            <label for="mobile_number_1">Mobile Number 1 <span class="required">*</span></label>
+                            <div class="input-icon">
+                                <i class="fas fa-mobile-alt"></i>
+                                <input type="tel" id="mobile_number_1" name="mobile_number_1" placeholder="Enter Mobile Number" required pattern="[0-9]{10}" title="Enter a valid 10-digit mobile number">
                             </div>
                         </div>
-                        <button type="submit" class="save-btn">Update Party</button>
-                    </form>
-                    <div id="editPartyMessage" class="success-message"></div>
-                </div>
+
+                        <div class="form-group">
+                            <label for="mobile_number_2">Mobile Number 2</label>
+                            <div class="input-icon">
+                                <i class="fas fa-mobile-alt"></i>
+                                <input type="tel" id="mobile_number_2" name="mobile_number_2" placeholder="Enter Mobile Number" pattern="[0-9]{10}" title="Enter a valid 10-digit mobile number">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone_number_1">Phone Number 1</label>
+                            <div class="input-icon">
+                                <i class="fas fa-phone"></i>
+                                <input type="tel" id="phone_number_1" name="phone_number_1" placeholder="Enter Phone Number" pattern="[0-9]{10}" title="Enter a valid 10-digit phone number">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone_number_2">Phone Number 2</label>
+                            <div class="input-icon">
+                                <i class="fas fa-phone"></i>
+                                <input type="tel" id="phone_number_2" name="phone_number_2" placeholder="Enter Phone Number" pattern="[0-9]{10}" title="Enter a valid 10-digit phone number">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="party_code">Party Code</label>
+                            <input type="text" id="party_code" name="party_code" placeholder="Party Code">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="gst_no">Party GST No.</label>
+                            <div class="input-icon">
+                                <i class="fas fa-file-invoice"></i>
+                                <input type="text" id="gst_no" name="gst_no" placeholder="Party GST No" pattern="^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$" title="Enter a valid GST number">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pan_no">PAN No.</label>
+                            <div class="input-icon">
+                                <i class="fas fa-id-card"></i>
+                                <input type="text" id="pan_no" name="pan_no" placeholder="ENTER PAN NUMBER" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" title="Enter a valid PAN number">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <div class="input-icon">
+                                <i class="fas fa-envelope"></i>
+                                <input type="email" id="email" name="email" placeholder="Enter Email">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="marketing_person">Marketing Person</label>
+                            <div class="input-icon">
+                                <i class="fas fa-user-tie"></i>
+                                <input type="text" id="marketing_person" name="marketing_person" placeholder="Enter Marketing Person">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="party_type">Party Type <span class="required">*</span></label>
+                            <select id="party_type" name="party_type" required>
+                                <option value="">Select Party Type</option>
+                                <option value="booking">Booking</option>
+                                <option value="delivery">Delivery</option>
+                                <option value="both">Booking & Delivery Both</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="country">Country</label>
+                            <input type="text" id="country" name="country" value="INDIA" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="state">State</label>
+                            <div class="input-icon">
+                                <i class="fas fa-map"></i>
+                                <input type="text" id="state" name="state" placeholder="Enter State">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="city">City <span class="required">*</span></label>
+                            <div class="input-icon">
+                                <i class="fas fa-city"></i>
+                                <input type="text" id="city" name="city" placeholder="Enter City" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pincode">Pincode</label>
+                            <input type="text" id="pincode" name="pincode" placeholder="Enter Pincode" pattern="[0-9]{6}" title="Enter a valid 6-digit pincode">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="address">Address <span class="required">*</span></label>
+                            <div class="input-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <textarea id="address" name="address" placeholder="Enter Address" required rows="3"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="remark">Remark</label>
+                            <textarea id="remark" name="remark" placeholder="Enter Remark" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" class="save-btn">Update Party</button>
+                </form>
+                <div id="editPartyMessage" class="success-message"></div>
 
                 <div id="partyConfiguration" class="tab-content">
                     <h2 class="form-title">Party Configuration</h2>
@@ -736,7 +718,6 @@
     </main>
 
     <script>
-        
         function openTab(evt, tabName) {
             var i, tabContent, tabButtons;
             tabContent = document.getElementsByClassName("tab-content");
@@ -756,50 +737,65 @@
             if (tabName === 'editParty') {
                 fetchPartyMasterRecords();
             }
-
-
         }
-        function fetchPartyMasterRecords() {
-            fetch('/transporter/get-party-master-records/')
-                .then(response => response.json())
-                .then(data => {
-                    const tableBody = document.querySelector('#partyMasterTable tbody');
-                    tableBody.innerHTML = '';
-                    data.forEach(record => {
-                        const row = `
-                            <tr>
-                                <td>${record.party_code || ''}</td>
-                                <td>${record.party_name}</td>
-                                <td>${record.display_name}</td>
-                                <td>${record.mobile_number_1}</td>
-                                <td>${record.mobile_number_2 || ''}</td>
-                                <td>${record.phone_number_1 || ''}</td>
-                                <td>${record.phone_number_2 || ''}</td>
-                                <td>${record.gst_no || ''}</td>
-                                <td>${record.pan_no || ''}</td>
-                                <td>${record.email || ''}</td>
-                                <td>${record.marketing_person || ''}</td>
-                                <td>${record.party_type}</td>
-                                <td>${record.country}</td>
-                                <td>${record.state || ''}</td>
-                                <td>${record.city}</td>
-                                <td>${record.pincode}</td>
-                                <td>${record.address}</td>
-                                <td>${record.is_tbb ? 'Yes' : 'No'}</td>
-                                <td>${record.remark || ''}</td>
-                                <td>${new Date(record.created_at).toLocaleString()}</td>
-                                <td>${new Date(record.updated_at).toLocaleString()}</td>
-                                <td>
-                                    <button onclick="editParty(${record.id})">Edit</button>
-                                    <button onclick="deleteParty(${record.id})">Delete</button>
-                                </td>
-                            </tr>
-                        `;
-                        tableBody.innerHTML += row;
+
+        document.getElementById('fetchPartyDetails').addEventListener('click', function () {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            loadingIndicator.style.display = 'block'; // Show loading spinner
+
+            const searchTerm = document.getElementById('search-party').value.trim();
+            if (searchTerm) {
+                fetch(`/transporter/get-party-master-records/?search=${encodeURIComponent(searchTerm)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const tableBody = document.querySelector('#partyMasterTable tbody');
+                        tableBody.innerHTML = ''; // Clear existing rows
+
+                        data.forEach(record => {
+                            const row = `
+                                <tr>
+                                    <td>${record.party_code || ''}</td>
+                                    <td>${record.party_name}</td>
+                                    <td>${record.display_name}</td>
+                                    <td>${record.mobile_number_1}</td>
+                                    <td>${record.mobile_number_2 || ''}</td>
+                                    <td>${record.phone_number_1 || ''}</td>
+                                    <td>${record.phone_number_2 || ''}</td>
+                                    <td>${record.gst_no || ''}</td>
+                                    <td>${record.pan_no || ''}</td>
+                                    <td>${record.email || ''}</td>
+                                    <td>${record.marketing_person || ''}</td>
+                                    <td>${record.party_type}</td>
+                                    <td>${record.country}</td>
+                                    <td>${record.state || ''}</td>
+                                    <td>${record.city}</td>
+                                    <td>${record.pincode}</td>
+                                    <td>${record.address}</td>
+                                    <td>${record.is_tbb ? 'Yes' : 'No'}</td>
+                                    <td>${record.remark || ''}</td>
+                                    <td>${new Date(record.created_at).toLocaleString()}</td>
+                                    <td>${new Date(record.updated_at).toLocaleString()}</td>
+                                    <td>
+                                        <button onclick="editParty(${record.id})">Edit</button>
+                                        <button onclick="deleteParty(${record.id})">Delete</button>
+                                    </td>
+                                </tr>
+                            `;
+                            tableBody.innerHTML += row;
+                        });
+
+                        loadingIndicator.style.display = 'none'; // Hide loading spinner
+                    })
+                    .catch(error => {
+                        console.error('Error fetching party master records:', error);
+                        loadingIndicator.textContent = 'Failed to load data.';
+                        loadingIndicator.style.display = 'none'; // Hide loading spinner
                     });
-                })
-                .catch(error => console.error('Error fetching party master records:', error));
-        }
+            } else {
+                alert('Please enter a search term.');
+                loadingIndicator.style.display = 'none'; // Hide loading spinner
+            }
+        });
 
         function editParty(partyId) {
             fetch(`/transporter/get-party/${partyId}/`)
@@ -852,9 +848,6 @@
                 .catch(error => console.error('Error deleting party:', error));
             }
         }
-
-
-        
 
         function resetForms() {
             document.getElementById('addNewPartyForm').reset();
@@ -937,6 +930,7 @@
                 });
             }
         });
+
         function showModal() {
             document.getElementById('successModal').style.display = 'flex';
         }
@@ -948,7 +942,7 @@
         function redirectToAddParty() {
             closeModal();
             openTab(event, 'addNewParty'); // Redirect to Add New Party tab
-     }
+        }
     
         document.getElementById('addNewPartyForm').addEventListener('submit', function(e) {
             e.preventDefault(); // Prevent default form submission
@@ -977,6 +971,7 @@
                 });
             }
         });
+
         document.getElementById('search-party').addEventListener('input', function() {
             const searchTerm = this.value.toLowerCase();
             const rows = document.querySelectorAll('#partyMasterTable tbody tr');
@@ -990,8 +985,54 @@
                 }
             });
         });
+
         document.addEventListener('DOMContentLoaded', fetchPartyMasterRecords);
+        
+        function fetchPartyMasterRecords() {
+            // Simulate data fetching or integrate API call
+            fetch('/transporter/get-party-master-records/')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.querySelector('#partyMasterTable tbody');
+                    tableBody.innerHTML = ''; // Clear existing rows
+
+                    data.forEach(record => {
+                        const row = `
+                            <tr>
+                                <td>${record.party_code || ''}</td>
+                                <td>${record.party_name}</td>
+                                <td>${record.display_name}</td>
+                                <td>${record.mobile_number_1}</td>
+                                <td>${record.mobile_number_2 || ''}</td>
+                                <td>${record.phone_number_1 || ''}</td>
+                                <td>${record.phone_number_2 || ''}</td>
+                                <td>${record.gst_no || ''}</td>
+                                <td>${record.pan_no || ''}</td>
+                                <td>${record.email || ''}</td>
+                                <td>${record.marketing_person || ''}</td>
+                                <td>${record.party_type}</td>
+                                <td>${record.country}</td>
+                                <td>${record.state || ''}</td>
+                                <td>${record.city}</td>
+                                <td>${record.pincode}</td>
+                                <td>${record.address}</td>
+                                <td>${record.is_tbb ? 'Yes' : 'No'}</td>
+                                <td>${record.remark || ''}</td>
+                                <td>${new Date(record.created_at).toLocaleString()}</td>
+                                <td>${new Date(record.updated_at).toLocaleString()}</td>
+                                <td>
+                                    <button onclick="editParty(${record.id})">Edit</button>
+                                    <button onclick="deleteParty(${record.id})">Delete</button>
+                                </td>
+                            </tr>
+                        `;
+                        tableBody.innerHTML += row;
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching party master records:', error);
+                });
+        }
     </script>
 </body>
 </html>
-
