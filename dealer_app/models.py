@@ -8,6 +8,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.apps import apps
 from django.db.models.signals import pre_delete
+from django.utils import timezone
 
 
 # City and State Choices
@@ -211,7 +212,7 @@ class CNotes(models.Model):
 
     dealer = models.ForeignKey('Dealer', on_delete=models.CASCADE, null=True)
     cnote_number = models.CharField(max_length=100, unique=True, editable=False, db_index=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
     booking_type = models.CharField(max_length=50, choices=BOOKING_TYPE_CHOICES, default='sundry')
     delivery_type = models.CharField(max_length=50, choices=DELIVERY_TYPE_CHOICES, default='economy')
     delivery_method = models.CharField(max_length=50)
