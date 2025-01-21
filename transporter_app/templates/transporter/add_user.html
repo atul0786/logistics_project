@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Dealer or Transporter</title>
+    <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(120deg, #4facfe, #00f2fe);
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 500px;
+            padding: 20px;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #007bff;
+        }
+
+        label {
+            font-weight: bold;
+            margin: 10px 0 5px;
+            display: block;
+        }
+
+        input, select, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .alert {
+            display: none;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .alert.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Add Dealer or Transporter</h1>
+        <div id="alert" class="alert"></div>
+        <form id="userForm">
+            <label for="role">Role:</label>
+            <select id="role" name="role" required>
+                <option value="">--Select Role--</option>
+                <option value="dealer">Dealer</option>
+                <option value="transporter">Transporter</option>
+            </select>
+
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" placeholder="Enter username" required>
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" placeholder="Enter password" required>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" placeholder="Enter email" required>
+
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" placeholder="Enter full name" required>
+
+            <label for="phone_number">Phone Number:</label>
+            <input type="text" id="phone_number" name="phone_number" placeholder="Enter phone number" required>
+
+            <label for="address">Address:</label>
+            <textarea id="address" name="address" rows="3" placeholder="Enter address" required></textarea>
+
+            <label for="state">State:</label>
+            <input type="text" id="state" name="state" placeholder="Enter state" required>
+
+            <label for="city">City:</label>
+            <input type="text" id="city" name="city" placeholder="Enter city" required>
+
+            <button type="submit">Add User</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('userForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const alertBox = document.getElementById('alert');
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch("{% url 'transporter:add_user' %}", {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                });
+
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    alertBox.textContent = data.message;
+                    alertBox.className = 'alert success';
+                    alertBox.style.display = 'block';
+                    this.reset();
+                } else {
+                    throw new Error(data.message || 'Failed to add user.');
+                }
+            } catch (error) {
+                alertBox.textContent = error.message;
+                alertBox.className = 'alert error';
+                alertBox.style.display = 'block';
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
