@@ -3,6 +3,8 @@ import logging
 import csv
 import io
 from decimal import Decimal
+from django.db import IntegrityError
+
 import datetime
 import pandas as pd
 from datetime import datetime  # Import the datetime class
@@ -1836,3 +1838,79 @@ def download_excel(request):
     except Exception as e:
         logger.error(f"Error in download_excel: {str(e)}", exc_info=True)
         return HttpResponse(f"Error generating Excel: {e}", status=500)
+
+from django.db import IntegrityError
+
+@login_required
+def add_user(request):
+    if request.method == "POST":
+        role = request.POST.get('role')
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        email = request.POST.get('email')
+        name = request.POST.get('name')
+        phone_number = request.POST.get('phone_number')
+        address = request.POST.get('address')
+        state = request.POST.get('state')
+        city = request.POST.get('city')
+
+        # Check if email is provided
+        if not email:
+            return JsonResponse({'success': False, 'message': 'Email is required.'}, status=400)
+
+        try:
+            with transaction.atomic():
+                # Check if the username or email already exists
+                if CustomUser.objects.filter(username=username).exists():
+                    return JsonResponse({'success': False, 'message': 'Username already exists.'}, status=400)
+                if CustomUser.objects.filter(email=email).exists():
+                    return JsonResponse({'success': False, 'message': 'Email already exists.'}, status=400)
+
+                # Create the CustomUser
+                user = CustomUser.objects.create_user(
+                    username=username,
+                    password=password,
+                    email=email
+                )
+
+                # Assign role-specific flags and save details
+                if role == "dealer":
+                    user.is_dealer = True
+                    user.save()
+                    # Save Dealer details
+                    Dealer.objects.create(
+                        user=user,
+                        name=name,
+                        phone_number_1=phone_number,
+                        address=address,
+                        state=state,
+                        city=city,
+                        email=email  # Add email field here
+                    )
+                elif role == "transporter":
+                    user.is_transporter = True
+                    user.save()
+                    # Save Transporter details
+                    Transporter.objects.create(
+                        user=user,
+                        name=name,
+                        phone_number_1=phone_number,
+                        address=address,
+                        state=state,
+                        city=city,
+                        email=email  # Add email field here
+                    )
+                else:
+                    return JsonResponse({'success': False, 'message': 'Invalid role selected.'}, status=400)
+
+                return JsonResponse({'success': True, 'message': f"{role.capitalize()} added successfully!"}, status=201)
+
+        except IntegrityError as e:
+            if 'dealer_app_dealer_email_key' in str(e):
+                return JsonResponse({'success': False, 'message': 'This email is already associated with a dealer.'}, status=400)
+            else:
+                return JsonResponse({'success': False, 'message': f"Database integrity error: {str(e)}"}, status=500)
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f"Error: {str(e)}"}, status=500)
+
+    return render(request, 'transporter/add_user.html')
