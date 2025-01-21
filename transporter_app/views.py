@@ -1853,49 +1853,44 @@ def add_user(request):
         address = request.POST.get('address')
         state = request.POST.get('state')
         city = request.POST.get('city')
+        dealer_code = request.POST.get('dealer_code', '').strip()
 
         if role == "dealer":
-            if len(dealer_code) != 4:
+            if not dealer_code or len(dealer_code) != 4:
                 return JsonResponse({'success': False, 'message': 'Dealer code must be exactly 4 characters.'}, status=400)
 
-
-        # Check if email is provided
         if not email:
             return JsonResponse({'success': False, 'message': 'Email is required.'}, status=400)
 
         try:
             with transaction.atomic():
-                # Check if the username or email already exists
                 if CustomUser.objects.filter(username=username).exists():
                     return JsonResponse({'success': False, 'message': 'Username already exists.'}, status=400)
                 if CustomUser.objects.filter(email=email).exists():
                     return JsonResponse({'success': False, 'message': 'Email already exists.'}, status=400)
 
-                # Create the CustomUser
                 user = CustomUser.objects.create_user(
                     username=username,
                     password=password,
                     email=email
                 )
 
-                # Assign role-specific flags and save details
                 if role == "dealer":
                     user.is_dealer = True
                     user.save()
-                    # Save Dealer details
                     Dealer.objects.create(
                         user=user,
+                        dealer_code=dealer_code,
                         name=name,
                         phone_number_1=phone_number,
                         address=address,
                         state=state,
                         city=city,
-                        email=email  # Add email field here
+                        email=email
                     )
                 elif role == "transporter":
                     user.is_transporter = True
                     user.save()
-                    # Save Transporter details
                     Transporter.objects.create(
                         user=user,
                         name=name,
@@ -1903,7 +1898,7 @@ def add_user(request):
                         address=address,
                         state=state,
                         city=city,
-                        email=email  # Add email field here
+                        email=email
                     )
                 else:
                     return JsonResponse({'success': False, 'message': 'Invalid role selected.'}, status=400)
@@ -1922,26 +1917,20 @@ def add_user(request):
 
 
 
+
 import pandas as pd
 from django.http import HttpResponse
 
 @login_required
 def export_dealers_template(request):
-    # Define column headers
     columns = ["Dealer Code", "Name", "Username", "Password", "Email", "Phone Number", "Address", "State", "City"]
-
-    # Create DataFrame
     df = pd.DataFrame(columns=columns)
-
-    # Prepare response
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename="dealers_template.xlsx"'
-
-    # Write to Excel
     with pd.ExcelWriter(response, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Dealers Template')
-
     return response
+
 
 import pandas as pd
 from django.contrib.auth.models import User
@@ -1950,29 +1939,44 @@ from django.contrib.auth.models import User
 def import_dealers(request):
     if request.method == "POST" and request.FILES.get("dealer_file"):
         try:
-            # Read the Excel file
             file = request.FILES["dealer_file"]
             df = pd.read_excel(file)
 
-            # Validate columns
             required_columns = ["Dealer Code", "Name", "Username", "Password", "Email", "Phone Number", "Address", "State", "City"]
             if not all(col in df.columns for col in required_columns):
                 return JsonResponse({'success': False, 'message': 'Invalid file format.'}, status=400)
 
-            # Prepare data for bulk creation
-            dealers = []
-            for _, row in df.iterrows():
-                dealers.append(CustomUser(
-                    username=row["Username"],
-                    email=row["Email"],
-                    password=row["Password"],  # Make sure to hash passwords
-                    is_dealer=True,
-                ))
+            with transaction.atomic():
+                for _, row in df.iterrows():
+                    dealer_code = str(row["Dealer Code"]).strip()
+                    if not dealer_code or len(dealer_code) != 4:
+                        return JsonResponse({'success': False, 'message': f'Invalid dealer code: {dealer_code}. Must be exactly 4 characters.'}, status=400)
 
-            # Bulk create users
-            CustomUser.objects.bulk_create(dealers)
+                    if CustomUser.objects.filter(username=row["Username"]).exists():
+                        return JsonResponse({'success': False, 'message': f'Username already exists: {row["Username"]}'}, status=400)
+                    if CustomUser.objects.filter(email=row["Email"]).exists():
+                        return JsonResponse({'success': False, 'message': f'Email already exists: {row["Email"]}'}, status=400)
+
+                    user = CustomUser.objects.create_user(
+                        username=row["Username"],
+                        email=row["Email"],
+                        password=row["Password"],
+                        is_dealer=True
+                    )
+
+                    Dealer.objects.create(
+                        user=user,
+                        dealer_code=dealer_code,
+                        name=row["Name"],
+                        phone_number_1=row["Phone Number"],
+                        address=row["Address"],
+                        state=row["State"],
+                        city=row["City"],
+                        email=row["Email"]
+                    )
 
             return JsonResponse({'success': True, 'message': 'Dealers imported successfully!'}, status=201)
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
     return JsonResponse({'success': False, 'message': 'Invalid request.'}, status=400)
+
