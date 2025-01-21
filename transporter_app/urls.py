@@ -87,9 +87,8 @@ urlpatterns = [
     path('edit-party/<int:party_id>/', views.edit_party, name='edit_party'),
 
     path('add-user/', views.add_user, name='add_user'),
-    path('import_dealers/', views.import_dealers, name='import_dealers'),
-    path('export_dealers_template/', views.export_dealers_template, name='export_dealers_template'),
-
+    path('export-dealers-template/', views.export_dealers_template, name='export_dealers_template'),
+    path('import-dealers/', views.import_dealers, name='import_dealers'),
 
     
 
