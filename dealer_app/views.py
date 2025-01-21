@@ -1296,6 +1296,7 @@ def create_cnotes(request):
             # Create CNotes object with all fields
             cnote = CNotes(
                 dealer=dealer,
+                created_at=timezone.now(),
                 booking_type=request.POST.get('booking_type'),
                 delivery_type=request.POST.get('delivery_type'),
                 delivery_method=request.POST.get('delivery_method'),
