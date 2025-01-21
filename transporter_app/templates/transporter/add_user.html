@@ -102,7 +102,8 @@
     <div class="container">
         <h1>Add Dealer or Transporter</h1>
         <div id="alert" class="alert"></div>
-        <form id="userForm">
+        <form id="userForm" method="POST" action="{% url 'transporter:add_user' %}">
+            {% csrf_token %}
             <label for="role">Role:</label>
             <select id="role" name="role" required>
                 <option value="">--Select Role--</option>
