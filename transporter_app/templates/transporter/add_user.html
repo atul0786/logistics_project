@@ -112,8 +112,8 @@
             </select>
 
             <label for="dealer_code">Dealer Code:</label>
-            <input type="text" id="dealer_code" name="dealer_code" maxlength="4" placeholder="Enter 4-digit dealer code" pattern="\d{4}" title="Dealer code must be 4 digits" required>
-
+        <input type="text" id="dealer_code" name="dealer_code" maxlength="4" placeholder="Enter 4-character dealer code" pattern=".{4,4}" title="Dealer code must be exactly 4 characters" required>
+            
             <label for="username">Username:</label>
             <input type="text" id="username" name="username" placeholder="Enter username" required>
 
@@ -151,6 +151,17 @@
     </div>
 
     <script>
+        document.getElementById('userForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const alertBox = document.getElementById('alert');
+            const dealerCode = document.getElementById('dealer_code').value;
+            
+            if (dealerCode.length !== 4) {
+                alertBox.textContent = 'Dealer code must be exactly 4 characters.';
+                alertBox.className = 'alert alert-danger';
+                alertBox.style.display = 'block';
+                return;
+            }
         // Handle Add User Form Submission
         document.getElementById('userForm').addEventListener('submit', async function (e) {
             e.preventDefault();
