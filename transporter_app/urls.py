@@ -86,5 +86,8 @@ urlpatterns = [
     path('delete-party/<int:party_id>/', views.delete_party, name='delete_party'),
     path('edit-party/<int:party_id>/', views.edit_party, name='edit_party'),
 
+    path('add-user/', views.add_user, name='add_user'),
+
+
         
 ]
