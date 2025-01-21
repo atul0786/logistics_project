@@ -197,7 +197,7 @@
 
         // Export Template
         document.getElementById('exportDealers').addEventListener('click', function () {
-            window.location.href = "{% url 'export_dealers_template' %}";
+            window.location.href = "{% url 'transporter:export_dealers_template' %}";
         });
 
         // Handle Import Dealers
