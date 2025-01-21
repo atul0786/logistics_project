@@ -157,7 +157,7 @@
             const formData = new FormData(this);
 
             try {
-                const response = await fetch("{% url 'transporter/add_user.html' %}", {
+                const response = await fetch("{% url 'transporter/add_user' %}", {
                     method: 'POST',
                     body: formData,
                     headers: {
