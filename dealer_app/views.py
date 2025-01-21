@@ -1209,6 +1209,7 @@ def mf_print(request, loading_sheet_number):
             'loading_sheet_details': loading_sheet_details,
             'dealer': dealer,
             'transporter': loading_sheet.transporter,
+            'current_date': timezone.now(),
         }
         
         return render(request, 'dealer/mf_print.html', context)
