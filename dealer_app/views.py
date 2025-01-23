@@ -670,88 +670,65 @@ def loading_sheet(request):
 
     return render(request, 'dealer/loading_sheet.html', context)
 
-
-
-logger = logging.getLogger(__name__)
-
 @login_required
 def booking_register_view(request):
+    # Get the logged-in dealer
     try:
         dealer = request.user.dealer
     except AttributeError:
+        # If the user is not a dealer, show an error or redirect
         return redirect('login')
 
-    # Get filter parameters from request
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
-    from_region = request.GET.get('from_region')
-    from_branch = request.GET.get('from_branch')
-    from_city = request.GET.get('from_city')
-    to_city = request.GET.get('to_city')
-    select_type = request.GET.get('select_type')
-    amount_min = request.GET.get('amount_min')
-    amount_max = request.GET.get('amount_max')
-
-    # Start with all CNotes for the logged-in dealer
+    # Filter CNotes for the logged-in dealer
     dealer_cnotes = CNotes.objects.filter(dealer=dealer).order_by('-created_at')
-
-    # Apply filters
-    if date_from:
-        dealer_cnotes = dealer_cnotes.filter(created_at__gte=date_from)
-    if date_to:
-        dealer_cnotes = dealer_cnotes.filter(created_at__lte=date_to)
-    if from_region:
-        dealer_cnotes = dealer_cnotes.filter(from_region=from_region)
-    if from_branch:
-        dealer_cnotes = dealer_cnotes.filter(from_branch=from_branch)
-    if from_city:
-        dealer_cnotes = dealer_cnotes.filter(from_city=from_city)
-    if to_city:
-        dealer_cnotes = dealer_cnotes.filter(delivery_destination__destination_name=to_city)
-    if select_type:
-        dealer_cnotes = dealer_cnotes.filter(booking_type=select_type)
-    if amount_min:
-        dealer_cnotes = dealer_cnotes.filter(grand_total__gte=amount_min)
-    if amount_max:
-        dealer_cnotes = dealer_cnotes.filter(grand_total__lte=amount_max)
-
-    # Pagination
-    page = request.GET.get('page', 1)
-    paginator = Paginator(dealer_cnotes, 20)  # Show 20 CNotes per page
-    try:
-        dealer_cnotes = paginator.page(page)
-    except PageNotAnInteger:
-        dealer_cnotes = paginator.page(1)
-    except EmptyPage:
-        dealer_cnotes = paginator.page(paginator.num_pages)
-
+    
+    # Get article data for each CNotes
     article_data = []
     for cnote in dealer_cnotes:
         try:
             articles = Article.objects.filter(cnote=cnote)
             
+            # Safely collect article data with proper null checks
             art_types = []
             said_to_contain_list = []
             art_amounts = []
             total_art = 0
             
             for article in articles:
-                art_type_name = article.art_type.art_type_name if article.art_type else 'N/A'
-                if art_type_name == 'type1':
-                    art_type_name = 'SMALL BOX'
-                elif art_type_name == 'type2':
-                    art_type_name = 'BIG BOX'
-                art_types.append(art_type_name)
+                # Handle art_type safely - use the actual art type name from the selection
+                try:
+                    art_type_name = article.art_type.art_type_name if article.art_type else 'N/A'
+                    # Convert database value to display value
+                    if art_type_name == 'type1':
+                        art_type_name = 'SMALL BOX'
+                    elif art_type_name == 'type2':
+                        art_type_name = 'BIG BOX'
+                    art_types.append(art_type_name)
+                except AttributeError:
+                    art_types.append('N/A')
                 
-                art_value = str(article.art) if article.art is not None else '0'
-                said_to_contain = str(article.said_to_contain) if article.said_to_contain else 'N/A'
-                said_to_contain_list.append(f'{said_to_contain} - {art_value}')
+                # Handle said_to_contain safely
+                try:
+                    art_value = str(article.art) if article.art is not None else '0'
+                    said_to_contain = str(article.said_to_contain) if article.said_to_contain else 'N/A'
+                    said_to_contain_list.append(f'{said_to_contain} - {art_value}')
+                except AttributeError:
+                    said_to_contain_list.append('N/A - 0')
                 
-                art_amount = str(article.art_amount) if article.art_amount is not None else '0'
-                art_amounts.append(art_amount)
+                # Handle art_amount safely
+                try:
+                    art_amount = str(article.art_amount) if article.art_amount is not None else '0'
+                    art_amounts.append(art_amount)
+                except AttributeError:
+                    art_amounts.append('0')
                 
-                total_art += article.art if article.art is not None else 0
-
+                # Calculate total_art safely
+                try:
+                    total_art += article.art if article.art is not None else 0
+                except AttributeError:
+                    pass
+            
+            # Create article data dictionary with safe default values
             article_entry = {
                 'cnote_id': cnote.id,
                 'articles': articles,
@@ -798,24 +775,15 @@ def booking_register_view(request):
             article_data.append(article_entry)
             
         except Exception as e:
+            # Log the error and continue with the next CNotes
             logger.error(f"Error processing CNotes {cnote.id}: {str(e)}")
             continue
 
+    # Pass the required data to the template
     context = {
         'dealer': dealer,
         'dealer_cnotes': dealer_cnotes,
         'article_data': article_data,
-        'filters': {
-            'date_from': date_from,
-            'date_to': date_to,
-            'from_region': from_region,
-            'from_branch': from_branch,
-            'from_city': from_city,
-            'to_city': to_city,
-            'select_type': select_type,
-            'amount_min': amount_min,
-            'amount_max': amount_max,
-        }
     }
 
     return render(request, 'dealer/booking_register.html', context)
