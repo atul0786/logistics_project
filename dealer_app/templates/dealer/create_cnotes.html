@@ -496,7 +496,7 @@
     <nav>
         <ul>
             <li>
-                <a href="#"><i class="fas fa-home"></i> Home</a>
+                <a href="{% url 'dealer:create_cnotes' %}"><i class="fas fa-home"></i> Home</a>
             </li>
             <li>
                 <a href="#"><i class="fas fa-cogs"></i> Operations</a>
@@ -505,7 +505,7 @@
                         <a href="{% url 'dealer:create_cnotes' %}"> Booking</a>
                     </li>
                     <li>
-                        <a href="{% url 'dealer:loading_sheet' %}"> Loading Sheet</a>
+                        <a href="{% url 'dealer:loading_sheet' %}"target="_blank" rel="noopener noreferrer"> Loading Sheet</a>
                     </li>
                    
                 </ul>
@@ -514,9 +514,13 @@
                 <a href="{% url 'dealer:search' %}"><i class="fas fa-search"></i> Search</a>
             </li> -->
             <li>
-                <a href="{% url 'dealer:booking_register' %}"><i class="fas fa-chart-bar"></i> Report</a>
+                <a href="{% url 'dealer:booking_register' %}"target="_blank" rel="noopener noreferrer"><i class="fas fa-chart-bar"></i> Report</a>
                 <ul>
-                    <li><a href="{% url 'dealer:booking_register' %}">Booking Register</a></li>
+                  <!--  <li>
+                        <a href="{% url 'dealer:booking_register' %}" target="_blank" rel="noopener noreferrer">Booking Register</a>
+
+                    </li> -->
+                    
                    
                     
                 </ul>
@@ -527,9 +531,9 @@
         </ul>
     </nav>
 
-    <div class="function-keys">
-        <span id="paidBtn">F7 : PAID</span>
-        <span id="toPayBtn">F8 : TO PAY</span>
+   <div class="function-keys">
+       <!-- <spa id="paidBtn">F7 : PAID</spa
+        <span id="toPayBtn">F8 : TO PAY</span> -->
         <span id="tbbBtn">F9 : TBB</span>
         <span id="focBtn">F10 : FOC</span>
         <span id="manualBtn">ALT+M : MANUAL</span>
@@ -1085,7 +1089,7 @@
                 }
             });
 
-            ["paidBtn", "toPayBtn", "tbbBtn", "focBtn", "manualBtn"].forEach(id => {
+            ["tbbBtn", "focBtn", "manualBtn"].forEach(id => {
                 document.getElementById(id).addEventListener("click", () => updatePaymentType(id.replace("Btn", "").toUpperCase()));
             });
 
