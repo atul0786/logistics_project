@@ -97,4 +97,4 @@ zopfli==0.2.3
 whitenoise==6.6.0
 pandas==1.5.3  # or the latest version you want to use
 openpyxl==3.1.2  # or the latest version you want to use
-numpy==1.23.5
+numpy==1.26.4
