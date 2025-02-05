@@ -5,14 +5,13 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@jcjdu2*cprnhxp1eim1c4td1p3ef55-v6wksl1*t&$a-da14)'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-@jcjdu2*cprnhxp1eim1c4td1p3ef55-v6wksl1*t&$a-da14)')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
-    'logistics-project-4.onrender.com',
-    'goodwayexpress.onrender.com',
+    '147.93.110.231',  # आपके VPS का IP
     'localhost',
     '127.0.0.1',
 ]
@@ -77,11 +76,11 @@ WSGI_APPLICATION = 'logistics_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'good_way_express',
-        'USER': 'good_way_express_user',
-        'PASSWORD': 'tCSwM28YhLcHJXVMLCeZO6GcEStk8iZ8',
-        'HOST': 'dpg-ctnest5umphs73c610og-a',
-        'PORT': '5432',
+        'NAME': 'good_way_express',  # अपने डेटाबेस का नाम
+        'USER': 'good_way_express_user',  # अपने यूजर का नाम
+        'PASSWORD': '0786',  # अपने पासवर्ड को यहाँ डालें
+        'HOST': 'localhost',  # PostgreSQL सर्वर का होस्ट
+        'PORT': '5432',  # PostgreSQL का डिफ़ॉल्ट पोर्ट
     }
 }
 
