@@ -385,7 +385,12 @@
         }
 
         .error {
-            border: 1px solid red;
+            background-color: #f44336;
+            color: white;
+            
+            border-radius: 4px;
+            text-align: center;
+
         }
 
         input {
@@ -464,28 +469,55 @@
         .dropdown-item.active {
             background-color: #f0f0f0;
         }
+        .popup-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #f44336;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .error-message {
+            background-color: #f44336;
+            color: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            text-align: center;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <header>
         <div class="top-bar">
-            <div class="logo" style="width: 55px; height: 55px; border-radius: 50%; overflow: hidden;">  
-                {% if dealer.photo %}  
-                    <img src="{{ dealer.photo.url }}" alt="Dealer Photo" style="width: 100%; height: 100%; object-fit: cover">  
-                {% else %}  
-                    
-                {% endif %}  
+            
+            <div class="user-info" style="text-align: left; margin-left: 10px;"> 
+                <p>Welcome {{ dealer.name }} ({{ dealer.city }} - {{ dealer.state }})</p>
+                <p id="currentDateTime" style="margin-top: 5px;"></p>  
             </div>
-            <div class="user-info"> 
-                <p>Welcome {{ dealer.name }} ({{ dealer.city}} - {{ dealer.state}})</p>
-                <p id="currentDateTime"></p>  
-            </div>  
+              
+            {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
             <div class="search-bar">
-                <form method="GET" action="{% url 'dealer:search_cnote' %}">
+                <form method="GET" action="{% url 'dealer:search_cnote' %}" target="_blank" rel="noopener noreferrer">
                     <input type="text" id="searchCNote" name="cnote_number" placeholder="Search CNote Number" required />
                     <button type="submit" id="searchButton">Search</button>
                 </form>
             </div>
+            <!-- Add this near your search form -->
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+
             <form action="{% url 'logout' %}" method="post" class="logout-button">
                 {% csrf_token %}
                 <button type="submit" id="logoutBtn">Logout</button>
@@ -524,20 +556,23 @@
                    
                     
                 </ul>
+                
             </li>
-           
            
           
         </ul>
-    </nav>
 
-   <div class="function-keys">
-       <!-- <spa id="paidBtn">F7 : PAID</spa
-        <span id="toPayBtn">F8 : TO PAY</span> -->
+    </nav>
+    
+
+    <div class="function-keys">
+        <span id="paidBtn">F7 : PAID</span>
+        <span id="toPayBtn">F8 : TO PAY</span>
         <span id="tbbBtn">F9 : TBB</span>
         <span id="focBtn">F10 : FOC</span>
         <span id="manualBtn">ALT+M : MANUAL</span>
     </div>
+    
 
     <div class="container">
         <main>
@@ -896,6 +931,8 @@
             <p>No CNote available to update.</p>
         {% endif %}
     </div>
+    <!-- Add this div for the popup message -->
+    <div id="popupMessage" class="popup-message" style="display: none;"></div>
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -1047,7 +1084,7 @@
                 // Fetch cities on page load
                 fetchCities();
 
-            function updateDateTime() {
+                function updateDateTime() {
                     const now = new Date();
                     const options = { 
                         timeZone: "Asia/Kolkata",
@@ -1089,7 +1126,7 @@
                 }
             });
 
-            ["tbbBtn", "focBtn", "manualBtn"].forEach(id => {
+            ["paidBtn","toPayBtn","tbbBtn", "focBtn", "manualBtn"].forEach(id => {
                 document.getElementById(id).addEventListener("click", () => updatePaymentType(id.replace("Btn", "").toUpperCase()));
             });
 
@@ -1342,20 +1379,21 @@
                 });
             }
 
-            var viewCnoteUrl = "{% url 'dealer:view_cnote' 'CNOTE_NUMBER' %}";
+            var searchCnoteUrl = "{% url 'dealer:search_cnote' %}";
 
-            document.getElementById("searchButton").addEventListener("click", function() {  
-                const cnoteNumber = document.getElementById("searchCNote").value.trim();  
+            document.getElementById("searchButton").addEventListener("click", function(e) {
+                e.preventDefault(); // फॉर्म सबमिशन को रोकें
+                const cnoteNumber = document.getElementById("searchCNote").value.trim();
                 
-                if (cnoteNumber === "") {  
-                    alert("Please enter a valid CNote number");  
-                    return;  
-                }  
+                if (cnoteNumber === "") {
+                    alert("Please enter a valid CNote number");
+                    return;
+                }
                 
                 console.log("Searching for CNote:", cnoteNumber);
-                console.log("Redirecting to:", viewCnoteUrl.replace('CNOTE_NUMBER', cnoteNumber));
+                console.log("Redirecting to:", searchCnoteUrl + "?cnote_number=" + encodeURIComponent(cnoteNumber));
                 
-                window.location.href = viewCnoteUrl.replace('CNOTE_NUMBER', cnoteNumber);  
+                window.location.href = searchCnoteUrl + "?cnote_number=" + encodeURIComponent(cnoteNumber);
             });
 
             document.querySelectorAll('.charges-container input[type="number"]').forEach(input => {
@@ -1640,6 +1678,47 @@
                 // Your form submission logic here
             });
         });
+        
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.querySelector('.search-bar form');
+    const errorMessage = document.getElementById('errorMessage');
+
+    if (searchForm) {
+        searchForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent form submission
+            const cnoteNumber = document.getElementById('searchCNote').value.trim();
+            
+            if (!cnoteNumber) {
+                showError('Please enter a CNote number');
+                return;
+            }
+
+            // Use fetch with preventDefault to stay on the same page
+            fetch(`/dealer/search_cnote/?cnote_number=${cnoteNumber}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = data.url;
+                    } else {
+                        showError(data.error);
+                    }
+                })
+                .catch(error => {
+                    showError('An error occurred while searching');
+                });
+        });
+    }
+
+    function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.style.display = 'block';
+        
+        // Hide the error message after 3 seconds
+        setTimeout(() => {
+            errorMessage.style.display = 'none';
+        }, 3000);
+    }
+});
     </script>
 </body>
 </html>
