@@ -23,28 +23,21 @@
         .container {
           max-width: 1400px;
           margin: 0 auto;
-          padding: 20px;
         }
   
         header {
           background-color: #87ceeb;
           color: #333;
-          padding: 10px 0;
           box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
   
-        .logo {
-          width: 80px;
-          height: auto;
-        }
-  
-        /* Top bar container to manage entire layout */
-          .top-bar {
+        .top-bar {
           display: flex;
-          justify-content: flex-end; /* Pushes content to the right */
+          justify-content: flex-end;
           align-items: center;
-          padding: 0 20px; /* Adjust the padding */
-                  }
+          padding: 0 20px;
+        }
+
         .user-info {
           text-align: center;
           flex-grow: 1;
@@ -131,6 +124,7 @@
           padding: 10px 0;
           text-align: center;
         }
+
         .autocomplete-container {
           position: relative;
         }
@@ -260,509 +254,448 @@
           color: white;
         }
   
-        .article-details {
-          max-height: 300px;
-          overflow-y: auto;
-          margin-bottom: 20px;
-        }
-  
-        .article-details table {
-          table-layout: fixed;
-        }
-  
-        .article-details th,
-        .article-details td {
-          width: 16.66%;
-        }
-  
-        .article-details input,
-        .article-details select {
-          width: 100%;
-        }
-  
-        #submitBtn {
-          background-color: #4caf50;
-          color: white;
-          padding: 14px 20px;
-          margin: 8px 0;
-          border: none;
-          cursor: pointer;
-          width: 100%;
-          font-size: 18px;
-        }
-  
-        #submitBtn:hover {
-          background-color: #45a049;
-        }
-  
-        .manual-fields {
-          display: none;
-        }
-  
-        .autocomplete-container {
-          position: relative;
-        }
-  
-        .autocomplete-list {
-          position: absolute;
-          z-index: 1;
-          list-style-type: none;
-          padding: 0;
-          margin: 0;
-          background-color: #fff;
-          border: 1px solid #ddd;
-          max-height: 150px;
-          overflow-y: auto;
-          width: 100%;
-          display: none;
-        }
-  
-        .autocomplete-list li {
-          padding: 8px;
-          cursor: pointer;
-        }
-  
-        .autocomplete-list li:hover,
-        .autocomplete-list li.selected {
-          background-color: #f0f0f0;
-        }
-  
-        @media (max-width: 1200px) {
-          .form-container {
-            flex: 2;
-          }
-        }
-  
-        @media (max-width: 992px) {
-          .form-container,
-          .charges-container {
-            flex: 1 1 100%;
-          }
-        }
-        
-        /* Container for search and logout */
         .search-logout-container {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          width: 100%; /* Ensure it takes full width */
+          width: 100%;
         }
-        /* Search bar styles */
+
         .search-bar {
-        display: flex;
-        align-items: center;
-        background-color: #ffffff;
-        border-radius: 20px;
-        padding: 5px 10px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+          display: flex;
+          align-items: center;
+          background-color: #ffffff;
+          border-radius: 20px;
+          padding: 5px 10px;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         } 
         
-  /* Logout button styles */
-    .logout-button {  
-      position: absolute;  
-      right: 10px;  
-      top: 53px;  
-      }
+        .logout-button {  
+          position: absolute;  
+          right: 8px;  
+          top: 10px;  
+        }
   
-  .logout-button button {
-    background-color: #ff4500;
-    color: white;
-    padding: 9px 18px;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
+        .logout-button button {
+          background-color: #ff4500;
+          color: white;
+          padding: 9px 18px;
+          border: none;
+          border-radius: 20px;
+          cursor: pointer;
+          transition: background-color 0.3s;
+        }
   
-  .logout-button button:hover {
-    background-color: #e63900;
-  }
-  /* Add styles for status indicator */
-          .status-indicator {
-              display: inline-block;
-              padding: 5px 10px;
-              border-radius: 4px;
-              font-weight: bold;
-              margin-top: 10px;
-          }
-          .status-booked { background-color: #ffd700; color: #000; }
-          .status-dispatched { background-color: #1e90ff; color: #fff; }
-          .status-received { background-color: #32cd32; color: #fff; }
-          .status-due-for-delivery { background-color: #ff8c00; color: #fff; }
-          .status-delivered { background-color: #008000; color: #fff; }
-          .status-received-at-godown { background-color: #4b0082; color: #fff; }
-          .status-cancelled { background-color: #ff0000; color: #fff; }
-      
-      
-  
-  
-  
+        .logout-button button:hover {
+          background-color: #e63900;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .status-booked { background-color: #ffd700; color: #000; }
+        .status-dispatched { background-color: #1e90ff; color: #fff; }
+        .status-received { background-color: #32cd32; color: #fff; }
+        .status-due-for-delivery { background-color: #ff8c00; color: #fff; }
+        .status-delivered { background-color: #008000; color: #fff; }
+        .status-received-at-godown { background-color: #4b0082; color: #fff; }
+        .status-cancelled { background-color: #ff0000; color: #fff; }
+
+        .edit-mode input:not([readonly]), .edit-mode select:not([readonly]), .edit-mode textarea:not([readonly]) {
+            background-color: #fff;
+            border: 1px solid #4682b4;
+        }
+
+        .edit-mode input[readonly], .edit-mode select[readonly], .edit-mode textarea[readonly] {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+        }
+
+        #editBtn, #updateBtn {
+            background-color: #4682b4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        #editBtn:hover, #updateBtn:hover {
+            background-color: #3a6d8c;
+        }
+
+        #updateBtn {
+            display: none;
+        }
+
+        .search-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            padding-right: 30px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .dropdown-arrow {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            cursor: pointer;
+        }
+
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            border-top: none;
+            background: white;
+            z-index: 1000;
+            display: none;
+        }
+
+        .dropdown-item {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover,
+        .dropdown-item.active {
+            background-color: #f0f0f0;
+        }
+
+        .article-container {
+            margin-bottom: 20px;
+        }
+
+        .summary-container {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .summary-row span:first-child {
+            font-weight: bold;
+        }
+
+        /* New styles for article table */
+        #articleTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        #articleTable th, #articleTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        #articleTable th {
+            background-color: #4682b4;
+            color: white;
+        }
+
+        #addArticle, .remove-article {
+            background-color: #4682b4;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        #addArticle:hover, .remove-article:hover {
+            background-color: #3a6d8c;
+        }
+
+        .remove-article {
+            background-color: #ff4500;
+        }
+
+        .remove-article:hover {
+            background-color: #e63900;
+        }
     </style>
 </head>
 <body>
     <header>
         <div class="container">
           <div class="top-bar">
-            <div class="logo" style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">  
-              {% if dealer.photo %}  
-                 <img src="{{ dealer.photo.url }}" alt="Dealer Photo" style="width: 100%; height: 100%; object-fit: cover">  
-              {% else %}  
-              {% endif %}  
-           </div> 
-           <div class="user-info"> 
-            <p>Welcome {{ dealer.name }} ({{ dealer.city}} - {{ dealer.state}})</p><p id="currentDateTime"></p>  
-            <a href="#" id="contactSupport">Contact Support</a>  
-           </div>  
-           <div class="search-bar">
-              <input type="text" id="searchCNote" placeholder="Search CNote Number" />
-              <button id="searchButton">Search</button>
+            <div class="user-info" style="text-align: left; margin-left: 0px;">
+                <p>Welcome {{ dealer.name }} ({{ dealer.city }} - {{ dealer.state }})</p>
+                <p id="currentDateTime" style="margin-top: 5px;"></p>  
             </div>
+              
+            {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            <div class="search-bar">
+                <form method="GET" action="{% url 'dealer:search_cnote' %}">
+                    <input type="text" id="searchCNote" name="cnote_number" placeholder="Search CNote Number" required />
+                    <button type="submit" id="searchButton">Search</button>
+                </form>
+            </div>
+            <!-- Add this near your search form -->
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+
             <form action="{% url 'logout' %}" method="post" class="logout-button">
-              {% csrf_token %}
-              <button type="submit" id="logoutBtn">Logout</button>
+                {% csrf_token %}
+                <button type="submit" id="logoutBtn">Logout</button>
             </form>
         </div>
-      </header>
+    </header>
 
     <nav>
-        <div class="container">
-            <ul>
-                <li>
-                    <a href="#"><i class="fas fa-home"></i> Home</a>
-                </li>
-                <li>
-                    <a href="#"><i class="fas fa-cogs"></i> Operations</a>
-                    <ul>
-                        <li>
-                            <a href="{% url 'dealer:loading_sheet' %}"> Loading Sheet</a>
-                        </li>
-                        <li><a href="#">Operation 2</a></li>
-                        <li><a href="#">Operation 3</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#"><i class="fas fa-search"></i> Search</a>
-                </li>
-                <li>
-                    <a href="{% url 'dealer:booking_register' %}"><i class="fas fa-chart-bar"></i> Report</a>
-                    <ul>
-                        <li><a href="{% url 'dealer:booking_register' %}">Booking Register</a></li>
-                        <li><a href="#">Report 2</a></li>
-                        <li><a href="#">Report 3</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#"><i class="fas fa-user"></i> Profile</a>
-                    <ul>
-                        <li><a href="#">Edit Profile</a></li>
-                        <li><a href="#">Change Password</a></li>
-                        <li><a href="#">Logout</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#"><i class="fas fa-tasks"></i> Masters</a>
-                    <ul>
-                        <li><a href="#">Master 1</a></li>
-                        <li><a href="#">Master 2</a></li>
-                        <li><a href="#">Master 3</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                    <ul>
-                        <li><a href="#">Overview</a></li>
-                        <li><a href="#">Analytics</a></li>
-                        <li><a href="#">Reports</a></li>
-                    </ul>
-                </li>
-            </ul>
-        </div>
+       <!-- Navigation menu items -->
+        <ul>
+            <li>
+                <a href="{% url 'dealer:create_cnotes' %}"><i class="fas fa-home"></i> Go To Booking Page</a>
+            </li>
+        </ul>
     </nav>
-
-    <div class="function-keys">
-        <div class="container">
-            <span id="paidBtn">F7 : PAID</span>
-            <span id="toPayBtn">F8 : TO PAY</span>
-            <span id="tbbBtn">F9 : T BB</span>
-            <span id="focBtn">F10 : F OC</span>
-            <span id="manualBtn">ALT+M : MANUAL</span>
-        </div>
-    </div>
 
     <div class="container">
         <main>
             <div class="form-container">
                 <h2>CNote Details</h2>
-                <form id="cnoteDetailsForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="fromCity">From City</label>
-                            <input type="text" id="fromCity" name="from_city" required />
-                        </div>
-                        <div class="form-group">
-                            <label for="cnoteNumber">CNote Number</label>
-                            <input type="text" id="cnoteNumber" name="cnote_number" required />
-                        </div>
-                        <div class="form-group">
-                            <label for="fromDealer">From Dealer</label>
-                            <input type="text" id="fromDealer" name="from_dealer" required />
-                        </div>
-                        <div class="form-group">
-                            <label for="date">Date</label>
-                            <input type="date" id="date" name="date" required />
-                        </div>
-                        <div class="form-group">
-                            <label for="time">Time</label>
-                            <input type="time" id="time" name="time" required />
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="bookingType" class="required">Booking Type</label>
-                            <select id="bookingType" name="booking_type" required>
-                                <option value="sundry" selected>Sundry</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="deliveryType" class="required">Delivery Type</label>
-                            <select id="deliveryType" name="delivery_type" required>
-                                <option value="economy" selected>ECONOMY DELIVERY</option>
-                                <option value="express">EXPRESS DELIVERY</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="deliveryMethod" class="required">Delivery Method</label>
-                            <select id="deliveryMethod" name="delivery_method" required>
-                                <option value="door" selected>Door Delivery</option>
-                                <option value="godown">Godown Delivery</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="deliveryDestination" class="required">Delivery Destination</label>
-                            <div class="autocomplete-container">
-                                <input type="text" id="deliveryDestination" name="delivery_destination" required />
-                                <ul id="destinationList" class="autocomplete-list"></ul>
+                {% if cnote %}
+                    <button id="editBtn">Edit</button>
+                    <button id="updateBtn">Update</button>
+                    <form id="cnoteDetailsForm">
+                        {% csrf_token %}
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="cnoteNumber">CNote Number</label>
+                                <input type="text" id="cnoteNumber" name="cnote_number" value="{{ cnote.cnote_number }}" readonly />
+                            </div>
+                            <div class="form-group">
+                                <label for="createdAt">Created At</label>
+                                <input type="text" id="createdAt" name="created_at" value="{{ cnote.created_at|date:'Y-m-d H:i:s' }}" readonly />
+                            </div>
+                            <div class="form-group">
+                                <label for="status">Status</label>
+                                <input type="text" id="status" name="status" value="{{ cnote.get_status_display }}" readonly />
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="ewayBillNumber">EWAYBILL NUMBER</label>
-                            <input type="text" id="ewayBillNumber" name="ewayBillNumber" />
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="fromCity">From City</label>
+                                <input type="text" id="fromCity" name="from_city" value="{{ dealer.city }}" readonly />
+                            </div>
+                            <div class="form-group">
+                                <label for="deliveryDestination" class="required">Delivery Destination</label>
+                                <div class="search-container">
+                                    <input 
+                                        type="text" 
+                                        class="search-input" 
+                                        placeholder="Search or select destination" 
+                                        id="deliveryDestination"
+                                        name="delivery_destination"
+                                        required
+                                        value="{{ cnote.delivery_destination.destination_name }}"
+                                        data-destination-id="{{ cnote.delivery_destination.id }}"
+                                    >
+                                    <input 
+                                        type="hidden" 
+                                        id="deliveryDestinationId" 
+                                        name="delivery_destination_id" 
+                                        value="{{ cnote.delivery_destination.id }}"
+                                    >
+                                    <span class="dropdown-arrow" id="dropdownArrow">&#9662;</span>
+                                    <div class="dropdown-list" id="dropdownList">
+                                        <!-- Dropdown items will be populated dynamically -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="fromDealer">From Dealer</label>
+                                <input type="text" id="fromDealer" name="from_dealer" value="{{ dealer.name }}" readonly />
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-row manual-fields">
-                        <div class="form-group">
-                            <label for="manualDate" class="required">Manual Date</label>
-                            <input type="date" id="manualDate" name="manualDate" required />
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bookingType">Booking Type</label>
+                                <select id="bookingType" name="booking_type" disabled>
+                                    <option value="sundry" {% if cnote.booking_type == 'sundry' %}selected{% endif %}>Sundry</option>
+                                    <option value="ftl" {% if cnote.booking_type == 'ftl' %}selected{% endif %}>FTL</option>
+                                    <!-- Add other booking types as needed -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="deliveryType">Delivery Type</label>
+                                <select id="deliveryType" name="delivery_type" disabled>
+                                    <option value="normal" {% if cnote.delivery_type == 'normal' %}selected{% endif %}>Normal</option>
+                                    <option value="express" {% if cnote.delivery_type == 'express' %}selected{% endif %}>Express</option>
+                                    <!-- Add other delivery types as needed -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="deliveryMethod">Delivery Method</label>
+                                <select id="deliveryMethod" name="delivery_method" disabled>
+                                    <option value="door" {% if cnote.delivery_method == 'door' %}selected{% endif %}>Door Delivery</option>
+                                    <option value="godown" {% if cnote.delivery_method == 'godown' %}selected{% endif %}>Godown Delivery</option>
+                                    <!-- Add other delivery methods as needed -->
+                                </select>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="manualCNoteNumber" class="required">CN Note Number</label>
-                            <input type="text" id="manualCNoteNumber" name="manualCNoteNumber" required />
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="actualWt">Actual Weight</label>
+                                <input type="number" step="0.01" id="actualWt" name="actual_weight" value="{{ cnote.actual_weight }}" />
+                            </div>
+                            <div class="form-group">
+                                <label for="chargedWt">Charged Weight</label>
+                                <input type="number" step="0.01" id="chargedWt" name="charged_weight" value="{{ cnote.charged_weight }}" />
+                            </div>
+                            <div class="form-group">
+                                <label for="totalAmt">Total Amount</label>
+                                <input type="text" id="totalAmt" name="total_amount" value="{{ cnote.grand_total }}" readonly />
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="manualCNoteType" class="required">CN Note Type</label>
-                            <select id="manualCNoteType" name="manualCNoteType" required>
-                                <option value="">Select</option>
-                                <option value="paid">Paid</option>
-                                <option value="topay">To Pay</option>
-                                <option value="tbb">TBB</option>
-                                <option value="foc">FOC</option>
-                            </select>
+                        
+                        <h3>Consignor Details</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="consignorName">Consignor Name</label>
+                                <input type="text" id="consignorName" name="consignor_name" value="{{ cnote.consignor_name }}" disabled />
+                            </div>
+                            <div class="form-group">
+                                <label for="consignorMobile">Consignor Mobile</label>
+                                <input type="text" id="consignorMobile" name="consignor_mobile" value="{{ cnote.consignor_mobile }}" disabled />
+                            </div>
+                            <div class="form-group">
+                                <label for="consignorGST">Consignor GST</label>
+                                <input type="text" id="consignorGST" name="consignor_gst" value="{{ cnote.consignor_gst }}" disabled />
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <h3>Consignor (From)</h3>
-                            <label for="consignorName" class="required">Consignor Name</label>
-                            <input type="text" id="consignorName" name="consignor_name" required />
-                            <label for="consignorMobile" class="required">Mobile No</label>
-                            <input type="tel" id="consignorMobile" name="consignor_mobile" maxlength="10" required />
- <label for="consignorGST">GST No</label>
-                            <input type="text" id="consignorGST" name="consignorGST" />
-                            <label for="consignorAddress">Address</label>
-                            <textarea id="consignorAddress" name="consignorAddress" rows="3"></textarea>
+                        
+                        <h3>Consignee Details</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="consigneeName">Consignee Name</label>
+                                <input type="text" id="consigneeName" name="consignee_name" value="{{ cnote.consignee_name }}" disabled />
+                            </div>
+                            <div class="form-group">
+                                <label for="consigneeMobile">Consignee Mobile</label>
+                                <input type="text" id="consigneeMobile" name="consignee_mobile" value="{{ cnote.consignee_mobile }}" disabled />
+                            </div>
+                            <div class="form-group">
+                                <label for="consigneeGST">Consignee GST</label>
+                                <input type="text" id="consigneeGST" name="consignee_gst" value="{{ cnote.consignee_gst }}" disabled />
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <h3>Consignee (To)</h3>
-                            <label for="consigneeName" class="required">Consignee Name</label>
-                            <input type="text" id="consigneeName" name="consignee_name" required />
-                            <label for="consigneeMobile" class="required">Mobile No</label>
-                            <input type="tel" id="consigneeMobile" name="consignee_mobile" maxlength="10" required />
-                            <label for="consigneeGST">GST No</label>
-                            <input type="text" id="consigneeGST" name="consigneeGST" />
-                            <label for="consigneeAddress">Address</label>
-                            <textarea id="consigneeAddress" name="consigneeAddress" rows="3"></textarea>
+                        
+
+                        <h3>Article Details</h3>
+                        <div class="article-container">
+                            <table id="articleTable">
+                                <thead>
+                                    <tr>
+                                        <th>Article Type</th>
+                                        <th>Quantity</th>
+                                        <th>Description</th>
+                                        <th>Amount</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for article in articles %}
+                                    <tr>
+                                        <td>
+                                            <select name="article_type[]" class="article-type" required>
+                                                <option value="">Select Article Type</option>
+                                                {% for article_type in article_types %}
+                                                <option value="{{ article_type.id }}" 
+                                                    {% if article.article_type and article.article_type.id == article_type.id %}selected{% endif %}>
+                                                    {{ article_type.art_type_name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="number" name="quantity[]" class="quantity" value="{{ article.art }}" required>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="description[]" class="description" value="{{ article.said_to_contain }}" required>
+                                        </td>
+                                        <td>
+                                            <input type="number" name="amount[]" class="amount" value="{{ article.art_amount }}" step="0.01" required>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="remove-article">Remove</button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5">No articles found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <button type="button" id="addArticle">Add Article</button>
                         </div>
-                    </div>
-                    <h3>Article Details</h3>
-                    <div class="article-details">
-                        <table id="articleTable">
-                            <thead>
-                                <tr>
-                                    <th>Article</th>
-                                    <th>Art</th>
-                                    <th>Art Type</th>
-                                    <th>Said To Cont</th>
-                                    <th>Art Amt</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>
-                                        <select name="article" class="article-select" required>
-                                            <option value="Article" selected>Article</option>
-                                            <option value="Weight">Weight</option>
-                                            <option value="Fix">Fix</option>
-                                        </select>
-                                    </td>
-                                    <td><input type="number" name="art" required></td>
-                                    <td>
-                                        <select name="artType" required>
-                                            <option value="">Select</option>
-                                            <option value="type1">Type 1</option>
-                                            <option value="type2">Type 2</option>
-                                        </select>
-                                    </td>
-                                    <td><input type="text" name="saidToCont" required></td>
-                                    <td>
-                                        <input type="number" name="artAmt" class="art-amt" step="0.01" required>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="remove-article" disabled>Remove</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <button type="button" id="addArticle">Add Article</button>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="actualWt" class="required">Actual Wt</label>
-                            <input type="number" id="actualWt" name="actual_weight" step="0.01" required>
+
+                        <div class="summary-container">
+                            <div class="summary-row">
+                                <span>Total Quantity:</span>
+                                <span id="totalQuantity">0</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Total Amount:</span>
+                                <span id="totalAmount">0.00</span>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="chargedWt" class="required">Charged Wt</label>
-                            <input type="number" id="chargedWt" name="charged_weight" step="0.01" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="wtRate" class="required">Wt Rate</label>
-                            <input type="number" id="wtRate" name="weight_rate" step="0.01" required>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="wtAmt">Wt Amt</label>
-                            <input type="number" id="wtAmt" name="weight_amount" step="0.01" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label for="fixAmt">Fix Amt</label>
-                            <input type="number" id="fixAmt" name="fix_amount" step="0.01">
-                        </div>
-                        <div class="form-group">
-                            <label for="invoiceNo" class="required">Invoice No</label>
-                            <input type="text" id="invoiceNo" name="invoice_number" required>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="declaredValue" class="required">Declared Value</label>
-                            <input type="number " id="declaredValue" name="declared_value" step="0. 01" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="riskType" class="required">Risk Type</label>
-                            <select id="riskType" name="risk_type" required>
-                                <option value="owner" selected>Owner Risk</option>
-                                <option value="carrier">Carrier Risk</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="podRequired">POD Required</label>
-                            <select id="podRequired" name="pod_required">
-                                <option value="yes">YES</option>
-                                <option value="no">NO</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button type="submit" id="submitBtn">Save</button>
-                </form>
+                    </form>
+                {% else %}
+                    <p>No CNote details available.</p>
+                {% endif %}
             </div>
+            
             <div class="charges-container">
                 <h2>Charges</h2>
                 <table>
+                    <tr><td>Freight</td><td><input type="number" step="0.01" name="freight" value="{{ cnote.freight }}" /></td></tr>
+                    <tr><td>Docket Charge</td><td><input type="number" step="0.01" name="docket_charge" value="{{ cnote.docket_charge }}" /></td></tr>
+                    <tr><td>Door Delivery Charge</td><td><input type="number" step="0.01" name="door_delivery_charge" value="{{ cnote.door_delivery_charge }}" /></td></tr>
+                    <tr><td>Handling Charge</td><td><input type="number" step="0.01" name="handling_charge" value="{{ cnote.handling_charge }}" /></td></tr>
+                    <tr><td>Pickup Charge</td><td><input type="number" step="0.01" name="pickup_charge" value="{{ cnote.pickup_charge }}" /></td></tr>
+                    <tr><td>Transhipment Charge</td><td><input type="number" step="0.01" name="transhipment_charge" value="{{ cnote.transhipment_charge }}" /></td></tr>
+                    <tr><td>Insurance</td><td><input type="number" step="0.01" name="insurance" value="{{ cnote.insurance }}" /></td></tr>
+                    <tr><td>Fuel Surcharge</td><td><input type="number" step="0.01" name="fuel_surcharge" value="{{ cnote.fuel_surcharge }}" /></td></tr>
+                    <tr><td>Commission</td><td><input type="number" step="0.01" name="commission" value="{{ cnote.commission }}" /></td></tr>
+                    <tr><td>Other Charge</td><td><input type="number" step="0.01" name="other_charge" value="{{ cnote.other_charge }}" /></td></tr>
+                    <tr><td>Carrier Risk</td><td><input type="number" step="0.01" name="carrier_risk" value="{{ cnote.carrier_risk }}" /></td></tr>
                     <tr>
-                        <td>Freight</td>
-                        <td>
-                            <input type="number" id="freight" name="freight" value="0" step="0.01">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Docket Charge</td>
-                        <td>
-                            <input type="number" id="docketCharge" name="docket_charge" value="0" step="0.01">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Door Dly.</td>
-                        <td>
-                            <input type="number" id="doorDlyCharge" name="door_delivery_charge" value="0" step="0.01">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Handling</td>
-                        <td>
-                            <input type="number" id="handlingCharge" name="handling_charge" value="0" step="0.01">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Pickup</td>
-                        <td>
-                            <input type="number" id="pickupCharge" name="pickup_charge" value="0" step="0.01">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Transhipment Charge</td>
-                        <td>
-                            <input type="number" id="transhipmentCharge" name="transhipment_charge" value="0" step="0.01">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Insurance</td>
-                        <td>
-                            <input type="number" id="insurance" name="insurance" value="0" step="0.01">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Fuel Surcharge</td>
-                        <td>
-                            <input type="number" id="fuelSurcharge" name="fuel_surcharge" value="0" step="0.01">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Commission</td>
-                        <td>
-                            <input type="number" id="commission" name="commission" value="0" step="0.01">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Other</td>
-                        <td>
-                            <input type="number" id="otherCharge" name="other_charge" value="0" step="0.01">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Carrier Risk</td>
-                        <td>
-                            <input type="number" id="carrierRisk" name="carrier_risk" value="0" step="0.01">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Grand Total</td>
-                        <td>
-                            <input type="number" id="grandTotal" name="grand_total" value="0" step="0.01" readonly>
-                        </td>
+                        <td><strong>Grand Total</strong></td>
+                        <td><strong><input type="number" step="0.01" name="grand_total" value="{{ cnote.grand_total }}" readonly /></strong></td>
                     </tr>
                 </table>
             </div>
@@ -776,7 +709,7 @@
                 {% csrf_token %}
                 <select name="status">
                     {% for status, label in cnote.STATUS_CHOICES %}
-                        <option value="{{ status }}">{{ label }}</option>
+                        <option value="{{ status }}" {% if status == cnote.status %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
                 <button type="submit">Update Status</button>
@@ -788,92 +721,6 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            const form = document.getElementById("cnoteDetailsForm");
-            const addArticleButton = document .getElementById("addArticle");
-            const articleTable = document.getElementById("articleTable").getElementsByTagName("tbody")[0];
-            const chargedWtInput = document.getElementById("chargedWt");
-            const wtRateInput = document.getElementById("wtRate");
-            const wtAmtInput = document.getElementById("wtAmt");
-            const fixAmtInput = document.getElementById("fixAmt");
-            const freightInput = document.getElementById("freight");
-            const manualFields = document.querySelector(".manual-fields");
-            const manualDateInput = document.getElementById("manualDate");
-            const manualCNoteNumber = document.getElementById("manualCNoteNumber");
-            const manualCNoteType = document.getElementById("manualCNoteType");
-            const deliveryDestinationInput = document.getElementById("deliveryDestination");
-            const destinationList = document.getElementById("destinationList");
-
-            const validDestinations = [
-                "MUMBAI",
-                "DELHI",
-                "BANGALORE",
-                "CHENNAI",
-                "KOLKATA",
-            ];
-            let selectedIndex = -1;
-            let articleType = "Article"; // Default article type
-
-            function showAutocompleteList(input) {
-                const value = input.value.toUpperCase();
-                const filteredDestinations = validDestinations.filter((dest) =>
-                    dest.startsWith(value)
-                );
-                destinationList.innerHTML = "";
-
-                if (filteredDestinations.length > 0) {
-                    filteredDestinations.forEach((dest) => {
-                        const li = document.createElement("li");
-                        li.textContent = dest;
-                        li.addEventListener("click", () => {
-                            input.value = dest;
-                            destinationList.style.display = "none";
-                        });
-                        destinationList.appendChild(li);
-                    });
-                    destinationList.style.display = "block";
-                } else {
-                    destinationList.style.display = "none";
-                }
-                selectedIndex = -1;
-            }
-
-            deliveryDestinationInput.addEventListener("input", function() {
-                showAutocompleteList(this);
-            });
-
-            deliveryDestinationInput.addEventListener("keydown", function(e) {
-                const items = destinationList.getElementsByTagName("li");
-                if (e.key === "ArrowDown") {
-                    e.preventDefault();
-                    selectedIndex =
-                        selectedIndex < items.length - 1 ? selectedIndex + 1 : 0;
-                    updateSelectedItem(items);
-                } else if (e.key === "ArrowUp") {
-                    e.preventDefault();
-                    selectedIndex =
-                        selectedIndex > 0 ? selectedIndex - 1 : items.length - 1;
-                    updateSelectedItem(items);
-                } else if (e.key === "Enter" && selectedIndex > -1) {
-                    e.preventDefault();
-                    if (items[selectedIndex]) {
-                        this.value = items[selectedIndex].textContent;
-                        destinationList.style.display = "none";
-                    }
-                }
-            });
-
-            function updateSelectedItem(items) {
-                for (let i = 0; i < items.length; i++) {
-                    items[i].classList.toggle("selected", i === selectedIndex);
-                }
-            }
-
-            document.addEventListener("click", function(e) {
-                if (e.target !== deliveryDestinationInput) {
-                    destinationList.style.display = "none";
-                }
-            });
-
             function updateDateTime() {
                 const now = new Date();
                 const dateTimeString = now.toLocaleString("en-US", {
@@ -885,311 +732,314 @@
                     second: "2-digit",
                     hour12: true,
                 });
-                document.getElementById("currentDateTime").textContent =
-                    dateTimeString;
+                document.getElementById("currentDateTime").textContent = dateTimeString;
             }
 
             setInterval(updateDateTime, 1000);
             updateDateTime();
 
-            function updateCNoteStatus(status) {
-                const statusInput = document.getElementById("cnoteStatus");
-                const statusDisplay = document.getElementById("statusDisplay");
-                statusInput.value = status;
-                statusDisplay.className = `status-indicator status-${status.replace(" ", "-")}`;
-                statusDisplay.textContent = `Status: ${status.charAt(0).toUpperCase() + status.slice(1)}`;
-            }
+            const searchButton = document.getElementById("searchButton");
+            const searchInput = document.getElementById("searchCNote");
 
-            function updateStatusDisplay(status) {
-                const statusDisplay = document.getElementById("statusDisplay");
-                statusDisplay.className = `status-indicator status-${status.replace("_", "-")}`;
-                statusDisplay.textContent = `Status: ${status.replace("_", " ").charAt(0).toUpperCase() + status.slice(1)}`;
-            }
-
-            document.addEventListener("keydown", function(event) {
-                const keyMap = {
-                    F7: "PAID",
-                    F8: "TO PAY",
-                    F9: "TBB",
-                    F10: "FOC",
-                    "Alt+m": "MANUAL",
-                };
-                const type =
-                    keyMap[event.key] || keyMap[`${event.altKey && event.key === "m"}`];
-                if (type) {
-                    event.preventDefault();
-                    updatePaymentType(type);
+            searchButton.addEventListener("click", function() {
+                const cnoteNumber = searchInput.value.trim();
+                if (cnoteNumber) {
+                    window.location.href = `/dealer/view-cnote/${cnoteNumber}/`;
+                } else {
+                    alert("Please enter a CNote number to search.");
                 }
             });
 
-            document.getElementById("paidBtn").addEventListener("click", () => updatePaymentType("PAID"));
-            document.getElementById("toPayBtn").addEventListener("click", () => updatePaymentType("TO PAY"));
-            document.getElementById ("tbbBtn").addEventListener("click", () => updatePaymentType("TBB"));
-            document.getElementById("focBtn").addEventListener("click", () => updatePaymentType("FOC"));
-            document.getElementById("manualBtn").addEventListener("click", () => updatePaymentType("MANUAL"));
+            searchInput.addEventListener("keypress", function(event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    searchButton.click();
+                }
+            });
 
-            function updatePaymentType(type) {
-                document.getElementById("paymentTypeHeader").textContent = type;
-                document.getElementById("paymentType").value = type;
-                manualFields.style.display = type === "MANUAL" ? "flex" : "none";
+            const editBtn = document.getElementById("editBtn");
+            const updateBtn = document.getElementById("updateBtn");
+            const form = document.getElementById("cnoteDetailsForm");
+            const inputs = form.querySelectorAll("input:not([readonly]), select:not([readonly]), textarea:not([readonly])");
+            const statusInput = document.getElementById("status");
 
-                const manualRequired = type === "MANUAL";
-                manualDateInput.required = manualRequired;
-                manualCNoteNumber.required = manualRequired;
-                manualCNoteType.required = manualRequired;
+            function toggleEditMode(editable) {
+                const editableFields = document.querySelectorAll('#cnoteDetailsForm input:not([readonly]), #cnoteDetailsForm select:not([readonly]), #cnoteDetailsForm textarea:not([readonly]), .charges-container input:not([readonly])');
+                editableFields.forEach(input => {
+                    input.disabled = !editable;
+                });
+                document.getElementById('addArticle').disabled = !editable;
+                document.querySelectorAll('.remove-article').forEach(btn => btn.disabled = !editable);
+                document.getElementById('cnoteDetailsForm').classList.toggle("edit-mode", editable);
+                editBtn.style.display = editable ? "none" : "inline-block";
+                updateBtn.style.display = editable ? "inline-block" : "none";
+            }
 
-                if (manualRequired) {
-                    setManualDateRestrictions();
+            editBtn.addEventListener("click", function() {
+                if (statusInput.value.toLowerCase() === "booked") {
+                    toggleEditMode(true);
+                } else {
+                    alert("Only CNotes with 'Booked' status can be edited.");
+                }
+            });
+
+            updateBtn.addEventListener("click", function() {
+                const formData = new FormData(document.getElementById('cnoteDetailsForm'));
+        
+                // Get the delivery destination ID
+                const destinationId = document.getElementById('deliveryDestinationId').value;
+                formData.set('delivery_destination', destinationId);
+
+                // Add charges container inputs to formData
+                document.querySelectorAll('.charges-container input').forEach(input => {
+                    formData.append(input.name, input.value);
+                });
+
+                fetch(`/dealer/update_cnote/${cnote.id}/`, {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert("CNote updated successfully!");
+                        toggleEditMode(false);
+                        location.reload();
+                    } else {
+                        alert("Error updating CNote: " + (data.error || "Unknown error"));
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("An error occurred while updating the CNote.");
+                });
+            });
+
+            function updateFreightAndTotal() {
+                let totalArticleAmount = parseFloat(totalAmountSpan.textContent) || 0;
+                
+                const freightInput = document.querySelector('input[name="freight"]');
+                freightInput.value = totalArticleAmount.toFixed(2);
+                
+                let grandTotal = totalArticleAmount;
+                document.querySelectorAll('.charges-container input[type="number"]:not([name="grand_total"])').forEach(input => {
+                    grandTotal += parseFloat(input.value) || 0;
+                });
+                
+                document.querySelector('input[name="grand_total"]').value = grandTotal.toFixed(2);
+            }
+
+            document.querySelectorAll('.charges-container input[type="number"]:not([name="grand_total"])').forEach(input => {
+                input.addEventListener('input', updateFreightAndTotal);
+            });
+
+            // Delivery Destination Dropdown functionality
+            const deliveryDestinationInput = document.getElementById("deliveryDestination");
+            const dropdownList = document.getElementById("dropdownList");
+            const dropdownArrow = document.getElementById("dropdownArrow");
+            let cities = []; // Dynamic cities list fetched from the backend
+            let activeIndex = -1;
+            let isFullListVisible = false;
+
+            async function fetchCities() {
+                try {
+                    const response = await fetch("/dealer/fetch_cities/");
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Store cities with their IDs
+                        cities = data.cities.map(city => ({
+                            id: city.id,
+                            name: city.destination_name || city.name
+                        }));
+                        
+                        // Initially populate dropdown with current value
+                        const currentDestination = document.getElementById('deliveryDestination').value;
+                        if (currentDestination) {
+                            populateDropdown(currentDestination);
+                        }
+                    } else {
+                        console.error("Error fetching cities:", data.error);
+                    }
+                } catch (error) {
+                    console.error("Error fetching cities:", error);
                 }
             }
 
-            function setManualDateRestrictions() {
-                const today = new Date();
-                const thirtyDaysAgo = new Date(today);
-                thirtyDaysAgo.setDate(today.getDate() - 30);
+            function populateDropdown(filter = "") {
+                dropdownList.innerHTML = "";
+                const filteredCities = filter
+                    ? cities.filter(city => 
+                        city.name.toLowerCase().includes(filter.toLowerCase()))
+                    : cities;
 
-                manualDateInput.max = today.toISOString().split("T")[0];
-                manualDateInput.min = thirtyDaysAgo.toISOString().split("T")[0];
-                manualDateInput.value = today.toISOString().split("T")[0];
+                filteredCities.forEach((city) => {
+                    const div = document.createElement("div");
+                    div.classList.add("dropdown-item");
+                    div.textContent = city.name;
+                    div.dataset.cityId = city.id;
+                    div.addEventListener("click", () => {
+                        deliveryDestinationInput.value = city.name;
+                        document.getElementById('deliveryDestinationId').value = city.id;
+                        dropdownList.style.display = "none";
+                        isFullListVisible = false;
+                    });
+                    dropdownList.appendChild(div);
+                });
+
+                dropdownList.style.display = filteredCities.length> 0 ? "block" : "none";
+        activeIndex = -1;
             }
 
-            function handleArticleTypeChange(select) {
-                articleType = select.value;
-                updateRowFields(select.closest("tr"));
-                updateAllRows();
-            }
-
-            function updateRowFields(row) {
-                const artAmtInput = row.querySelector(".art-amt");
-                const wtRateInput = document.getElementById("wtRate");
-                const wtAmtInput = document.getElementById("wtAmt");
-                const fixAmtInput = document.getElementById("fixAmt");
-                const chargedWtInput = document.getElementById("chargedWt");
-
-                const articleSelect = row.querySelector("select[name='article']");
-                const selectedArticle = articleSelect.value;
-
-                switch (selectedArticle) {
-                    case "Article":
-                        artAmtInput.disabled = false;
-                        wtRateInput.disabled = true;
-                        wtAmtInput.disabled = true;
-                        fixAmtInput.disabled = true;
-                        wtRateInput.value = 0.0;
-                        wtAmtInput.value = 0.0;
-                        fixAmtInput.value = 0.0;
-                        break;
-                    case "Weight":
-                        artAmtInput.disabled = true;
-                        wtRateInput.disabled = false;
-                        wtAmtInput.disabled = true;
-                        fixAmtInput.disabled = true;
-                        wtAmtInput.value = 0.0;
-                        fixAmtInput.value = 0.0;
-                        break;
-                    case "Fix":
-                        artAmtInput.disabled = true;
-                        wtRateInput.disabled = true;
-                        wtAmtInput.disabled = true;
-                        fixAmtInput.disabled = false;
-                        wtRateInput.value = 0.0;
-                        wtAmtInput.value = 0.0;
-                        break;
+            deliveryDestinationInput.addEventListener("input", (e) => {
+                if (isFullListVisible) {
+                    isFullListVisible = false;
                 }
+                populateDropdown(e.target.value);
+            });
 
-                calculateRowAmount(row);
-            }
-
-            function calculateRowAmount(row) {
-                const artAmtInput = row.querySelector(".art-amt");
-                const wtRateInput = document.getElementById("wtRate");
-                const wtAmtInput = document.getElementById("wtAmt");
-                const fixAmtInput = document.getElementById("fixAmt");
-                const chargedWtInput = document.getElementById("chargedWt");
-
-                let amount = 0;
-
-                switch (articleType) {
-                    case "Article":
-                        amount = parseFloat(artAmtInput.value) || 0;
-                        break;
-                    case "Weight":
-                        const chargedWt = parseFloat(chargedWtInput.value) || 0;
-                        const wtRate = parseFloat(wtRateInput.value) || 0;
-                        amount = chargedWt * wtRate;
-                        wtAmtInput.value = amount.toFixed(2);
-                        break;
-                    case "Fix":
-                        amount = parseFloat(fixAmtInput.value) || 0;
-                        break;
+            dropdownArrow.addEventListener("click", () => {
+                if (dropdownList.style.display === "block" && isFullListVisible) {
+                    dropdownList.style.display = "none";
+                    isFullListVisible = false;
+                } else {
+                    populateDropdown();
+                    dropdownList.style.display = "block";
+                    isFullListVisible = true;
                 }
+            });
 
-                updateFreight();
-            }
+            document.addEventListener("click", (e) => {
+                if (!e.target.closest(".search-container")) {
+                    dropdownList.style.display = "none";
+                    isFullListVisible = false;
+                }
+            });
 
-            function updateAllRows() {
-                const rows = articleTable.getElementsByTagName("tr");
-                for (let i = 0; i < rows.length; i++) {
-                    const select = rows[i].querySelector("select[name='article']");
-                    if (select) {
-                        const selectedArticle = select.value;
-                        updateRowFields(rows[i]);
+            deliveryDestinationInput.addEventListener("keydown",(e) => {
+                const items = Array.from(dropdownList.querySelectorAll(".dropdown-item"));
+        
+                if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    activeIndex = (activeIndex + 1) % items.length;
+                    updateActiveItem(items);
+                } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    activeIndex = (activeIndex - 1 + items.length) % items.length;
+                    updateActiveItem(items);
+                } else if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (activeIndex >= 0 && items[activeIndex]) {
+                        deliveryDestinationInput.value = items[activeIndex].textContent;
+                        dropdownList.style.display = "none";
+                        isFullListVisible = false;
+                    } else if (items.length === 1) {
+                        deliveryDestinationInput.value = items[0].textContent;
+                        dropdownList.style.display = "none";
+                        isFullListVisible = false;
                     }
                 }
+            });
+
+            function updateActiveItem(items) {
+                items.forEach(item => item.classList.remove("active"));
+                if (activeIndex >= 0 && items[activeIndex]) {
+                    items[activeIndex].classList.add("active");
+                    items[activeIndex].scrollIntoView({ block: "nearest" });
+                }
             }
 
-            function updateFreight() {
-                let totalFreight = 0;
-                const rows = articleTable.getElementsByTagName("tr");
+            // Fetch cities on page load
+            fetchCities();
+
+            // Article management
+            const articleTable = document.getElementById('articleTable').getElementsByTagName('tbody')[0];
+            const addArticleBtn = document.getElementById('addArticle');
+            const totalQuantitySpan = document.getElementById('totalQuantity');
+            const totalAmountSpan = document.getElementById('totalAmount');
+
+            function updateTotals() {
+                let totalQuantity = 0;
+                let totalAmount = 0;
+                const rows = articleTable.getElementsByTagName('tr');
                 for (let i = 0; i < rows.length; i++) {
-                    const artAmtInput = rows[i].querySelector(".art-amt");
-                    const wtAmtInput = document.getElementById("wtAmt");
-                    const fixAmtInput = document.getElementById("fixAmt");
-
-                    switch (articleType) {
-                        case "Article":
-                            totalFreight += parseFloat(artAmtInput.value) || 0;
-                            break;
-                        case "Weight":
-                            totalFreight += parseFloat(wtAmtInput.value) || 0;
-                            break;
-                        case "Fix":
-                            totalFreight += parseFloat (fixAmtInput.value) || 0;
-                            break;
-                    }
+                    const quantityInput = rows[i].querySelector('.quantity');
+                    const amountInput = rows[i].querySelector('.amount');
+                    totalQuantity += parseInt(quantityInput.value) || 0;
+                    totalAmount += parseFloat(amountInput.value) || 0;
                 }
+                totalQuantitySpan.textContent = totalQuantity;
+                totalAmountSpan.textContent = totalAmount.toFixed(2);
 
-                const freightInput = document.getElementById("freight");
-                freightInput.value = totalFreight.toFixed(2);
-                calculateGrandTotal();
+                // Update freight and grand total
+                const freightInput = document.querySelector('input[name="freight"]');
+                freightInput.value = totalAmount.toFixed(2);
+                updateFreightAndTotal();
             }
 
-            function calculateGrandTotal() {
-                let grandTotal = 0;
-                const chargesInputs = document.querySelectorAll(".charges-container input[type='number']");
-                for (let i = 0; i < chargesInputs.length; i++) {
-                    grandTotal += parseFloat(chargesInputs[i].value) || 0;
-                }
-
-                const grandTotalInput = document.getElementById("grandTotal");
-                grandTotalInput.value = grandTotal.toFixed(2);
-            }
-
-            function addArticle() {
+            function addArticleRow() {
                 const newRow = articleTable.insertRow();
                 newRow.innerHTML = `
                     <td>
-                        <select name="article" class="article-select" required>
-                            <option value="Article" selected>Article</option>
-                            <option value="Weight">Weight</option>
-                            <option value="Fix">Fix</option>
+                        <select name="article_type[]" class="article-type" required>
+                            <option value="">Select Article Type</option>
+                            {% for article_type in article_types %}
+                            <option value="{{ article_type.id }}">{{ article_type.name }}</option>
+                            {% endfor %}
                         </select>
                     </td>
-                    <td><input type="number" name="art" required></td>
-                    <td>
-                        <select name="artType" required>
-                            <option value="">Select</option>
-                            <option value="type1">Type 1</option>
-                            <option value="type2">Type 2</option>
-                        </select>
-                    </td>
-                    <td><input type="text" name="saidToCont" required></td>
-                    <td><input type="number" name="artAmt" class="art-amt" step="0.01" required></td>
+                    <td><input type="number" name="quantity[]" class="quantity" required></td>
+                    <td><input type="text" name="description[]" class="description" required></td>
+                    <td><input type="number" name="amount[]" class="amount" step="0.01" required></td>
                     <td><button type="button" class="remove-article">Remove</button></td>
                 `;
-
-                const select = newRow.querySelector("select[name='article']");
-                select.value = articleType;
-                updateRowFields(newRow);
-
-                select.addEventListener("change", function() {
-                    handleArticleTypeChange(this);
-                });
-
                 setupArticleRowListeners(newRow);
-                calculateTotalFreight();
+                updateTotals();
             }
-
-            function calculateTotalFreight() {
-                let totalFreight = 0;
-                const rows = articleTable.getElementsByTagName("tr");
-                for (let i = 0; i < rows.length; i++) {
-                    const artAmtInput = rows[i].querySelector(".art-amt");
-                    const wtAmtInput = document.getElementById("wtAmt");
-                    const fixAmtInput = document.getElementById("fixAmt");
-
-                    switch (articleType) {
-                        case "Article":
-                            totalFreight += parseFloat(artAmtInput.value) || 0;
-                            break;
-                        case "Weight":
-                            totalFreight += parseFloat(wtAmtInput.value) || 0;
-                            break;
-                        case "Fix":
-                            totalFreight += parseFloat(fixAmtInput.value) || 0;
-                            break;
-                    }
-                }
-
-                const freightInput = document.getElementById("freight");
-                freightInput.value = totalFreight.toFixed(2);
-                calculateGrandTotal();
-            }
-
-            addArticleButton.addEventListener("click", addArticle);
-
-            articleTable.addEventListener("click", function(e) {
-                if (e.target.classList.contains("remove-article")) {
-                    e.target.closest("tr").remove();
-                    updateFreight();
-                }
-            });
 
             function setupArticleRowListeners(row) {
-                row.querySelector(".remove-article").disabled =
-                    articleTable.rows.length <= 1;
-            }
+                const removeBtn = row.querySelector('.remove-article');
+                const quantityInput = row.querySelector('.quantity');
+                const amountInput = row.querySelector('.amount');
 
-            setupArticleRowListeners(articleTable.rows[0]);
-            calculateTotalFreight();
-
-            const articleSelects = articleTable.querySelectorAll("select[name='article']");
-            for (let i = 0; i < articleSelects.length; i++) {
-                articleSelects[i].addEventListener("change", function() {
-                    handleArticleTypeChange(this);
+                removeBtn.addEventListener('click', function() {
+                    articleTable.removeChild(row);
+                    updateTotals();
                 });
+
+                quantityInput.addEventListener('input', updateTotals);
+                amountInput.addEventListener('input', updateTotals);
             }
 
-            updateRowFields(articleTable.rows[0]);
+            addArticleBtn.addEventListener('click', addArticleRow);
+
+            // Setup listeners for existing rows
+            Array.from(articleTable.rows).forEach(setupArticleRowListeners);
+
+            // Initial update of totals
+            updateTotals();
+
+            function updateFreightAndTotal() {
+                let totalArticleAmount = parseFloat(totalAmountSpan.textContent) || 0;
+
+                const freightInput = document.querySelector('input[name="freight"]');
+                freightInput.value = totalArticleAmount.toFixed(2);
+
+                let grandTotal = totalArticleAmount;
+                document.querySelectorAll('.charges-container input[type="number"]:not([name="grand_total"])').forEach(input => {
+                    grandTotal += parseFloat(input.value) || 0;
+                });
+
+                document.querySelector('input[name="grand_total"]').value = grandTotal.toFixed(2);
+            }
+
+            document.querySelectorAll('.charges-container input[type="number"]:not([name="grand_total"])').forEach(input => {
+                input.addEventListener('input', updateFreightAndTotal);
+            });
         });
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const cnoteNumber = urlParams.get("cnoteNumber");
-
-        if (cnoteNumber) {
-            fetch(`/api/cnote-details/${cnoteNumber}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error("CNote not found");
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // Populate the form fields with the fetched CNote data
-                    document.getElementById("fromCity").value = data.from_city;
-                    document.getElementById("cnoteNumber").value = data.cnote_number;
-                    document.getElementById("fromDealer").value = data.from_dealer;
-                    document.getElementById("date").value = data.date;
-                    document.getElementById("time").value = data.time;
-                    // Populate other fields as needed
-                })
-                .catch(error => {
-                    console.error("Error fetching CNote details:", error);
-                    alert("CNote not found. Please check the number and try again.");
-                });
-        } else {
-            alert("Invalid CNote number");
-        }
     </script>
 </body>
 </html>
