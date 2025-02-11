@@ -93,7 +93,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 import json
 import logging
+from django.contrib import messages
+from django.shortcuts import redirect
 from django.views.decorators.http import require_GET, require_POST
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+from .models import CNotes, DeliveryDestination, Article, ArtType
+from decimal import Decimal
 
 
 
@@ -924,18 +931,45 @@ def cnote_success(request, cnote_number):
     except CNotes.DoesNotExist:
         messages.error(request, 'CNote not found.')
         return redirect('dealer:create_cnotes')
-        
+
+
+logger = logging.getLogger(__name__)
+
 @login_required
 def view_cnote(request, cnote_number):
-    print(f"Searching for CNotes with number: {cnote_number}")
     try:
-        cnote = CNotes.objects.get(cnote_number=cnote_number)
-        print(f"CNotes found: {cnote}")
-        return render(request, 'dealer/view_cnote.html', {'cnote': cnote})
+        # Fetch the CNote
+        cnote = get_object_or_404(CNotes, cnote_number=cnote_number)
+        
+        # Fetch the dealer information from the CNote
+        dealer = cnote.dealer
+        
+        # Fetch related articles
+        #articles = cnote.articles.all()
+        articles = Article.objects.filter(cnote=cnote)  # Fetch related articles
+
+
+        # Fetch all destinations for the dropdown
+        destinations = DeliveryDestination.objects.all()
+
+        # Pass all required data to the template
+        return render(request, 'dealer/view_cnote.html', {
+            'cnote': cnote,
+            'dealer': dealer,
+            'articles': articles,
+            'destinations': destinations,
+            #'article_types': article_types, # type: ignore
+        })
+
     except CNotes.DoesNotExist:
-        print(f"CNotes with number {cnote_number} does not exist")
-        raise Http404("CNotes does not exist")
+        logger.error(f"CNote does not exist: {cnote_number}")
+        messages.error(request, 'CNote does not exist.')
+        return redirect('dealer:create_cnotes')
     
+    except Exception as e:
+        logger.error(f"Error in view_cnote: {str(e)}")
+        messages.error(request, 'An error occurred while fetching the CNote details.')
+        return redirect('dealer:dashboard')
 
 # dealer_app/views.py
 
@@ -992,7 +1026,6 @@ def get_cities(request):
         return JsonResponse(list(cities), safe=False)
     return JsonResponse([], safe=False)
 
-
 def fetch_cities(request):
     """
     Fetches all city names from the City model and returns them as a JSON response.
@@ -1009,6 +1042,7 @@ def fetch_cities(request):
     else:
         # Return a 405 error for non-GET requests
         return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
+
 logger = logging.getLogger(__name__)
 
 @login_required
@@ -1267,7 +1301,7 @@ def create_cnotes(request):
         logger.info("POST request received.")
         logger.info(f"POST data: {request.POST}")
 
-        try:
+        try:   
             # Process charge fields with explicit mapping
             charge_fields = {
                 'freight': 'freight',
@@ -1389,22 +1423,18 @@ def create_cnotes(request):
     }
     return render(request, 'dealer/create_cnotes.html', context)
 
-@login_required
+
+
+logger = logging.getLogger(__name__)
 def search_cnote(request):
-    cnote_number = request.GET.get('cnote_number')
-    if cnote_number:
-        try:
-            cnote = get_object_or_404(CNotes, cnote_number=cnote_number)
-            return render(request, 'dealer/view_cnote.html', {'cnote': cnote})
-        except CNotes.DoesNotExist:
-            messages.error(request, 'CNote not found.')
-            return redirect('dealer:create_cnotes')  # Redirect back to the create CNotes page
-    messages.error(request, 'Please enter a CNote number.')
-    return redirect('dealer:create_cnotes')  # Redirect if no CNote number is provided
-
-
-
-
+    cnote_number = request.GET.get('cnote_number', '')
+    try:
+        cnote = CNotes.objects.get(cnote_number=cnote_number)
+        return redirect('dealer:view_cnote', cnote_number=cnote_number)
+    except CNotes.DoesNotExist:
+        logger.warning(f"CNote not found: {cnote_number}")
+        messages.error(request, f"CNote with number {cnote_number} not found.")
+        return redirect(reverse('dealer:create_cnotes'))
 # Set up logging
 logger = logging.getLogger(__name__)
 
@@ -1457,3 +1487,112 @@ def party_suggestions(request):
     except Exception as e:
         logger.exception(f"Error in party_suggestions: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
+
+
+
+@login_required
+@require_POST
+def update_cnote(request, cnote_id):
+    try:
+        cnote = CNotes.objects.get(id=cnote_id, dealer=request.user.dealer)
+        
+        if cnote.status != 'booked':
+            return JsonResponse({'success': False, 'error': 'Only booked CNotes can be updated.'})
+
+        # Update CNote fields
+        cnote.booking_type = request.POST.get('booking_type', cnote.booking_type)
+        cnote.delivery_type = request.POST.get('delivery_type', cnote.delivery_type)
+        cnote.delivery_method = request.POST.get('delivery_method', cnote.delivery_method)
+        
+        # Handle delivery_destination
+        delivery_destination_id = request.POST.get('delivery_destination')
+        if delivery_destination_id:
+            cnote.delivery_destination = DeliveryDestination.objects.get(id=delivery_destination_id)
+        
+        cnote.eway_bill_number = request.POST.get('eway_bill_number', cnote.eway_bill_number)
+        cnote.manual_date = request.POST.get('manual_date', cnote.manual_date)
+        cnote.manual_cnote_number = request.POST.get('manual_cnote_number', cnote.manual_cnote_number)
+        cnote.manual_cnote_type = request.POST.get('manual_cnote_type', cnote.manual_cnote_type)
+        cnote.payment_type = request.POST.get('payment_type', cnote.payment_type)
+        cnote.consignor_name = request.POST.get('consignor_name', cnote.consignor_name)
+        cnote.consignor_mobile = request.POST.get('consignor_mobile', cnote.consignor_mobile)
+        cnote.consignor_gst = request.POST.get('consignor_gst', cnote.consignor_gst)
+        cnote.consignor_address = request.POST.get('consignor_address', cnote.consignor_address)
+        cnote.consignee_name = request.POST.get('consignee_name', cnote.consignee_name)
+        cnote.consignee_mobile = request.POST.get('consignee_mobile', cnote.consignee_mobile)
+        cnote.consignee_gst = request.POST.get('consignee_gst', cnote.consignee_gst)
+        cnote.consignee_address = request.POST.get('consignee_address', cnote.consignee_address)
+        cnote.actual_weight = Decimal(request.POST.get('actual_weight', cnote.actual_weight))
+        cnote.charged_weight = Decimal(request.POST.get('charged_weight', cnote.charged_weight))
+        cnote.weight_rate = Decimal(request.POST.get('weight_rate', cnote.weight_rate))
+        cnote.weight_amount = Decimal(request.POST.get('weight_amount', cnote.weight_amount))
+        cnote.fix_amount = Decimal(request.POST.get('fix_amount', cnote.fix_amount))
+        cnote.invoice_number = request.POST.get('invoice_number', cnote.invoice_number)
+        cnote.declared_value = Decimal(request.POST.get('declared_value', cnote.declared_value))
+        cnote.risk_type = request.POST.get('risk_type', cnote.risk_type)
+        cnote.pod_required = request.POST.get('pod_required', cnote.pod_required)
+        
+        # Update charges
+        cnote.freight = Decimal(request.POST.get('freight', cnote.freight))
+        cnote.docket_charge = Decimal(request.POST.get('docket_charge', cnote.docket_charge))
+        cnote.door_delivery_charge = Decimal(request.POST.get('door_delivery_charge', cnote.door_delivery_charge))
+        cnote.handling_charge = Decimal(request.POST.get('handling_charge', cnote.handling_charge))
+        cnote.pickup_charge = Decimal(request.POST.get('pickup_charge', cnote.pickup_charge))
+        cnote.transhipment_charge = Decimal(request.POST.get('transhipment_charge', cnote.transhipment_charge))
+        cnote.insurance = Decimal(request.POST.get('insurance', cnote.insurance))
+        cnote.fuel_surcharge = Decimal(request.POST.get('fuel_surcharge', cnote.fuel_surcharge))
+        cnote.commission = Decimal(request.POST.get('commission', cnote.commission))
+        cnote.other_charge = Decimal(request.POST.get('other_charge', cnote.other_charge))
+        cnote.carrier_risk = Decimal(request.POST.get('carrier_risk', cnote.carrier_risk))
+        
+        # Recalculate grand total
+        cnote.grand_total = (
+            cnote.freight +
+            cnote.docket_charge +
+            cnote.door_delivery_charge +
+            cnote.handling_charge +
+            cnote.pickup_charge +
+            cnote.transhipment_charge +
+            cnote.insurance +
+            cnote.fuel_surcharge +
+            cnote.commission +
+            cnote.other_charge +
+            cnote.carrier_risk
+        )
+
+        cnote.total_art = int(request.POST.get('total_art', cnote.total_art))
+
+        cnote.save()
+
+        # Update articles
+        article_types = request.POST.getlist('article_type[]')
+        quantities = request.POST.getlist('quantity[]')
+        descriptions = request.POST.getlist('description[]')
+        amounts = request.POST.getlist('amount[]')
+        art_type_ids = request.POST.getlist('art_type[]')
+
+        # Delete existing articles
+        cnote.articles.all().delete()
+
+        # Create new articles
+        for i in range(len(article_types)):
+            art_type = ArtType.objects.get(id=art_type_ids[i]) if art_type_ids[i] else None
+            Article.objects.create(
+                cnote=cnote,
+                article_type=article_types[i],
+                art=int(quantities[i]),
+                art_type=art_type,
+                said_to_contain=descriptions[i],
+                art_amount=Decimal(amounts[i])
+            )
+
+        return JsonResponse({'success': True})
+    except CNotes.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'CNote not found.'})
+    except DeliveryDestination.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Invalid delivery destination.'})
+    except ArtType.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Invalid article type.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
