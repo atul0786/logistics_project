@@ -717,11 +717,14 @@
             console.log("DOM fully loaded");
             fetchPendingCNotes();
             fetchTransporters();
+            // ✅ Ensure filter works when user types
             document.querySelectorAll('.filter-row input').forEach(input => {
-                input.addEventListener('input', filterPopupTable);
+                input.addEventListener('input', function() {
+                    console.log("Filtering:", input.id, input.value);
+                    filterPopupTable();
+                });
             });
         });
-
         function fetchPendingCNotes() {
             fetch('/dealer/api/fetch_pending_cnotes/')
                 .then(response => {
@@ -767,9 +770,9 @@
                     <td>${item.delivery_destination__destination_name || ''}</td>
                     <td>${item.consignor_name}</td>
                     <td>${item.consignee_name}</td>
-                    <td>${item.total_art}</td>
+                    <td>${item.total_articles}</td>  <!-- ✅ Corrected: Now using total_articles -->
                     <td>${item.actual_weight}</td>
-                    <td>${item.booking_type}</td>
+                    <td>${item.payment_type}</td>
                     <td>${item.grand_total}</td>
                 `;
                 tableBody.appendChild(row);
@@ -809,14 +812,25 @@
             };
 
             const filteredData = data.filter(item => {
-                return Object.keys(filters).every(key => {
-                    if (!filters[key]) return true;
-                    const itemValue = item[key] || item[`delivery_destination__destination_name`] || '';
-                    return itemValue.toString().toLowerCase().includes(filters[key]);
-                }) && !addedCNoteNumbers.has(item.cnote_number);
+                return (
+                    (!filters.sr || item.id.toString().toLowerCase().includes(filters.sr)) &&
+                    (!filters.date || item.created_at.toString().toLowerCase().includes(filters.date)) &&
+                    (!filters.cnoteNumber || item.cnote_number.toLowerCase().includes(filters.cnoteNumber)) &&
+                    (!filters.destination || item.delivery_destination__destination_name?.toLowerCase().includes(filters.destination)) &&
+                    (!filters.consignor || item.consignor_name.toLowerCase().includes(filters.consignor)) &&
+                    (!filters.consignee || item.consignee_name.toLowerCase().includes(filters.consignee)) &&
+                    (!filters.totalArt || (item.total_articles || '0').toString().toLowerCase().includes(filters.totalArt)) &&
+                    (!filters.weight || (item.actual_weight || '0').toString().toLowerCase().includes(filters.weight)) &&
+                    (!filters.cnoteType || item.payment_type.toLowerCase().includes(filters.cnoteType)) &&
+                    (!filters.grandTotal || (item.grand_total || '0').toString().toLowerCase().includes(filters.grandTotal))
+                );
             });
+            
 
             renderTable('popup-table', filteredData);
+            console.log("Filters applied:", filters);
+            console.log("Filtered Data:", filteredData);
+
         }
 
         function showPopup(popupId) {
