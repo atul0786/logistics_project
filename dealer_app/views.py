@@ -984,7 +984,10 @@ def fetch_pending_cnotes(request):
     ).values(
         'id', 'created_at', 'cnote_number', 'delivery_destination__destination_name',
         'consignor_name', 'consignee_name', 'total_art', 'actual_weight', 
-        'charged_weight', 'booking_type', 'freight', 'grand_total'
+        'charged_weight', 'booking_type', 'freight', 'grand_total',
+        'payment_type'
+    ).annotate(
+        total_articles=Sum('articles__art')  # ✅ Change 'total_art' to 'total_articles'
     )
     
     # Convert queryset to list and ensure total_art is not None
