@@ -3,12 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DDM Details</title>
+    <title>Delivery Run Sheet</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            width: 210mm;
+            min-height: 297mm;
+        }
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 10mm;
+            margin: 0 auto;
+            background: white;
+        }
         @media print {
             .no-print {
-                display: none;
+                display: none !important;
             }
             body {
                 print-color-adjust: exact;
@@ -20,6 +37,16 @@
             tr {
                 page-break-inside: avoid;
                 page-break-after: auto;
+            }
+            .page {
+                margin: 0;
+                border: initial;
+                border-radius: initial;
+                width: initial;
+                min-height: initial;
+                box-shadow: initial;
+                background: initial;
+                page-break-after: always;
             }
         }
         .loading {
@@ -60,117 +87,54 @@
         <div class="loading-spinner"></div>
     </div>
 
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-6 text-center">Door Delivery Memo Details</h1>
-        
+    <div class="page bg-white shadow-md">
         <div id="errorMessage" class="error-message bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
             <strong class="font-bold">Error!</strong>
             <span class="block sm:inline" id="errorText"></span>
         </div>
 
-        {% if messages %}
-        <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4" role="alert">
-            {% for message in messages %}
-            <span class="block sm:inline">{{ message }}</span>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold">DDM Number: <span id="ddmNumber" class="text-blue-600">{{ ddm_summary.ddm_no }}</span></h2>
-                <p class="text-sm text-gray-600">Date: <span id="ddmDate">{{ ddm_summary.creation_date|date:"M d, Y, g:i a" }}</span></p>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div class="bg-gray-50 p-4 rounded">
-                    <h3 class="text-lg font-semibold mb-2 text-gray-700">Vehicle Details</h3>
-                    <p><strong>Truck Number:</strong> <span id="truckNumber">{{ ddm_summary.truck_no }}</span></p>
-                    <p><strong>Driver Name:</strong> <span id="driverName">{{ ddm_summary.driver_name }}</span></p>
-                    <p><strong>Driver Number:</strong> <span id="driverNumber">{{ ddm_summary.driver_no }}</span></p>
-                </div>
-                
-            <div class="bg-gray-50 p-4 rounded">
-                <h3 class="text-lg font-semibold mb-2 text-gray-700">Loading Information</h3>
-                <p><strong>Lorry Hire:</strong> ₹<span id="lorryHire">{{ ddm_summary.lorry_hire }}</span></p>
-                <p><strong>Remarks:</strong> <span id="remarks">{{ ddm_summary.remarks }}</span></p>
-            </div>
-            
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold">GOOD WAY EXPRESS</h1>
+            <p class="text-sm">Address : Behind Mahadev Mandir, Joshi Wada, Yavatmal(MS) 445001</p>
+            <h2 class="text-xl font-bold mt-4">Delivery Run Sheet</h2>
         </div>
 
-            <h3 class="text-lg font-semibold mb-2 text-gray-700">CNotes List</h3>
-            {% if ddm_details %}
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-white border border-gray-300">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="py-2 px-4 border-b text-left">CNote Number</th>
-                            <th class="py-2 px-4 border-b text-left">Consignee Name</th>
-                            <th class="py-2 px-4 border-b text-left">Consignee Contact</th>
-                            <th class="py-2 px-4 border-b text-left">Destination</th>
-                            <th class="py-2 px-4 border-b text-left">Total Art</th>
-                            <th class="py-2 px-4 border-b text-left">Amount</th>
-                            <th class="py-2 px-4 border-b text-left">Remarks</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cnotesList">
-                        {% for detail in ddm_details %}
-                        <tr>
-                            <td class="py-2 px-4 border-b">{{ detail.cnote_number }}</td>
-                            <td class="py-2 px-4 border-b">{{ detail.consignee_name }}</td>
-                            <td class="py-2 px-4 border-b">{{ detail.contact_number }}</td>
-                            <td class="py-2 px-4 border-b">{{ detail.destination }}</td>
-                            <td class="py-2 px-4 border-b">{{ detail.total_pkt }}</td>
-                            <td class="py-2 px-4 border-b">₹{{ detail.amount }}</td>
-                        
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="text-center py-4 text-gray-600">
-                No CNotes found for this DDM.
-            </div>
-            {% endif %}
-
-            <div class="mt-6">
-                <h3 class="text-lg font-semibold mb-2 text-gray-700">Summary</h3>
-                <table class="min-w-full bg-white border border-gray-300">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="py-2 px-4 border-b text-left">Total CNotes</th>
-                            <th class="py-2 px-4 border-b text-left">Total Art</th>
-                            <th class="py-2 px-4 border-b text-left">Total Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="py-2 px-4 border-b">{{ ddm_details|length }}</td>
-                            <td class="py-2 px-4 border-b">{{ total_art }}</td>
-                            <td class="py-2 px-4 border-b">₹{{ total_amount }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
+            <p>DRS No.: <span id="drsNumber"></span></p>
+            <p>Date: <span id="drsDate"></span></p>
+            <p>Vehicle No.: <span id="vehicleNumber"></span></p>
+            <p>Driver Name: <span id="driverName"></span> (<span id="driverNumber"></span>)</p>
             </div>
 
-            <div class="mt-6">
-                <h3 class="text-lg font-semibold mb-2 text-gray-700">Signature and Stamp</h3>
-                <div class="border-2 border-dashed border-gray-300 p-4 text-center h-32">
-                    Space for Signature and Stamp
-                </div>
-            </div>
+        <div class="overflow-x-auto mb-6">
+            <table class="w-full bg-white border border-gray-300">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="py-2 px-2 border-b text-left text-xs">To City</th> <!-- ✅ New Column -->
+                        <th class="py-2 px-2 border-b text-left text-xs">CN No</th>
+                        <th class="py-2 px-2 border-b text-left text-xs">Date</th>
+                        <th class="py-2 px-2 border-b text-left text-xs">Consignee Name</th>
+                        <th class="py-2 px-2 border-b text-left text-xs">No of PKG</th>
+                        <th class="py-2 px-2 border-b text-left text-xs">CN Type</th>
+                        <th class="py-2 px-2 border-b text-left text-xs">AMT</th>
+                        <th class="py-2 px-2 border-b text-left text-xs">Receiver Sign.</th>
+                    </tr>
+                </thead>
+                <tbody id="cnotesList">
+                    <!-- CNotes will be dynamically inserted here -->
+                </tbody>
+            </table>
         </div>
 
-        <div class="flex justify-end space-x-4 no-print">
-            <button id="savePdfBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300">
-                Save PDF
-            </button>
+        <div class="flex justify-between text-sm">
+            <p>Total: <span id="totalCNotes"></span></p>
+            <p>Total PKG: <span id="totalPackages"></span></p>
+            <p>Total Amount: ₹<span id="totalAmount"></span></p>
+        </div>
+
+        <div class="flex justify-end space-x-4 mt-6 no-print">
             <button id="printBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition duration-300">
                 Print
-            </button>
-            <button id="createDdmBtn" class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded transition duration-300">
-                Create DDM
             </button>
         </div>
     </div>
@@ -180,9 +144,18 @@
             const loadingIndicator = document.getElementById('loading');
             const errorMessage = document.getElementById('errorMessage');
             const errorText = document.getElementById('errorText');
-            const savePdfBtn = document.getElementById('savePdfBtn');
+           // const savePdfBtn = document.getElementById('savePdfBtn');
             const printBtn = document.getElementById('printBtn');
-            const createDdmBtn = document.getElementById('createDdmBtn');
+
+            function formatDate(dateString) {
+                if (!dateString) return ''; 
+                let dateObj = new Date(dateString); 
+                if (isNaN(dateObj)) return 'Invalid Date'; 
+                let year = dateObj.getFullYear();
+                let month = String(dateObj.getMonth() + 1).padStart(2, '0'); 
+                let day = String(dateObj.getDate()).padStart(2, '0');
+                return `${day}-${month}-${year}`; 
+            }
 
             function showLoading() {
                 loadingIndicator.style.display = 'flex';
@@ -201,6 +174,7 @@
                 errorMessage.classList.remove('show');
             }
 
+
             // Get DDM ID from URL
             const ddmId = new URLSearchParams(window.location.search).get('ddmId');
             if (!ddmId) {
@@ -212,9 +186,8 @@
             loadDDMDetails(ddmId);
 
             // Event Listeners
-            savePdfBtn.addEventListener('click', () => savePDF(ddmId));
+           // savePdfBtn.addEventListener('click', () => savePDF(ddmId));
             printBtn.addEventListener('click', printDDM);
-            createDdmBtn.addEventListener('click', () => window.location.href = '/transporter/ddm/');
 
             function loadDDMDetails(ddmId) {
                 showLoading();
@@ -229,31 +202,40 @@
                     })
                     .then(data => {
                         // Update DDM details
-                        document.getElementById('ddmNumber').textContent = data.ddm_no;
-                        document.getElementById('ddmDate').textContent = new Date(data.creation_date).toLocaleString();
-                        document.getElementById('truckNumber').textContent = data.truck_no;
+                        document.getElementById('drsNumber').textContent = data.ddm_no;
+                        document.getElementById('drsDate').textContent = formatDate(data.creation_date); // ✅ Updated
+                        document.getElementById('vehicleNumber').textContent = data.truck_no;
                         document.getElementById('driverName').textContent = data.driver_name;
                         document.getElementById('driverNumber').textContent = data.driver_no;
-                        document.getElementById('lorryHire').textContent = data.lorry_hire;
-                        document.getElementById('remarks').textContent = data.remarks || '';
 
-                        // Update CNotes list if it's empty
+                        // Update CNotes list
                         const cnotesList = document.getElementById('cnotesList');
-                        if (!cnotesList.children.length && data.cnotes && data.cnotes.length > 0) {
-                            data.cnotes.forEach(cnote => {
-                                const row = document.createElement('tr');
-                                row.innerHTML = `
-                                    <td class="py-2 px-4 border-b">${cnote.cnote_number}</td>
-                                    <td class="py-2 px-4 border-b">${cnote.consignee_name}</td>
-                                    <td class="py-2 px-4 border-b">${cnote.consignee_contact}</td>
-                                    <td class="py-2 px-4 border-b">${cnote.delivery_destination}</td>
-                                    <td class="py-2 px-4 border-b">${cnote.total_art}</td>
-                                    <td class="py-2 px-4 border-b">₹${cnote.amount}</td>
-                                    <td class="py-2 px-4 border-b">${cnote.remarks || ''}</td>
-                                `;
-                                cnotesList.appendChild(row);
-                            });
-                        }
+                        cnotesList.innerHTML = ''; // Clear existing content
+                        let totalPackages = 0;
+                        let totalAmount = 0;
+
+                        data.cnotes.forEach((cnote, index) => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td class="py-1 px-2 border-b text-xs">${cnote.delivery_destination || 'N/A'}</td> <!-- ✅ Destination Added -->
+                                <td class="py-1 px-2 border-b text-xs">${cnote.cnote_number}</td>
+                                <td class="py-1 px-2 border-b text-xs">${formatDate(cnote.date)}</td> <!-- ✅ Updated -->
+                                <td class="py-1 px-2 border-b text-xs">${cnote.consignee_name}</td>
+                                <td class="py-1 px-2 border-b text-xs">${cnote.total_art ?? 0}</td> <!-- ✅ Fix: Correct total_art -->
+                                <td class="py-1 px-2 border-b text-xs">${cnote.cn_type ? cnote.cn_type : 'N/A'}</td> <!-- ✅ Fix: Correct CN Type Display -->
+                                <td class="py-1 px-2 border-b text-xs">₹${cnote.amount}</td>
+                                <td class="py-1 px-2 border-b text-xs"></td>
+                            `;
+                            cnotesList.appendChild(row);
+
+                            totalPackages += cnote.total_art ?? 0;  // ✅ Fix: Correct total_art calculation
+                            totalAmount += cnote.amount;
+                        });
+
+                        // Update summary
+                        document.getElementById('totalCNotes').textContent = data.cnotes.length;
+                        document.getElementById("totalPackages").textContent = `No of PKG: ${totalPackages}`;
+                        document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
                     })
                     .catch(error => {
                         console.error('Error:', error);
@@ -264,31 +246,12 @@
                     });
             }
 
-            function savePDF(ddmId) {
-                showLoading();
-                fetch(`/transporter/api/save-ddm-pdf/${ddmId}/`)
-                    .then(response => {
-                        if (!response.ok) throw new Error('Failed to generate PDF');
-                        return response.blob();
-                    })
-                    .then(blob => {
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.style.display = 'none';
-                        a.href = url;
-                        a.download = `DDM-${document.getElementById('ddmNumber').textContent}.pdf`;
-                        document.body.appendChild(a);
-                        a.click();
-                        window.URL.revokeObjectURL(url);
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        showError('Failed to generate PDF. Please try again.');
-                    })
-                    .finally(() => {
-                        hideLoading();
-                    });
-            }
+           
+                console.log("API Response:", data); // ✅ Debug full API data
+                data.cnotes.forEach((cnote, index) => {
+                    console.log(`Processing CNote #${index + 1}:`, cnote); // ✅ Debug each cnote
+                });
+
 
             function printDDM() {
                 window.print();
@@ -297,3 +260,4 @@
     </script>
 </body>
 </html>
+
