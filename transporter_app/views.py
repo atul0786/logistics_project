@@ -1239,10 +1239,17 @@ def generate_sequential_ddm_number():
 
         return f"DDM-{new_number}"  # Example format: DDM-1, DDM-2, etc.
     
+
+
+logger = logging.getLogger(__name__)
+
 @require_GET
 def get_ddm_details(request, ddm_id):
     try:
+        # ✅ Fetch DDM Summary
         ddm_summary = get_object_or_404(DDMSummary, ddm_id=ddm_id)
+
+        # ✅ Fetch all related DDM Details
         ddm_details = DDMDetails.objects.filter(ddm=ddm_summary)
 
         cnotes_data = []
@@ -1250,26 +1257,50 @@ def get_ddm_details(request, ddm_id):
         total_amount = 0
 
         for detail in ddm_details:
+            try:
+                # ✅ Step 1: Fetch CNote
+                cnote = CNotes.objects.get(cnote_number=detail.cnote_number)
+                cnote_date = cnote.created_at.date().strftime('%Y-%m-%d') if cnote.created_at else "N/A"
+                
+                # ✅ Step 2: Get total_art from dealer_app_article
+                total_packets = Article.objects.filter(cnote_id=cnote.id).aggregate(total_art=Sum('art'))['total_art'] or 0
+                
+                # ✅ Step 3: Fetch Payment Type from CNotes table
+                payment_type = cnote.payment_type if cnote.payment_type else "N/A"
+                
+                logger.info(f"Total PKG for {detail.cnote_number}: {total_packets} (From: dealer_app_article)")
+            
+            except CNotes.DoesNotExist:
+                logger.warning(f"CNotes Not Found: {detail.cnote_number}")
+                cnote_date = "N/A"
+                total_packets = 0  # Default to 0
+                payment_type = "N/A"  # Default Payment Type
+
             cnote_data = {
                 'cnote_number': detail.cnote_number,
+                'date': cnote_date,
                 'consignee_name': detail.consignee_name,
                 'consignee_contact': detail.contact_number,
                 'delivery_destination': detail.destination,
-                'total_art': detail.total_pkt,
-                'amount': float(detail.amount),
+                'total_art': total_packets,  # ✅ Now correctly calculated!
+                'amount': float(detail.amount) if detail.amount else 0,
+                'cn_type': payment_type,  # ✅ Correctly fetched CN Type
                 'remarks': detail.remark or '',
             }
             cnotes_data.append(cnote_data)
-            total_art += detail.total_pkt
-            total_amount += detail.amount
+            total_art += total_packets
+            total_amount += detail.amount if detail.amount else 0
+
+        # ✅ Fix `creation_date`
+        creation_date = ddm_summary.creation_date.strftime('%Y-%m-%d') if ddm_summary.creation_date else "N/A"
 
         response_data = {
             'ddm_no': ddm_summary.ddm_no,
-            'creation_date': ddm_summary.creation_date.strftime('%Y-%m-%d %H:%M:%S'),
+            'creation_date': creation_date,
             'truck_no': ddm_summary.truck_no,
             'driver_name': ddm_summary.driver_name,
             'driver_no': ddm_summary.driver_no,
-            'lorry_hire': float(ddm_summary.lorry_hire),
+            'lorry_hire': float(ddm_summary.lorry_hire) if ddm_summary.lorry_hire else 0,
             'remarks': ddm_summary.remarks or '',
             'cnotes': cnotes_data,
             'total_art': total_art,
@@ -1277,15 +1308,14 @@ def get_ddm_details(request, ddm_id):
         }
 
         return JsonResponse(response_data)
+
     except DDMSummary.DoesNotExist:
         return JsonResponse({'error': 'DDM not found'}, status=404)
+
     except Exception as e:
         logger.error(f"Error in get_ddm_details: {str(e)}")
         return JsonResponse({'error': 'Internal Server Error'}, status=500)
-
-
-
-    
+        
 @require_GET
 def save_ddm_pdf(request, ddm_id):
     # Implement PDF generation logic here
@@ -1302,31 +1332,33 @@ def ddm_details_view(request):
             messages.error(request, 'DDM ID is required')
             return redirect('transporter:ddm')
 
-        # Remove 'DDM-' prefix if present
-        ddm_id = ddm_id.replace('DDM-', '')
-        
+        # Remove 'DDM-' prefix if present (More flexible)
+        ddm_id = ddm_id.replace('DDM-', '') if ddm_id.startswith('DDM-') else ddm_id
+
         # Get DDM summary
         ddm_summary = get_object_or_404(DDMSummary, ddm_id=ddm_id)
-        
+
         # Get all DDM details
         ddm_details = DDMDetails.objects.filter(ddm=ddm_summary)
-        
-        total_art = sum(detail.total_pkt for detail in ddm_details)
-        total_amount = sum(detail.amount for detail in ddm_details)
-        
+
+        # Ensure `None` values don’t cause errors
+        total_art = sum(detail.total_pkt or 0 for detail in ddm_details)
+        total_amount = sum(detail.amount or 0 for detail in ddm_details)
+
         context = {
             'ddm_summary': ddm_summary,
             'ddm_details': ddm_details,
             'total_art': total_art,
             'total_amount': total_amount,
-            'remarks': ddm_summary.remarks or ''  # Use empty string if remarks is None
+            'remarks': ddm_summary.remarks or '',  # Use empty string if None
         }
-        
+
         return render(request, 'transporter/ddm-details.html', context)
-        
+
     except DDMSummary.DoesNotExist:
         messages.error(request, 'DDM not found')
         return redirect('transporter:ddm')
+
     except Exception as e:
         logger.error(f"Error in ddm_details_view: {str(e)}")
         messages.error(request, 'Error loading DDM details. Please try again.')
