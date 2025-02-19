@@ -569,20 +569,27 @@
             document.getElementById('otherCharges').innerText = `₹${total.toFixed(2)}`;
 
         }
+        const createCnotesUrl = "{% url 'dealer:create_cnotes' %}";
         // New script for button functionalities
         document.addEventListener('DOMContentLoaded', function() {
             const createCnoteBtn = document.getElementById('createCnoteBtn');
             const printBtn = document.getElementById('printBtn');
 
             createCnoteBtn.addEventListener('click', function() {
-                window.location.href = 'http://127.0.0.1:8000/dealer/create_cnotes/';
-            });
 
+                window.location.href = createCnotesUrl; // Use the variable here
+        
+            });
             printBtn.addEventListener('click', function() {
+
                 window.print();
+        
                 // Redirect after printing
+        
                 setTimeout(() => {
-                    window.location.href = 'http://127.0.0.1:8000/dealer/create_cnotes/';
+        
+                    window.location.href = createCnotesUrl; // Use the variable here
+        
                 }, 100);
             });
         });
