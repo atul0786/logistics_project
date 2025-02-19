@@ -310,22 +310,20 @@
         <div class="form-container">
             <div class="header">
                 <div class="logo-section">
+
                     <div class="logo">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M10 17h4V5H2v12h3m15-5h2v3h-2zM7 17l5-5 5 5M2 9h20M2 13h3m15 0h2"/>
-                        </svg>
-                        <div>
-                            <div class="company-name">Good Way Express</div> 
-                            <div class="tagline">सुरक्षित का एहसास</div>
-                        </div>
+                
+                        <img src="{% static 'images/logo.jpg' %}" alt="Company Logo" style="width: 100%; height: auto; max-height: 25mm;">                
+                
                     </div>
-                </div>
+                
+                </div>                
                 <div class="booking-details">
-                    <p><strong>Dealer : {{ dealer.name|default:"-" }}</strong></p>
-                    <p><strong>ADDRESS :</strong> {{ dealer.address }}</p>
-                    <p><strong>CUST NO:</strong> {{ dealer.mobile_number_1 }}</p>
-                    <p><strong>TRANSPORTER ID:</strong> {{ dealer.gstn }}</p>
-                    <p><strong>WEBSITE:</strong> goodwayexpress.com</p>
+                    <p><strong>Goodway Express</strong></p>
+                    <p><strong>(Yavatmal District Daily Parcel)</strong></p>
+                    <p><strong>CUST NO:</strong> 9923799699</p>
+                    <p><strong>TRANSPORTER ID:</strong> 27AUYDM5847P2Z9</p>
+                    <p><strong>Email:</strong> Goodwayytl123@gmail.com</p>
                 </div>
                 <div class="date-section">
                     <p><strong>CN No:</strong> {{ cnote.cnote_number }}</p>
