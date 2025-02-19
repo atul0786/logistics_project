@@ -925,9 +925,22 @@ def get_cnote_details(request, cnote_number):
 @login_required
 def cnote_success(request, cnote_number):
     try:
-        # Directly fetch the CNotes object with related articles
-        cnote = CNotes.objects.prefetch_related('articles').get(cnote_number=cnote_number)
-        return render(request, 'dealer/cnote_success.html', {'cnote': cnote})
+        # CNotes ऑब्जेक्ट को संबंधित आर्टिकल्स और डीलर के साथ लाना
+        cnote = CNotes.objects.prefetch_related('articles').select_related('dealer').get(cnote_number=cnote_number)
+        
+        # सभी संबंधित आर्टिकल्स को लाना
+        articles = cnote.articles.all()  # यह सभी आर्टिकल्स को लाएगा
+        
+        # Total Art की गणना करना
+        total_art = sum(article.art for article in articles if article.art is not None)  # None चेक करें
+        
+        # टेम्पलेट में cnote, dealer, articles और total_art पास करना
+        return render(request, 'dealer/cnote_success.html', {
+            'cnote': cnote,
+            'dealer': cnote.dealer,
+            'articles': articles,  # articles को पास करना
+            'total_art': total_art,  # total_art को पास करना
+        })
     except CNotes.DoesNotExist:
         messages.error(request, 'CNote not found.')
         return redirect('dealer:create_cnotes')
