@@ -487,8 +487,9 @@
             <div class="form-container">
                 <h2>CNote Details</h2>
                 {% if cnote %}
-                    <button id="editBtn">Edit</button>
-                    <button id="updateBtn">Update</button>
+                    <!--<button id="editBtn">Edit</button>
+                    <button id="updateBtn">Update</button> -->
+                    <button id="printNoteBtn">Print Note</button>
                     <form id="cnoteDetailsForm">
                         {% csrf_token %}
                         <div class="form-row">
@@ -1039,6 +1040,14 @@
             document.querySelectorAll('.charges-container input[type="number"]:not([name="grand_total"])').forEach(input => {
                 input.addEventListener('input', updateFreightAndTotal);
             });
+        });
+        document.getElementById("printNoteBtn").addEventListener("click", function() {
+            const cnoteNumber = document.getElementById("cnoteNumber").value; // Get the CNote number
+            if (cnoteNumber) {
+                window.location.href = `/dealer/cnote-success/${cnoteNumber}/`; // Corrected URL
+            } else {
+                alert("CNote number is not available.");
+            }
         });
     </script>
 </body>
