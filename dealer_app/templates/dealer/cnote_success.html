@@ -3,571 +3,593 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CNote Created Successfully!</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <title>Logistics Form</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+        /* Your existing styles here */
+        @media print {
+            @page {
+                size: A4;
+                margin: 0;
+            }
+            .form-container {
+                page-break-inside: avoid;
+            }
+            body {
+                background: white !important;
+                padding: 0 !important;
+            }
+            .page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 5mm !important;
+            }
+        }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: Arial, sans-serif;
+            font-size: 9pt;
         }
 
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f5f5f5;
-            padding: 20px;
+            background: #f0f0f0;
+            padding: 5mm;
             min-height: 100vh;
-        }
-
-        .card {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        h1 {
-            color: #2196F3;
-            margin-bottom: 15px;
-            font-size: 24px;
-        }
-
-        .cnote-number {
-            font-weight: bold;
-            color: #333;
-            font-size: 18px;
-        }
-
-        .button-container {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        button {
-            background-color: #2196F3;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 16px;
-            transition: background-color 0.3s;
+            justify-content: center;
         }
 
-        button:hover {
-            background-color: #1976D2;
-        }
-
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        #printArea {
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            max-width: 210mm;
-            width: 100%;
-            margin: 20px auto;
+        .page {
+            background: white;
+            width: 210mm;
             min-height: 297mm;
+            margin: 0 auto;
+            padding: 7mm;
+            display: flex;
+            flex-direction: column;
+            gap: 7mm;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .form-container {
+            border: 1px solid black;
+            height: auto; /* Changed to auto for flexibility */
+            display: flex;
+            flex-direction: column;
         }
 
         .header {
-            text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #2196F3;
+            display: flex;
+            border-bottom: 1px solid black;
+            min-height: 25mm;
+        }
+
+        .logo-section {
+            width: 25%;
+            border-right: 1px solid black;
+            padding: 2mm;
         }
 
         .logo {
-            max-width: 150px;
-            height: auto;
-            margin-bottom: 15px;
+            color: #dc2626;
+            font-weight: bold;
+            display: flex;
+            align-items: flex-start;
+            gap: 2mm;
+        }
+
+        .company-name {
+            font-size: 14pt;
+            color: #dc2626;
+            line-height: 1.2;
+            margin-bottom: 1mm;
+        }
+
+        .tagline {
+            font-style: italic;
+            font-size: 8pt;
+        }
+
+        .booking-details {
+            width: 50%;
+            border-right: 1px solid black;
+            padding: 2mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            line-height: 1.4;
+        }
+
+        .date-section {
+            width: 25%;
+            padding: 2mm;
+            display: flex;
+            flex-direction: column;
+            gap: 2mm;
+            line-height: 1.4;
+        }
+
+        .main-content {
+            display: flex;
+            padding: 2mm;
+            gap: 4mm;
+            min-height: 22mm;
+            border-bottom: 1px solid black;
+        }
+
+        .from-section, .to-section {
+            width: 50%;
+            line-height: 1.5;
+        }
+
+        .table-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 35mm;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            height: 100%;
         }
 
         th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
+            border: 1px solid black;
+            padding: 2mm;
             text-align: left;
+            vertical-align: top;
         }
 
         th {
-            background-color: #f5f5f5;
-            font-weight: 500;
+            background: #f8f8f8;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .charges-details {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2mm 4mm;
+            align-content: start;
+        }
+
+        .charges-label {
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .charges-value {
+            text-align: right;
         }
 
         .footer {
-            margin-top: 30px;
-            text-align: center;
-            color: #666;
-            font-size: 12px;
+            padding: 2mm;
+            border-top: 1px solid black;
+            margin-top: auto;
         }
 
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
+        .contact-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 8pt;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        strong {
+            font-weight: bold;
         }
 
-        .error-message {
-            background-color: #ffebee;
-            color: #c62828;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 10px 0;
-            text-align: center;
+        p {
+            margin: 0;
+            padding: 0;
         }
 
-        @media print {
+        .description-cell {
+            font-weight: bold;
+        }
+
+        /* Responsive adjustments for content overflow */
+        @media screen and (max-width: 210mm) {
             body {
-                background: white;
                 padding: 0;
             }
+            
+            .page {
+                width: 100%;
+                min-height: auto;
+                padding: 5mm;
+            }
 
-            .card {
+            * {
+                font-size: 8pt;
+            }
+
+            .company-name {
+                font-size: 12pt;
+            }
+        }
+
+        /* Ensure content doesn't overflow in cells */
+        td, th {
+            max-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
+        /* Flexible height adjustments */
+        .form-container {
+            min-height: 90mm;
+            height: auto;
+        }
+
+        .main-content {
+            height: auto;
+            min-height: 22mm;
+        }
+
+        .table-section {
+            height: auto;
+            min-height: 35mm;
+        }
+        .hidden {
+            display: none; /* Hide the rows */
+        }
+
+        /* New styles for buttons */
+        .button-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .action-button {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-button:hover {
+            background-color: #b91c1c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .action-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Hide buttons when printing */
+        @media print {
+            .button-container {
                 display: none;
             }
+        }
 
-            #printArea {
-                box-shadow: none;
-                padding: 0;
-                margin: 0;
+        /* Responsive design for smaller screens */
+        @media screen and (max-width: 600px) {
+            .button-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .action-button {
+                margin: 5px 0;
+                width: 80%;
             }
         }
+ 
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>CNote Created Successfully!</h1>
-        <p>CNote Number: <span class="cnote-number" id="cnoteNumber">{{ cnote.cnote_number }}</span></p>
-        <div class="button-container">
-            <button onclick="savePdf()" id="saveButton">
-                <span class="button-text">Save PDF</span>
-                <span class="button-icon">📥</span>
-            </button>
-            <button onclick="printPdf()" id="printButton">
-                <span class="button-text">Print PDF</span>
-                <span class="button-icon">🖨️</span>
-            </button>
-            <button onclick="window.location.href='/dealer/create_cnotes'" id="newButton">
-                <span class="button-text">Create New CNote</span>
-                <span class="button-icon">➕</span>
-            </button>
-        </div>
-    </div>    
-    <div id="printArea">
-        <div class="header">
-            <h1>Consignment Note</h1>
-            <p>Original</p>
-        </div>
+    
+    <div class="page">
+        <!-- Add this button container just before the .page div -->
+    <div class="button-container">
+        <button class="action-button" id="createCnoteBtn">Create CNote</button>
+        <button class="action-button" id="printBtn">Print</button>
+    </div>
+        <!-- Form 1 -->
+        <div class="form-container">
+            <div class="header">
+                <div class="logo-section">
+                    <div class="logo">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10 17h4V5H2v12h3m15-5h2v3h-2zM7 17l5-5 5 5M2 9h20M2 13h3m15 0h2"/>
+                        </svg>
+                        <div>
+                            <div class="company-name">Good Way Express</div> 
+                            <div class="tagline">सुरक्षित का एहसास</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="booking-details">
+                    <p><strong>Dealer : {{ dealer.name|default:"-" }}</strong></p>
+                    <p><strong>ADDRESS :</strong> {{ dealer.address }}</p>
+                    <p><strong>CUST NO:</strong> {{ dealer.mobile_number_1 }}</p>
+                    <p><strong>TRANSPORTER ID:</strong> {{ dealer.gstn }}</p>
+                    <p><strong>WEBSITE:</strong> goodwayexpress.com</p>
+                </div>
+                <div class="date-section">
+                    <p><strong>CN No:</strong> {{ cnote.cnote_number }}</p>
+                    <p><strong>Date :</strong> {{ cnote.created_at|date:"d/m/Y" }}</p>
+                    <p><strong>Freight Type:</strong>{{ cnote.payment_type }}</p>
+                    <p><strong>Total Art:</strong>
+                        {% for article in articles %}
+                            {{ article.art }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                        (Total: {{ total_art }})  <!-- Display total articles -->
+                    </p>
+                </div>
+            </div>
 
-        <div class="cnote-details">
-            <table>
-                <tr>
-                    <th>CNote Number</th>
-                    <td>{{ cnote.cnote_number }}</td>
-                    <th>Date</th>
-                    <td>{{ cnote.created_at|date:"d/m/Y" }}</td>
-                </tr>
-                <tr>
-                    <th>Payment Type</th>
-                    <td>{{ cnote.payment_type }}</td>
-                    <th>Destination</th>
-                    <td>{{ cnote.delivery_destination }}</td>
-                </tr>
-            </table>
-        </div>
+            <div class="main-content">
+                <div class="from-section">
+                    <p><strong>From: {{ dealer.address }}</strong></p>
+                    <p><strong>Consignor :</strong>{{ cnote.consignor_name }}</p>
+                    <p><strong>Mobile No :</strong>{{ cnote.consignor_mobile }}</p>
+                    <p><strong>Address :</strong> {{ cnote.consignor_address }}</p>
+                    <p><strong>GSTN :</strong> {{ cnote.consignor_gst|default:"N/A" }}</p>
+                </div>
+                <div class="to-section">
+                    <p><strong>To: {{ cnote.delivery_destination }}</strong></p>
+                    <p><strong>Consignee :</strong>{{ cnote.consignee_name }}</p>
+                    <p><strong>Mobile No :</strong>{{ cnote.consignee_mobile }}</p>
+                    <p><strong>Address :</strong>{{ cnote.consignee_address }}</p>
+                    <p><strong>GSTN :</strong>{{ cnote.consignee_gst|default:"N/A" }}</p>
+                </div>
+            </div>
 
-        <div class="party-details">
-            <table>
-                <tr>
-                    <th colspan="2">Consignor Details</th>
-                    <th colspan="2">Consignee Details</th>
-                </tr>
-                <tr>
-                    <td>Name:</td>
-                    <td>{{ cnote.consignor_name }}</td>
-                    <td>Name:</td>
-                    <td>{{ cnote.consignee_name }}</td>
-                </tr>
-                <tr>
-                    <td>Mobile:</td>
-                    <td>{{ cnote.consignor_mobile }}</td>
-                    <td>Mobile:</td>
-                    <td>{{ cnote.consignee_mobile }}</td>
-                </tr>
-                <tr>
-                    <td>GST:</td>
-                    <td>{{ cnote.consignor_gst|default:"N/A" }}</td>
-                    <td>GST:</td>
-                    <td>{{ cnote.consignee_gst|default:"N/A" }}</td>
-                </tr>
-                <tr>
-                    <td>Address:</td>
-                    <td>{{ cnote.consignor_address }}</td>
-                    <td>Address:</td>
-                    <td>{{ cnote.consignee_address }}</td>
-                </tr>
-            </table>
-        </div>
+            <div class="table-section">
+                <div class="article-details" style="display: flex; justify-content: space-between;">
+                    <div class="left-section" style="width: 48%;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Qty.</th>
+                                    <th>DESCRIPTION</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for article in articles %}
+                                <tr>
+                                    <td>{{ article.art }}</td>
+                                    <td class="description-cell">{{ article.said_to_contain }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="2">No articles found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="charges-details" style="width: 48%;">
 
-        <div class="article-details">
-            <h2>Article Details</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Article Type</th>
-                        <th>Quantity</th>
-                        <th>Description</th>
-                        <th>Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for article in cnote.articles.all %}
-                    <tr>
-                        <td>{{ article.article_type }}</td>
-                        <td>{{ article.art }}</td>
-                        <td>{{ article.said_to_contain }}</td>
-                        <td>₹{{ article.art_amount|floatformat:2 }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <div class="charges">
-            <h2>Charges</h2>
-            <table>
-                <tr>
-                    <td>Freight</td>
-                    <td>₹{{ cnote.freight|floatformat:2 }}</td>
-                </tr>
-                <tr>
-                    <td>Docket Charge</td>
-                    <td>₹{{ cnote.docket_charge|floatformat:2 }}</td>
-                </tr>
-                <tr>
-                    <td>Door Delivery Charge</td>
-                    <td>₹{{ cnote.door_delivery_charge|floatformat:2 }}</td>
-                </tr>
-                <tr>
-                    <td>Handling Charge</td>
-                    <td>₹{{ cnote.handling_charge|floatformat:2 }}</td>
-                </tr>
-                <tr>
-                    <td>Pickup Charge</td>
-                    <td>₹{{ cnote.pickup_charge|floatformat:2 }}</td>
-                </tr>
-                <tr>
-                    <td>Transhipment Charge</td>
-                    <td>₹{{ cnote.transhipment_charge|floatformat:2 }}</td>
-                </tr>
-                <tr>
-                    <td>Insurance</td>
-                    <td>₹{{ cnote.insurance|floatformat:2 }}</td>
-                </tr>
-                <tr>
-                    <td>Fuel Surcharge</td>
-                    <td>₹{{ cnote.fuel_surcharge|floatformat:2 }}</td>
-                </tr>
-                <tr>
-                    <td>Commission</td>
-                    <td>₹{{ cnote.commission|floatformat:2 }}</td>
-                </tr>
-                <tr>
-                    <td>Other Charges</td>
-                    <td>₹{{ cnote.other_charge|floatformat:2 }}</td>
-                </tr>
-                <tr>
-                    <td>Carrier Risk</td>
-                    <td>₹{{ cnote.carrier_risk|floatformat:2 }}</td>
-                </tr>
-                <tr>
-                    <td><strong>Grand Total</strong></td>
-                    <td><strong>₹{{ cnote.grand_total|floatformat:2 }}</strong></td>
-                </tr>
-            </table>
-        </div>
-        
-        <div class="footer">
-            <p>This is a computer-generated document. No signature is required.</p>
-            <p>Generated on: {% now "d/m/Y H:i:s" %}</p>
+                        <div class="charges-item">
+                
+                            <span class="charges-label">INV NO:</span>
+                
+                            <span class="charges-value">{{ cnote.invoice_number }}</span>
+                
+                        </div>
+                
+                        <div class="charges-item">
+                
+                            <span class="charges-label">Declared Value:</span>
+                
+                            <span class="charges-value">{{ cnote.declared_value }}</span>
+                
+                        </div>
+                
+                        <div class="charges-item">
+                
+                            <span class="charges-label">Actual Weight:</span>
+                
+                            <span class="charges-value">{{ cnote.actual_weight }}</span>
+                
+                        </div>
+                
+                        <div class="charges-item">
+                
+                            <span class="charges-label">Charged Weight:</span>
+                
+                            <span class="charges-value">{{ cnote.charged_weight }}</span>
+                
+                        </div>
+                
+                        <div class="charges-item">
+                
+                            <span class="charges-label">Freight:</span>
+                
+                            <span class="charges-value">₹{{ cnote.freight|floatformat:2 }}</span>
+                
+                        </div>
+                
+                
+                        <!-- Hidden Charges Inputs -->
+                
+                        <div class="hidden">
+                
+                            <div class="charges-item">
+                
+                                <span class="charges-label">Docket Charge</span>
+                
+                                <input type="number" id="docketCharge" name="docket_charge" value="0" step="0.01" oninput="calculateTotal()" />
+                
+                            </div>
+                
+                            <div class="charges-item">
+                
+                                <span class="charges-label">Door Dly.</span>
+                
+                                <input type="number" id="doorDlyCharge" name="door_delivery_charge" value="0" step="0.01" oninput="calculateTotal()" />
+                
+                            </div>
+                
+                            <div class="charges-item">
+                
+                                <span class="charges-label">Handling</span>
+                
+                                <input type="number" id="handlingCharge" name="handling_charge" value="0" step="0.01" oninput="calculateTotal()" />
+                
+                            </div>
+                
+                            <div class="charges-item">
+                
+                                <span class="charges-label">Pickup</span>
+                
+                                <input type="number" id="pickupCharge" name="pickup_charge" value="0" step="0.01" oninput="calculateTotal()" />
+                
+                            </div>
+                
+                            <div class="charges-item">
+                
+                                <span class="charges-label">Transhipment Charge</span>
+                
+                                <input type="number" id="transhipmentCharge" name="transhipment_charge" value="0" step="0.01" oninput="calculateTotal()" />
+                
+                            </div>
+                
+                            <div class="charges-item">
+                
+                                <span class="charges-label">Insurance</span>
+                
+                                <input type="number" id="insurance" name="insurance" value="0" step="0.01" oninput="calculateTotal()" />
+                
+                            </div>
+                
+                            <div class="charges-item">
+                
+                                <span class="charges-label">Fuel Surcharge</span>
+                
+                                <input type="number" id="fuelSurcharge" name="fuel_surcharge" value="0" step="0.01" oninput="calculateTotal()" />
+                
+                            </div>
+                
+                            <div class="charges-item">
+                
+                                <span class="charges-label">Commission</span>
+                
+                                <input type="number" id="commission" name="commission" value="0" step="0.01" oninput="calculateTotal()" />
+                
+                            </div>
+                
+                        </div>
+                
+                
+                        <div class="charges-item">
+                
+                            <span class="charges-label">Other:</span>
+                
+                            <span class="charges-value" id="otherCharges">₹0.00</span>                       
+                
+                        </div>
+                
+                        <div class="charges-item">
+                
+                            <span class="charges-label">Total:</span>
+                
+                            <span class="charges-value">₹{{ cnote.grand_total|floatformat:2 }}</span>
+                
+                        </div>
+                
+                        <div class="charges-item">
+                
+                            <span class="charges-label">Insurance Type:</span>
+                
+                            <span class="charges-value">OWNER RISK</span>
+                
+                        </div>
+                
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const pathSegments = window.location.pathname.split('/');
-            const cnoteNumber = pathSegments[pathSegments.length - 1].replace('/', '');
+            // Clone the first form to create the second and third forms
+            const formContainer = document.querySelector('.form-container');
+            const form2 = formContainer.cloneNode(true);
+            const form3 = formContainer.cloneNode(true);
             
-            if (cnoteNumber) {
-                document.getElementById('cnoteNumber').textContent = cnoteNumber;
-                fetchCNoteDetails(cnoteNumber);
-            }
+            formContainer.parentNode.appendChild(form2);
+            formContainer.parentNode.appendChild(form3);
         });
 
-        async function fetchCNoteDetails(cnoteNumber) {
-            try {
-                const response = await fetch(`/dealer/get_cnote_details/${cnoteNumber}/`);
-                if (!response.ok) {
-                    throw new Error('Failed to fetch CNote details');
-                }
-                const data = await response.json();
-                document.getElementById('printArea').innerHTML = generatePrintContent(data);
-            } catch (error) {
-                console.error('Error fetching CNote details:', error);
-                showError('Error loading CNote details. Please try again.');
-            }
+        function calculateTotal() {
+
+            // Get all input fields
+
+            const docketCharge = parseFloat(document.getElementById('docketCharge').value) || 0;
+
+            const doorDlyCharge = parseFloat(document.getElementById('doorDlyCharge').value) || 0;
+
+            const handlingCharge = parseFloat(document.getElementById('handlingCharge').value) || 0;
+
+            const pickupCharge = parseFloat(document.getElementById('pickupCharge').value) || 0;
+
+            const transhipmentCharge = parseFloat(document.getElementById('transhipmentCharge').value) || 0;
+
+            const insurance = parseFloat(document.getElementById('insurance').value) || 0;
+
+            const fuelSurcharge = parseFloat(document.getElementById('fuelSurcharge').value) || 0;
+
+            const commission = parseFloat(document.getElementById('commission').value) || 0;
+
+
+            // Calculate total
+
+            const total = docketCharge + doorDlyCharge + handlingCharge + pickupCharge + 
+
+                          transhipmentCharge + insurance + fuelSurcharge + commission;
+
+
+            // Update total in the "Other" charges section
+
+            document.getElementById('otherCharges').innerText = `₹${total.toFixed(2)}`;
+
         }
+        // New script for button functionalities
+        document.addEventListener('DOMContentLoaded', function() {
+            const createCnoteBtn = document.getElementById('createCnoteBtn');
+            const printBtn = document.getElementById('printBtn');
 
-        function generatePrintContent(cnote) {
-            const articles = cnote.articles || [];
-            const totalArticles = articles.reduce((sum, article) => sum + (parseInt(article.art) || 0), 0);
+            createCnoteBtn.addEventListener('click', function() {
+                window.location.href = 'http://127.0.0.1:8000/dealer/create_cnotes/';
+            });
 
-            return `
-                <div class="header">
-                    <h1>Consignment Note</h1>
-                    <p>Original</p>
-                </div>
-
-                <div class="cnote-details">
-                    <table>
-                        <tr>
-                            <th>CNote Number</th>
-                            <td>${cnote.cnote_number}</td>
-                            <th>Date</th>
-                            <td>${new Date(cnote.created_at).toLocaleDateString()}</td>
-                        </tr>
-                        <tr>
-                            <th>Payment Type</th>
-                            <td>${cnote.payment_type}</td>
-                            <th>Destination</th>
-                            <td>${cnote.delivery_destination}</td>
-                        </tr>
-                    </table>
-                </div>
-
-                <div class="party-details">
-                    <table>
-                        <tr>
-                            <th colspan="2">Consignor Details</th>
-                            <th colspan="2">Consignee Details</th>
-                        </tr>
-                        <tr>
-                            <td>Name:</td>
-                            <td>${cnote.consignor_name}</td>
-                            <td>Name:</td>
-                            <td>${cnote.consignee_name}</td>
-                        </tr>
-                        <tr>
-                            <td>Mobile:</td>
-                            <td>${cnote.consignor_mobile}</td>
-                            <td>Mobile:</td>
-                            <td>${cnote.consignee_mobile}</td>
-                        </tr>
-                        <tr>
-                            <td>GST:</td>
-                            <td>${cnote.consignor_gst || 'N/A'}</td>
-                            <td>GST:</td>
-                            <td>${cnote.consignee_gst || 'N/A'}</td>
-                        </tr>
-                        <tr>
-                            <td>Address:</td>
-                            <td>${cnote.consignor_address}</td>
-                            <td>Address:</td>
-                            <td>${cnote.consignee_address}</td>
-                        </tr>
-                    </table>
-                </div>
-
-                <div class="article-details">
-                    <h2>Article Details</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Article Type</th>
-                                <th>Quantity</th>
-                                <th>Description</th>
-                                <th>Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${articles.map(article => `
-                                <tr>
-                                    <td>${article.article_type}</td>
-                                    <td>${article.art}</td>
-                                    <td>${article.said_to_contain}</td>
-                                    <td>₹${parseFloat(article.art_amount).toFixed(2)}</td>
-                                </tr>
-                            `).join('')}
-                            <tr>
-                                <td colspan="3"><strong>Total Articles</strong></td>
-                                <td><strong>${totalArticles}</strong></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="charges">
-                    <h2>Charges</h2>
-                    <table>
-                        <tr>
-                            <td>Freight</td>
-                            <td>₹${parseFloat(cnote.freight).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>Docket Charge</td>
-                            <td>₹${parseFloat(cnote.docket_charge).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>Door Delivery Charge</td>
-                            <td>₹${parseFloat(cnote.door_delivery_charge).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>Handling Charge</td>
-                            <td>₹${parseFloat(cnote.handling_charge).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>Pickup Charge</td>
-                            <td>₹${parseFloat(cnote.pickup_charge).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>Transhipment Charge</td>
-                            <td>₹${parseFloat(cnote.transhipment_charge).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>Insurance</td>
-                            <td>₹${parseFloat(cnote.insurance).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>Fuel Surcharge</td>
-                            <td>₹${parseFloat(cnote.fuel_surcharge).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>Commission</td>
-                            <td>₹${parseFloat(cnote.commission).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>Other Charges</td>
-                            <td>₹${parseFloat(cnote.other_charge).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>Carrier Risk</td>
-                            <td>₹${parseFloat(cnote.carrier_risk).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Grand Total</strong></td>
-                            <td><strong>₹${parseFloat(cnote.grand_total).toFixed(2)}</strong></td>
-                        </tr>
-                    </table>
-                </div>
-
-                <div class="footer">
-                    <p>This is a computer-generated document. No signature is required.</p>
-                    <p>Generated on: ${new Date().toLocaleString()}</p>
-                </div>
-            `;
-        }
-
-        async function savePdf() {
-            const saveButton = document.getElementById('saveButton');
-            showLoading(saveButton);
-            
-            try {
-                const printArea = document.getElementById('printArea');
-                const canvas = await html2canvas(printArea, {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: '#ffffff'
-                });
-
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('p', 'mm', 'a4');
-                
-                const imgData = canvas.toDataURL('image/png');
-                const pageWidth = doc.internal.pageSize.getWidth();
-                const pageHeight = doc.internal.pageSize.getHeight();
-                
-                doc.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
-                
-                const cnoteNumber = document.getElementById('cnoteNumber').textContent;
-                const today = new Date().toISOString().split('T')[0];
-                
-                // Use FileSaver.js to save the PDF
-                const blob = doc.output('blob');
-                const fileName = `${cnoteNumber}.pdf`;
-                saveAs(blob, fileName);
-
-                window.location.href = "/dealer/create_cnotes";
-            } catch (error) {
-                console.error('Error saving PDF:', error);
-                console.error('Error details:', error.message);
-                showError('Error saving PDF. Please try again.');
-            } finally {
-                resetButton(saveButton, 'Save PDF', '📥');
-            }
-        }
-
-        function printPdf() {
-            const printButton = document.getElementById('printButton');
-            showLoading(printButton);
-
-            setTimeout(() => {
+            printBtn.addEventListener('click', function() {
                 window.print();
-                resetButton(printButton, 'Print PDF', '🖨️');
-            }, 500);
-        }
+                // Redirect after printing
+                setTimeout(() => {
+                    window.location.href = 'http://127.0.0.1:8000/dealer/create_cnotes/';
+                }, 100);
+            });
+        });
 
-        function showLoading(button) {
-            const buttonText = button.querySelector('.button-text');
-            const buttonIcon = button.querySelector('.button-icon');
-            button.disabled = true;
-            buttonText.textContent = 'Processing...';
-            buttonIcon.innerHTML = '<div class="loading"></div>';
-        }
-
-        function resetButton(button, text, icon) {
-            const buttonText = button.querySelector('.button-text');
-            const buttonIcon = button.querySelector('.button-icon');
-            button.disabled = false;
-            buttonText.textContent = text;
-            buttonIcon.textContent = icon;
-        }
-
-        function showError(message) {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.textContent = message;
-            document.getElementById('printArea').innerHTML = '';
-            document.getElementById('printArea').appendChild(errorDiv);
+        // Remove the automatic print on load
+        window.onload = function() {
+            // The print functionality is now handled by the Print button
         }
     </script>
 </body>
