@@ -12,6 +12,9 @@ from django.shortcuts import redirect
 from .views import send_pickup_request
 from .views import search_loading_sheets
 from .views import view_cnote, search_cnote
+from .views import export_excel_template
+from .views import import_cnotes  # ✅ Correct import
+
 
 app_name = 'dealer'  # Defines the namespace for this app
 
@@ -104,6 +107,10 @@ urlpatterns = [
     path('transporter/home/', home, name='home'),
     #path('api/get_pickup_requests/', views.get_pickup_requests, name='get_pickup_requests'),
     path('list/', views.transporter_list, name='transporter_list'),
+
+    path('import-cnotes/', import_cnotes, name='import_cnotes'),
+    path('export-excel/', export_excel_template, name='export_excel_template'),
+    
 ]
 
 if settings.DEBUG:
