@@ -494,6 +494,8 @@
     </style>
 </head>
 <body>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <header>
         <div class="top-bar">
             
@@ -536,10 +538,9 @@
                     <li>
                         <a href="{% url 'dealer:create_cnotes' %}"> Booking</a>
                     </li>
-                   
                     <li>
                         <a href="{% url 'dealer:import_cnotes' %}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Bulk Booking</a>
-                    </li> 
+                    </li>
                     
                     <li>
                         <a href="{% url 'dealer:loading_sheet' %}"target="_blank" rel="noopener noreferrer"> Loading Sheet</a>
@@ -697,7 +698,10 @@
                             <textarea id="consignorAddress" name="consignorAddress" rows="3">{{ dealer.address }}</textarea>
                         </div>
                         <div class="form-group">
-                            <h3 style="padding-bottom: 2.1px;">Consignee (To)</h3>
+                            <label style="font-size: 16px; font-weight: bold;">
+                                <span style="font-size: 20px; font-weight: bold;">Consignee (To)</span> - Destination Wise Party
+                                <input type="checkbox" id="destinationWiseParty" checked style="margin-left: 5px; width: 16px; height: 16px;">
+                            </label>
                             <label for="consigneeName" class="required">Consignee Name</label>
                             <div class="consignee-input-wrapper">
                                 <input type="text" id="consigneeName" name="consignee_name" required value="{{ consignee_data.name|default:'' }}" />
@@ -1578,71 +1582,65 @@
             });
         });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const consigneeNameInput = document.getElementById('consigneeName');
-            const consigneeSuggestions = document.getElementById('consigneeSuggestions');
-            const consigneeMobileInput = document.getElementById('consigneeMobile');
-            const consigneeGSTInput = document.getElementById('consigneeGST');
-            const consigneeAddressInput = document.getElementById('consigneeAddress');
-            const form = document.getElementById('bookingForm');
-        
+        document.addEventListener("DOMContentLoaded", function () {
+            const consigneeNameInput = document.getElementById("consigneeName");
+            const destinationInput = document.getElementById("deliveryDestination");
+            const destinationWiseCheckbox = document.getElementById("destinationWiseParty");
+            const suggestionsList = document.getElementById("consigneeSuggestions");
             let debounceTimer;
             let selectedIndex = -1;
         
-            consigneeNameInput.addEventListener('input', function() {
+            // Input event handler with debounce
+            consigneeNameInput.addEventListener("input", function() {
                 clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(() => fetchPartySuggestions(this.value), 300);
+                debounceTimer = setTimeout(() => {
+                    const query = this.value.trim();
+                    const destination = destinationInput.value.trim();
+                    const destinationWise = destinationWiseCheckbox.checked;
+        
+                    if (query.length < 2) {
+                        suggestionsList.innerHTML = "";
+                        suggestionsList.style.display = "none";
+                        return;
+                    }
+        
+                    fetchPartySuggestions(query, destination, destinationWise);
+                }, 300);
             });
         
-            consigneeNameInput.addEventListener('keydown', function(e) {
-                const items = consigneeSuggestions.getElementsByTagName('li');
-                if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    selectedIndex = (selectedIndex < items.length - 1) ? selectedIndex + 1 : 0;
-                    updateSelectedItem(items);
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    selectedIndex = (selectedIndex > 0) ? selectedIndex - 1 : items.length - 1;
-                    updateSelectedItem(items);
-                } else if (e.key === 'Enter' && selectedIndex > -1) {
-                    e.preventDefault();
-                    items[selectedIndex].click();
+            // Event listeners for destination and checkbox changes
+            destinationInput.addEventListener("change", function() {
+                if (consigneeNameInput.value.trim().length >= 2) {
+                    const query = consigneeNameInput.value.trim();
+                    const destination = this.value.trim();
+                    const destinationWise = destinationWiseCheckbox.checked;
+                    fetchPartySuggestions(query, destination, destinationWise);
                 }
             });
         
-            function updateSelectedItem(items) {
-                Array.from(items).forEach((item, index) => {
-                    item.classList.toggle('selected', index === selectedIndex);
+            destinationWiseCheckbox.addEventListener("change", function() {
+                if (consigneeNameInput.value.trim().length >= 2) {
+                    const query = consigneeNameInput.value.trim();
+                    const destination = destinationInput.value.trim();
+                    const destinationWise = this.checked;
+                    fetchPartySuggestions(query, destination, destinationWise);
+                }
+            });
+        
+            function fetchPartySuggestions(query, destination, destinationWise) {
+                const params = new URLSearchParams({
+                    query: query,
+                    destination: destination,
+                    destination_wise: destinationWise
                 });
-                if (items[selectedIndex]) {
-                    items[selectedIndex].scrollIntoView({ block: 'nearest' });
-                }
-            }
         
-            function fetchPartySuggestions(query) {
-                if (query.length < 2) {
-                    consigneeSuggestions.style.display = 'none';
-                    return;
-                }
-        
-                fetch(`/dealer/api/party-suggestions/?query=${encodeURIComponent(query)}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            console.error(`Error: HTTP ${response.status} - ${response.statusText}`);
-                            throw new Error('Failed to fetch suggestions');
-                        }
-                        return response.json();
-                    })
+                fetch(`/dealer/api/party-suggestions/?${params}`)
+                    .then(response => response.json())
                     .then(data => {
-                        if (!Array.isArray(data)) {
-                            console.error('Invalid response format:', data);
-                            throw new Error('Invalid response format');
-                        }
-        
-                        consigneeSuggestions.innerHTML = '';
+                        suggestionsList.innerHTML = "";
                         
                         data.forEach(party => {
-                            const li = document.createElement('li');
+                            const li = document.createElement("li");
                             li.innerHTML = `
                                 <strong>${party.party_name}</strong>
                                 <br>Code: ${party.party_code}
@@ -1650,80 +1648,76 @@
                                 ${party.gst_no ? `<br>GST: ${party.gst_no}` : ''}
                                 ${party.city ? `<br>City: ${party.city}` : ''}
                             `;
-                            li.addEventListener('click', () => {
+                            li.addEventListener("click", () => {
                                 fillConsigneeDetails(party);
-                                consigneeSuggestions.style.display = 'none';
+                                suggestionsList.style.display = "none";
                             });
-                            consigneeSuggestions.appendChild(li);
+                            suggestionsList.appendChild(li);
                         });
         
-                        consigneeSuggestions.style.display = data.length > 0 ? 'block' : 'none';
+                        suggestionsList.style.display = data.length > 0 ? "block" : "none";
                     })
                     .catch(error => {
-                        console.error('Error fetching party suggestions:', error);
-                        consigneeSuggestions.style.display = 'none';
+                        console.error("Error fetching suggestions:", error);
+                        suggestionsList.style.display = "none";
                     });
             }
         
             function fillConsigneeDetails(party) {
-                consigneeNameInput.value = party.party_name;
-                consigneeMobileInput.value = party.mobile_number_1 || '';
-                consigneeGSTInput.value = party.gst_no || '';
-                consigneeAddressInput.value = `${party.address || ''}\n${party.city || ''}\n${party.state || ''}`.trim();
+                document.getElementById("consigneeName").value = party.party_name;
+                document.getElementById("consigneeMobile").value = party.mobile_number_1 || '';
+                document.getElementById("consigneeGST").value = party.gst_no || '';
+                document.getElementById("consigneeAddress").value = 
+                    `${party.address || ''}\n${party.city || ''}\n${party.state || ''}`.trim();
             }
         
-            document.addEventListener('click', function(e) {
-                if (!consigneeNameInput.contains(e.target) && !consigneeSuggestions.contains(e.target)) {
-                    consigneeSuggestions.style.display = 'none';
+            // Handle keyboard navigation
+            consigneeNameInput.addEventListener("keydown", function(e) {
+                const items = suggestionsList.getElementsByTagName("li");
+                
+                switch(e.key) {
+                    case "ArrowDown":
+                        e.preventDefault();
+                        selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                        updateSelection(items);
+                        break;
+                    case "ArrowUp":
+                        e.preventDefault();
+                        selectedIndex = Math.max(selectedIndex - 1, 0);
+                        updateSelection(items);
+                        break;
+                    case "Enter":
+                        e.preventDefault();
+                        if (selectedIndex >= 0 && items[selectedIndex]) {
+                            items[selectedIndex].click();
+                        }
+                        break;
+                    case "Escape":
+                        suggestionsList.style.display = "none";
+                        selectedIndex = -1;
+                        break;
                 }
             });
         
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                // Your form submission logic here
+            function updateSelection(items) {
+                Array.from(items).forEach((item, index) => {
+                    item.classList.toggle("selected", index === selectedIndex);
+                    if (index === selectedIndex) {
+                        item.scrollIntoView({ block: "nearest" });
+                    }
+                });
+            }
+        
+            // Close suggestions when clicking outside
+            document.addEventListener("click", function(e) {
+                if (!consigneeNameInput.contains(e.target) && !suggestionsList.contains(e.target)) {
+                    suggestionsList.style.display = "none";
+                    selectedIndex = -1;
+                }
             });
         });
         
-document.addEventListener('DOMContentLoaded', function() {
-    const searchForm = document.querySelector('.search-bar form');
-    const errorMessage = document.getElementById('errorMessage');
 
-    if (searchForm) {
-        searchForm.addEventListener('submit', function(e) {
-            e.preventDefault(); // Prevent form submission
-            const cnoteNumber = document.getElementById('searchCNote').value.trim();
-            
-            if (!cnoteNumber) {
-                showError('Please enter a CNote number');
-                return;
-            }
-
-            // Use fetch with preventDefault to stay on the same page
-            fetch(`/dealer/search_cnote/?cnote_number=${cnoteNumber}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        window.location.href = data.url;
-                    } else {
-                        showError(data.error);
-                    }
-                })
-                .catch(error => {
-                    showError('An error occurred while searching');
-                });
-        });
-    }
-
-    function showError(message) {
-        errorMessage.textContent = message;
-        errorMessage.style.display = 'block';
-        
-        // Hide the error message after 3 seconds
-        setTimeout(() => {
-            errorMessage.style.display = 'none';
-        }, 3000);
-    }
-});
     </script>
 </body>
 </html>
