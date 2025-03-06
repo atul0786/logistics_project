@@ -1,7 +1,7 @@
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
-from .views import fetch_transporters, custom_login_redirect, mf_print
+from .views import fetch_transporters, custom_login_redirect, get_consignee_data, mf_print
 from transporter_app.views import home as home
 from django.conf import settings
 from django.conf.urls.static import static
@@ -45,6 +45,8 @@ urlpatterns = [
     #path('mf_print/<str:ls_number>/', views.mf_print, name='mf_print'),
     path('dealer/mf_print/<int:loading_sheet_number>/', views.mf_print, name='mf_print'),
     path('mf_print/<str:loading_sheet_number>/', views.mf_print, name='mf_print'),
+    path('download_excel/', views.download_excel, name='download_excel'),
+    
 
    
     #path('api/fetch_transporters/', views.fetch_transporters, name='fetch_transporters'),
@@ -110,6 +112,9 @@ urlpatterns = [
 
     path('import-cnotes/', import_cnotes, name='import_cnotes'),
     path('export-excel/', export_excel_template, name='export_excel_template'),
+
+    path('get_consignee_data/', get_consignee_data, name='get_consignee_data'),
+
     
 ]
 
