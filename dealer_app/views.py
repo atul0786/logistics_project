@@ -1685,59 +1685,48 @@ def search_cnote(request):
         logger.warning(f"CNote not found: {cnote_number}")
         messages.error(request, f"CNote with number {cnote_number} not found.")
         return redirect(reverse('dealer:create_cnotes'))
-# Set up logging
+ 
 logger = logging.getLogger(__name__)
-
 @require_GET
 def party_suggestions(request):
     try:
-        query = request.GET.get('query', '').upper()
-        logger.info(f"Received party suggestion query: {query}")
-        
-        if len(query) >= 2:
-            parties = PartyMaster.objects.filter(
-                Q(party_name__istartswith=query) |
-                Q(party_code__istartswith=query) |
-                Q(display_name__istartswith=query) |
-                Q(mobile_number_1__istartswith=query) |
-                Q(gst_no__istartswith=query)
-            )[:10]
-            
-            if not parties.exists():
-                logger.info(f"No parties found for query: {query}")
-                return JsonResponse([], safe=False)
-            
-            data = [{
-                'party_code': party.party_code,
-                'party_name': party.party_name,
-                'display_name': party.display_name,
-                'mobile_number_1': party.mobile_number_1,
-                'mobile_number_2': party.mobile_number_2,
-                'phone_number_1': party.phone_number_1,
-                'phone_number_2': party.phone_number_2,
-                'gst_no': party.gst_no,
-                'pan_no': party.pan_no,
-                'email': party.email,
-                'marketing_person': party.marketing_person,
-                'party_type': party.party_type,
-                'country': party.country,
-                'state': party.state,
-                'city': party.city,
-                'pincode': party.pincode,
-                'address': party.address,
-                'is_tbb': party.is_tbb,
-                'remark': party.remark
-            } for party in parties]
-            
-            logger.info(f"Found {len(data)} matching parties")
-            return JsonResponse(data, safe=False)
-        
-        return JsonResponse([], safe=False)
-        
-    except Exception as e:
-        logger.exception(f"Error in party_suggestions: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
+        query = request.GET.get('query', '').strip().upper()
+        destination = request.GET.get('destination', '').strip().upper()
+        destination_wise = request.GET.get('destination_wise', 'true') == 'true'
 
+        logger.info(f"Party suggestion query: {query}, Destination: {destination}, Filter: {destination_wise}")
+
+        if len(query) < 2:
+            return JsonResponse([], safe=False)
+
+        # Base filter for party suggestions
+        party_filter = Q(party_name__istartswith=query) | \
+                       Q(party_code__istartswith=query) | \
+                       Q(mobile_number_1__istartswith=query) | \
+                       Q(gst_no__istartswith=query)
+
+        # Apply destination filter if enabled
+        if destination and destination_wise:
+            party_filter &= Q(city__iexact=destination)  # Exact city match
+
+        # Fetch filtered results
+        parties = PartyMaster.objects.filter(party_filter).distinct().order_by('party_name')[:10]
+
+        data = [{
+            'party_code': party.party_code,
+            'party_name': party.party_name,
+            'mobile_number_1': party.mobile_number_1,
+            'gst_no': party.gst_no or '',
+            'address': party.address,
+            'city': party.city,
+            'state': party.state
+        } for party in parties]
+
+        return JsonResponse(data, safe=False)
+
+    except Exception as e:
+        logger.error(f"Error in party_suggestions: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 @login_required
