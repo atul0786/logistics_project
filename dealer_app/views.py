@@ -103,10 +103,14 @@ from .models import CNotes, DeliveryDestination, Article, ArtType
 from decimal import Decimal
 import openpyxl
 from django.http import HttpResponse
-
-
-
-
+from transporter_app.models import DDMDetails
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import Sum, F, FloatField, Value
+from django.db.models.functions import Cast, Coalesce, NullIf
+import xlsxwriter
+from io import BytesIO
+from django.http import HttpResponse
+from django.db.models import Q
 
 
 # Set up logging   
@@ -680,123 +684,336 @@ def loading_sheet(request):
 
     return render(request, 'dealer/loading_sheet.html', context)
 
+# Set up logging
+logger = logging.getLogger(__name__)
+
 @login_required
 def booking_register_view(request):
-    # Get the logged-in dealer
+    logger.info("📢 booking_register_view called")
+
+    # Ensure the logged-in user is a dealer
+    try:
+        dealer = request.user.dealer
+        logger.info(f"✅ Dealer found: {dealer}")
+    except AttributeError:
+        return render(request, 'dealer/booking_register.html', {'error_message': 'आप डीलर नहीं हैं।'})
+
+    # ✅ **Base Query for Dealer's CNotes**
+    dealer_cnotes = CNotes.objects.filter(dealer=dealer).order_by('-created_at')
+    
+    # ✅ **Initialize Filters**
+    filters = Q()
+    
+    # ✅ **Get Query Parameters from Request**
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    from_city = request.GET.get('from_city')
+    to_city = request.GET.get('to_city')
+    amount_min = request.GET.get('amount_min')
+    amount_max = request.GET.get('amount_max')
+    search_term = request.GET.get('search_term')
+    cnote_number = request.GET.get('cnote_number')
+    ls_number = request.GET.get('ls_number')
+
+    cnotes = CNote.objects.filter(dealer=dealer)  
+
+    # ✅ Fetch Unique To Cities for Dropdown
+    to_city = dealer_cnotes.values_list('delivery_destination__destination_name', flat=True).distinct()
+    to_city = sorted(set(to_city))  # ✅ Unique and Sorted List
+
+    # ✅ "All City" ka option add karo
+    to_city.insert(0, "All City")
+
+    # ✅ Get Selected City from Request
+    selected_to_city = request.GET.get('to_city', '').strip()
+
+    # ✅ UNIQUE payment types fetch kar rahe hain
+    payment_types = dealer_cnotes.values_list('payment_type', flat=True).distinct()
+    payment_types = sorted(set(payment_types))  # ✅ Unique and Sorted List
+
+
+    # ✅ Filter apply karne ka logic
+    payment_filter = request.GET.get('payment_type', '')
+
+    # ✅ **Apply Filters with Proper Handling**
+    if date_from:
+        filters &= Q(created_at__gte=timezone.make_aware(timezone.datetime.strptime(date_from, '%Y-%m-%d')))
+    if date_to:
+        filters &= Q(created_at__lte=timezone.make_aware(timezone.datetime.strptime(date_to, '%Y-%m-%d').replace(hour=23, minute=59, second=59)))
+
+    if from_city:
+        filters &= Q(delivery_destination__destination_name__icontains=from_city)  # ✅ Fixed ForeignKey Filtering
+
+    # ✅ **Agar "All City" select nahi kiya hai, tabhi filter apply ho**
+    if selected_to_city and selected_to_city != "All City":
+        filters &= Q(delivery_destination__destination_name=selected_to_city)  # ✅ Exact Match
+
+    if amount_min:
+        try:
+            amount_min = float(amount_min)
+            filters &= Q(grand_total__gte=amount_min)
+        except ValueError:
+            logger.warning("⚠ Invalid amount_min value")
+
+    if amount_max:
+        try:
+            amount_max = float(amount_max)
+            filters &= Q(grand_total__lte=amount_max)
+        except ValueError:
+            logger.warning("⚠ Invalid amount_max value")
+
+    if search_term:
+        filters &= (Q(cnote_number__icontains=search_term) |
+                    Q(consignor_name__icontains=search_term) |
+                    Q(consignee_name__icontains=search_term))
+
+    if cnote_number:
+        filters &= Q(cnote_number__icontains=cnote_number)
+
+    if ls_number:
+        filters &= Q(loadingsheetdetail__loading_sheet__ls_number__icontains=ls_number)
+
+    if payment_filter and payment_filter != "All":
+        filters &= Q(payment_type=payment_filter)  # ✅ Correctly adding payment_type filter
+
+   
+    # ✅ **Apply Filters to Queryset**
+
+    dealer_cnotes = dealer_cnotes.filter(filters).distinct()
+    logger.info(f"✅ Filtered CNotes count: {dealer_cnotes.count()}")
+
+
+    
+
+    # ✅ **Fix LS Number & DDM Number Issues**
+    for cnote in dealer_cnotes:
+        # Fetch Loading Sheet Details
+        try:
+            loading_sheet_detail = cnote.loading_sheet_details.select_related('loading_sheet').first()
+            cnote.loading_sheet_number = loading_sheet_detail.loading_sheet.ls_number if loading_sheet_detail else ''
+        except Exception as e:
+            logger.error(f"⚠ Error accessing LS Number for CNote {cnote.cnote_number}: {str(e)}")
+            cnote.loading_sheet_number = ''
+
+     # ✅ **Implement Pagination (30 records per page)**
+    page = request.GET.get('page', 1)  # Default page 1
+    paginator = Paginator(dealer_cnotes, 30)  # ✅ 30 records per page
+
+    try:
+        bookings = paginator.page(page)
+    except PageNotAnInteger:
+        bookings = paginator.page(1)
+    except EmptyPage:
+        bookings = paginator.page(paginator.num_pages)
+        
+    # ✅ **Calculate Summary Data with Proper Type Handling**
+    summary_data = dealer_cnotes.aggregate(
+        paid_total=Sum('grand_total', filter=Q(payment_type__iregex=r'^\s*(paid)\s*$')),
+        to_pay_total=Sum('grand_total', filter=Q(payment_type__iregex=r'^\s*(to\s*pay|topay)\s*$')),
+        billing_total=Sum('grand_total', filter=Q(payment_type__iexact="TBB")),
+        total_amount=Sum('grand_total'),
+
+        # ✅ GST Calculation (18% of grand_total)
+        gst_total=Sum(F('grand_total') * 0.18, output_field=FloatField()),  
+
+        # ✅ Grand Total = Total Amount + GST (18%)
+        grand_total=Sum(F('grand_total') * 1.18, output_field=FloatField())  
+    )
+
+    # ✅ **None values ko 0 karna (Agar koi value na ho to error na aaye)**
+    for key, value in summary_data.items():
+        summary_data[key] = value if value is not None else 0
+
+    logger.info(f"✅ Summary Data: {summary_data}")
+
+    # ✅ Fetch Articles Data for Each CNotes
+    article_data = {}
+    for cnote in dealer_cnotes:
+        articles = Article.objects.filter(cnote=cnote)
+        
+        art_types = []
+        said_to_contain_list = []
+        art_amounts = []
+        
+        for article in articles:
+            # Handle art_type name
+            art_type_name = article.art_type.art_type_name if article.art_type else 'N/A'
+            art_types.append(art_type_name)
+            
+            # Handle said_to_contain with article count
+            said_to_contain = f"{article.said_to_contain or 'N/A'} ({article.art or 0})"
+            said_to_contain_list.append(said_to_contain)
+            
+            # Handle art_amount
+            art_amount = str(article.art_amount) if article.art_amount else '0'
+            art_amounts.append(art_amount)
+        
+        article_data[cnote.id] = {
+            'art_types': ' / '.join(art_types) if art_types else 'N/A',
+            'said_to_contain': ' / '.join(said_to_contain_list) if said_to_contain_list else 'N/A',
+            'art_amounts': ' / '.join(art_amounts) if art_amounts else '0'
+        }
+
+
+    # ✅ **Pass Data to the Template**
+    return render(request, 'dealer/booking_register.html', {
+        'bookings': bookings,  # ✅ Paginated data
+        'paginator': paginator,  # ✅ Add paginator object for pagination UI
+        'to_city': to_city,  # ✅ Pass the list of cities
+        'payment_types': payment_types,  # ✅ Pass payment types for filters
+        'summary_data': summary_data,  # ✅ Summary data
+        'article_data': article_data,  # ✅ Pass article data
+
+        'filters': {
+            'date_from': date_from,
+            'date_to': date_to,
+            'from_city': from_city,
+            'to_city': selected_to_city,  # ✅ Pass selected city
+            'amount_min': amount_min,
+            'amount_max': amount_max,
+            'search_term': search_term,
+            'cnote_number': cnote_number,
+            'ls_number': ls_number,
+            'payment_type': request.GET.get('payment_type', 'All')  # ✅ Ensure correct filter remains selected
+        }
+    })
+
+
+@login_required
+def download_excel(request):
     try:
         dealer = request.user.dealer
     except AttributeError:
-        # If the user is not a dealer, show an error or redirect
-        return redirect('login')
+        messages.error(request, "आप डीलर नहीं हैं। कृपया पुनः प्रयास करें।")
+        return redirect('dealer:booking_register')
 
-    # Filter CNotes for the logged-in dealer
-    dealer_cnotes = CNotes.objects.filter(dealer=dealer).order_by('-created_at')
-    
-    # Get article data for each CNotes
-    article_data = []
-    for cnote in dealer_cnotes:
+    # ✅ **Same Filters Apply करें जो `booking_register_view` में हैं**
+    filters = Q(dealer=dealer)
+
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    from_city = request.GET.get('from_city')
+    to_city = request.GET.get('to_city')
+    amount_min = request.GET.get('amount_min')
+    amount_max = request.GET.get('amount_max')
+    search_term = request.GET.get('search_term')
+    cnote_number = request.GET.get('cnote_number')
+    ls_number = request.GET.get('ls_number')
+    payment_filter = request.GET.get('payment_type')
+
+    if date_from:
+        filters &= Q(created_at__gte=timezone.make_aware(timezone.datetime.strptime(date_from, '%Y-%m-%d')))
+    if date_to:
+        filters &= Q(created_at__lte=timezone.make_aware(timezone.datetime.strptime(date_to, '%Y-%m-%d').replace(hour=23, minute=59, second=59)))
+
+    if from_city:
+        filters &= Q(delivery_destination__destination_name__icontains=from_city)
+
+    if to_city and to_city != "All City":
+        filters &= Q(delivery_destination__destination_name=to_city)
+
+    if amount_min:
         try:
-            articles = Article.objects.filter(cnote=cnote)
-            
-            # Safely collect article data with proper null checks
-            art_types = []
-            said_to_contain_list = []
-            art_amounts = []
-            total_art = 0
-            
-            for article in articles:
-                # Handle art_type safely - use the actual art type name from the selection
-                try:
-                    art_type_name = article.art_type.art_type_name if article.art_type else 'N/A'
-                    # Convert database value to display value
-                    if art_type_name == 'type1':
-                        art_type_name = 'SMALL BOX'
-                    elif art_type_name == 'type2':
-                        art_type_name = 'BIG BOX'
-                    art_types.append(art_type_name)
-                except AttributeError:
-                    art_types.append('N/A')
-                
-                # Handle said_to_contain safely
-                try:
-                    art_value = str(article.art) if article.art is not None else '0'
-                    said_to_contain = str(article.said_to_contain) if article.said_to_contain else 'N/A'
-                    said_to_contain_list.append(f'{said_to_contain} - {art_value}')
-                except AttributeError:
-                    said_to_contain_list.append('N/A - 0')
-                
-                # Handle art_amount safely
-                try:
-                    art_amount = str(article.art_amount) if article.art_amount is not None else '0'
-                    art_amounts.append(art_amount)
-                except AttributeError:
-                    art_amounts.append('0')
-                
-                # Calculate total_art safely
-                try:
-                    total_art += article.art if article.art is not None else 0
-                except AttributeError:
-                    pass
-            
-            # Create article data dictionary with safe default values
-            article_entry = {
-                'cnote_id': cnote.id,
-                'articles': articles,
-                'total_art': total_art,
-                'art_types': '/'.join(art_types),
-                'said_to_contain': '/'.join(said_to_contain_list),
-                'art_amounts': '/'.join(art_amounts),
-                'cnote_number': getattr(cnote, 'cnote_number', 'N/A'),
-                'booking_type': getattr(cnote, 'booking_type', 'N/A'),
-                'delivery_destination': getattr(cnote, 'delivery_destination', 'N/A'),
-                'consignor_name': getattr(cnote, 'consignor_name', 'N/A'),
-                'consignee_name': getattr(cnote, 'consignee_name', 'N/A'),
-                'payment_type': getattr(cnote, 'payment_type', 'N/A'),
-                'grand_total': getattr(cnote, 'grand_total', 0),
-                'created_at': getattr(cnote, 'created_at', None),
-                'eway_bill_number': getattr(cnote, 'eway_bill_number', 'N/A'),
-                'actual_weight': getattr(cnote, 'actual_weight', 0),
-                'charged_weight': getattr(cnote, 'charged_weight', 0),
-                'weight_rate': getattr(cnote, 'weight_rate', 0),
-                'weight_amount': getattr(cnote, 'weight_amount', 0),
-                'fix_amount': getattr(cnote, 'fix_amount', 0),
-                'invoice_number': getattr(cnote, 'invoice_number', 'N/A'),
-                'declared_value': getattr(cnote, 'declared_value', 0),
-                'risk_type': getattr(cnote, 'risk_type', 'N/A'),
-                'pod_required': getattr(cnote, 'pod_required', 'N/A'),
-                'freight': getattr(cnote, 'freight', 0),
-                'docket_charge': getattr(cnote, 'docket_charge', 0),
-                'door_delivery_charge': getattr(cnote, 'door_delivery_charge', 0),
-                'handling_charge': getattr(cnote, 'handling_charge', 0),
-                'pickup_charge': getattr(cnote, 'pickup_charge', 0),
-                'transhipment_charge': getattr(cnote, 'transhipment_charge', 0),
-                'insurance': getattr(cnote, 'insurance', 0),
-                'fuel_surcharge': getattr(cnote, 'fuel_surcharge', 0),
-                'commission': getattr(cnote, 'commission', 0),
-                'other_charge': getattr(cnote, 'other_charge', 0),
-                'carrier_risk': getattr(cnote, 'carrier_risk', 0),
-                'delivery_type': getattr(cnote, 'delivery_type', 'N/A'),
-                'delivery_method': getattr(cnote, 'delivery_method', 'N/A'),
-                'status': getattr(cnote, 'status', 'N/A'),
-                'consignor_gst': getattr(cnote, 'consignor_gst', 'N/A'),
-                'consignee_gst': getattr(cnote, 'consignee_gst', 'N/A'),
-            }
-            
-            article_data.append(article_entry)
-            
-        except Exception as e:
-            # Log the error and continue with the next CNotes
-            logger.error(f"Error processing CNotes {cnote.id}: {str(e)}")
-            continue
+            amount_min = float(amount_min)
+            filters &= Q(grand_total__gte=amount_min)
+        except ValueError:
+            pass
 
-    # Pass the required data to the template
-    context = {
-        'dealer': dealer,
-        'dealer_cnotes': dealer_cnotes,
-        'article_data': article_data,
-    }
+    if amount_max:
+        try:
+            amount_max = float(amount_max)
+            filters &= Q(grand_total__lte=amount_max)
+        except ValueError:
+            pass
 
-    return render(request, 'dealer/booking_register.html', context)
+    if search_term:
+        filters &= (Q(cnote_number__icontains=search_term) |
+                    Q(consignor_name__icontains=search_term) |
+                    Q(consignee_name__icontains=search_term))
+
+    if cnote_number:
+        filters &= Q(cnote_number__icontains=cnote_number)
+
+    if ls_number:
+        filters &= Q(loading_sheet_details__loading_sheet__ls_number__icontains=ls_number)
+
+    if payment_filter and payment_filter != "All":
+        filters &= Q(payment_type=payment_filter)
+
+    # ✅ **Filtered CNotes Fetch करें**
+    dealer_cnotes = CNotes.objects.filter(filters).order_by('-created_at')
+
+    # ✅ **Article Data Fetch करें**
+    article_data = {}
+    for cnote in dealer_cnotes:
+        articles = Article.objects.filter(cnote=cnote)
+        article_data[cnote.id] = {
+            "total_art": len(articles),
+            "art_types": "/".join([article.art_type.art_type_name for article in articles if article.art_type]),
+            "said_to_contain": "/".join([article.said_to_contain for article in articles if article.said_to_contain]),
+            "art_amounts": "/".join([str(article.art_amount) for article in articles if article.art_amount]),
+        }
+
+    # ✅ **Excel File Create करें**
+    output = BytesIO()
+    workbook = xlsxwriter.Workbook(output)
+    worksheet = workbook.add_worksheet("Booking Register")
+
+    # ✅ **Excel Headers Define करें (Updated)**
+    headers = [
+        'Sr. No', 'CNote Number', 'Booking Type', 'Delivery Destination', 'Consignor Name', 'Consignee Name',
+        'Payment Type', 'Grand Total', 'Created Date', 'Created Time',  # ✅ Yeh do naye columns
+        'Eway Bill Number', 'Actual Weight', 'Charged Weight', 'Weight Rate', 'Weight Amount', 'Fix Amount',
+        'Invoice Number', 'Declared Value', 'Risk Type', 'POD Required', 'Freight', 'Docket Charge',
+        'Door Delivery Charge', 'Handling Charge', 'Pickup Charge', 'Transhipment Charge',
+        'Insurance', 'Fuel Surcharge', 'Commission', 'Other Charge', 'Carrier Risk',
+        'Delivery Type', 'Delivery Method', 'Status', 'Total Article', 'Art Types',
+        'Said to Contain', 'Art Amounts', 'Consignor GST', 'Consignee GST', 'LS Number'
+    ]
+
+    for col, header in enumerate(headers):
+        worksheet.write(0, col, header)  # ✅ Headers को First Row में Add करें
+
+    # ✅ **Table Data को Excel में लिखें**
+    for row, cnote in enumerate(dealer_cnotes, start=1):
+        article_info = article_data.get(cnote.id, {"total_art": 0, "art_types": "N/A", "said_to_contain": "N/A", "art_amounts": "0"})
+
+        # ✅ "Created At" ka Date aur Time alag-alag nikalna
+        created_date = cnote.created_at.strftime('%d-%m-%Y') if cnote.created_at else 'N/A'  # ✅ dd-mm-yyyy format
+        created_time = cnote.created_at.strftime('%H:%M:%S') if cnote.created_at else 'N/A'  # ✅ Same time format
+
+        data = [
+            row, cnote.cnote_number, cnote.booking_type,
+            cnote.delivery_destination.destination_name if cnote.delivery_destination else 'N/A',
+            cnote.consignor_name, cnote.consignee_name, cnote.payment_type, cnote.grand_total,
+            created_date,  # ✅ Yeh "Created Date" ke liye hai
+            created_time,  # ✅ Yeh "Created Time" ke liye hai
+            cnote.eway_bill_number,
+            cnote.actual_weight, cnote.charged_weight, cnote.weight_rate,
+            cnote.weight_amount, cnote.fix_amount, cnote.invoice_number, cnote.declared_value,
+            cnote.risk_type, cnote.pod_required, cnote.freight, cnote.docket_charge,
+            cnote.door_delivery_charge, cnote.handling_charge, cnote.pickup_charge,
+            cnote.transhipment_charge, cnote.insurance, cnote.fuel_surcharge, cnote.commission,
+            cnote.other_charge, cnote.carrier_risk, cnote.delivery_type, cnote.delivery_method,
+            cnote.status,
+            article_info["total_art"],  # ✅ Total Articles
+            article_info["art_types"],  # ✅ Art Types
+            article_info["said_to_contain"],  # ✅ Said to Contain
+            article_info["art_amounts"],  # ✅ Art Amounts
+            cnote.consignor_gst, cnote.consignee_gst,
+            cnote.loading_sheet_details.first().loading_sheet.ls_number if cnote.loading_sheet_details.exists() else 'N/A'
+        ]
+
+        for col, value in enumerate(data):
+            worksheet.write(row, col, value)
+
+    workbook.close()
+    output.seek(0)
+
+    # ✅ **Excel File को Response में Return करें**
+    response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=booking_register.xlsx'
+    return response
 
 @login_required
 def cnote_options(request, cnote_id):
@@ -1315,6 +1532,20 @@ def create_cnotes(request):
 
     # Fetch the last CNote created by the dealer
     last_cnote = CNotes.objects.filter(dealer=dealer).order_by('-created_at').first()
+
+     # **⬇️ Fetch selected destination & checkbox value**
+    delivery_destination = request.GET.get("delivery_destination", "").strip().upper()
+    destination_wise = request.GET.get("destination_wise", "true") == "true"  # Default True
+    consignee_list = []
+
+    if delivery_destination and destination_wise:
+        consignee_list = PartyMaster.objects.filter(
+            Q(city__iexact=delivery_destination) |  
+            Q(address__icontains=delivery_destination) |  
+            Q(remark__icontains=delivery_destination)  
+        ).order_by("party_name")
+    else:
+        consignee_list = PartyMaster.objects.all().order_by("party_name")  # ✅ All parties if unchecked
 
     if request.method == 'POST':
         logger.info("POST request received.")
@@ -1844,6 +2075,53 @@ def export_excel_template(request):
 
     return response
 
+
+@login_required
+@require_GET
+def get_consignee_data(request):
+    """
+    Fetch consignee data based on destination.
+    """
+    try:
+        destination = request.GET.get("destination", "").strip().upper()
+        destination_wise = request.GET.get("destination_wise", "true") == "true"  # Convert to boolean
+
+        logger.info(f"Fetching consignee data for destination: {destination}, filter: {destination_wise}")
+
+        if not destination:
+            return JsonResponse({"success": False, "message": "Destination is required"}, status=400)
+
+        # ✅ FIX: Filter consignees with exact city match
+        if destination_wise:
+            parties = PartyMaster.objects.filter(city__iexact=destination).distinct().order_by('party_name')
+        else:
+            parties = PartyMaster.objects.all().distinct().order_by('party_name')
+
+        # ✅ FIX: Ensure only correct destination parties are returned
+        consignee_list = [
+            {
+                "name": party.party_name,
+                "code": party.party_code,
+                "mobile": party.mobile_number_1,
+                "gst": party.gst_no or "",
+                "address": party.address,
+                "city": party.city,
+                "state": party.state,
+                "pincode": party.pincode,
+                "email": party.email,
+                "is_tbb": party.is_tbb
+            }
+            for party in parties
+            if party.city.strip().upper() == destination  # ✅ Final filtering
+        ]
+
+        logger.info(f"✅ Found {len(consignee_list)} matching consignees for destination: {destination}")
+
+        return JsonResponse({"success": True, "consignees": consignee_list})
+
+    except Exception as e:
+        logger.error(f"❌ Error in get_consignee_data: {str(e)}")
+        return JsonResponse({"success": False, "message": f"Error fetching consignee data: {str(e)}"}, status=500)
 
 
 
