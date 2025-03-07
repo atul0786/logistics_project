@@ -1883,18 +1883,17 @@ def update_cnote(request, cnote_id):
 
 
 
-logger = logging.getLogger(__name__)
 
+logger = logging.getLogger(__name__)
 
 @login_required
 def import_cnotes(request):
-
     # Get the dealer information at the start
     try:
-        dealer = request.user.dealer  # Ensure this line is present
+        dealer = request.user.dealer
     except AttributeError:
         messages.error(request, "Dealer information not found.")
-        return redirect("some_error_page")  # Redirect to an appropriate error page
+        return redirect("some_error_page")
 
     if request.method == "POST":
         file = request.FILES.get("excel_file")
@@ -1910,49 +1909,50 @@ def import_cnotes(request):
 
             failed_rows = []
             success_count = 0
-            dealer = request.user.dealer
             logger.info(f"✅ Logged-in Dealer: {dealer.name} (ID: {dealer.dealer_id})")
 
             for index, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
                 try:
                     logger.info(f"📌 Processing Row {index}: {row}")
                     
+                    # Modified data extraction based on new column order
                     booking_type = row[2] or "sundry"
                     delivery_type = row[3] or "economy"
                     delivery_method = row[4] or "DOOR"
-                    delivery_destination_name = row[5] or "UNKNOWN"
-                    eway_bill_number = row[6] or "0"
-                    payment_type = row[7] or "TBB"
-                    consignor_name = row[8] or dealer.name
-                    consignor_mobile = row[9] or "0000000000"
-                    consignor_gst = row[10] or "UNKNOWN"
-                    consignor_address = row[11] or "UNKNOWN"
-                    consignee_name = row[12] or "UNKNOWN"
-                    consignee_mobile = row[13] or "0000000000"
-                    consignee_gst = row[14] or "UNKNOWN"
-                    consignee_address = row[15] or "UNKNOWN"
-                    actual_weight = row[16] or 0.0
-                    charged_weight = row[17] or actual_weight
-                    weight_rate = row[18] or 0.0
-                    weight_amount = row[19] or 0.0
-                    fix_amount = row[20] or 0.0
-                    invoice_number = row[21] or ""
-                    declared_value = row[22] or 0.0
-                    risk_type = row[23] or "owner"
-                    pod_required = row[24] or "yes"
-                    freight = row[25] or 0.0
-                    docket_charge = row[26] or 0.0
-                    door_delivery_charge = row[27] or 0.0
-                    handling_charge = row[28] or 0.0
-                    pickup_charge = row[29] or 0.0
-                    transhipment_charge = row[30] or 0.0
-                    insurance = row[31] or 0.0
-                    fuel_surcharge = row[32] or 0.0
-                    commission = row[33] or 0.0
-                    other_charge = row[34] or 0.0
-                    carrier_risk = row[35] or 0.0
-                    grand_total = row[36] or 0.0
-                    total_art = row[38] or 0
+                    eway_bill_number = row[5] or "0"
+                    payment_type = row[6] or "TBB"
+                    consignor_name = row[7] or dealer.name
+                    consignor_mobile = row[8] or "0000000000"
+                    consignor_gst = row[9] or "UNKNOWN"
+                    consignor_address = row[10] or "UNKNOWN"
+                    consignee_name = row[11] or "UNKNOWN"
+                    delivery_destination_name = row[12] or "UNKNOWN"
+                    consignee_address = row[13] or "UNKNOWN"
+                    invoice_number = row[14] or ""
+                    article_quantity = row[15] or 0
+                    consignee_mobile = row[16] or "0000000000"
+                    consignee_gst = row[17] or "UNKNOWN"
+                    actual_weight = row[18] or 0.0
+                    charged_weight = row[19] or actual_weight
+                    weight_rate = row[20] or 0.0
+                    weight_amount = row[21] or 0.0
+                    fix_amount = row[22] or 0.0
+                    declared_value = row[23] or 0.0
+                    risk_type = row[24] or "owner"
+                    pod_required = row[25] or "yes"
+                    freight = row[26] or 0.0
+                    docket_charge = row[27] or 0.0
+                    door_delivery_charge = row[28] or 0.0
+                    handling_charge = row[29] or 0.0
+                    pickup_charge = row[30] or 0.0
+                    transhipment_charge = row[31] or 0.0
+                    insurance = row[32] or 0.0
+                    fuel_surcharge = row[33] or 0.0
+                    commission = row[34] or 0.0
+                    other_charge = row[35] or 0.0
+                    carrier_risk = row[36] or 0.0
+                    grand_total = row[37] or 0.0
+                    total_art = row[39] or 0
 
                     def safe_float(value, default=0.0):
                         try:
@@ -1960,12 +1960,12 @@ def import_cnotes(request):
                         except ValueError:
                             return default
 
-                    actual_weight = safe_float(row[16])
-                    charged_weight = safe_float(row[17], actual_weight)
-                    weight_rate = safe_float(row[18])
+                    actual_weight = safe_float(row[18])
+                    charged_weight = safe_float(row[19], actual_weight)
+                    weight_rate = safe_float(row[20])
                     weight_amount = actual_weight * weight_rate
-                    declared_value = safe_float(row[22])
-                    total_art = int(row[38]) if row[38] else 0
+                    declared_value = safe_float(row[23])
+                    total_art = int(row[39]) if row[39] else 0
                     
                     delivery_destination, _ = DeliveryDestination.objects.get_or_create(
                         destination_name=delivery_destination_name
@@ -2018,22 +2018,19 @@ def import_cnotes(request):
                         )
                         
                         def get_art_type(art_type_name):
-                            """ ArtType ke art_type_name se uska ID fetch karo, nahi mile toh default ID 1 return karo """
                             art_type_obj = ArtType.objects.filter(art_type_name=art_type_name).first()
                             return art_type_obj if art_type_obj else ArtType.objects.get(id=1)  # Default ID: 1
 
                         for i in range(total_art):
                             Article.objects.create(
                                 cnote=cnote,
-                                article_type=safe_get(row, 39, "UNKNOWN"),
-                                art=safe_get(row, 40, "UNKNOWN"),
-                                art_type=get_art_type(safe_get(row, 41, "UNKNOWN")),  # ArtType.name -> ArtType.art_type_name
+                                article_type=safe_get(row, 40, "UNKNOWN"),
+                                art=safe_get(row, 15, "UNKNOWN"),  # Article Quantity is now at index 15
+                                art_type=get_art_type(safe_get(row, 41, "UNKNOWN")),
                                 said_to_contain=safe_get(row, 42, "UNKNOWN"),
                                 art_amount=safe_get(row, 43, 0.0)
                             )
 
-
-                    
                     success_count += 1
                     logger.info(f"✅ CNote Created Successfully: {next_cnote_number}")
                 
@@ -2052,11 +2049,8 @@ def import_cnotes(request):
             messages.error(request, f"❌ Error processing file: {e}")
             return redirect("dealer:import_cnotes")
     
-   # return render(request, "dealer/import_cnotes.html")
-     # For GET requests, render the template with dealer info
-
     return render(request, "dealer/import_cnotes.html", {"dealer": dealer})
-    
+
 def safe_get(row, index, default=""):
     try:
         return row[index] if row[index] not in [None, "", "NULL"] else default
@@ -2064,7 +2058,6 @@ def safe_get(row, index, default=""):
         return default
 
     
-
 @login_required
 def export_excel_template(request):
     try:
@@ -2076,38 +2069,40 @@ def export_excel_template(request):
     ws = wb.active
     ws.title = "CNotes & Articles"
 
-    # ✅ Corrected Headers (Including Art Type)
+    # Modified Headers with new order
     headers = [
-        "Dealer ID", "Dealer Name", "Booking Type", "Delivery Type", "Delivery Method", "Delivery Destination",
-        "EWay Bill Number", "Payment Type", "Consignor Name", "Consignor Mobile", "Consignor GST", "Consignor Address",
-        "Consignee Name", "Consignee Mobile", "Consignee GST", "Consignee Address", "Actual Weight", "Charged Weight",
-        "Weight Rate", "Weight Amount", "Fix Amount", "Invoice Number", "Declared Value", "Risk Type", "POD Required",
-        "Freight", "Docket Charge", "Door Delivery Charge", "Handling Charge", "Pickup Charge", "Transhipment Charge",
-        "Insurance", "Fuel Surcharge", "Commission", "Other Charge", "Carrier Risk", "Grand Total", "Status", "Total Articles",
-        "Article Type", "Article Quantity", "Art Type", "Said To Contain", "Article Amount"
+        "Dealer ID", "Dealer Name", "Booking Type", "Delivery Type", "Delivery Method", "EWay Bill Number",
+        "Payment Type", "Consignor Name", "Consignor Mobile", "Consignor GST", "Consignor Address",
+        "Consignee Name", "Delivery Destination", "Consignee Address", "Invoice Number", "Article Quantity",
+        "Consignee Mobile", "Consignee GST", "Actual Weight", "Charged Weight", "Weight Rate", "Weight Amount",
+        "Fix Amount", "Declared Value", "Risk Type", "POD Required", "Freight", "Docket Charge",
+        "Door Delivery Charge", "Handling Charge", "Pickup Charge", "Transhipment Charge", "Insurance",
+        "Fuel Surcharge", "Commission", "Other Charge", "Carrier Risk", "Grand Total", "Status",
+        "Total Articles", "Article Type", "Art Type", "Said To Contain", "Article Amount"
     ]
     ws.append(headers)
 
-    for _ in range(5):  # 5 Sample rows
-        # ✅ CNote Sample Data
+    for _ in range(50):  # 50 Sample rows
+        # Modified CNote Sample Data
         cnote_data = [
-            dealer.dealer_id, dealer.name, "sundry", "economy", "DOOR", "", "", "TBB", dealer.name,
-            dealer.mobile_number_1, "", dealer.address, "", "", "", "", 0, 0, 0, 0, 0, "", 0, "owner", "yes",
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "booked", 1  # Example: 10 total articles
+            dealer.dealer_id, dealer.name, "sundry", "economy", "DOOR", "", "TBB", dealer.name,
+            dealer.mobile_number_1, "", dealer.address, "", "", "", "", 0, "", "", 0, 0, 0, 0, 0, 0,
+            "owner", "yes", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "booked", 1
         ]
         
-        # ✅ Article Sample Data (Including Art Type)
-        article_data = ["Article", 0, "Small Box", "Box", 0]  # Example
+        # Modified Article Sample Data
+        article_data = ["Article", "Small Box", "Box", 0]
 
-        # ✅ Add complete row in a single line
+        # Add complete row in a single line
         ws.append(cnote_data + article_data)
 
-    # ✅ Generate Excel response
+    # Generate Excel response
     response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     response["Content-Disposition"] = 'attachment; filename="CNote_Booking_Template.xlsx"'
     wb.save(response)
 
     return response
+
 
 
 @login_required
