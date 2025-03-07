@@ -618,11 +618,12 @@
                             <td>{{ booking.delivery_type|default:"N/A" }}</td>
                             <td>{{ booking.delivery_method|default:"N/A" }}</td>
                             <td>{{ booking.status|default:"N/A" }}</td>
-                            <td>{{ booking.total_art|default:"0" }}</td>
 
+                            <td>{{ article_data|get:booking.id|default:"{}"|get:"total_sum"|default:"0" }}</td>
                             <td>{{ article_data|get:booking.id|default:"{}"|get:"art_types"|default:"N/A" }}</td>
                             <td>{{ article_data|get:booking.id|default:"{}"|get:"said_to_contain"|default:"N/A" }}</td>
                             <td>{{ article_data|get:booking.id|default:"{}"|get:"art_amounts"|default:"N/A" }}</td>
+                            
                             <td>{{ booking.consignor_gst|default:"N/A" }}</td>
                             <td>{{ booking.consignee_gst|default:"N/A" }}</td>
                             
