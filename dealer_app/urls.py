@@ -14,6 +14,8 @@ from .views import search_loading_sheets
 from .views import view_cnote, search_cnote
 from .views import export_excel_template
 from .views import import_cnotes  # ✅ Correct import
+from dealer_app.views import check_loading_sheet  # ✅ Correct import
+
 
 
 app_name = 'dealer'  # Defines the namespace for this app
@@ -114,7 +116,10 @@ urlpatterns = [
     path('export-excel/', export_excel_template, name='export_excel_template'),
 
     path('get_consignee_data/', get_consignee_data, name='get_consignee_data'),
-
+    
+    # MF Print Preview (for checking before finalizing the Loading Sheet)
+    path('check-loading-sheet/', views.check_loading_sheet, name='check_loading_sheet'),
+    
     
 ]
 
