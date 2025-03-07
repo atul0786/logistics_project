@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manifest Report</title>
+    <title>Loading Sheet</title>
     <style>
         @page {
             size: A4 portrait;
@@ -87,29 +87,59 @@
                 width: 210mm;
                 height: 297mm;
             }
+            .no-print {
+                display: none;
+            }
         }
+        @media print {
+            #print-btn {
+                display: none;  /* ✅ Print page pe button hide hoga */
+            }
+        }
+        #print-btn {
+            padding: 8px 15px;
+            font-size: 14px;
+            font-weight: bold;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+    
+        #print-btn:hover {
+            background-color: #0056b3;
+        }
+        
     </style>
 </head>
 <body>
+    
     <div class="container">
         <!-- Header -->
         <div class="header">
             <div class="company-name">GOOD WAY EXPRESS</div>
             <div class="company-details">
                 Address : Behind Mahadev Mandir, Joshi Wada, Yavatmal(MS) 445001
-                <h2 class="text-xl font-bold mt-4">Loading Sheet</h2>
+                <h2 class="text-xl font-bold mt-4" id="page-title">Loading Sheet</h2> 
+                    <span>
+                        <button id="print-btn" onclick="window.print()">Print</button>
+                    </span>
+                
             </div>
-            
         </div>
 
         <!-- Manifest Information -->
         <div class="info-section">
             <div><strong>Dealer Name:</strong> {{ dealer.name|default:"-" }}</div>
-            <div><strong>Transporter:</strong> {{ transporter.name|default:"-" }}</div>
+            <div><strong>Transporter:</strong> <span id="transporter-name">
+                {{ transporter.name|default:"-" }}
+            </span></div>
         </div>
         <div class="info-section">
-            <div><strong>Loading Sheet Number:</strong> {{ loading_sheet.ls_number|default:"-" }}</div>
-            <div><strong>Date & Time:</strong> {{ loading_sheet.created_at|default:"-" }}</div>
+            <div><strong>Loading Sheet Number:</strong> <span id="ls-number">{{ loading_sheet.ls_number|default:"-" }}</span></div>
+            <div><strong>Date & Time:</strong> <span id="current-datetime">{{ loading_sheet.created_at|default:"-" }}</span></div>
         </div>
 
         <!-- Table -->
@@ -121,23 +151,23 @@
                     <th>Consignor</th>
                     <th>Consignee</th>
                     <th>Total Art</th>
-                    <th>Weight</th>
+                    <th>Invoice No.</th>
                     <th>CNote Type</th>
-                    <th>Grand Total</th>
+                    
                     <th>Remark</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="manifest-body">
                 {% for detail in loading_sheet_details %}
                 <tr>
                     <td>{{ detail.cnote.cnote_number|default:"-" }}</td>
                     <td>{{ detail.destination|default:"-" }}</td>
                     <td>{{ detail.consignor_name|default:"-" }}</td>
                     <td>{{ detail.consignee_name|default:"-" }}</td>
-                    <td>{{ detail.art|default:"0" }}</td>
-                    <td>{{ detail.weight|default:"0.00" }}</td>
+                    <td>{{ detail.total_art|default:"0" }}</td>  {# ✅ Total Art ab properly show hoga #}
+                    <td>{{ detail.invoice_number|default:"N/A" }}</td>
                     <td>{{ detail.payment_type|default:"-" }}</td>
-                    <td>{{ detail.amount|default:"0.00" }}</td>
+                    
                     <td>{{ detail.remark|default:"" }}</td>
                 </tr>
                 {% endfor %}
@@ -150,37 +180,37 @@
                 <tr>
                     <th>CN TYPE</th>
                     <th>CN COUNT</th>
-                    <th>NO.OF PKG</th>
-                    <th>AMOUNT</th>
+                    <th>NO. OF PKG</th>
+                  
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td>Paid</td>
-                    <td id="paid-count">0</td>
-                    <td id="paid-pkg">0</td>
-                    <td id="paid-amount">-</td>
+                    <td>{{ summary.Paid.count }}</td>
+                    <td>{{ summary.Paid.pkgs }}</td>
+                    
                 </tr>
                 <tr>
                     <td>To Pay</td>
-                    <td id="topay-count">0</td>
-                    <td id="topay-pkg">0</td>
-                    <td id="topay-amount">0</td>
+                    <td>{{ summary.To_Pay.count }}</td>  <!-- ✅ Fixed key -->
+                    <td>{{ summary.To_Pay.pkgs }}</td>
+                    
                 </tr>
                 <tr>
                     <td>TBB</td>
-                    <td id="tbb-count">0</td>
-                    <td id="tbb-pkg">0</td>
-                    <td id="tbb-amount">-</td>
+                    <td>{{ summary.TBB.count }}</td>
+                    <td>{{ summary.TBB.pkgs }}</td>
+                    
                 </tr>
                 <tr class="total-row">
                     <td>TOTAL</td>
-                    <td id="total-count">0</td>
-                    <td id="total-pkg">0</td>
-                    <td id="total-amount">0</td>
-                </tr>
+                    <td>{{ summary.Paid.count|add:summary.To_Pay.count|add:summary.TBB.count }}</td>  
+                    <td>{{ summary.Paid.pkgs|add:summary.To_Pay.pkgs|add:summary.TBB.pkgs }}</td>  
+                    </tr>
             </tbody>
         </table>
+
 
         <div class="remark">Remark :-</div>
         <div class="prepared-by">Prepared By :{{ dealer.name|default:"-" }}</div>
@@ -191,66 +221,22 @@
             const table = document.getElementById('manifest-table');
             const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
         
-            let summary = {
-                paid: { count: 0, pkg: 0, amount: 0 },
-                topay: { count: 0, pkg: 0, amount: 0 },
-                tbb: { count: 0, pkg: 0, amount: 0 }
-            };
-        
+            let totalArtSum = 0;
+
             for (let row of rows) {
                 const totalArt = parseInt(row.cells[4].textContent) || 0;
-                const amount = parseFloat(row.cells[7].textContent) || 0;
-                const cnoteType = row.cells[6].textContent.trim().toLowerCase(); // Convert to lowercase
-        
-                console.log("CNote Type:", cnoteType); // Debugging ke liye
-        
-                if (cnoteType === 'paid') {
-                    summary.paid.count++;
-                    summary.paid.pkg += totalArt;
-                    summary.paid.amount += amount;
-                } else if (cnoteType === 'to pay' || cnoteType === 'topay') { // Both formats handled
-                    summary.topay.count++;
-                    summary.topay.pkg += totalArt;
-                    summary.topay.amount += amount;
-                } else if (cnoteType === 'tbb') {
-                    summary.tbb.count++;
-                    summary.tbb.pkg += totalArt;
-                    summary.tbb.amount += amount;
-                }
+                totalArtSum += totalArt;
             }
-        
-            // Total calculation
-            const totalCount = summary.paid.count + summary.topay.count + summary.tbb.count;
-            const totalPkg = summary.paid.pkg + summary.topay.pkg + summary.tbb.pkg;
-            const totalAmount = summary.paid.amount + summary.topay.amount + summary.tbb.amount;
-        
-            // HTML update
-            document.getElementById('paid-count').textContent = summary.paid.count;
-            document.getElementById('paid-pkg').textContent = summary.paid.pkg;
-            document.getElementById('paid-amount').textContent = summary.paid.amount.toFixed(2);
-        
-            document.getElementById('topay-count').textContent = summary.topay.count;
-            document.getElementById('topay-pkg').textContent = summary.topay.pkg;
-            document.getElementById('topay-amount').textContent = summary.topay.amount.toFixed(2);
-        
-            document.getElementById('tbb-count').textContent = summary.tbb.count;
-            document.getElementById('tbb-pkg').textContent = summary.tbb.pkg;
-            document.getElementById('tbb-amount').textContent = summary.tbb.amount.toFixed(2);
-        
-            document.getElementById('total-count').textContent = totalCount;
-            document.getElementById('total-pkg').textContent = totalPkg;
-            document.getElementById('total-amount').textContent = totalAmount.toFixed(2);
+
+            document.getElementById('total-art').textContent = totalArtSum;
         }
-        
-        // Run summary calculation on page load
-        window.onload = function() {
+
+        document.addEventListener('DOMContentLoaded', function() {
             calculateSummary();
             window.print();
-        };
-        
-        // Update summary when table changes
+        });
+
         document.getElementById('manifest-table').addEventListener('input', calculateSummary);
-        
     </script>
 </body>
 </html>
