@@ -111,6 +111,8 @@ import xlsxwriter
 from io import BytesIO
 from django.http import HttpResponse
 from django.db.models import Q
+from collections import defaultdict
+from django.contrib.postgres.aggregates import StringAgg
 
 
 # Set up logging   
@@ -771,7 +773,7 @@ def booking_register_view(request):
         filters &= Q(cnote_number__icontains=cnote_number)
 
     if ls_number:
-        filters &= Q(loadingsheetdetail__loading_sheet__ls_number__icontains=ls_number)
+        filters &= Q(loading_sheet_details__loading_sheet__ls_number__icontains=ls_number)
 
     if payment_filter and payment_filter != "All":
         filters &= Q(payment_type=payment_filter)  # ✅ Correctly adding payment_type filter
@@ -830,6 +832,10 @@ def booking_register_view(request):
     article_data = {}
     for cnote in dealer_cnotes:
         articles = Article.objects.filter(cnote=cnote)
+
+        # Calculate total articles sum
+        total_articles = articles.aggregate(total_sum=Sum('art'))['total_sum'] or 0
+        
         
         art_types = []
         said_to_contain_list = []
@@ -849,6 +855,7 @@ def booking_register_view(request):
             art_amounts.append(art_amount)
         
         article_data[cnote.id] = {
+            'total_sum': total_articles,  # Add total sum
             'art_types': ' / '.join(art_types) if art_types else 'N/A',
             'said_to_contain': ' / '.join(said_to_contain_list) if said_to_contain_list else 'N/A',
             'art_amounts': ' / '.join(art_amounts) if art_amounts else '0'
@@ -877,6 +884,7 @@ def booking_register_view(request):
             'payment_type': request.GET.get('payment_type', 'All')  # ✅ Ensure correct filter remains selected
         }
     })
+
 
 
 @login_required
@@ -1463,31 +1471,68 @@ logger = logging.getLogger(__name__)
 @login_required
 def mf_print(request, loading_sheet_number):
     try:
-        # Get the loading sheet
+        # ✅ Get Loading Sheet
         loading_sheet = get_object_or_404(LoadingSheetSummary, ls_number=loading_sheet_number)
+
+        # ✅ Fetch Loading Sheet Details with Total Art Calculation
         
-        # Get all CNotes associated with this loading sheet
-        loading_sheet_details = LoadingSheetDetail.objects.filter(
-            loading_sheet=loading_sheet
-        ).select_related('cnote')
-        
-        # Get the dealer associated with the loading sheet
-        dealer = loading_sheet.dealer
-        
-        context = {
-            'loading_sheet': loading_sheet,
-            'loading_sheet_details': loading_sheet_details,
-            'dealer': dealer,
-            'transporter': loading_sheet.transporter,
-            'current_date': timezone.now(),
+
+        loading_sheet_details = (
+            LoadingSheetDetail.objects.filter(loading_sheet=loading_sheet)
+            .select_related("cnote")
+            .annotate(
+                total_art=Sum("cnote__articles__art"),  
+                invoice_number=StringAgg("cnote__invoice_number", delimiter=", ")  # ✅ Fixed
+            )
+        )
+
+
+        # ✅ Calculate Summary Data - Direct approach
+        summary = {
+            "Paid": {"count": 0, "pkgs": 0, "amount": 0},
+            "To_Pay": {"count": 0, "pkgs": 0, "amount": 0},
+            "TBB": {"count": 0, "pkgs": 0, "amount": 0},
         }
         
-        return render(request, 'dealer/mf_print.html', context)
-        
+        # ✅ Process each detail record individually to ensure accurate counting
+        for detail in loading_sheet_details:
+            payment_type = detail.payment_type.upper().replace(" ", "_")
+            
+            # Map payment types to our standard keys
+            if payment_type in ["PAID"]:
+                key = "Paid"
+            elif payment_type in ["TOPAY", "TO_PAY"]:
+                key = "To_Pay"
+            elif payment_type in ["TBB"]:
+                key = "TBB"
+            else:
+                continue
+                
+            # ✅ Increment counts and sums
+            summary[key]["count"] += 1
+            
+            # ✅ Use the total_art directly from the detail record
+            # This ensures we get the exact art count from the CNotes
+            summary[key]["pkgs"] += detail.total_art or 0
+            summary[key]["amount"] += detail.amount or 0
+
+        # ✅ Pass Context to Template
+        context = {
+            "loading_sheet": loading_sheet,
+            "loading_sheet_details": loading_sheet_details,
+            "dealer": loading_sheet.dealer,
+            "transporter": loading_sheet.transporter,
+            "current_date": timezone.now(),
+            "summary": summary,  # ✅ Clean dictionary passed
+        }
+
+        return render(request, "dealer/mf_print.html", context)
+
     except Exception as e:
         logger.error(f"Error rendering MF Print page: {str(e)}")
-        messages.error(request, 'Error loading the print page. Please try again.')
-        return redirect('dealer:loading_sheet')
+        messages.error(request, "Error loading the print page. Please try again.")
+        return redirect("dealer:loading_sheet")
+
     
 @login_required
 @require_POST
@@ -2112,5 +2157,31 @@ def get_consignee_data(request):
         logger.error(f"❌ Error in get_consignee_data: {str(e)}")
         return JsonResponse({"success": False, "message": f"Error fetching consignee data: {str(e)}"}, status=500)
 
+
+@login_required
+def check_loading_sheet(request):
+    try:
+        dealer = request.user.dealer
+
+        # ✅ Fetch Selected CNotes from Query Params
+        selected_cnote_ids = request.GET.getlist("selected_cnotes")
+
+        if not selected_cnote_ids:
+            return render(request, "dealer/check_loading_sheet.html", {"error_message": "No CNotes selected."})
+
+        # ✅ Fetch CNotes directly instead of LoadingSheetDetail
+        selected_cnotes = CNotes.objects.filter(id__in=selected_cnote_ids, dealer=dealer)
+
+        context = {
+            "loading_sheet_details": selected_cnotes,
+            "dealer": dealer,
+            "current_date": timezone.now(),
+        }
+
+        return render(request, "dealer/check_loading_sheet.html", context)
+
+    except Exception as e:
+        logger.error(f"Error rendering Check Loading Sheet: {str(e)}")
+        return render(request, "dealer/check_loading_sheet.html", {"error_message": "Error loading data."})
 
 
