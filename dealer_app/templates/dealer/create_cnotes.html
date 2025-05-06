@@ -548,26 +548,12 @@
                    
                 </ul>
             </li>
-            <!--<li>
-                <a href="{% url 'dealer:search' %}"><i class="fas fa-search"></i> Search</a>
-            </li> -->
             <li>
                 <a href="{% url 'dealer:booking_register' %}"target="_blank" rel="noopener noreferrer"><i class="fas fa-chart-bar"></i> Report</a>
                 <ul>
-                  <!--  <li>
-                        <a href="{% url 'dealer:booking_register' %}" target="_blank" rel="noopener noreferrer">Booking Register</a>
-
-                    </li> -->
-                    
-                   
-                    
                 </ul>
-                
             </li>
-           
-          
         </ul>
-
     </nav>
     
 
@@ -651,7 +637,7 @@
                                     name="delivery_destination"
                                     required
                                 >
-                                <span class="dropdown-arrow" id="dropdownArrow">&#9662;</span>
+                                <span class="dropdown-arrow" id="dropdownArrow">▾</span>
                                 <div class="dropdown-list" id="dropdownList">
                                     <!-- Dropdown items will be populated dynamically -->
                                 </div>
@@ -745,7 +731,6 @@
                                             <option value="">Select</option>
                                             <option value="type1">SMALL BOX</option>
                                             <option value="type2">BIG BOX</option>
-                                            
                                         </select>
                                     </td>
                                     <td><input type="text" name="saidToContain" required /></td>
@@ -756,9 +741,16 @@
                                     </td>
                                 </tr>
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4"><button type="button" id="addArticle">Add Article</button></td>
+                                    <td><label>Total Amt</label></td>
+                                    <td><input type="number" id="overallTotalAmt" step="0.01" readonly /></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
-                    <button type="button" id="addArticle">Add Article</button>
 
                     <div class="form-row">
                         <div class="form-group">
@@ -953,6 +945,7 @@
             const wtAmtInput = document.getElementById("wtAmt");
             const fixAmtInput = document.getElementById("fixAmt");
             const freightInput = document.getElementById("freight");
+            const overallTotalAmtInput = document.getElementById("overallTotalAmt");
             const manualFields = document.querySelector(".manual-fields");
             const manualDateInput = document.getElementById("manualDate");
             const manualCNoteNumber = document.getElementById("manualCNoteNumber");
@@ -1187,7 +1180,7 @@
                 }
 
                 updateRowFields(row);
-                updateAllRows();
+                updateOverallTotal();
             }
 
             function updateRowFields(row) {
@@ -1211,9 +1204,6 @@
                 const wtAmtInput = document.getElementById("wtAmt");
                 const fixAmtInput = document.getElementById("fixAmt");
                 const chargedWtInput = document.getElementById("chargedWt");
-                const freightInput = document.getElementById("freight");
-
-                let freight = 0;
 
                 switch(articleType) {
                     case 'Article':
@@ -1221,22 +1211,19 @@
                         const perPktAmt = parseFloat(perPktAmtInput.value) || 0;
                         const totalAmt = art * perPktAmt;
                         totalAmtInput.value = totalAmt.toFixed(2);
-                        freight = totalAmt;
                         break;
                     case 'Weight':
                         const chargedWt = parseFloat(chargedWtInput.value) || 0;
                         const wtRate = parseFloat(wtRateInput.value) || 0;
                         const wtAmt = chargedWt * wtRate;
                         wtAmtInput.value = wtAmt.toFixed(2);
-                        freight = wtAmt;
                         break;
                     case 'Fix':
-                        freight = parseFloat(fixAmtInput.value) || 0;
+                        // No direct calculation for Fix type in Total Amt
                         break;
                 }
 
-                freightInput.value = freight.toFixed(2);
-                calculateGrandTotal();
+                updateOverallTotal();
             }
 
             function handleTotalAmtChange(row) {
@@ -1252,26 +1239,25 @@
                     perPktAmtInput.value = perPktAmt.toFixed(2);
                 }
 
+                updateOverallTotal();
+            }
+
+            function updateOverallTotal() {
+                const articleTable = document.getElementById("articleTable").getElementsByTagName("tbody")[0];
+                let total = 0;
+                Array.from(articleTable.rows).forEach(row => {
+                    const totalAmtInput = row.querySelector(".total-amt");
+                    total += parseFloat(totalAmtInput.value) || 0;
+                });
+                const overallTotalAmtInput = document.getElementById("overallTotalAmt");
+                overallTotalAmtInput.value = total.toFixed(2);
                 updateFreight();
             }
 
-            function updateAllRows() {
-                Array.from(articleTable.rows).forEach(row => {
-                    const select = row.querySelector("select[name='article']");
-                    if (select) {
-                        updateRowFields(row);
-                    }
-                });
-            }
-
             function updateFreight() {
-                let totalFreight = 0;
-                Array.from(articleTable.rows).forEach(row => {
-                    const totalAmtInput = row.querySelector(".total-amt");
-                    totalFreight += parseFloat(totalAmtInput.value) || 0;
-                });
-
-                freightInput.value = totalFreight.toFixed(2);
+                const overallTotalAmtInput = document.getElementById("overallTotalAmt");
+                const freightInput = document.getElementById("freight");
+                freightInput.value = overallTotalAmtInput.value;
                 calculateGrandTotal();
             }
 
@@ -1321,18 +1307,7 @@
                 handleArticleTypeChange(select); // Initialize the state
 
                 setupArticleRowListeners(newRow);
-                calculateTotalFreight();
-            }
-
-            function calculateTotalFreight() {
-                let totalFreight = 0;
-                Array.from(articleTable.rows).forEach(row => {
-                    const totalAmtInput = row.querySelector(".total-amt");
-                    totalFreight += parseFloat(totalAmtInput.value) || 0;
-                });
-
-                freightInput.value = totalFreight.toFixed(2);
-                calculateGrandTotal();
+                updateOverallTotal();
             }
 
             addArticleButton.addEventListener("click", addArticle);
@@ -1340,7 +1315,7 @@
             articleTable.addEventListener("click", function (e) {
                 if (e.target.classList.contains("remove-article")) {
                     e.target.closest("tr").remove();
-                    updateFreight();
+                    updateOverallTotal();
                 }
             });
 
@@ -1367,7 +1342,7 @@
             }
 
             setupArticleRowListeners(articleTable.rows[0]);
-            calculateTotalFreight();
+            updateOverallTotal();
 
             articleTable.querySelectorAll("select[name='article']").forEach(select => {
                 select.addEventListener("change", function () {
@@ -1382,7 +1357,7 @@
                 const inputs = document.querySelectorAll('.art-input, .per-pkt-amt, .total-amt, .charges-container input[type="number"], input[name="saidToContain"]');
                 inputs.forEach(input => {
                     input.addEventListener('input', function() {
-                        updateFreight();
+                        updateOverallTotal();
                         calculateGrandTotal();
                     });
                 });
@@ -1719,5 +1694,5 @@
         
 
     </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93734d49c968ade7',t:'MTc0NTgwOTE0OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
