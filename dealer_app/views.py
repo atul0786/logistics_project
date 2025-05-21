@@ -2180,3 +2180,291 @@ def check_loading_sheet(request):
         return render(request, "dealer/check_loading_sheet.html", {"error_message": "Error loading data."})
 
 
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.db import transaction
+from dealer_app.models import CNotes, Article, DeliveryDestination, Dealer, ArtType
+import json
+import logging
+import re
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from decimal import Decimal
+
+logger = logging.getLogger(__name__)
+
+@login_required
+def view_cnote(request, cnote_number):
+    try:
+        dealer = get_object_or_404(Dealer, user=request.user)
+        
+        if not cnote_number or not re.match(r'^[A-Z0-9-]{1,50}$', cnote_number):
+            logger.warning(f"Invalid cnote_number format: {cnote_number}")
+            messages.error(request, "Invalid CNote number format.")
+            return redirect('dealer:create_cnotes')
+        
+        cnote = get_object_or_404(CNotes, cnote_number=cnote_number)
+        articles = Article.objects.filter(cnote=cnote).select_related('art_type')
+        art_types = ArtType.objects.all()
+        
+        art_types_json = json.dumps([
+            {'id': art_type.id, 'name': art_type.art_type_name}
+            for art_type in art_types
+        ])
+        
+        context = {
+            'dealer': dealer,
+            'cnote': cnote,
+            'articles': articles,
+            'art_types': art_types,
+            'art_types_json': art_types_json,
+        }
+        
+        logger.info(f"Rendering CNote {cnote_number} for dealer {dealer.name}")
+        return render(request, 'dealer/view_cnote.html', context)
+    
+    except ObjectDoesNotExist as e:
+        logger.error(f"Object not found for CNote {cnote_number}: {str(e)}")
+        messages.error(request, "CNote or dealer not found.")
+        return redirect('dealer:create_cnotes')
+    except Exception as e:
+        logger.error(f"Error rendering CNote {cnote_number}: {str(e)}")
+        messages.error(request, "An error occurred while loading the CNote.")
+        return redirect('dealer:create_cnotes')
+
+@login_required
+def fetch_cities(request):
+    try:
+        query = request.GET.get('q', '')
+        cities = DeliveryDestination.objects.all()
+        if query:
+            cities = cities.filter(destination_name__icontains=query)
+        
+        cities = cities.values('id', 'destination_name')[:100]
+        cities_list = list(cities)
+        
+        logger.info(f"Fetched {len(cities_list)} cities for dealer {request.user.username}")
+        return JsonResponse({'success': True, 'cities': cities_list})
+    
+    except Exception as e:
+        logger.error(f"Error fetching cities: {str(e)}")
+        return JsonResponse({'success': False, 'error': 'Failed to fetch cities'}, status=500)
+
+@login_required
+def update_freight(request):
+    if request.method != 'POST':
+        logger.warning(f"Invalid request method for update_freight: {request.method}")
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        cnote_number = data.get('cnote_number')
+        new_freight = data.get('freight')
+        
+        if not cnote_number or not isinstance(cnote_number, str):
+            logger.warning("Invalid or missing cnote_number")
+            return JsonResponse({'success': False, 'error': 'Invalid CNote number'}, status=400)
+        
+        if not re.match(r'^[A-Z0-9-]{1,50}$', cnote_number):
+            logger.warning(f"Invalid cnote_number format: {cnote_number}")
+            return JsonResponse({'success': False, 'error': 'Invalid CNote number format'}, status=400)
+        
+        if new_freight is None:
+            logger.warning(f"Missing freight value for CNote {cnote_number}")
+            return JsonResponse({'success': False, 'error': 'Freight value is required'}, status=400)
+        
+        try:
+            new_freight = Decimal(str(new_freight))
+            if new_freight < 0:
+                logger.warning(f"Negative freight value for CNote {cnote_number}: {new_freight}")
+                return JsonResponse({'success': False, 'error': 'Freight cannot be negative'}, status=400)
+            if new_freight > 1000000:
+                logger.warning(f"Excessive freight value for CNote {cnote_number}: {new_freight}")
+                return JsonResponse({'success': False, 'error': 'Freight value too large'}, status=400)
+        except (ValueError, TypeError):
+            logger.warning(f"Invalid freight value for CNote {cnote_number}: {new_freight}")
+            return JsonResponse({'success': False, 'error': 'Invalid freight value'}, status=400)
+        
+        with transaction.atomic():
+            cnote = get_object_or_404(CNotes, cnote_number=cnote_number)
+            cnote.freight = new_freight
+            cnote.grand_total = (
+                Decimal(str(cnote.freight or 0)) +
+                Decimal(str(cnote.docket_charge or 0)) +
+                Decimal(str(cnote.door_delivery_charge or 0)) +
+                Decimal(str(cnote.handling_charge or 0)) +
+                Decimal(str(cnote.pickup_charge or 0)) +
+                Decimal(str(cnote.transhipment_charge or 0)) +
+                Decimal(str(cnote.insurance or 0)) +
+                Decimal(str(cnote.fuel_surcharge or 0)) +
+                Decimal(str(cnote.commission or 0)) +
+                Decimal(str(cnote.other_charge or 0)) +
+                Decimal(str(cnote.carrier_risk or 0))
+            )
+            cnote.save()
+            
+            logger.info(f"Freight updated for CNote {cnote_number} to {new_freight}")
+            return JsonResponse({
+                'success': True,
+                'freight': float(new_freight),
+                'grand_total': float(cnote.grand_total)
+            })
+    
+    except CNotes.DoesNotExist:
+        logger.warning(f"CNote {cnote_number} not found")
+        return JsonResponse({'success': False, 'error': 'CNote not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error updating freight for CNote {cnote_number}: {str(e)}")
+        return JsonResponse({'success': False, 'error': 'Failed to update freight'}, status=400)
+
+@login_required
+def save_cnote(request):
+    if request.method != 'POST':
+        logger.warning(f"Invalid request method for save_cnote: {request.method}")
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        cnote_number = data.get('cnote_number')
+        actual_weight = data.get('actual_weight')
+        charged_weight = data.get('charged_weight')
+        delivery_destination_id = data.get('delivery_destination_id')
+        articles = data.get('articles', [])
+        charges = data.get('charges', {})
+
+        if not cnote_number or not isinstance(cnote_number, str):
+            logger.warning("Invalid or missing cnote_number")
+            return JsonResponse({'success': False, 'error': 'Invalid CNote number'}, status=400)
+        
+        if not re.match(r'^[A-Z0-9-]{1,50}$', cnote_number):
+            logger.warning(f"Invalid cnote_number format: {cnote_number}")
+            return JsonResponse({'success': False, 'error': 'Invalid CNote number format'}, status=400)
+        
+        if actual_weight is None or charged_weight is None:
+            logger.warning(f"Missing weight values for CNote {cnote_number}")
+            return JsonResponse({'success': False, 'error': 'Weight values are required'}, status=400)
+        
+        try:
+            actual_weight = Decimal(str(actual_weight))
+            charged_weight = Decimal(str(charged_weight))
+            if actual_weight < 0 or charged_weight < 0:
+                logger.warning(f"Negative weight values for CNote {cnote_number}")
+                return JsonResponse({'success': False, 'error': 'Weights cannot be negative'}, status=400)
+        except (ValueError, TypeError):
+            logger.warning(f"Invalid weight values for CNote {cnote_number}")
+            return JsonResponse({'success': False, 'error': 'Invalid weight values'}, status=400)
+        
+        if not delivery_destination_id:
+            logger.warning(f"Missing delivery_destination_id for CNote {cnote_number}")
+            return JsonResponse({'success': False, 'error': 'Delivery destination is required'}, status=400)
+        
+        if not articles:
+            logger.warning(f"No articles provided for CNote {cnote_number}")
+            return JsonResponse({'success': False, 'error': 'At least one article is required'}, status=400)
+
+        with transaction.atomic():
+            cnote = get_object_or_404(CNotes, cnote_number=cnote_number)
+            cnote.actual_weight = actual_weight
+            cnote.charged_weight = charged_weight
+            cnote.delivery_destination = get_object_or_404(DeliveryDestination, id=delivery_destination_id)
+            
+            for field in ['docket_charge', 'door_delivery_charge', 'handling_charge', 'pickup_charge',
+                         'transhipment_charge', 'insurance', 'fuel_surcharge', 'commission',
+                         'other_charge', 'carrier_risk']:
+                value = charges.get(field, 0)
+                try:
+                    value = Decimal(str(value)) if value is not None else Decimal('0')
+                    if value < 0:
+                        logger.warning(f"Negative {field} for CNote {cnote_number}: {value}")
+                        return JsonResponse({'success': False, 'error': f'{field.replace("_", " ").title()} cannot be negative'}, status=400)
+                    setattr(cnote, field, value)
+                except (ValueError, TypeError):
+                    logger.warning(f"Invalid {field} for CNote {cnote_number}: {value}")
+                    return JsonResponse({'success': False, 'error': f'Invalid {field.replace("_", " ").title()} value'}, status=400)
+            
+            cnote.grand_total = (
+                Decimal(str(cnote.freight or 0)) +
+                Decimal(str(cnote.docket_charge or 0)) +
+                Decimal(str(cnote.door_delivery_charge or 0)) +
+                Decimal(str(cnote.handling_charge or 0)) +
+                Decimal(str(cnote.pickup_charge or 0)) +
+                Decimal(str(cnote.transhipment_charge or 0)) +
+                Decimal(str(cnote.insurance or 0)) +
+                Decimal(str(cnote.fuel_surcharge or 0)) +
+                Decimal(str(cnote.commission or 0)) +
+                Decimal(str(cnote.other_charge or 0)) +
+                Decimal(str(cnote.carrier_risk or 0))
+            )
+            cnote.save()
+
+            existing_article_ids = set(Article.objects.filter(cnote=cnote).values_list('id', flat=True))
+            new_article_ids = set(int(article.get('id')) for article in articles if article.get('id') and article.get('id').isdigit())
+            articles_to_delete = existing_article_ids - new_article_ids
+            Article.objects.filter(id__in=articles_to_delete).delete()
+
+            for article_data in articles:
+                art_type_id = article_data.get('art_type')
+                quantity = article_data.get('quantity')
+                description = article_data.get('description')
+                amount = article_data.get('amount')
+                article_id = article_data.get('id')
+
+                if not all([art_type_id, quantity is not None, description, amount is not None]):
+                    logger.warning(f"Incomplete article data for CNote {cnote_number}")
+                    return JsonResponse({'success': False, 'error': 'Incomplete article data'}, status=400)
+                
+                try:
+                    art_type = ArtType.objects.get(id=art_type_id)
+                except ArtType.DoesNotExist:
+                    logger.warning(f"Invalid art_type_id {art_type_id} for CNote {cnote_number}")
+                    return JsonResponse({'success': False, 'error': 'Invalid article type'}, status=400)
+                
+                try:
+                    quantity = int(quantity)
+                    amount = Decimal(str(amount))
+                    if quantity <= 0 or amount < 0:
+                        logger.warning(f"Invalid article values for CNote {cnote_number}: quantity={quantity}, amount={amount}")
+                        return JsonResponse({'success': False, 'error': 'Article quantity must be positive and amount cannot be negative'}, status=400)
+                except (ValueError, TypeError):
+                    logger.warning(f"Invalid article values for CNote {cnote_number}")
+                    return JsonResponse({'success': False, 'error': 'Invalid article quantity or amount'}, status=400)
+
+                if article_id and article_id.isdigit():
+                    try:
+                        article = Article.objects.get(id=int(article_id), cnote=cnote)
+                        article.art_type = art_type
+                        article.art = quantity
+                        article.said_to_contain = description
+                        article.art_amount = amount
+                        article.save()
+                    except Article.DoesNotExist:
+                        logger.warning(f"Article {article_id} not found for CNote {cnote_number}, creating new")
+                        Article.objects.create(
+                            cnote=cnote,
+                            art_type=art_type,
+                            art=quantity,
+                            said_to_contain=description,
+                            art_amount=amount
+                        )
+                else:
+                    Article.objects.create(
+                        cnote=cnote,
+                        art_type=art_type,
+                        art=quantity,
+                        said_to_contain=description,
+                        art_amount=amount
+                    )
+            
+            logger.info(f"CNote {cnote_number} updated successfully")
+            return JsonResponse({'success': True})
+    
+    except CNotes.DoesNotExist:
+        logger.warning(f"CNote {cnote_number} not found")
+        return JsonResponse({'success': False, 'error': 'CNote not found'}, status=404)
+    except DeliveryDestination.DoesNotExist:
+        logger.warning(f"Delivery destination {delivery_destination_id} not found for CNote {cnote_number}")
+        return JsonResponse({'success': False, 'error': 'Invalid delivery destination'}, status=400)
+    except Exception as e:
+        logger.error(f"Error updating CNote {cnote_number}: {str(e)}")
+        return JsonResponse({'success': False, 'error': 'Failed to update CNote'}, status=400)
