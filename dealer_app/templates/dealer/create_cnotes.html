@@ -387,10 +387,8 @@
         .error {
             background-color: #f44336;
             color: white;
-            
             border-radius: 4px;
             text-align: center;
-
         }
 
         input {
@@ -498,7 +496,6 @@
 
     <header>
         <div class="top-bar">
-            
             <div class="user-info" style="text-align: left; margin-left: 10px;"> 
                 <p>Welcome {{ dealer.name }} ({{ dealer.city }} - {{ dealer.state }})</p>
                 <p id="currentDateTime" style="margin-top: 5px;"></p>  
@@ -541,11 +538,9 @@
                     <li>
                         <a href="{% url 'dealer:import_cnotes' %}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Bulk Booking</a>
                     </li>
-                    
                     <li>
                         <a href="{% url 'dealer:loading_sheet' %}"target="_blank" rel="noopener noreferrer"> Loading Sheet</a>
                     </li>
-                   
                 </ul>
             </li>
             <li>
@@ -555,7 +550,6 @@
             </li>
         </ul>
     </nav>
-    
 
     <div class="function-keys">
         <span id="paidBtn">F7 : PAID</span>
@@ -564,7 +558,6 @@
         <span id="focBtn">F10 : FOC</span>
         <span id="manualBtn">ALT+M : MANUAL</span>
     </div>
-    
 
     <div class="container">
         <main>
@@ -598,6 +591,8 @@
                     {% csrf_token %}
                     <input type="hidden" id="paymentType" name="paymentType" value="" />
                     <input type="hidden" id="cnoteStatus" name="cnoteStatus" value="booked">
+                    <!-- Hidden input to store the selected destination ID -->
+                    <input type="hidden" id="deliveryDestinationId" name="delivery_destination_id" value="">
 
                     <div id="statusDisplay" class="status-indicator status-booked">Status: Booked</div>
 
@@ -884,37 +879,38 @@
                     </tr>
                 </table>
                 
-<div style="clear: both;"></div>
-<div class="last-cnote-details" style="margin-top: 10px;">
-    <h3 style="color: #4682b4; font-weight: bold; text-decoration: underline;">
-        {% if last_cnote %}
-            <a href="{% url 'dealer:view_cnote' last_cnote.cnote_number %}" style="color: #4682b4; text-decoration: underline;">
-                Last CNote Details
-            </a>
-        {% else %}
-            Last CNote Details
-        {% endif %}
-    </h3>
-    {% if last_cnote %}
-        <p><strong>CNote Number:</strong> {{ last_cnote.cnote_number }}</p>
-        <p><strong>Destination:</strong> {{ last_cnote.delivery_destination }}</p>
-        <p><strong>Payment Mode:</strong> {{ last_cnote.payment_type }}</p>
-        <p><strong>Article:</strong> 
-            {% for article in last_cnote.articles.all %}
-                {{ article.article_type }} ({{ article.art }}){% if not forloop.last %}, {% endif %}
-            {% endfor %}
-        </p>
-        <p><strong>Total Amount:</strong> {{ last_cnote.grand_total }}</p>
-    {% else %}
-        <p><strong>CNote Number:</strong> 0</p>
-        <p><strong>Destination:</strong> -</p>
-        <p><strong>Payment Mode:</strong> -</p>
-        <p><strong>Article:</strong> -</p>
-        <p><strong>Total Amount:</strong> 0</p>
-    {% endif %}
-</div>
-</div>
-</main>    </div>
+                <div style="clear: both;"></div>
+                <div class="last-cnote-details" style="margin-top: 10px;">
+                    <h3 style="color: #4682b4; font-weight: bold; text-decoration: underline;">
+                        {% if last_cnote %}
+                            <a href="{% url 'dealer:view_cnote' last_cnote.cnote_number %}" style="color: #4682b4; text-decoration: underline;">
+                                Last CNote Details
+                            </a>
+                        {% else %}
+                            Last CNote Details
+                        {% endif %}
+                    </h3>
+                    {% if last_cnote %}
+                        <p><strong>CNote Number:</strong> {{ last_cnote.cnote_number }}</p>
+                        <p><strong>Destination:</strong> {{ last_cnote.delivery_destination }}</p>
+                        <p><strong>Payment Mode:</strong> {{ last_cnote.payment_type }}</p>
+                        <p><strong>Article:</strong> 
+                            {% for article in last_cnote.articles.all %}
+                                {{ article.article_type }} ({{ article.art }}){% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
+                        <p><strong>Total Amount:</strong> {{ last_cnote.grand_total }}</p>
+                    {% else %}
+                        <p><strong>CNote Number:</strong> 0</p>
+                        <p><strong>Destination:</strong> -</p>
+                        <p><strong>Payment Mode:</strong> -</p>
+                        <p><strong>Article:</strong> -</p>
+                        <p><strong>Total Amount:</strong> 0</p>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
 
     <div class="status-update-container" style="margin-top: 20px;">
         <h3>Update CNote Status</h3>
@@ -951,6 +947,7 @@
             const manualCNoteNumber = document.getElementById("manualCNoteNumber");
             const manualCNoteType = document.getElementById("manualCNoteType");
             const deliveryDestinationInput = document.getElementById("deliveryDestination");
+            const deliveryDestinationIdInput = document.getElementById("deliveryDestinationId");
             const originalConsignorName = document.getElementById("consignorName").value;
             const originalConsignorMobile = document.getElementById("consignorMobile").value;
             const originalConsignorGST = document.getElementById("consignorGST").value;
@@ -960,7 +957,7 @@
 
             const dropdownList = document.getElementById("dropdownList");
             const dropdownArrow = document.getElementById("dropdownArrow");
-            let cities = []; // Dynamic cities list fetched from the backend
+            let cities = []; // Array to store {id, name} objects
             let activeIndex = -1;
             let isFullListVisible = false;
 
@@ -981,7 +978,7 @@
 
             // Function to fetch cities from the backend
             function fetchCities() {
-                fetch("/dealer/fetch_cities/") // Adjust this URL if needed
+                fetch("/dealer/fetch_cities/")
                     .then((response) => {
                         if (!response.ok) {
                             throw new Error(`Failed to fetch cities: ${response.statusText}`);
@@ -990,7 +987,12 @@
                     })
                     .then((data) => {
                         if (data.success) {
-                            cities = data.cities; // Update the cities list with fetched data
+                            // Store the full city objects with id and name
+                            cities = data.cities.map(city => ({
+                                id: city.id,
+                                name: city.destination_name
+                            }));
+                            // Do not call populateDropdown() here to avoid showing the list on page load
                         } else {
                             console.error("Error fetching cities:", data.error);
                         }
@@ -1004,103 +1006,109 @@
             function populateDropdown(filter = "") {
                 dropdownList.innerHTML = "";
                 const filteredCities = filter
-                    ? cities.filter(city => city.toLowerCase().includes(filter.toLowerCase()))
+                    ? cities.filter(city => city.name.toLowerCase().includes(filter.toLowerCase()))
                     : cities;
 
                 filteredCities.forEach((city, index) => {
                     const div = document.createElement("div");
                     div.classList.add("dropdown-item");
-                    div.textContent = city;
+                    div.textContent = city.name;
+                    div.dataset.id = city.id;
                     div.addEventListener("click", () => {
-                        deliveryDestinationInput.value = city;
+                        deliveryDestinationInput.value = city.name;
+                        deliveryDestinationIdInput.value = city.id;
                         dropdownList.style.display = "none";
                         isFullListVisible = false;
                     });
                     dropdownList.appendChild(div);
                 });
 
-                dropdownList.style.display = filteredCities.length > 0 ? "block" : "none";
+                // Only show the dropdown if the user has interacted with the input or arrow
+                if (filter || isFullListVisible) {
+                    dropdownList.style.display = filteredCities.length > 0 ? "block" : "none";
+                } else {
+                    dropdownList.style.display = "none"; // Ensure the dropdown is hidden by default
+                }
                 activeIndex = -1;
             }
 
-                // Event listeners
-                deliveryDestinationInput.addEventListener("input", (e) => {
-                    if (isFullListVisible) {
-                        isFullListVisible = false;
-                    }
-                    populateDropdown(e.target.value);
-                });
+            // Event listeners for the delivery destination input
+            deliveryDestinationInput.addEventListener("input", (e) => {
+                isFullListVisible = false; // Reset the full list visibility flag
+                populateDropdown(e.target.value);
+            });
 
+            dropdownArrow.addEventListener("click", () => {
+                if (dropdownList.style.display === "block" && isFullListVisible) {
+                    dropdownList.style.display = "none";
+                    isFullListVisible = false;
+                } else {
+                    populateDropdown();
+                    isFullListVisible = true;
+                    dropdownList.style.display = "block";
+                }
+            });
 
-                dropdownArrow.addEventListener("click", () => {
-                    if (dropdownList.style.display === "block" && isFullListVisible) {
-                        dropdownList.style.display = "none";
-                        isFullListVisible = false;
-                    } else {
-                        populateDropdown();
-                        dropdownList.style.display = "block";
-                        isFullListVisible = true;
-                    }
-                });
-        
-                document.addEventListener("click", (e) => {
-                    if (!e.target.closest(".search-container")) {
-                        dropdownList.style.display = "none";
-                        isFullListVisible = false;
-                    }
-                });
+            document.addEventListener("click", (e) => {
+                if (!e.target.closest(".search-container")) {
+                    dropdownList.style.display = "none";
+                    isFullListVisible = false;
+                }
+            });
 
-                deliveryDestinationInput.addEventListener("keydown", (e) => {
-                    const items = Array.from(dropdownList.querySelectorAll(".dropdown-item"));
-        
-                    if (e.key === "ArrowDown") {
-                        e.preventDefault();
-                        activeIndex = (activeIndex + 1) % items.length;
-                        updateActiveItem(items);
-                    } else if (e.key === "ArrowUp") {
-                        e.preventDefault();
-                        activeIndex = (activeIndex - 1 + items.length) % items.length;
-                        updateActiveItem(items);
-                    } else if (e.key === "Enter") {
-                        e.preventDefault();
-                        if (activeIndex >= 0 && items[activeIndex]) {
-                            deliveryDestinationInput.value = items[activeIndex].textContent;
-                            dropdownList.style.display = "none";
-                            isFullListVisible = false;
-                        } else if (items.length === 1) {
-                            deliveryDestinationInput.value = items[0].textContent;
-                            dropdownList.style.display = "none";
-                            isFullListVisible = false;
-                        }
-                    }
-                });
+            deliveryDestinationInput.addEventListener("keydown", (e) => {
+                const items = Array.from(dropdownList.querySelectorAll(".dropdown-item"));
 
-                function updateActiveItem(items) {
-                    items.forEach(item => item.classList.remove("active"));
+                if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    activeIndex = (activeIndex + 1) % items.length;
+                    updateActiveItem(items);
+                } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    activeIndex = (activeIndex - 1 + items.length) % items.length;
+                    updateActiveItem(items);
+                } else if (e.key === "Enter") {
+                    e.preventDefault();
                     if (activeIndex >= 0 && items[activeIndex]) {
-                        items[activeIndex].classList.add("active");
-                        items[activeIndex].scrollIntoView({ block: "nearest" });
+                        deliveryDestinationInput.value = items[activeIndex].textContent;
+                        deliveryDestinationIdInput.value = items[activeIndex].dataset.id;
+                        dropdownList.style.display = "none";
+                        isFullListVisible = false;
+                    } else if (items.length === 1) {
+                        deliveryDestinationInput.value = items[0].textContent;
+                        deliveryDestinationIdInput.value = items[0].dataset.id;
+                        dropdownList.style.display = "none";
+                        isFullListVisible = false;
                     }
                 }
+            });
 
-                // Fetch cities on page load
-                fetchCities();
-
-                function updateDateTime() {
-                    const now = new Date();
-                    const options = { 
-                        timeZone: "Asia/Kolkata",
-                        year: "numeric",
-                        month: "2-digit",
-                        day: "2-digit",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        second: "2-digit",
-                        hour12: true
-                    };
-                    const dateTimeString = now.toLocaleString("en-US", options);
-                    document.getElementById("currentDateTime").textContent = dateTimeString;
+            function updateActiveItem(items) {
+                items.forEach(item => item.classList.remove("active"));
+                if (activeIndex >= 0 && items[activeIndex]) {
+                    items[activeIndex].classList.add("active");
+                    items[activeIndex].scrollIntoView({ block: "nearest" });
                 }
+            }
+
+            // Fetch cities on page load, but don't populate the dropdown yet
+            fetchCities();
+
+            function updateDateTime() {
+                const now = new Date();
+                const options = { 
+                    timeZone: "Asia/Kolkata",
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: true
+                };
+                const dateTimeString = now.toLocaleString("en-US", options);
+                document.getElementById("currentDateTime").textContent = dateTimeString;
+            }
 
             setInterval(updateDateTime, 1000);
             updateDateTime();
@@ -1366,7 +1374,7 @@
             var searchCnoteUrl = "{% url 'dealer:search_cnote' %}";
 
             document.getElementById("searchButton").addEventListener("click", function(e) {
-                e.preventDefault(); // फॉर्म सबमिशन को रोकें
+                e.preventDefault();
                 const cnoteNumber = document.getElementById("searchCNote").value.trim();
                 
                 if (cnoteNumber === "") {
@@ -1383,7 +1391,7 @@
             document.querySelectorAll('.charges-container input[type="number"]').forEach(input => {
                 input.addEventListener('input', calculateGrandTotal);
             });
-                      
+
             // Add event listener for form submission
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -1394,6 +1402,13 @@
                 const selectedPaymentType = paymentTypeInput.value;
                 if (!selectedPaymentType) {
                     alert("Please select a payment type.");
+                    return;
+                }
+
+                // Validate delivery destination
+                const selectedDestinationId = deliveryDestinationIdInput.value;
+                if (!selectedDestinationId) {
+                    alert("Please select a valid delivery destination.");
                     return;
                 }
 
@@ -1551,6 +1566,7 @@
                 handleArticleTypeChange(defaultArticleSelect);
             }
         });
+
         document.querySelectorAll('input, textarea').forEach(input => {
             input.addEventListener('input', function() {
                 this.value = this.value.toUpperCase(); // Convert input to uppercase
@@ -1564,7 +1580,7 @@
             const suggestionsList = document.getElementById("consigneeSuggestions");
             let debounceTimer;
             let selectedIndex = -1;
-        
+
             // Input event handler with debounce
             consigneeNameInput.addEventListener("input", function() {
                 clearTimeout(debounceTimer);
@@ -1572,17 +1588,17 @@
                     const query = this.value.trim();
                     const destination = destinationInput.value.trim();
                     const destinationWise = destinationWiseCheckbox.checked;
-        
+
                     if (query.length < 2) {
                         suggestionsList.innerHTML = "";
                         suggestionsList.style.display = "none";
                         return;
                     }
-        
+
                     fetchPartySuggestions(query, destination, destinationWise);
                 }, 300);
             });
-        
+
             // Event listeners for destination and checkbox changes
             destinationInput.addEventListener("change", function() {
                 if (consigneeNameInput.value.trim().length >= 2) {
@@ -1592,7 +1608,7 @@
                     fetchPartySuggestions(query, destination, destinationWise);
                 }
             });
-        
+
             destinationWiseCheckbox.addEventListener("change", function() {
                 if (consigneeNameInput.value.trim().length >= 2) {
                     const query = consigneeNameInput.value.trim();
@@ -1601,14 +1617,14 @@
                     fetchPartySuggestions(query, destination, destinationWise);
                 }
             });
-        
+
             function fetchPartySuggestions(query, destination, destinationWise) {
                 const params = new URLSearchParams({
                     query: query,
                     destination: destination,
                     destination_wise: destinationWise
                 });
-        
+
                 fetch(`/dealer/api/party-suggestions/?${params}`)
                     .then(response => response.json())
                     .then(data => {
@@ -1629,7 +1645,7 @@
                             });
                             suggestionsList.appendChild(li);
                         });
-        
+
                         suggestionsList.style.display = data.length > 0 ? "block" : "none";
                     })
                     .catch(error => {
@@ -1637,7 +1653,7 @@
                         suggestionsList.style.display = "none";
                     });
             }
-        
+
             function fillConsigneeDetails(party) {
                 document.getElementById("consigneeName").value = party.party_name;
                 document.getElementById("consigneeMobile").value = party.mobile_number_1 || '';
@@ -1645,7 +1661,7 @@
                 document.getElementById("consigneeAddress").value = 
                     `${party.address || ''}\n${party.city || ''}\n${party.state || ''}`.trim();
             }
-        
+
             // Handle keyboard navigation
             consigneeNameInput.addEventListener("keydown", function(e) {
                 const items = suggestionsList.getElementsByTagName("li");
@@ -1673,7 +1689,7 @@
                         break;
                 }
             });
-        
+
             function updateSelection(items) {
                 Array.from(items).forEach((item, index) => {
                     item.classList.toggle("selected", index === selectedIndex);
@@ -1682,7 +1698,7 @@
                     }
                 });
             }
-        
+
             // Close suggestions when clicking outside
             document.addEventListener("click", function(e) {
                 if (!consigneeNameInput.contains(e.target) && !suggestionsList.contains(e.target)) {
@@ -1691,8 +1707,9 @@
                 }
             });
         });
-        
-
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93734d49c968ade7',t:'MTc0NTgwOTE0OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93734d49c968ade7',t:'MTc0NTgwOTE0OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93c61d0189c9bd37',t:'MTc0NjY3NzQ4OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93de49badb92bfb6',t:'MTc0NjkzMDk3OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+</body>
 </html>
