@@ -2232,6 +2232,24 @@ def view_cnote(request, cnote_number):
         logger.error(f"Error rendering CNote {cnote_number}: {str(e)}")
         messages.error(request, "An error occurred while loading the CNote.")
         return redirect('dealer:create_cnotes')
+        
+@login_required
+def fetch_cities(request):
+    try:
+        query = request.GET.get('q', '')
+        cities = DeliveryDestination.objects.all()
+        if query:
+            cities = cities.filter(destination_name__icontains=query)
+        
+        cities = cities.values('id', 'destination_name')[:100]
+        cities_list = list(cities)
+        
+        logger.info(f"Fetched {len(cities_list)} cities for dealer {request.user.username}")
+        return JsonResponse({'success': True, 'cities': cities_list})
+    
+    except Exception as e:
+        logger.error(f"Error fetching cities: {str(e)}")
+        return JsonResponse({'success': False, 'error': 'Failed to fetch cities'}, status=500)
 
 @login_required
 def update_freight(request):
