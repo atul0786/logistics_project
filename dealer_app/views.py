@@ -2241,7 +2241,7 @@ def fetch_cities(request):
         if query:
             cities = cities.filter(destination_name__icontains=query)
         
-        cities = cities.values('id', 'destination_name')[:100]
+        cities = cities.values('id', 'destination_name')[:1000]
         cities_list = list(cities)
         
         logger.info(f"Fetched {len(cities_list)} cities for dealer {request.user.username}")
