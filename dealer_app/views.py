@@ -2234,71 +2234,34 @@ def view_cnote(request, cnote_number):
         return redirect('dealer:create_cnotes')
         
 from django.db.models import Q
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-import logging
-from dealer_app.models import DeliveryDestination
-from transporter_app.models import City
-
-logger = logging.getLogger(__name__)
 
 @login_required
 def fetch_cities(request):
     try:
         query = request.GET.get('q', '')
-
-        # Step 1: Get valid city names from transporter_app.models.City to filter DeliveryDestination
+        
+        # Get all city names from the City model
         valid_city_names = City.objects.values_list('name', flat=True)
-
-        # Build a case-insensitive filter for DeliveryDestination
+        
+        # Build a case-insensitive filter
         filter_query = Q()
         for city_name in valid_city_names:
             filter_query |= Q(destination_name__iexact=city_name)
-
-        # Step 2: Query DeliveryDestination (dealer_app.models)
+        
+        # Start with DeliveryDestination objects
         destinations = DeliveryDestination.objects.filter(filter_query)
-
+        
         # Apply search query if provided
         if query:
             destinations = destinations.filter(destination_name__icontains=query)
-
-        # Get id and destination_name from DeliveryDestination
-        cities_list = list(destinations.values('id', 'destination_name'))
-
-        # Step 3: Collect destination_names to avoid duplicates
-        existing_names = {city['destination_name'].lower() for city in cities_list}
-
-        # Step 4: If no matches and query is provided, search in transporter_app.models.City
-        if not cities_list and query:
-            # Search in transporter_app.models.City
-            transporter_cities = City.objects.filter(name__icontains=query)
-
-            for transporter_city in transporter_cities:
-                city_name = transporter_city.name
-
-                # Skip if this name already exists in the results
-                if city_name.lower() in existing_names:
-                    continue
-
-                # Create a new DeliveryDestination entry
-                new_destination = DeliveryDestination.objects.create(
-                    destination_name=city_name,
-                    address="Unknown Address"  # Placeholder address since City has no address field
-                )
-
-                # Add to the results
-                cities_list.append({
-                    'id': new_destination.id,
-                    'destination_name': new_destination.destination_name
-                })
-                existing_names.add(city_name.lower())
-
-        # Step 5: Log and return the results
-        # Use a safe identifier for the user (avoid dealer lookup)
-        user_identifier = request.user.get_username() or str(request.user.id)
-        logger.info(f"Fetched {len(cities_list)} destinations for user {user_identifier}")
+        
+        # Get id and destination_name
+        cities = destinations.values('id', 'destination_name')
+        cities_list = list(cities)
+        
+        logger.info(f"Fetched {len(cities_list)} destinations for dealer {request.user.username}")
         return JsonResponse({'success': True, 'cities': cities_list})
-
+    
     except Exception as e:
         logger.error(f"Error fetching cities: {str(e)}")
         return JsonResponse({'success': False, 'error': 'Failed to fetch cities'}, status=500)
