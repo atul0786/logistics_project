@@ -2237,11 +2237,12 @@ def view_cnote(request, cnote_number):
 def fetch_cities(request):
     try:
         query = request.GET.get('q', '')
-        cities = DeliveryDestination.objects.all()
+        cities = City.objects.all()
         if query:
-            cities = cities.filter(destination_name__icontains=query)
+            cities = cities.filter(name__icontains=query)
         
-        cities = cities.values('id', 'destination_name')[:100]
+        # Return id and name instead of id and destination_name
+        cities = cities.values('id', 'name')
         cities_list = list(cities)
         
         logger.info(f"Fetched {len(cities_list)} cities for dealer {request.user.username}")
@@ -2250,7 +2251,7 @@ def fetch_cities(request):
     except Exception as e:
         logger.error(f"Error fetching cities: {str(e)}")
         return JsonResponse({'success': False, 'error': 'Failed to fetch cities'}, status=500)
-
+        
 @login_required
 def update_freight(request):
     if request.method != 'POST':
