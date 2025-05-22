@@ -2234,34 +2234,45 @@ def view_cnote(request, cnote_number):
         return redirect('dealer:create_cnotes')
         
 from django.db.models import Q
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+import logging
+from dealer_app.models import DeliveryDestination
+
+logger = logging.getLogger(__name__)
 
 @login_required
 def fetch_cities(request):
     try:
         query = request.GET.get('q', '')
-        
-        # Get all city names from the City model
-        valid_city_names = City.objects.values_list('name', flat=True)
-        
-        # Build a case-insensitive filter
-        filter_query = Q()
-        for city_name in valid_city_names:
-            filter_query |= Q(destination_name__iexact=city_name)
-        
-        # Start with DeliveryDestination objects
-        destinations = DeliveryDestination.objects.filter(filter_query)
-        
+
+        # Query all DeliveryDestination entries, excluding problematic ones
+        destinations = DeliveryDestination.objects.exclude(
+            destination_name__in=['UNKNOWN', 'Address']
+        )
+
         # Apply search query if provided
         if query:
             destinations = destinations.filter(destination_name__icontains=query)
-        
+
         # Get id and destination_name
         cities = destinations.values('id', 'destination_name')
         cities_list = list(cities)
-        
-        logger.info(f"Fetched {len(cities_list)} destinations for dealer {request.user.username}")
-        return JsonResponse({'success': True, 'cities': cities_list})
-    
+
+        # Deduplicate based on destination_name (case-insensitive)
+        seen_names = set()
+        deduplicated_cities = []
+        for city in cities_list:
+            name_lower = city['destination_name'].lower().strip()  # Normalize by stripping spaces
+            if name_lower not in seen_names:
+                seen_names.add(name_lower)
+                deduplicated_cities.append(city)
+
+        # Log and return the results
+        user_identifier = request.user.get_username() or str(request.user.id)
+        logger.info(f"Fetched {len(deduplicated_cities)} destinations for user {user_identifier}")
+        return JsonResponse({'success': True, 'cities': deduplicated_cities})
+
     except Exception as e:
         logger.error(f"Error fetching cities: {str(e)}")
         return JsonResponse({'success': False, 'error': 'Failed to fetch cities'}, status=500)
