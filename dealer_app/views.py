@@ -2294,30 +2294,16 @@ def fetch_cities(request):
                 existing_names.add(city_name.lower())
 
         # Step 5: Log and return the results
-        # Safely access the dealer's identifier
-        try:
-            # Assume request.user has a related Dealer object (e.g., via a 'dealer' field)
-            if hasattr(request.user, 'dealer') and request.user.dealer:
-                dealer_identifier = request.user.dealer.dealer_code
-            else:
-                # Fallback: Look up Dealer by user (if Dealer has a user field)
-                from dealer_app.models import Dealer
-                dealer = Dealer.objects.filter(user=request.user).first()
-                if dealer:
-                    dealer_identifier = dealer.dealer_code
-                else:
-                    # Fallback to user ID or username
-                    dealer_identifier = getattr(request.user, 'username', request.user.id)
-        except Exception as e:
-            logger.warning(f"Could not determine dealer identifier: {str(e)}")
-            dealer_identifier = "unknown"
-
-        logger.info(f"Fetched {len(cities_list)} destinations for dealer {dealer_identifier}")
+        # Use a safe identifier for the user (avoid dealer lookup)
+        user_identifier = request.user.get_username() or str(request.user.id)
+        logger.info(f"Fetched {len(cities_list)} destinations for user {user_identifier}")
         return JsonResponse({'success': True, 'cities': cities_list})
 
     except Exception as e:
         logger.error(f"Error fetching cities: {str(e)}")
         return JsonResponse({'success': False, 'error': 'Failed to fetch cities'}, status=500)        
+
+
 @login_required
 def update_freight(request):
     if request.method != 'POST':
