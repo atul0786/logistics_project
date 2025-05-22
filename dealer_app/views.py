@@ -2237,8 +2237,8 @@ from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 import logging
-from dealer_app.models import DeliveryDestination, City as DealerCity
-from transporter_app.models import City as TransporterCity
+from dealer_app.models import DeliveryDestination
+from transporter_app.models import City
 
 logger = logging.getLogger(__name__)
 
@@ -2247,12 +2247,12 @@ def fetch_cities(request):
     try:
         query = request.GET.get('q', '')
 
-        # Step 1: Get valid city names from dealer_app.models.City to filter DeliveryDestination
-        valid_dealer_city_names = DealerCity.objects.values_list('name', flat=True)
+        # Step 1: Get valid city names from transporter_app.models.City to filter DeliveryDestination
+        valid_city_names = City.objects.values_list('name', flat=True)
 
         # Build a case-insensitive filter for DeliveryDestination
         filter_query = Q()
-        for city_name in valid_dealer_city_names:
+        for city_name in valid_city_names:
             filter_query |= Q(destination_name__iexact=city_name)
 
         # Step 2: Query DeliveryDestination (dealer_app.models)
@@ -2271,7 +2271,7 @@ def fetch_cities(request):
         # Step 4: If no matches and query is provided, search in transporter_app.models.City
         if not cities_list and query:
             # Search in transporter_app.models.City
-            transporter_cities = TransporterCity.objects.filter(name__icontains=query)
+            transporter_cities = City.objects.filter(name__icontains=query)
 
             for transporter_city in transporter_cities:
                 city_name = transporter_city.name
@@ -2283,7 +2283,7 @@ def fetch_cities(request):
                 # Create a new DeliveryDestination entry
                 new_destination = DeliveryDestination.objects.create(
                     destination_name=city_name,
-                    address="Unknown Address"  # Placeholder address since TransporterCity has no address field
+                    address="Unknown Address"  # Placeholder address since City has no address field
                 )
 
                 # Add to the results
@@ -2299,7 +2299,7 @@ def fetch_cities(request):
 
     except Exception as e:
         logger.error(f"Error fetching cities: {str(e)}")
-        return JsonResponse({'success': False, 'error': 'Failed to fetch cities'}, status=500)        
+        return JsonResponse({'success': False, 'error': 'Failed to fetch cities'}, status=500)
         
 @login_required
 def update_freight(request):
