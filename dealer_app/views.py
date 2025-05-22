@@ -2237,35 +2237,34 @@ from django.db.models import Q
 
 @login_required
 def fetch_cities(request):
-try:
-query = request.GET.get('q', '')
-
-Get all city names from the City model
-valid_city_names = City.objects.values_list('name', flat=True)
-
-Build a case-insensitive filter
-filter_query = Q()
-for city_name in valid_city_names:
-filter_query |= Q(destination_name__iexact=city_name)
-
-Start with DeliveryDestination objects
-destinations = DeliveryDestination.objects.filter(filter_query)
-
-Apply search query if provided
-if query:
-destinations = destinations.filter(destination_name__icontains=query)
-
-Get id and destination_name
-cities = destinations.values('id', 'destination_name')
-cities_list = list(cities)
-
-logger.info(f"Fetched {len(cities_list)} destinations for dealer {request.user.username}")
-return JsonResponse({'success': True, 'cities': cities_list})
-
-except Exception as e:
-logger.error(f"Error fetching cities: {str(e)}")
-return JsonResponse({'success': False, 'error': 'Failed to fetch cities'}, status=500)
-
+    try:
+        query = request.GET.get('q', '')
+        
+        # Get all city names from the City model
+        valid_city_names = City.objects.values_list('name', flat=True)
+        
+        # Build a case-insensitive filter
+        filter_query = Q()
+        for city_name in valid_city_names:
+            filter_query |= Q(destination_name__iexact=city_name)
+        
+        # Start with DeliveryDestination objects
+        destinations = DeliveryDestination.objects.filter(filter_query)
+        
+        # Apply search query if provided
+        if query:
+            destinations = destinations.filter(destination_name__icontains=query)
+        
+        # Get id and destination_name
+        cities = destinations.values('id', 'destination_name')
+        cities_list = list(cities)
+        
+        logger.info(f"Fetched {len(cities_list)} destinations for dealer {request.user.username}")
+        return JsonResponse({'success': True, 'cities': cities_list})
+    
+    except Exception as e:
+        logger.error(f"Error fetching cities: {str(e)}")
+        return JsonResponse({'success': False, 'error': 'Failed to fetch cities'}, status=500)
 @login_required
 def update_freight(request):
     if request.method != 'POST':
