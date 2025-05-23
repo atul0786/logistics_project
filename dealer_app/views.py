@@ -698,15 +698,16 @@ def booking_register_view(request):
         dealer = request.user.dealer
         logger.info(f"✅ Dealer found: {dealer}")
     except AttributeError:
+        logger.error("User is not a dealer")
         return render(request, 'dealer/booking_register.html', {'error_message': 'आप डीलर नहीं हैं।'})
 
-    # ✅ **Base Query for Dealer's CNotes**
-    dealer_cnotes = CNotes.objects.filter(dealer=dealer).order_by('-created_at')
+    # Base Query for Dealer's CNotes, exclude null delivery_destination
+    dealer_cnotes = CNotes.objects.filter(dealer=dealer, delivery_destination__isnull=False).order_by('-created_at')
     
-    # ✅ **Initialize Filters**
+    # Initialize Filters
     filters = Q()
     
-    # ✅ **Get Query Parameters from Request**
+    # Get Query Parameters from Request
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
     from_city = request.GET.get('from_city')
@@ -716,80 +717,64 @@ def booking_register_view(request):
     search_term = request.GET.get('search_term')
     cnote_number = request.GET.get('cnote_number')
     ls_number = request.GET.get('ls_number')
+    payment_filter = request.GET.get('payment_type')
 
-    cnotes = CNote.objects.filter(dealer=dealer)  
+    # Fetch Unique To Cities for Dropdown
+    to_city_list = dealer_cnotes.values_list('delivery_destination__destination_name', flat=True).distinct()
+    to_city = sorted(set(city for city in to_city_list if city is not None))  # Filter out None before sorting
+    to_city.insert(0, "All City")  # Add "All City" option
 
-    # ✅ Fetch Unique To Cities for Dropdown
-    to_city = dealer_cnotes.values_list('delivery_destination__destination_name', flat=True).distinct()
-    to_city = sorted(set(to_city))  # ✅ Unique and Sorted List
-
-    # ✅ "All City" ka option add karo
-    to_city.insert(0, "All City")
-
-    # ✅ Get Selected City from Request
+    # Get Selected City from Request
     selected_to_city = request.GET.get('to_city', '').strip()
 
-    # ✅ UNIQUE payment types fetch kar rahe hain
+    # UNIQUE payment types
     payment_types = dealer_cnotes.values_list('payment_type', flat=True).distinct()
-    payment_types = sorted(set(payment_types))  # ✅ Unique and Sorted List
+    payment_types = sorted(set(pt for pt in payment_types if pt is not None))  # Filter out None
 
-
-    # ✅ Filter apply karne ka logic
-    payment_filter = request.GET.get('payment_type', '')
-
-    # ✅ **Apply Filters with Proper Handling**
+    # Apply Filters
     if date_from:
-        filters &= Q(created_at__gte=timezone.make_aware(timezone.datetime.strptime(date_from, '%Y-%m-%d')))
+        try:
+            filters &= Q(created_at__gte=timezone.make_aware(timezone.datetime.strptime(date_from, '%Y-%m-%d')))
+        except ValueError:
+            logger.warning("⚠ Invalid date_from value")
     if date_to:
-        filters &= Q(created_at__lte=timezone.make_aware(timezone.datetime.strptime(date_to, '%Y-%m-%d').replace(hour=23, minute=59, second=59)))
-
+        try:
+            filters &= Q(created_at__lte=timezone.make_aware(timezone.datetime.strptime(date_to, '%Y-%m-%d').replace(hour=23, minute=59, second=59)))
+        except ValueError:
+            logger.warning("⚠ Invalid date_to value")
     if from_city:
-        filters &= Q(delivery_destination__destination_name__icontains=from_city)  # ✅ Fixed ForeignKey Filtering
-
-    # ✅ **Agar "All City" select nahi kiya hai, tabhi filter apply ho**
+        filters &= Q(delivery_destination__destination_name__icontains=from_city)
     if selected_to_city and selected_to_city != "All City":
-        filters &= Q(delivery_destination__destination_name=selected_to_city)  # ✅ Exact Match
-
+        filters &= Q(delivery_destination__destination_name=selected_to_city)
     if amount_min:
         try:
             amount_min = float(amount_min)
             filters &= Q(grand_total__gte=amount_min)
         except ValueError:
             logger.warning("⚠ Invalid amount_min value")
-
     if amount_max:
         try:
             amount_max = float(amount_max)
             filters &= Q(grand_total__lte=amount_max)
         except ValueError:
             logger.warning("⚠ Invalid amount_max value")
-
     if search_term:
         filters &= (Q(cnote_number__icontains=search_term) |
                     Q(consignor_name__icontains=search_term) |
                     Q(consignee_name__icontains=search_term))
-
     if cnote_number:
         filters &= Q(cnote_number__icontains=cnote_number)
-
     if ls_number:
         filters &= Q(loading_sheet_details__loading_sheet__ls_number__icontains=ls_number)
-
     if payment_filter and payment_filter != "All":
-        filters &= Q(payment_type=payment_filter)  # ✅ Correctly adding payment_type filter
+        filters &= Q(payment_type=payment_filter)
 
-   
-    # ✅ **Apply Filters to Queryset**
-
+    # Apply Filters to Queryset
     dealer_cnotes = dealer_cnotes.filter(filters).distinct()
     logger.info(f"✅ Filtered CNotes count: {dealer_cnotes.count()}")
 
-
-    
-
-    # ✅ **Fix LS Number & DDM Number Issues**
+    # Fix LS Number & DDM Number Issues
     for cnote in dealer_cnotes:
-        # Fetch Loading Sheet Details
         try:
             loading_sheet_detail = cnote.loading_sheet_details.select_related('loading_sheet').first()
             cnote.loading_sheet_number = loading_sheet_detail.loading_sheet.ls_number if loading_sheet_detail else ''
@@ -797,94 +782,61 @@ def booking_register_view(request):
             logger.error(f"⚠ Error accessing LS Number for CNote {cnote.cnote_number}: {str(e)}")
             cnote.loading_sheet_number = ''
 
-     # ✅ **Implement Pagination (30 records per page)**
-    page = request.GET.get('page', 1)  # Default page 1
-    paginator = Paginator(dealer_cnotes, 30)  # ✅ 30 records per page
-
+    # Pagination (30 records per page)
+    page = request.GET.get('page', 1)
+    paginator = Paginator(dealer_cnotes, 30)
     try:
         bookings = paginator.page(page)
     except PageNotAnInteger:
         bookings = paginator.page(1)
     except EmptyPage:
         bookings = paginator.page(paginator.num_pages)
-        
-    # ✅ **Calculate Summary Data with Proper Type Handling**
-    summary_data = dealer_cnotes.aggregate(
+
+    # Calculate Summary Data
+    summary_data = dealer_cnotes.exclude(grand_total__isnull=True).aggregate(
         paid_total=Sum('grand_total', filter=Q(payment_type__iregex=r'^\s*(paid)\s*$')),
         to_pay_total=Sum('grand_total', filter=Q(payment_type__iregex=r'^\s*(to\s*pay|topay)\s*$')),
         billing_total=Sum('grand_total', filter=Q(payment_type__iexact="TBB")),
         total_amount=Sum('grand_total'),
-
-        # ✅ GST Calculation (18% of grand_total)
-        gst_total=Sum(F('grand_total') * 0.18, output_field=FloatField()),  
-
-        # ✅ Grand Total = Total Amount + GST (18%)
-        grand_total=Sum(F('grand_total') * 1.18, output_field=FloatField())  
+        gst_total=Sum(F('grand_total') * 0.18, output_field=FloatField()),
+        grand_total=Sum(F('grand_total') * 1.18, output_field=FloatField())
     )
-
-    # ✅ **None values ko 0 karna (Agar koi value na ho to error na aaye)**
     for key, value in summary_data.items():
         summary_data[key] = value if value is not None else 0
-
     logger.info(f"✅ Summary Data: {summary_data}")
 
-    # ✅ Fetch Articles Data for Each CNotes
+    # Fetch Articles Data for Each CNote
     article_data = {}
     for cnote in dealer_cnotes:
         articles = Article.objects.filter(cnote=cnote)
-
-        # Calculate total articles sum
-        total_articles = articles.aggregate(total_sum=Sum('art'))['total_sum'] or 0
-        
-        
-        art_types = []
-        said_to_contain_list = []
-        art_amounts = []
-        
-        for article in articles:
-            # Handle art_type name
-            art_type_name = article.art_type.art_type_name if article.art_type else 'N/A'
-            art_types.append(art_type_name)
-            
-            # Handle said_to_contain with article count
-            said_to_contain = f"{article.said_to_contain or 'N/A'} ({article.art or 0})"
-            said_to_contain_list.append(said_to_contain)
-            
-            # Handle art_amount
-            art_amount = str(article.art_amount) if article.art_amount else '0'
-            art_amounts.append(art_amount)
-        
         article_data[cnote.id] = {
-            'total_sum': total_articles,  # Add total sum
-            'art_types': ' / '.join(art_types) if art_types else 'N/A',
-            'said_to_contain': ' / '.join(said_to_contain_list) if said_to_contain_list else 'N/A',
-            'art_amounts': ' / '.join(art_amounts) if art_amounts else '0'
+            'total_sum': articles.aggregate(total_sum=Sum('art'))['total_sum'] or 0,
+            'art_types': ' / '.join([article.art_type.art_type_name if article.art_type else 'N/A' for article in articles]) or 'N/A',
+            'said_to_contain': ' / '.join([f"{article.said_to_contain or 'N/A'} ({article.art or 0})" for article in articles]) or 'N/A',
+            'art_amounts': ' / '.join([str(article.art_amount or 0) for article in articles]) or '0'
         }
 
-
-    # ✅ **Pass Data to the Template**
+    # Pass Data to the Template
     return render(request, 'dealer/booking_register.html', {
-        'bookings': bookings,  # ✅ Paginated data
-        'paginator': paginator,  # ✅ Add paginator object for pagination UI
-        'to_city': to_city,  # ✅ Pass the list of cities
-        'payment_types': payment_types,  # ✅ Pass payment types for filters
-        'summary_data': summary_data,  # ✅ Summary data
-        'article_data': article_data,  # ✅ Pass article data
-
+        'bookings': bookings,
+        'paginator': paginator,
+        'to_city': to_city,
+        'payment_types': payment_types,
+        'summary_data': summary_data,
+        'article_data': article_data,
         'filters': {
             'date_from': date_from,
             'date_to': date_to,
             'from_city': from_city,
-            'to_city': selected_to_city,  # ✅ Pass selected city
+            'to_city': selected_to_city,
             'amount_min': amount_min,
             'amount_max': amount_max,
             'search_term': search_term,
             'cnote_number': cnote_number,
             'ls_number': ls_number,
-            'payment_type': request.GET.get('payment_type', 'All')  # ✅ Ensure correct filter remains selected
+            'payment_type': payment_filter or 'All'
         }
     })
-
 
 
 @login_required
