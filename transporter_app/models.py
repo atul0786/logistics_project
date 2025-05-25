@@ -261,3 +261,60 @@ class DDMDetails(models.Model):
     class Meta:
         verbose_name = "Door Delivery Memo Details"
         verbose_name_plural = "Door Delivery Memo Details"
+
+
+
+User = get_user_model()
+
+class Bill(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('paid', 'Paid'),
+        ('cancelled', 'Cancelled'),
+    )
+    
+    bill_number = models.CharField(max_length=20, unique=True)
+    dealer = models.ForeignKey('dealer_app.Dealer', on_delete=models.CASCADE)
+    transporter = models.ForeignKey('transporter_app.Transporter', on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_bills')
+    from_date = models.DateField(null=True, blank=True)
+    to_date = models.DateField(null=True, blank=True)
+    bill_month = models.IntegerField(null=True, blank=True)
+    bill_year = models.IntegerField(null=True, blank=True)
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    gst_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=18.00)
+    gst_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    remarks = models.TextField(blank=True, null=True)
+    
+    def __str__(self):
+        return f"Bill {self.bill_number} - {self.dealer.name}"
+    
+    def save(self, *args, **kwargs):
+        # Ensure gst_percentage is a Decimal
+        if not isinstance(self.gst_percentage, Decimal):
+            self.gst_percentage = Decimal(str(self.gst_percentage))
+        # Calculate GST and total amount if not already set
+        if not self.gst_amount or not self.total_amount:
+            self.gst_amount = self.subtotal * (self.gst_percentage / Decimal('100'))
+            self.total_amount = self.subtotal + self.gst_amount
+        super().save(*args, **kwargs)
+
+class BillItem(models.Model):
+    bill = models.ForeignKey(Bill, on_delete=models.CASCADE, related_name='items')
+    cnote = models.ForeignKey('dealer_app.CNotes', on_delete=models.CASCADE)
+    cnote_number = models.CharField(max_length=50)
+    created_date = models.DateField()
+    payment_type = models.CharField(max_length=50)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    consignee_name = models.CharField(max_length=255)
+    total_art = models.IntegerField()
+    
+    def __str__(self):
+        return f"Bill Item {self.cnote_number} for {self.bill.bill_number}"
+    
+    class Meta:
+        unique_together = ('bill', 'cnote')
