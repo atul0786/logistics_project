@@ -1,6 +1,10 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.db import models
+from django.utils import timezone
+from django.contrib.auth import get_user_model
+from decimal import Decimal
 
 # अन्य मॉडल्स के लिए आयात
 from dealer_app.models import CNote, Dealer  # CNote का आयात
