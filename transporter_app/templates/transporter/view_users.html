@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Users - Logistics Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            background-color: #1e3c72;
+            padding: 15px 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .navbar h2 {
+            color: #fff;
+            font-size: 24px;
+        }
+
+        .navbar a {
+            color: #fff;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .navbar a:hover {
+            background-color: #2a5298;
+        }
+
+        /* Main Container */
+        .container {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #1e3c72;
+            font-size: 28px;
+            font-weight: 500;
+        }
+
+        /* Summary Section */
+        .summary {
+            display: flex;
+            justify-content: space-around;
+            background-color: #f5f7fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .summary div {
+            text-align: center;
+        }
+
+        .summary h3 {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .summary p {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #1e3c72;
+            color: #fff;
+            font-weight: 500;
+            position: relative;
+            cursor: pointer;
+        }
+
+        th:hover {
+            background-color: #2a5298;
+        }
+
+        th .sort-icon {
+            margin-left: 5px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #e6f0ff;
+        }
+
+        /* Filter Dropdown */
+        .filter-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .filter-icon {
+            margin-left: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            color: #fff;
+        }
+
+        .filter-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            min-width: 150px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .filter-option {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .filter-option:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Action Button */
+        .btn {
+            display: inline-block;
+            padding: 6px 12px;
+            background-color: #007bff;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* Alert Styles */
+        .alert {
+            display: none;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .alert.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                width: 100%;
+                margin: 10px auto;
+                padding: 15px;
+            }
+
+            th, td {
+                font-size: 12px;
+                padding: 8px;
+            }
+
+            .summary {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .navbar h2 {
+                font-size: 20px;
+            }
+
+            .navbar a {
+                padding: 6px 10px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container">
+            <h2>Logistics Management System</h2>
+            <div>
+                <a href="{% url 'transporter:home' %}">Home</a>
+                <a href="{% url 'transporter:add_user' %}">Add User</a>
+                <a href="{% url 'logout' %}">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <h1>View Users</h1>
+        <div id="alert" class="alert"></div>
+
+        <!-- Summary Section -->
+        <div class="summary">
+            <div>
+                <h3>Total Dealers</h3>
+                <p id="totalDealers">0</p>
+            </div>
+            <div>
+                <h3>Total Transporters</h3>
+                <p id="totalTransporters">0</p>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <table id="userTable">
+            <thead>
+                <tr>
+                    <th data-key="role">Role <span class="sort-icon"><i class="fas fa-sort"></i></span> <span class="filter-icon"><i class="fas fa-filter"></i></span>
+                        <div class="filter-container">
+                            <div class="filter-dropdown" data-key="role"></div>
+                        </div>
+                    </th>
+                    <th data-key="dealer_code">Dealer Code / Transporter ID <span class="sort-icon"><i class="fas fa-sort"></i></span> <span class="filter-icon"><i class="fas fa-filter"></i></span>
+                        <div class="filter-container">
+                            <div class="filter-dropdown" data-key="dealer_code"></div>
+                        </div>
+                    </th>
+                    <th data-key="username">Username <span class="sort-icon"><i class="fas fa-sort"></i></span> <span class="filter-icon"><i class="fas fa-filter"></i></span>
+                        <div class="filter-container">
+                            <div class="filter-dropdown" data-key="username"></div>
+                        </div>
+                    </th>
+                    <th data-key="name">Name <span class="sort-icon"><i class="fas fa-sort"></i></span> <span class="filter-icon"><i class="fas fa-filter"></i></span>
+                        <div class="filter-container">
+                            <div class="filter-dropdown" data-key="name"></div>
+                        </div>
+                    </th>
+                    <th data-key="company_name">Company Name <span class="sort-icon"><i class="fas fa-sort"></i></span> <span class="filter-icon"><i class="fas fa-filter"></i></span>
+                        <div class="filter-container">
+                            <div class="filter-dropdown" data-key="company_name"></div>
+                        </div>
+                    </th>
+                    <th data-key="email">Email <span class="sort-icon"><i class="fas fa-sort"></i></span> <span class="filter-icon"><i class="fas fa-filter"></i></span>
+                        <div class="filter-container">
+                            <div class="filter-dropdown" data-key="email"></div>
+                        </div>
+                    </th>
+                    <th data-key="phone_number_1">Phone Number 1 <span class="sort-icon"><i class="fas fa-sort"></i></span> <span class="filter-icon"><i class="fas fa-filter"></i></span>
+                        <div class="filter-container">
+                            <div class="filter-dropdown" data-key="phone_number_1"></div>
+                        </div>
+                    </th>
+                    <th data-key="phone_number_2">Phone Number 2 <span class="sort-icon"><i class="fas fa-sort"></i></span> <span class="filter-icon"><i class="fas fa-filter"></i></span>
+                        <div class="filter-container">
+                            <div class="filter-dropdown" data-key="phone_number_2"></div>
+                        </div>
+                    </th>
+                    <th data-key="mobile_number_1">Mobile Number 1 <span class="sort-icon"><i class="fas fa-sort"></i></span> <span class="filter-icon"><i class="fas fa-filter"></i></span>
+                        <div class="filter-container">
+                            <div class="filter-dropdown" data-key="mobile_number_1"></div>
+                        </div>
+                    </th>
+                    <th data-key="mobile_number_2">Mobile Number 2 <span class="sort-icon"><i class="fas fa-sort"></i></span> <span class="filter-icon"><i class="fas fa-filter"></i></span>
+                        <div class="filter-container">
+                            <div class="filter-dropdown" data-key="mobile_number_2"></div>
+                        </div>
+                    </th>
+                    <th data-key="address">Address <span class="sort-icon"><i class="fas fa-sort"></i></span> <span class="filter-icon"><i class="fas fa-filter"></i></span>
+                        <div class="filter-container">
+                            <div class="filter-dropdown" data-key="address"></div>
+                        </div>
+                    </th>
+                    <th data-key="state">State <span class="sort-icon"><i class="fas fa-sort"></i></span> <span class="filter-icon"><i class="fas fa-filter"></i></span>
+                        <div class="filter-container">
+                            <div class="filter-dropdown" data-key="state"></div>
+                        </div>
+                    </th>
+                    <th data-key="city">City <span class="sort-icon"><i class="fas fa-sort"></i></span> <span class="filter-icon"><i class="fas fa-filter"></i></span>
+                        <div class="filter-container">
+                            <div class="filter-dropdown" data-key="city"></div>
+                        </div>
+                    </th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="userTableBody">
+                <!-- User data will be populated here dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Pass the CSRF token to JavaScript
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrfToken = getCookie('csrftoken');
+
+        document.addEventListener("DOMContentLoaded", async function() {
+            const userTableBody = document.getElementById("userTableBody");
+            const alertBox = document.getElementById("alert");
+            const totalDealersSpan = document.getElementById("totalDealers");
+            const totalTransportersSpan = document.getElementById("totalTransporters");
+            let users = [];
+            let filteredUsers = [];
+            let sortKey = null;
+            let sortDirection = 'asc';
+            const filters = {};
+
+            // Fetch users from the backend
+            async function fetchUsers() {
+                try {
+                    const response = await fetch("{% url 'transporter:fetch_users' %}", {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": csrfToken
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`An error occurred: ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    if (data.success && data.users && data.users.length > 0) {
+                        users = data.users;
+                        filteredUsers = [...users];
+                        populateTable();
+                        updateSummary();
+                        setupFilters();
+                    } else {
+                        throw new Error(data.message || "No users found.");
+                    }
+                } catch (error) {
+                    alertBox.textContent = error.message;
+                    alertBox.className = "alert error";
+                    alertBox.style.display = "block";
+                    console.error("Error fetching users:", error);
+                }
+            }
+
+            // Populate the table with users
+            function populateTable() {
+                userTableBody.innerHTML = ""; // Clear existing rows
+                filteredUsers.forEach(user => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${user.role || '-'}</td>
+                        <td>${user.dealer_code || user.transporter_id || '-'}</td>
+                        <td>${user.username || '-'}</td>
+                        <td>${user.name || '-'}</td>
+                        <td>${user.company_name || '-'}</td>
+                        <td>${user.email || '-'}</td>
+                        <td>${user.phone_number_1 || '-'}</td>
+                        <td>${user.phone_number_2 || '-'}</td>
+                        <td>${user.mobile_number_1 || '-'}</td>
+                        <td>${user.mobile_number_2 || '-'}</td>
+                        <td>${user.address || '-'}</td>
+                        <td>${user.state || '-'}</td>
+                        <td>${user.city || '-'}</td>
+                        <td><a href="{% url 'transporter:reset_password' %}?username=${encodeURIComponent(user.username)}" class="btn">Reset Password</a></td>
+                    `;
+                    userTableBody.appendChild(row);
+                });
+            }
+
+            // Update summary statistics
+            function updateSummary() {
+                const totalDealers = users.filter(user => user.role === "Dealer").length;
+                const totalTransporters = users.filter(user => user.role === "Transporter").length;
+                totalDealersSpan.textContent = totalDealers;
+                totalTransportersSpan.textContent = totalTransporters;
+            }
+
+            // Setup filter dropdowns
+            function setupFilters() {
+                const headers = document.querySelectorAll("th[data-key]");
+                headers.forEach(header => {
+                    const key = header.getAttribute("data-key");
+                    const filterIcon = header.querySelector(".filter-icon");
+                    const filterDropdown = header.querySelector(".filter-dropdown");
+
+                    // Populate filter dropdown with unique values
+                    const uniqueValues = [...new Set(users.map(user => user[key] || '-'))];
+                    uniqueValues.sort();
+                    uniqueValues.unshift("All"); // Add "All" option to reset filter
+
+                    uniqueValues.forEach(value => {
+                        const option = document.createElement("div");
+                        option.classList.add("filter-option");
+                        option.textContent = value;
+                        option.addEventListener("click", () => {
+                            filters[key] = value === "All" ? null : value;
+                            applyFilters();
+                            filterDropdown.style.display = "none";
+                        });
+                        filterDropdown.appendChild(option);
+                    });
+
+                    // Toggle filter dropdown on click
+                    filterIcon.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        const isVisible = filterDropdown.style.display === "block";
+                        document.querySelectorAll(".filter-dropdown").forEach(d => d.style.display = "none");
+                        filterDropdown.style.display = isVisible ? "none" : "block";
+                    });
+                });
+
+                // Close dropdowns when clicking outside
+                document.addEventListener("click", () => {
+                    document.querySelectorAll(".filter-dropdown").forEach(d => d.style.display = "none");
+                });
+            }
+
+            // Apply filters to the table
+            function applyFilters() {
+                filteredUsers = users.filter(user => {
+                    return Object.keys(filters).every(key => {
+                        if (!filters[key]) return true;
+                        return (user[key] || '-') === filters[key];
+                    });
+                });
+                if (sortKey) {
+                    sortTable(sortKey, sortDirection);
+                } else {
+                    populateTable();
+                }
+            }
+
+            // Setup sorting
+            document.querySelectorAll("th[data-key]").forEach(header => {
+                header.addEventListener("click", (e) => {
+                    if (e.target.classList.contains("filter-icon") || e.target.closest(".filter-icon")) return;
+                    const key = header.getAttribute("data-key");
+                    const sortIcon = header.querySelector(".sort-icon i");
+
+                    if (sortKey === key) {
+                        sortDirection = sortDirection === "asc" ? "desc" : "asc";
+                    } else {
+                        sortDirection = "asc";
+                        sortKey = key;
+                    }
+
+                    // Update sort icon
+                    document.querySelectorAll(".sort-icon i").forEach(icon => {
+                        icon.classList.remove("fa-sort-up", "fa-sort-down");
+                        icon.classList.add("fa-sort");
+                    });
+                    sortIcon.classList.remove("fa-sort");
+                    sortIcon.classList.add(sortDirection === "asc" ? "fa-sort-up" : "fa-sort-down");
+
+                    sortTable(key, sortDirection);
+                });
+            });
+
+            // Sort the table
+            function sortTable(key, direction) {
+                filteredUsers.sort((a, b) => {
+                    const valA = a[key] || '-';
+                    const valB = b[key] || '-';
+                    if (valA < valB) return direction === "asc" ? -1 : 1;
+                    if (valA > valB) return direction === "asc" ? 1 : -1;
+                    return 0;
+                });
+                populateTable();
+            }
+
+            // Fetch users on page load
+            fetchUsers();
+        });
+    </script>
+</body>
+</html>

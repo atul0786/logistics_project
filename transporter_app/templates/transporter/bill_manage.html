@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill Management System</title>
+    <!-- Bootstrap & jQuery -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Favicon -->
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --accent-color: #f39c12;
+            --text-color: #333;
+            --light-gray: #f5f5f5;
+            --border-color: #ddd;
+            --box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            --danger-color: #e74c3c;
+        }
+        
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 10px;
+            background-color: var(--light-gray);
+            color: var(--text-color);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: var(--box-shadow);
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 8px 10px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: var(--light-gray);
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .info-message {
+            color: var(--primary-color);
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #eaf5fe;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-success {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .save-success {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 9999;
+            display: none;
+            font-size: 0.9rem;
+        }
+        
+        .loader {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .loader .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        .filter-container {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .filter-container .form-group {
+            margin: 0;
+            width: 200px;
+        }
+        
+        .reset-btn {
+            background-color: #dc3545;
+            margin-left: 10px;
+        }
+        
+        .reset-btn:hover {
+            background-color: #c82333;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.6em;
+            font-size: 75%;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+            color: white;
+        }
+        
+        .badge-pending {
+            background-color: var(--accent-color);
+        }
+        
+        .badge-paid {
+            background-color: var(--secondary-color);
+        }
+        
+        .badge-cancelled {
+            background-color: var(--danger-color);
+        }
+        
+        .tab-container {
+            margin-bottom: 20px;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .tab-button {
+            padding: 10px 15px;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab-button.active {
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--box-shadow);
+            padding: 15px;
+        }
+        
+        .stat-card h3 {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20mm;
+        }
+        
+        .pagination button {
+            margin: 0 5px;
+        }
+        
+        .modal-dialog.modal-xl {
+            max-width: 1200px; /* Wider modal for better visibility */
+            width: 90%;
+        }
+        
+        .bill-details-container {
+            margin-top: 20mm;
+        }
+        
+        .bill-details-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20mm;
+            flex-wrap: wrap;
+        }
+        
+        .bill-details-section {
+            flex: 1;
+            min-width: 250px;
+            margin-bottom: 15px;
+        }
+        
+        .bill-details-section h4 {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+        
+        .bill-details-section p {
+            margin: 5px 0;
+            font-size: 0.9rem;
+        }
+        
+        .bill-details-section p strong {
+            display: inline-block;
+            width: 100px;
+        }
+        
+        .bill-totals {
+            margin-top: 20mm;
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+        }
+        
+        .bill-totals-table {
+            width: 300px;
+            margin-left: auto;
+        }
+        
+        .bill-totals-table td {
+            padding: 5px 10px;
+            border: none;
+        }
+        
+        .bill-totals-table td:last-child {
+            text-align: right;
+        }
+        
+        .bill-totals-table tr:last-child {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .search-container input {
+            padding-left: 35px;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row .form-group {
+                flex: 100%;
+            }
+            
+            .bill-details-header {
+                flex-direction: column;
+            }
+            
+            .bill-totals-table {
+                width: 100%;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media print {
+            .no-print, .tab-button, .filter-container, .search-container, .loader, .save-success, .pagination, .action-buttons {
+                display: none !important;
+            }
+            .tab-content.active {
+                display: block !important;
+            }
+            .container {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+                max-width: 100%;
+            }
+            .bill-details-container {
+                margin-top: 0;
+            }
+            .bill-details-header {
+                margin-bottom: 0;
+            }
+            .bill-totals {
+                margin-top: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loader">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+
+    <div class="save-success">Operation completed successfully!</div>
+
+    <div class="container">
+        <h2>Bill Management System</h2>
+
+        <!-- Tab Navigation -->
+        <div class="tab-container">
+            <div class="tab-buttons">
+                <button class="tab-button active" data-tab="bills-tab">Bills</button>
+                <button class="tab-button" data-tab="dashboard-tab">Dashboard</button>
+            </div>
+            
+            <!-- Bills Tab -->
+            <div id="bills-tab" class="tab-content active">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="search-container">
+                            <span class="search-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                                </svg>
+                            </span>
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search by invoice number or dealer...">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="filter-container">
+                            <button type="button" class="btn btn-outline-secondary" data-toggle="modal" data-target="#filterModal">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-funnel" viewBox="0 0 16 16">
+                                    <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2h-11z"/>
+                                </svg>
+                                Filters
+                            </button>
+                            <button type="button" id="resetFiltersBtn" class="btn reset-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+                                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708z"/>
+                                </svg>
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered" id="billsTable">
+                        <thead>
+                            <tr>
+                                <th>Invoice No</th>
+                                <th>Date</th>
+                                <th>Dealer</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="paginationContainer" class="pagination mt-4">
+                    <!-- Pagination will be populated here -->
+                </div>
+
+                <div id="noBillsMessage" class="info-message" style="display: none;">
+                    No bills found. Try adjusting your filters.
+                </div>
+
+                <div id="loadingMessage" class="info-message">
+                    Loading bills...
+                </div>
+            </div>
+            
+            <!-- Dashboard Tab -->
+            <div id="dashboard-tab" class="tab-content">
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <h3>Total Bills</h3>
+                        <div class="stat-value" id="totalBillsValue">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Bills</h3>
+                        <div class="stat-value" id="activeBillsValue">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Cancelled Bills</h3>
+                        <div class="stat-value" id="cancelledBillsValue">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Amount</h3>
+                        <div class="stat-value" id="totalAmountValue">₹0.00</div>
+                    </div>
+                </div>
+
+                <h3 class="mb-3">Dealer Summary</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered" id="dealerSummaryTable">
+                        <thead>
+                            <tr>
+                                <th>Dealer</th>
+                                <th>Bills Count</th>
+                                <th>Total Amount</th>
+                                <th>Average Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModalLabel">Filter Bills</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="filterForm">
+                        <div class="form-group">
+                            <label for="statusFilter">Status</label>
+                            <select id="statusFilter" class="form-control">
+                                <option value="">All</option>
+                                <option value="pending">Pending</option>
+                                <option value="paid">Paid</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="dealerFilter">Dealer</label>
+                            <select id="dealerFilter" class="form-control">
+                                <option value="">All</option>
+                                <!-- Dealer options will be populated here -->
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="fromDateFilter">From Date</label>
+                                <input type="date" id="fromDateFilter" class="form-control">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="toDateFilter">To Date</label>
+                                <input type="date" id="toDateFilter" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="monthFilter">Month</label>
+                                <select id="monthFilter" class="form-control">
+                                    <option value="">All</option>
+                                    <option value="1">January</option>
+                                    <option value="2">February</option>
+                                    <option value="3">March</option>
+                                    <option value="4">April</option>
+                                    <option value="5">May</option>
+                                    <option value="6">June</option>
+                                    <option value="7">July</option>
+                                    <option value="8">August</option>
+                                    <option value="9">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="yearFilter">Year</label>
+                                <select id="yearFilter" class="form-control">
+                                    <option value="">All</option>
+                                    <!-- Year options will be populated here -->
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="resetFiltersModalBtn">Reset</button>
+                    <button type="button" class="btn btn-primary" id="applyFiltersBtn" data-dismiss="modal">Apply Filters</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bill Details Modal -->
+    <div class="modal fade" id="billDetailsModal" tabindex="-1" role="dialog" aria-labelledby="billDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="billDetailsModalLabel">Bill Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="bill-details-container">
+                        <div class="bill-details-header">
+                            <div class="bill-details-section">
+                                <h4>Bill Information</h4>
+                                <p><strong>Invoice No:</strong> <span id="detailInvoiceNo"></span></p>
+                                <p><strong>Date:</strong> <span id="detailDate"></span></p>
+                                <p><strong>Status:</strong> <span id="detailStatus"></span></p>
+                            </div>
+                            <div class="bill-details-section">
+                                <h4>Dealer Information</h4>
+                                <p><strong>Name:</strong> <span id="detailDealerName"></span></p>
+                                <p><strong>Address:</strong> <span id="detailDealerAddress"></span></p>
+                                <p><strong>GSTN:</strong> <span id="detailDealerGSTIN"></span></p>
+                                <p><strong>Contact:</strong> <span id="detailDealerContact"></span></p>
+                                <p><strong>Email:</strong> <span id="detailDealerEmail"></span></p>
+                            </div>
+                        </div>
+
+                        <h4>CNotes</h4>
+                        <button type="button" class="btn btn-success mb-3" id="addCNoteBtn">Add CNote</button>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered" id="detailCNotesTable">
+                                <thead>
+                                    <tr>
+                                        <th>CNote No</th>
+                                        <th>Date</th>
+                                        <th>Payment Type</th>
+                                        <th>Amount</th>
+                                        <th>ART</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="bill-totals">
+                            <table class="bill-totals-table">
+                                <tr>
+                                    <td>Subtotal:</td>
+                                    <td id="detailSubtotal">₹0.00</td>
+                                </tr>
+                                <tr>
+                                    <td>GST (<span id="detailGSTRate">0</span>%):</td>
+                                    <td id="detailGSTAmount">₹0.00</td>
+                                </tr>
+                                <tr>
+                                    <td>Total Amount:</td>
+                                    <td id="detailTotalAmount">₹0.00</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="printBillBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-printer" viewBox="0 0 16 16">
+                            <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+                            <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+                        </svg>
+                        Print/Download
+                    </button>
+                    <button type="button" class="btn btn-danger" id="cancelBillBtn" style="display: none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                        </svg>
+                        Cancel Bill
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Bill Modal -->
+    <div class="modal fade" id="editBillModal" tabindex="-1" role="dialog" aria-labelledby="editBillModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editBillModalLabel">Edit Bill</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="editBillForm">
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label for="editInvoiceNo">Invoice No</label>
+                                <input type="text" id="editInvoiceNo" class="form-control" readonly>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="editDate">Date</label>
+                                <input type="date" id="editDate" class="form-control">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="editDealer">Dealer</label>
+                                <select id="editDealer" class="form-control">
+                                    <!-- Dealers will be populated here -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label for="editStatus">Status</label>
+                                <select id="editStatus" class="form-control">
+                                    <option value="pending">Pending</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="editTotalAmount">Total Amount</label>
+                                <input type="number" id="editTotalAmount" class="form-control" step="0.01" readonly>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="editArt">ART (Article/Description)</label>
+                                <input type="text" id="editArt" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>CNotes Management</label>
+                            <table class="table table-striped table-bordered" id="editCNotesTable">
+                                <thead>
+                                    <tr>
+                                        <th>CNote No</th>
+                                        <th>Date</th>
+                                        <th>Payment Type</th>
+                                        <th>Amount</th>
+                                        <th>ART</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- CNotes will be populated here -->
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-success btn-sm" id="addCNoteEditBtn">Add CNote</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveBillBtn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let allBills = [];
+        let filteredBills = [];
+        let currentPage = 1;
+        let itemsPerPage = 10;
+        let totalPages = 1;
+        let dealers = [];
+        let selectedBillId = null;
+        let editCNotes = [];
+
+        // Initialize the page
+        $(document).ready(function() {
+            // Populate year filter with last 5 years
+            const currentYear = new Date().getFullYear();
+            for (let i = 0; i < 5; i++) {
+                const year = currentYear - i;
+                $('#yearFilter').append(`<option value="${year}">${year}</option>`);
+            }
+            
+            // Fetch bills and dealers
+            fetchBills();
+            fetchDealers();
+            fetchDashboardSummary();
+            
+            // Tab switching
+            $('.tab-button').click(function() {
+                const tabId = $(this).data('tab');
+                $('.tab-button').removeClass('active');
+                $(this).addClass('active');
+                $('.tab-content').removeClass('active');
+                $(`#${tabId}`).addClass('active');
+            });
+            
+            // Search functionality
+            $('#searchInput').on('input', function() {
+                applyFilters();
+            });
+            
+            // Filter buttons
+            $('#applyFiltersBtn').click(function() {
+                applyFilters();
+            });
+            
+            $('#resetFiltersBtn, #resetFiltersModalBtn').click(function() {
+                resetFilters();
+            });
+            
+            // Pagination
+            $(document).on('click', '.page-btn', function() {
+                currentPage = parseInt($(this).data('page'));
+                renderBills();
+            });
+            
+            // View bill details
+            $(document).on('click', '.view-bill-btn', function() {
+                const billId = $(this).data('id');
+                fetchBillDetails(billId);
+            });
+            
+            // Edit bill
+            $(document).on('click', '.edit-bill-btn', function() {
+                const billId = $(this).data('id');
+                editBill(billId);
+            });
+            
+            // Delete bill
+            $(document).on('click', '.delete-bill-btn', function() {
+                const billId = $(this).data('id');
+                if (confirm('Are you sure you want to delete this bill?')) {
+                    deleteBill(billId);
+                }
+            });
+            
+            // Print/Download bill
+            $('#printBillBtn').click(function() {
+                if (selectedBillId) {
+                    const download = confirm('Download as PDF? (Cancel to print directly)');
+                    const url = `/transporter/bill/${selectedBillId}/print/?${download ? 'download=true' : ''}`;
+                    if (download) {
+                        window.location.href = url; // Download PDF
+                    } else {
+                        window.open(url, '_blank'); // Open print page
+                    }
+                }
+            });
+            
+            // Cancel bill
+            $('#cancelBillBtn').click(function() {
+                if (selectedBillId && confirm('Are you sure you want to cancel this bill?')) {
+                    cancelBill(selectedBillId);
+                }
+            });
+            
+            // Add CNote in bill details modal
+            $('#addCNoteBtn').click(function() {
+                addCNote(selectedBillId);
+            });
+            
+            // Add CNote in edit modal
+            $('#addCNoteEditBtn').click(function() {
+                addCNoteToEdit();
+            });
+            
+            // Remove CNote in edit modal
+            $(document).on('click', '.remove-cnote-edit-btn', function() {
+                const index = $(this).data('index');
+                editCNotes.splice(index, 1);
+                updateTotalAmount();
+                renderEditCNotes();
+            });
+            
+            // Update CNote details on input change
+            $(document).on('input', '.cnote-number', function() {
+                const index = $(this).data('index');
+                const cnoteNumber = $(this).val();
+                if (cnoteNumber) {
+                    autoPopulateCNote(index, cnoteNumber);
+                }
+            });
+
+            // Update amount and recalculate total
+            $(document).on('input', '.cnote-amount', function() {
+                const index = $(this).data('index');
+                const amount = parseFloat($(this).val()) || 0;
+                editCNotes[index].amount = amount;
+                updateTotalAmount();
+            });
+
+            // Update ART
+            $(document).on('input', '.cnote-art', function() {
+                const index = $(this).data('index');
+                const art = $(this).val();
+                editCNotes[index].art = art;
+            });
+
+            // Save edited bill
+            $('#saveBillBtn').click(function() {
+                saveBillChanges();
+            });
+            
+            // Remove CNote in details modal
+            $(document).on('click', '.remove-cnote-btn', function() {
+                const itemId = $(this).data('id');
+                removeCNote(selectedBillId, itemId);
+            });
+        });
+        
+        // Fetch all bills
+        function fetchBills() {
+            showLoader();
+            $.ajax({
+                url: '/transporter/bills/',
+                type: 'GET',
+                dataType: 'json',
+                timeout: 10000,
+                success: function(data) {
+                    allBills = data.results || data;
+                    totalPages = data.total_pages || Math.ceil(allBills.length / itemsPerPage);
+                    hideLoader();
+                    $('#loadingMessage').hide();
+                    if (allBills.length === 0) {
+                        $('#noBillsMessage').show();
+                        $('#billsTable tbody').empty();
+                        $('#paginationContainer').empty();
+                    } else {
+                        $('#noBillsMessage').hide();
+                        applyFilters();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    hideLoader();
+                    $('#loadingMessage').hide();
+                    $('#noBillsMessage').text('Error loading bills: ' + (xhr.responseText || error)).show();
+                    console.error('Error fetching bills:', xhr.responseText);
+                }
+            });
+        }
+        
+        // Fetch dealers for filter and edit dropdowns
+        function fetchDealers() {
+            $.ajax({
+                url: '/transporter/dealers/',
+                type: 'GET',
+                dataType: 'json',
+                timeout: 10000,
+                success: function(data) {
+                    dealers = data;
+                    $('#dealerFilter').empty().append('<option value="">All</option>');
+                    $('#editDealer').empty();
+                    dealers.forEach(function(dealer) {
+                        $('#dealerFilter').append(`<option value="${dealer.name}">${dealer.name}</option>`);
+                        $('#editDealer').append(`<option value="${dealer.name}">${dealer.name}</option>`);
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching dealers:', xhr.responseText);
+                }
+            });
+        }
+        
+        // Fetch dashboard summary
+        function fetchDashboardSummary() {
+            $.ajax({
+                url: '/transporter/dashboard-summary/',
+                type: 'GET',
+                dataType: 'json',
+                timeout: 10000,
+                success: function(data) {
+                    $('#totalBillsValue').text(data.total_bills);
+                    $('#activeBillsValue').text(data.active_bills);
+                    $('#cancelledBillsValue').text(data.cancelled_bills);
+                    $('#totalAmountValue').text(formatCurrency(data.total_amount));
+                    const dealerSummaryTable = $('#dealerSummaryTable tbody');
+                    dealerSummaryTable.empty();
+                    if (data.dealer_summary && data.dealer_summary.length > 0) {
+                        data.dealer_summary.forEach(function(item) {
+                            dealerSummaryTable.append(`
+                                <tr>
+                                    <td>${item.dealer}</td>
+                                    <td>${item.count}</td>
+                                    <td>${formatCurrency(item.total_amount)}</td>
+                                    <td>${formatCurrency(item.average_amount)}</td>
+                                </tr>
+                            `);
+                        });
+                    } else {
+                        dealerSummaryTable.append('<tr><td colspan="4" class="text-center">No data available</td></tr>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching dashboard summary:', xhr.responseText);
+                }
+            });
+        }
+        
+        // Fetch bill details
+        function fetchBillDetails(billId) {
+            showLoader();
+            selectedBillId = billId;
+            $.ajax({
+                url: `/transporter/bill/${billId}/`,
+                type: 'GET',
+                dataType: 'json',
+                timeout: 10000,
+                success: function(data) {
+                    $('#detailInvoiceNo').text(data.bill_number);
+                    $('#detailDate').text(formatDate(data.created_at));
+                    $('#detailStatus').html(getStatusBadge(data.status));
+                    $('#detailDealerName').text(data.dealer.name);
+                    $('#detailDealerAddress').text(data.dealer.address || 'N/A');
+                    $('#detailDealerGSTIN').text(data.dealer.gstn || 'N/A');
+                    $('#detailDealerContact').text(data.dealer.phone_number_1 || 'N/A');
+                    $('#detailDealerEmail').text(data.dealer.email || 'N/A');
+                    const cnotesTable = $('#detailCNotesTable tbody');
+                    cnotesTable.empty();
+                    data.items.forEach(function(item) {
+                        cnotesTable.append(`
+                            <tr data-id="${item.id}">
+                                <td>${item.cnote_number}</td>
+                                <td>${formatDate(item.created_date)}</td>
+                                <td>${item.payment_type}</td>
+                                <td>${formatCurrency(item.amount)}</td>
+                                <td>${item.art || 'N/A'}</td>
+                                <td><button class="btn btn-sm btn-danger remove-cnote-btn" data-id="${item.id}">Remove</button></td>
+                            </tr>
+                        `);
+                    });
+                    $('#detailSubtotal').text(formatCurrency(data.subtotal));
+                    $('#detailGSTRate').text(data.gst_percentage);
+                    $('#detailGSTAmount').text(formatCurrency(data.gst_amount));
+                    $('#detailTotalAmount').text(formatCurrency(data.total_amount));
+                    if (data.status === 'pending') {
+                        $('#cancelBillBtn').show();
+                    } else {
+                        $('#cancelBillBtn').hide();
+                    }
+                    hideLoader();
+                    $('#billDetailsModal').modal('show');
+                },
+                error: function(xhr, status, error) {
+                    hideLoader();
+                    alert('Error loading bill details: ' + (xhr.responseText || error));
+                    console.error('Error fetching bill details:', xhr.responseText);
+                }
+            });
+        }
+        
+        // Edit bill
+        function editBill(billId) {
+            selectedBillId = billId;
+            editCNotes = []; // Reset CNotes array
+            $.ajax({
+                url: `/transporter/bill/${billId}/`,
+                type: 'GET',
+                dataType: 'json',
+                timeout: 10000,
+                success: function(data) {
+                    $('#editInvoiceNo').val(data.bill_number);
+                    $('#editDate').val(data.created_at.split('T')[0]);
+                    $('#editDealer').val(data.dealer.name);
+                    $('#editStatus').val(data.status);
+                    $('#editTotalAmount').val(data.total_amount);
+                    $('#editArt').val(data.art || '');
+                    editCNotes = data.items.map(item => ({
+                        id: item.id,
+                        cnote_number: item.cnote_number,
+                        created_date: item.created_date.split('T')[0],
+                        payment_type: item.payment_type,
+                        amount: item.amount,
+                        art: item.art || ''
+                    }));
+                    updateTotalAmount();
+                    renderEditCNotes();
+                    $('#editBillModal').modal('show');
+                },
+                error: function(xhr, status, error) {
+                    alert('Error loading bill for edit: ' + (xhr.responseText || error));
+                    console.error('Error fetching bill for edit:', xhr.responseText);
+                }
+            });
+        }
+        
+        // Auto-populate CNote details based on CNote number
+        function autoPopulateCNote(index, cnoteNumber) {
+            // Simulate fetching CNote details (replace with actual API call if available)
+            const defaultData = {
+                created_date: new Date().toISOString().split('T')[0],
+                payment_type: 'Cash',
+                amount: 0,
+                art: 'Default ART'
+            };
+            editCNotes[index] = {
+                ...editCNotes[index],
+                cnote_number: cnoteNumber,
+                created_date: defaultData.created_date,
+                payment_type: defaultData.payment_type,
+                amount: defaultData.amount,
+                art: defaultData.art
+            };
+            renderEditCNotes();
+            updateTotalAmount();
+        }
+
+        // Render CNotes in edit modal
+        function renderEditCNotes() {
+            const cnotesTable = $('#editCNotesTable tbody');
+            cnotesTable.empty();
+            editCNotes.forEach((cnote, index) => {
+                cnotesTable.append(`
+                    <tr>
+                        <td><input type="text" class="form-control cnote-number" value="${cnote.cnote_number}" data-index="${index}" required></td>
+                        <td><input type="date" class="form-control cnote-date" value="${cnote.created_date}" data-index="${index}" readonly></td>
+                        <td><input type="text" class="form-control payment-type" value="${cnote.payment_type}" data-index="${index}" readonly></td>
+                        <td><input type="number" class="form-control cnote-amount" value="${cnote.amount}" step="0.01" data-index="${index}" required></td>
+                        <td><input type="text" class="form-control cnote-art" value="${cnote.art}" data-index="${index}"></td>
+                        <td><button type="button" class="btn btn-danger btn-sm remove-cnote-edit-btn" data-index="${index}">Remove</button></td>
+                    </tr>
+                `);
+            });
+        }
+        
+        // Add CNote to edit modal
+        function addCNoteToEdit() {
+            editCNotes.push({
+                id: null,
+                cnote_number: '',
+                created_date: new Date().toISOString().split('T')[0],
+                payment_type: 'Cash',
+                amount: 0,
+                art: ''
+            });
+            renderEditCNotes();
+            updateTotalAmount();
+        }
+        
+        // Update total amount based on CNote amounts
+        function updateTotalAmount() {
+            const total = editCNotes.reduce((sum, cnote) => sum + (parseFloat(cnote.amount) || 0), 0);
+            $('#editTotalAmount').val(total.toFixed(2));
+        }
+
+        // Save bill changes
+        function saveBillChanges() {
+            // Validate CNote numbers
+            const invalidCNotes = editCNotes.filter(cnote => !cnote.cnote_number.trim());
+            if (invalidCNotes.length > 0) {
+                alert('Please enter a CNote number for all CNotes.');
+                return;
+            }
+
+            const updatedBill = {
+                bill_number: $('#editInvoiceNo').val(),
+                created_at: $('#editDate').val(),
+                dealer: { name: $('#editDealer').val() },
+                status: $('#editStatus').val(),
+                total_amount: parseFloat($('#editTotalAmount').val()) || 0,
+                art: $('#editArt').val() || ''
+            };
+            updatedBill.items = editCNotes.map((cnote, index) => ({
+                id: cnote.id,
+                cnote_number: $('.cnote-number[data-index="' + index + '"]').val(),
+                created_date: $('.cnote-date[data-index="' + index + '"]').val(),
+                payment_type: $('.payment-type[data-index="' + index + '"]').val(),
+                amount: parseFloat($('.cnote-amount[data-index="' + index + '"]').val()) || 0,
+                art: $('.cnote-art[data-index="' + index + '"]').val() || ''
+            }));
+
+            $.ajax({
+                url: `/transporter/bill/${selectedBillId}/update/`,
+                type: 'PUT',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                data: JSON.stringify(updatedBill),
+                contentType: 'application/json',
+                timeout: 10000,
+                success: function(data) {
+                    $('#editBillModal').modal('hide');
+                    fetchBills();
+                    fetchDashboardSummary();
+                    showSuccessMessage('Bill updated successfully');
+                },
+                error: function(xhr, status, error) {
+                    alert('Error updating bill: ' + (xhr.responseText || error));
+                    console.error('Error updating bill:', xhr.responseText);
+                }
+            });
+        }
+        
+        // Delete bill
+        function deleteBill(billId) {
+            $.ajax({
+                url: `/transporter/bill/${billId}/`,
+                type: 'DELETE',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                timeout: 10000,
+                success: function() {
+                    fetchBills();
+                    fetchDashboardSummary();
+                    showSuccessMessage('Bill deleted successfully');
+                },
+                error: function(xhr, status, error) {
+                    alert('Error deleting bill: ' + (xhr.responseText || error));
+                    console.error('Error deleting bill:', xhr.responseText);
+                }
+            });
+        }
+        
+        // Cancel bill
+        function cancelBill(billId) {
+            showLoader();
+            $.ajax({
+                url: `/transporter/cancel-bill/${billId}/`,
+                type: 'POST',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                timeout: 10000,
+                success: function(data) {
+                    hideLoader();
+                    allBills = allBills.map(function(bill) {
+                        if (bill.id === billId) {
+                            bill.status = 'cancelled';
+                        }
+                        return bill;
+                    });
+                    applyFilters();
+                    fetchDashboardSummary();
+                    $('#billDetailsModal').modal('hide');
+                    showSuccessMessage('Bill cancelled successfully');
+                },
+                error: function(xhr, status, error) {
+                    hideLoader();
+                    alert('Error cancelling bill: ' + (xhr.responseText || error));
+                    console.error('Error cancelling bill:', xhr.responseText);
+                }
+            });
+        }
+        
+        // Add CNote
+        function addCNote(billId) {
+            const cnote = prompt('Enter CNote details (CNote No:Date:Payment Type:Amount) e.g., CN123:2025-04-07:Cash:500');
+            if (cnote) {
+                const [cnote_number, created_date, payment_type, amount] = cnote.split(':');
+                $.ajax({
+                    url: `/transporter/bill/${billId}/items/`,
+                    type: 'POST',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                    data: JSON.stringify({ cnote_number, created_date, payment_type, amount: parseFloat(amount) }),
+                    contentType: 'application/json',
+                    timeout: 10000,
+                    success: function() {
+                        fetchBillDetails(billId);
+                        fetchBills();
+                        showSuccessMessage('CNote added successfully');
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error adding CNote: ' + (xhr.responseText || error));
+                        console.error('Error adding CNote:', xhr.responseText);
+                    }
+                });
+            }
+        }
+        
+        // Remove CNote
+        function removeCNote(billId, itemId) {
+            if (confirm('Are you sure you want to remove this CNote?')) {
+                $.ajax({
+                    url: `/transporter/bill/${billId}/items/${itemId}/`,
+                    type: 'DELETE',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') },
+                    timeout: 10000,
+                    success: function() {
+                        fetchBillDetails(billId);
+                        fetchBills();
+                        showSuccessMessage('CNote removed successfully');
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error removing CNote: ' + (xhr.responseText || error));
+                        console.error('Error removing CNote:', xhr.responseText);
+                    }
+                });
+            }
+        }
+        
+        // Apply filters to bills
+        function applyFilters() {
+            const searchTerm = $('#searchInput').val().toLowerCase();
+            const status = $('#statusFilter').val();
+            const dealer = $('#dealerFilter').val();
+            const fromDate = $('#fromDateFilter').val();
+            const toDate = $('#toDateFilter').val();
+            const month = $('#monthFilter').val();
+            const year = $('#yearFilter').val();
+            
+            filteredBills = allBills.filter(function(bill) {
+                if (searchTerm && !bill.bill_number.toLowerCase().includes(searchTerm) && 
+                    !bill.dealer.name.toLowerCase().includes(searchTerm)) {
+                    return false;
+                }
+                if (status && bill.status !== status) {
+                    return false;
+                }
+                if (dealer && bill.dealer.name !== dealer) {
+                    return false;
+                }
+                if (fromDate) {
+                    const billDate = new Date(bill.created_at);
+                    const fromDateObj = new Date(fromDate);
+                    if (billDate < fromDateObj) {
+                        return false;
+                    }
+                }
+                if (toDate) {
+                    const billDate = new Date(bill.created_at);
+                    const toDateObj = new Date(toDate);
+                    toDateObj.setHours(23, 59, 59);
+                    if (billDate > toDateObj) {
+                        return false;
+                    }
+                }
+                if (month) {
+                    const billDate = new Date(bill.created_at);
+                    if (billDate.getMonth() + 1 !== parseInt(month)) {
+                        return false;
+                    }
+                }
+                if (year) {
+                    const billDate = new Date(bill.created_at);
+                    if (billDate.getFullYear() !== parseInt(year)) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+            
+            currentPage = 1;
+            renderBills();
+        }
+        
+        // Reset all filters
+        function resetFilters() {
+            $('#searchInput').val('');
+            $('#statusFilter').val('');
+            $('#dealerFilter').val('');
+            $('#fromDateFilter').val('');
+            $('#toDateFilter').val('');
+            $('#monthFilter').val('');
+            $('#yearFilter').val('');
+            applyFilters();
+        }
+        
+        // Render bills table with pagination
+        function renderBills() {
+            const billsTable = $('#billsTable tbody');
+            billsTable.empty();
+            if (filteredBills.length === 0) {
+                $('#noBillsMessage').show();
+                $('#paginationContainer').empty();
+                return;
+            }
+            $('#noBillsMessage').hide();
+            totalPages = Math.ceil(filteredBills.length / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, filteredBills.length);
+            for (let i = startIndex; i < endIndex; i++) {
+                const bill = filteredBills[i];
+                billsTable.append(`
+                    <tr>
+                        <td>${bill.bill_number}</td>
+                        <td>${formatDate(bill.created_at)}</td>
+                        <td>${bill.dealer.name}</td>
+                        <td>${formatCurrency(bill.total_amount)}</td>
+                        <td>${getStatusBadge(bill.status)}</td>
+                        <td>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-info view-bill-btn" data-id="${bill.id}" title="View Details">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                                        <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                                    </svg>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-warning edit-bill-btn" data-id="${bill.id}" title="Edit Bill">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+                                    </svg>
+                                </button>
+                                <a href="/transporter/bill/${bill.id}/print/" target="_blank" class="btn btn-sm btn-primary" title="Print/Download">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                                    </svg>
+                                </a>
+                                ${bill.status === 'pending' ? `
+                                <button type="button" class="btn btn-sm btn-danger cancel-bill-btn" data-id="${bill.id}" title="Cancel Bill">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                    </svg>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger delete-bill-btn" data-id="${bill.id}" title="Delete Bill">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 16 16">
+                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                                    </svg>
+                                </button>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `);
+            }
+            renderPagination();
+            $('.cancel-bill-btn').click(function() {
+                const billId = $(this).data('id');
+                if (confirm('Are you sure you want to cancel this bill?')) {
+                    cancelBill(billId);
+                }
+            });
+        }
+        
+        // Render pagination controls
+        function renderPagination() {
+            const paginationContainer = $('#paginationContainer');
+            paginationContainer.empty();
+            if (totalPages <= 1) {
+                return;
+            }
+            paginationContainer.append(`
+                <button class="btn btn-sm ${currentPage === 1 ? 'btn-secondary disabled' : 'btn-outline-secondary page-btn'}" 
+                    ${currentPage === 1 ? 'disabled' : 'data-page="' + (currentPage - 1) + '"'}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                    </svg>
+                    Previous
+                </button>
+            `);
+            const maxPages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxPages / 2));
+            let endPage = Math.min(totalPages, startPage + maxPages - 1);
+            if (endPage - startPage + 1 < maxPages) {
+                startPage = Math.max(1, endPage - maxPages + 1);
+            }
+            for (let i = startPage; i <= endPage; i++) {
+                paginationContainer.append(`
+                    <button class="btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline-secondary page-btn'}" 
+                        ${i === currentPage ? 'disabled' : 'data-page="' + i + '"'}>
+                        ${i}
+                    </button>
+                `);
+            }
+            paginationContainer.append(`
+                <button class="btn btn-sm ${currentPage === totalPages ? 'btn-secondary disabled' : 'btn-outline-secondary page-btn'}" 
+                    ${currentPage === totalPages ? 'disabled' : 'data-page="' + (currentPage + 1) + '"'}>
+                    Next
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                </button>
+            `);
+        }
+        
+        // Helper functions
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2 }).format(amount);
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
+        }
+        
+        function getStatusBadge(status) {
+            switch (status) {
+                case 'pending': return '<span class="badge badge-pending">Pending</span>';
+                case 'paid': return '<span class="badge badge-paid">Paid</span>';
+                case 'cancelled': return '<span class="badge badge-cancelled">Cancelled</span>';
+                default: return '<span class="badge badge-secondary">' + status + '</span>';
+            }
+        }
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        function showLoader() {
+            $('.loader').css('display', 'flex');
+        }
+        
+        function hideLoader() {
+            $('.loader').css('display', 'none');
+        }
+        
+        function showSuccessMessage(message) {
+            $('.save-success').text(message);
+            $('.save-success').fadeIn();
+            setTimeout(function() {
+                $('.save-success').fadeOut();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

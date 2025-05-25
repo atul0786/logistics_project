@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dealer Billing System</title>
+    <!-- Bootstrap & jQuery -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --accent-color: #f39c12;
+            --text-color: #333;
+            --light-gray: #f5f5f5;
+            --border-color: #ddd;
+            --box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 10px;
+            background-color: var(--light-gray);
+            color: var(--text-color);
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: var(--box-shadow);
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 8px 10px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: var(--light-gray);
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .info-message {
+            color: var(--primary-color);
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #eaf5fe;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .bill-container {
+            margin-top: 30px;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 5px;
+            background-color: white;
+        }
+        
+        .company-header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+        
+        .company-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .company-address, .company-contact {
+            font-size: 0.8rem;
+            margin-bottom: 3px;
+        }
+        
+        .bill-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .bill-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .bill-meta-item {
+            flex: 1;
+            min-width: 200px;
+            font-size: 0.9rem;
+        }
+        
+        .dealer-details {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: var(--light-gray);
+            border-radius: 5px;
+        }
+        
+        .dealer-details h3 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        
+        .dealer-details p {
+            margin: 5px 0;
+            font-size: 0.9rem;
+        }
+        
+        .bill-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .signature {
+            width: 180px;
+            text-align: center;
+        }
+        
+        .totals {
+            width: 250px;
+        }
+        
+        .signature-line {
+            margin-top: 40px;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+            font-size: 0.8rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .print-btn {
+            background-color: var(--primary-color);
+        }
+        
+        .btn-success {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        
+        .save-success {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 9999;
+            display: none;
+            font-size: 0.9rem;
+        }
+        
+        .loader {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .loader .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        .search-results {
+            display: none;
+        }
+        
+        /* Custom Dropdown Styles for Payment Type */
+        .custom-multiselect {
+            position: relative;
+            width: 100%;
+        }
+        
+        .custom-multiselect .dropdown-toggle {
+            width: 100%;
+            padding: 8px 30px 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-color);
+            position: relative;
+            transition: border-color 0.2s;
+        }
+        
+        .custom-multiselect .dropdown-toggle:hover {
+            border-color: #aaa;
+        }
+        
+        .custom-multiselect .dropdown-toggle::after {
+            content: '▼';
+            font-size: 0.8rem;
+            position: absolute;
+            right: 10px;
+            color: #666;
+        }
+        
+        .custom-multiselect .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 2px);
+            left: 0;
+            width: 100%;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: var(--box-shadow);
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 5px 0;
+        }
+        
+        .custom-multiselect .dropdown-menu.show {
+            display: block;
+        }
+        
+        .custom-multiselect .dropdown-item {
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .custom-multiselect .dropdown-item:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .custom-multiselect .dropdown-item input[type="checkbox"] {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        .custom-multiselect .dropdown-item label {
+            margin: 0;
+            cursor: pointer;
+            width: 100%;
+            font-weight: normal;
+        }
+        
+        .custom-multiselect .selected-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #666;
+        }
+        
+        .custom-multiselect .selected-text.active {
+            color: var(--text-color);
+        }
+        
+        /* Filter and Select All Container */
+        .filter-container {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .filter-container .form-group {
+            margin: 0;
+            width: 200px;
+        }
+        
+        /* Select All Button */
+        .select-all-btn {
+            background-color: #6c757d;
+        }
+        
+        .select-all-btn:hover {
+            background-color: #5a6268;
+        }
+        
+        /* Reset Button */
+        .reset-btn {
+            background-color: #dc3545;
+            margin-left: 10px;
+        }
+        
+        .reset-btn:hover {
+            background-color: #c82333;
+        }
+        
+        @media print {
+            body {
+                background-color: white;
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+            }
+            
+            form, .action-buttons, button, .info-message, .error-message {
+                display: none !important;
+            }
+            
+            .bill-container {
+                display: block !important;
+                border: none;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .form-row .form-group {
+                flex: 100%;
+            }
+            
+            .bill-footer {
+                flex-direction: column;
+            }
+            
+            .signature, .totals {
+                width: 100%;
+                margin-bottom: 15px;
+            }
+            
+            .bill-meta-item {
+                flex: 100%;
+                text-align: left !important;
+                margin-bottom: 10px;
+            }
+            
+            .filter-container {
+                flex-direction: column;
+                align-items: flex-end;
+            }
+            
+            .filter-container .form-group {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loader">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+
+    <div class="save-success">Bill saved successfully!</div>
+
+    <div class="container">
+        <h2>Dealer Billing System</h2>
+
+        <!-- Display Django messages for errors -->
+        {% if messages %}
+            <div class="error-message">
+                {% for message in messages %}
+                    {{ message }}<br>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="GET" action="{% url 'transporter:billing' %}" id="searchForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="dealer">Select Dealer:</label>
+                    <select name="dealer" id="dealer" class="form-control">
+                        <option value="">-- Select Dealer --</option>
+                        {% for dealer in dealers %}
+                        <option value="{{ dealer.name }}" {% if dealer.name == selected_dealer %}selected{% endif %}>
+                            {{ dealer.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="from_date">From Date:</label>
+                    <input type="date" id="from_date" name="from_date" class="form-control" value="{{ selected_from_date }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="to_date">To Date:</label>
+                    <input type="date" id="to_date" name="to_date" class="form-control" value="{{ selected_to_date }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="month">Or Select Month:</label>
+                    <select name="month" id="month" class="form-control">
+                        <option value="">-- Select Month --</option>
+                        {% for i in months %}
+                            <option value="{{ i }}" {% if selected_month == i|stringformat:"s" %}selected{% endif %}>{{ i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="state">State:</label>
+                    <select name="state" id="state" class="form-control">
+                        <option value="all" {% if selected_state == "all" or not selected_state %}selected{% endif %}>All States</option>
+                        <!-- Add state options as needed -->
+                        <option value="MH" {% if selected_state == "MH" %}selected{% endif %}>Maharashtra</option>
+                        <option value="GJ" {% if selected_state == "GJ" %}selected{% endif %}>Gujarat</option>
+                        <!-- Add more states as per your data -->
+                    </select>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Search</button>
+            <button type="button" class="btn reset-btn" id="resetBtn">Reset</button>
+        </form>
+        
+        {% if cnotes %}
+            <div class="search-results" id="searchResults" style="display: block;">
+                <div class="filter-container">
+                    <div class="form-group">
+                        <label for="tablePaymentMode">Filter by Payment Type:</label>
+                        <div class="custom-multiselect">
+                            <div class="dropdown-toggle" id="tablePaymentModeToggle">
+                                <span class="selected-text">Select Payment Type</span>
+                            </div>
+                            <div class="dropdown-menu" id="tablePaymentModeMenu">
+                                <div class="dropdown-item">
+                                    <input type="checkbox" value="PAID" id="table_payment_paid">
+                                    <label for="table_payment_paid">Paid</label>
+                                </div>
+                                <div class="dropdown-item">
+                                    <input type="checkbox" value="TO PAY" id="table_payment_to_pay">
+                                    <label for="table_payment_to_pay">To Pay</label>
+                                </div>
+                                <div class="dropdown-item">
+                                    <input type="checkbox" value="TBB" id="table_payment_tbb">
+                                    <label for="table_payment_tbb">TBB</label>
+                                </div>
+                                <div class="dropdown-item">
+                                    <input type="checkbox" value="MANUAL" id="table_payment_manual">
+                                    <label for="table_payment_manual">Manual</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="selectAllBtn" class="btn select-all-btn">Select All</button>
+                </div>
+                <div class="table-responsive mt-4">
+                    <table class="table table-striped table-bordered" id="cnotesTable">
+                        <thead>
+                            <tr>
+                                <th>CNote No</th>
+                                <th>Created Date</th>
+                                <th>Payment Type</th>
+                                <th>Total Amount</th>
+                                <th>Consignee Name</th>
+                                <th>Total Art</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cnote in cnotes %}
+                            <tr data-payment-type="{{ cnote.payment_type|default:'N/A' }}">
+                                <td>{{ cnote.cnote_number }}</td>
+                                <td>{{ cnote.created_at|date:"d-m-Y" }}</td>
+                                <td>{{ cnote.payment_type|default:"N/A" }}</td>
+                                <td>₹{{ cnote.grand_total }}</td>
+                                <td>{{ cnote.consignee_name }}</td>
+                                <td>{{ cnote.total_art }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary select-cnote" data-cnote-id="{{ cnote.id }}">Select</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="generateBill" class="btn btn-success">Generate Bill</button>
+                </div>
+            </div>
+        {% elif request.GET.dealer or request.GET.from_date or request.GET.to_date or request.GET.month %}
+            <div class="info-message">
+                No records found for your search criteria. Please try different parameters.
+            </div>
+        {% else %}
+            <div class="info-message" id="initialMessage">
+                Please select a dealer and date range or month to search for CNotes.
+            </div>
+        {% endif %}
+        
+        <div id="billContainer" class="bill-container" style="display: none;">
+            <div class="company-header">
+                <div class="company-name">GOOD WAY EXPRESS</div>
+                <div class="company-address"> Address : Behind Mahadev Mandir, Joshi Wada, Yavatmal(MS) 445001 </div>
+                <div class="company-contact">Phone: +91 19923799699 | Email: Goodwayytl123@gmail.com | GSTIN: 27AUYDM5847P2Z9</div>
+            </div>
+            
+            <div class="bill-title">TAX INVOICE</div>
+            
+            <div class="bill-meta">
+                <div class="bill-meta-item">
+                    <div><strong>Invoice No:</strong> <span id="invoiceNo"></span></div>
+                    <div><strong>Date:</strong> <span id="billDate"></span></div>
+                </div>
+                <div class="bill-meta-item text-right">
+                    <div><strong>Period:</strong> <span id="billPeriod"></span></div>
+                </div>
+            </div>
+            
+            <div class="dealer-details">
+                <h3>Billed To:</h3>
+                <p><strong>Name:</strong> <span id="dealerName"></span></p>
+                <p><strong>Address:</strong> <span id="dealerAddress"></span></p>
+                <p><strong>GSTIN:</strong> <span id="dealerGSTIN"></span></p>
+                <p><strong>Contact:</strong> <span id="dealerContact"></span></p>
+                <p><strong>Email:</strong> <span id="dealerEmail"></span></p>
+            </div>
+            
+            <div class="form-group">
+                <label for="gstPercentage">GST Percentage:</label>
+                <select id="gstPercentage" class="form-control">
+                    <option value="0">0%</option>
+                    <option value="5">5%</option>
+                    <option value="12">12%</option>
+                    <option value="18" selected>18%</option>
+                    <option value="28">28%</option>
+                </select>
+            </div>
+            
+            <h3>CNotes Details:</h3>
+            <div class="table-responsive">
+                <table id="billCnotesTable" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>S.No</th>
+                            <th>CNote No</th>
+                            <th>Created Date</th>
+                            <th>Payment Type</th>
+                            <th>Total Amount</th>
+                            <th>Consignee Name</th>
+                            <th>Total Art</th>
+                        </tr>
+                    </thead>                    
+                    <tbody>
+                        <!-- Data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="bill-footer">
+                <div class="signature">
+                    <div class="signature-line">Authorized Signature & Stamp</div>
+                </div>
+                <div class="totals">
+                    <table class="table table-bordered">
+                        <tr>
+                            <td><strong>Subtotal:</strong></td>
+                            <td id="subtotal">₹0.00</td>
+                        </tr>
+                        <tr>
+                            <td><strong>GST (<span id="gstRate"></span>%):</strong></td>
+                            <td id="gstAmount">₹0.00</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Amount:</strong></td>
+                            <td id="totalAmount">₹0.00</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <p class="small">This is a computer-generated invoice and does not require a physical signature.</p>
+                <p class="small">Thank you for your business!</p>
+            </div>
+        </div>
+        
+        <div class="action-buttons" id="billActions" style="display: none;">
+            <button id="printBill" class="btn print-btn">Print Bill</button>
+            <button id="saveBill" class="btn btn-success">Save Bill</button>
+            <button id="newBill" class="btn btn-secondary">Create New Bill</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize variables
+        let selectedCNotes = [];
+        let nextBillNumber = 1;
+        
+        // DOM Elements
+        const generateBillBtn = document.getElementById('generateBill');
+        const printBillBtn = document.getElementById('printBill');
+        const saveBillBtn = document.getElementById('saveBill');
+        const newBillBtn = document.getElementById('newBill');
+        const billContainer = document.getElementById('billContainer');
+        const billActions = document.getElementById('billActions');
+        const loader = document.querySelector('.loader');
+        const saveSuccess = document.querySelector('.save-success');
+        const searchResults = document.getElementById('searchResults');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const initialMessage = document.getElementById('initialMessage');
+        
+        // Custom Dropdown for Table Payment Type Filter
+        const tablePaymentModeToggle = document.getElementById('tablePaymentModeToggle');
+        const tablePaymentModeMenu = document.getElementById('tablePaymentModeMenu');
+        const tablePaymentModeCheckboxes = tablePaymentModeMenu ? tablePaymentModeMenu.querySelectorAll('input[type="checkbox"]') : [];
+        const tableSelectedText = tablePaymentModeToggle ? tablePaymentModeToggle.querySelector('.selected-text') : null;
+        
+        // Toggle dropdown on click
+        if (tablePaymentModeToggle) {
+            tablePaymentModeToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                tablePaymentModeMenu.classList.toggle('show');
+            });
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (tablePaymentModeToggle && tablePaymentModeMenu && !tablePaymentModeToggle.contains(e.target) && !tablePaymentModeMenu.contains(e.target)) {
+                tablePaymentModeMenu.classList.remove('show');
+            }
+        });
+        
+        // Update selected text and filter table when checkboxes change
+        if (tablePaymentModeCheckboxes.length > 0) {
+            tablePaymentModeCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const selectedOptions = Array.from(tablePaymentModeCheckboxes)
+                        .filter(cb => cb.checked)
+                        .map(cb => cb.value);
+                    
+                    if (selectedOptions.length === 0) {
+                        tableSelectedText.textContent = 'Select Payment Type';
+                        tableSelectedText.classList.remove('active');
+                    } else {
+                        tableSelectedText.textContent = selectedOptions.join(', ');
+                        tableSelectedText.classList.add('active');
+                    }
+                    
+                    // Filter table rows based on selected payment types
+                    filterTableByPaymentType(selectedOptions);
+                });
+            });
+        }
+        
+        // Function to filter table by payment type
+        function filterTableByPaymentType(selectedPaymentTypes) {
+            const rows = document.querySelectorAll('#cnotesTable tbody tr');
+            rows.forEach(row => {
+                const paymentType = row.getAttribute('data-payment-type');
+                if (selectedPaymentTypes.length === 0 || selectedPaymentTypes.includes(paymentType)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                    // Deselect the row if it's hidden
+                    const selectBtn = row.querySelector('.select-cnote');
+                    if (selectBtn && selectBtn.classList.contains('btn-success')) {
+                        selectBtn.click(); // Deselect the row
+                    }
+                }
+            });
+        }
+        
+        // Function to format currency
+        function formatCurrency(amount) {
+            return '₹' + Number(amount).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        }
+        
+        // Function to format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
+        }
+        
+        // Function to generate a sequential invoice number
+        function generateInvoiceNumber() {
+            const prefix = "INV";
+            const billNum = String(nextBillNumber).padStart(4, '0');
+            const date = new Date();
+            const year = date.getFullYear().toString().substr(-2);
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            return `${prefix}/${year}${month}/${billNum}`;
+        }
+        
+        // Function to validate the search form
+        function validateSearchForm() {
+            const dealer = document.getElementById('dealer').value;
+            const fromDate = document.getElementById('from_date').value;
+            const toDate = document.getElementById('to_date').value;
+            const month = document.getElementById('month').value;
+            
+            if ((!fromDate || !toDate) && !month) {
+                alert('Please select either a date range or a month');
+                return false;
+            }
+            
+            if (fromDate && toDate) {
+                const from = new Date(fromDate);
+                const to = new Date(toDate);
+                
+                if (from > to) {
+                    alert('From date cannot be greater than To date');
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+        
+        // Function to reset the page
+        function resetPage() {
+            // Reset form fields
+            document.getElementById('dealer').value = '';
+            document.getElementById('from_date').value = '';
+            document.getElementById('to_date').value = '';
+            document.getElementById('month').value = '';
+            document.getElementById('state').value = 'all';
+            
+            // Reset table payment type filter
+            if (tablePaymentModeCheckboxes.length > 0) {
+                tablePaymentModeCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                tableSelectedText.textContent = 'Select Payment Type';
+                tableSelectedText.classList.remove('active');
+                tablePaymentModeMenu.classList.remove('show');
+            }
+            
+            // Reset selected CNotes
+            selectedCNotes = [];
+            document.querySelectorAll('.select-cnote').forEach(button => {
+                button.classList.remove('btn-success');
+                button.classList.add('btn-primary');
+                button.textContent = 'Select';
+            });
+            
+            // Hide search results and bill container
+            if (searchResults) {
+                searchResults.style.display = 'none';
+            }
+            billContainer.style.display = 'none';
+            billActions.style.display = 'none';
+            
+            // Show initial message
+            if (initialMessage) {
+                initialMessage.style.display = 'block';
+            }
+            
+            // Reset save button if it was disabled
+            if (saveBillBtn) {
+                saveBillBtn.disabled = false;
+                saveBillBtn.textContent = 'Save Bill';
+            }
+            
+            // Clear URL query parameters
+            window.history.pushState({}, document.title, window.location.pathname);
+        }
+        
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show search results if they exist
+            if (searchResults && document.querySelectorAll('#cnotesTable tbody tr').length > 0) {
+                searchResults.style.display = 'block';
+                if (initialMessage) {
+                    initialMessage.style.display = 'none';
+                }
+            }
+            
+            // Form validation
+            document.getElementById('searchForm').addEventListener('submit', function(e) {
+                if (!validateSearchForm()) {
+                    e.preventDefault();
+                }
+            });
+            
+            // Add event listeners for CNotes selection
+            document.querySelectorAll('.select-cnote').forEach(button => {
+                button.addEventListener('click', function() {
+                    const cnoteId = this.getAttribute('data-cnote-id');
+                    const row = this.closest('tr');
+                    
+                    // Toggle selection
+                    if (this.classList.contains('btn-primary')) {
+                        this.classList.remove('btn-primary');
+                        this.classList.add('btn-success');
+                        this.textContent = 'Selected';
+                        
+                        // Add to selected CNotes
+                        selectedCNotes.push({
+                            id: cnoteId,
+                            cnoteNumber: row.cells[0].textContent,
+                            amount: parseFloat(row.cells[3].textContent.replace('₹', '')),
+                            date: row.cells[1].textContent,
+                            paymentType: row.cells[2].textContent,
+                            consigneeName: row.cells[4].textContent,
+                            totalArt: parseInt(row.cells[5].textContent)
+                        });
+                    } else {
+                        this.classList.remove('btn-success');
+                        this.classList.add('btn-primary');
+                        this.textContent = 'Select';
+                        
+                        // Remove from selected CNotes
+                        selectedCNotes = selectedCNotes.filter(cnote => cnote.id !== cnoteId);
+                    }
+                });
+            });
+            
+            // Select All button
+            if (selectAllBtn) {
+                selectAllBtn.addEventListener('click', function() {
+                    document.querySelectorAll('#cnotesTable tbody tr').forEach(row => {
+                        if (row.style.display !== 'none') {
+                            const selectBtn = row.querySelector('.select-cnote');
+                            if (selectBtn && selectBtn.classList.contains('btn-primary')) {
+                                selectBtn.click();
+                            }
+                        }
+                    });
+                });
+            }
+            
+            // Reset button
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function() {
+                    resetPage();
+                });
+            }
+            
+            // Generate Bill button
+            if (generateBillBtn) {
+                generateBillBtn.addEventListener('click', function() {
+                    if (selectedCNotes.length === 0) {
+                        alert('Please select at least one CNote to generate a bill');
+                        return;
+                    }
+                    
+                    // Show loader
+                    loader.style.display = 'flex';
+                    
+                    // Get dealer details (static for now; replace with AJAX if needed)
+                    const dealer = {
+                        name: document.getElementById('dealer').value || selectedCNotes[0].dealer,
+                        address: '123 Dealer Street, City - 110001',
+                        gstin: 'GSTIN1234567890',
+                        contact: '+91 9876543210',
+                        email: 'dealer@example.com'
+                    };
+                    
+                    // Populate dealer details
+                    document.getElementById('dealerName').textContent = dealer.name;
+                    document.getElementById('dealerAddress').textContent = dealer.address;
+                    document.getElementById('dealerGSTIN').textContent = dealer.gstin;
+                    document.getElementById('dealerContact').textContent = dealer.contact;
+                    document.getElementById('dealerEmail').textContent = dealer.email;
+                    
+                    // Generate invoice number and date
+                    document.getElementById('invoiceNo').textContent = generateInvoiceNumber();
+                    document.getElementById('billDate').textContent = formatDate(new Date().toISOString().split('T')[0]);
+                    
+                    // Set bill period
+                    const fromDate = document.getElementById('from_date').value;
+                    const toDate = document.getElementById('to_date').value;
+                    const month = document.getElementById('month').value;
+                    
+                    let billPeriod = '';
+                    if (fromDate && toDate) {
+                        billPeriod = `${formatDate(fromDate)} to ${formatDate(toDate)}`;
+                    } else if (month) {
+                        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                        billPeriod = `${monthNames[month - 1]} ${new Date().getFullYear()}`;
+                    }
+                    document.getElementById('billPeriod').textContent = billPeriod;
+                    
+                    // Populate CNotes table
+                    const tableBody = document.getElementById('billCnotesTable').getElementsByTagName('tbody')[0];
+                    tableBody.innerHTML = '';
+                    
+                    let subtotal = 0;
+                    
+                    selectedCNotes.forEach((cnote, index) => {
+                        subtotal += cnote.amount;
+                        
+                        const newRow = tableBody.insertRow();
+                        newRow.insertCell(0).textContent = index + 1;
+                        newRow.insertCell(1).textContent = cnote.cnoteNumber;
+                        newRow.insertCell(2).textContent = cnote.date;
+                        newRow.insertCell(3).textContent = cnote.paymentType;
+                        newRow.insertCell(4).textContent = formatCurrency(cnote.amount);
+                        newRow.insertCell(5).textContent = cnote.consigneeName;
+                        newRow.insertCell(6).textContent = cnote.totalArt;
+                    });   
+                                     
+                    // Calculate totals with selected GST percentage
+                    const gstPercentage = parseFloat(document.getElementById('gstPercentage').value);
+                    const gstAmount = subtotal * (gstPercentage / 100);
+                    const totalAmount = subtotal + gstAmount;
+                    
+                    document.getElementById('subtotal').textContent = formatCurrency(subtotal);
+                    document.getElementById('gstRate').textContent = gstPercentage;
+                    document.getElementById('gstAmount').textContent = formatCurrency(gstAmount);
+                    document.getElementById('totalAmount').textContent = formatCurrency(totalAmount);
+                    
+                    // Show bill container and action buttons
+                    billContainer.style.display = 'block';
+                    billActions.style.display = 'flex';
+                    
+                    // Hide search results
+                    if (searchResults) {
+                        searchResults.style.display = 'none';
+                    }
+                    
+                    // Hide loader after bill generation is complete
+                    loader.style.display = 'none';
+                    
+                    // Scroll to bill container
+                    billContainer.scrollIntoView({ behavior: 'smooth' });
+                });
+            }
+            
+            // Print Bill button
+            if (printBillBtn) {
+                printBillBtn.addEventListener('click', function() {
+                    window.print();
+                });
+            }
+            
+            // Save Bill button
+            if (saveBillBtn) {
+                saveBillBtn.addEventListener('click', function() {
+                    // Show loader
+                    loader.style.display = 'flex';
+                    
+                    // Simulate saving (replace with AJAX call to save in backend)
+                    setTimeout(() => {
+                        // Show success message
+                        saveSuccess.style.display = 'block';
+                        setTimeout(() => {
+                            saveSuccess.style.display = 'none';
+                        }, 3000);
+                        
+                        // Disable save button to prevent duplicate saves
+                        saveBillBtn.disabled = true;
+                        saveBillBtn.textContent = 'Bill Saved';
+                        
+                        // Increment bill number for next bill
+                        nextBillNumber++;
+                        
+                        // Hide loader
+                        loader.style.display = 'none';
+                    }, 1000);
+                });
+            }
+            
+            // New Bill button
+            if (newBillBtn) {
+                newBillBtn.addEventListener('click', function() {
+                    // Reset selections
+                    document.querySelectorAll('.select-cnote').forEach(button => {
+                        button.classList.remove('btn-success');
+                        button.classList.add('btn-primary');
+                        button.textContent = 'Select';
+                    });
+                    
+                    selectedCNotes = [];
+                    
+                    // Hide bill container and action buttons
+                    billContainer.style.display = 'none';
+                    billActions.style.display = 'none';
+                    
+                    // Show search results
+                    if (searchResults) {
+                        searchResults.style.display = 'block';
+                    }
+                    
+                    // Reset save button
+                    if (saveBillBtn) {
+                        saveBillBtn.disabled = false;
+                        saveBillBtn.textContent = 'Save Bill';
+                    }
+                    
+                    // Scroll to search results
+                    if (searchResults) {
+                        searchResults.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            }
+            
+            // Toggle between date range and month selection
+            document.getElementById('month').addEventListener('change', function() {
+                const dateRangeInputs = document.querySelectorAll('#from_date, #to_date');
+                if (this.value) {
+                    dateRangeInputs.forEach(input => {
+                        input.value = '';
+                        input.disabled = true;
+                    });
+                } else {
+                    dateRangeInputs.forEach(input => {
+                        input.disabled = false;
+                    });
+                }
+            });
+            
+            document.getElementById('from_date').addEventListener('change', function() {
+                if (this.value) {
+                    document.getElementById('month').value = '';
+                    document.getElementById('month').disabled = true;
+                } else if (!document.getElementById('to_date').value) {
+                    document.getElementById('month').disabled = false;
+                }
+            });
+            
+            document.getElementById('to_date').addEventListener('change', function() {
+                if (this.value) {
+                    document.getElementById('month').value = '';
+                    document.getElementById('month').disabled = true;
+                } else if (!document.getElementById('from_date').value) {
+                    document.getElementById('month').disabled = false;
+                }
+            });
+            
+            // Add event listener to GST percentage dropdown
+            document.getElementById('gstPercentage').addEventListener('change', function() {
+                if (selectedCNotes.length > 0) {
+                    // Recalculate totals when GST percentage changes
+                    let subtotal = 0;
+                    selectedCNotes.forEach(cnote => {
+                        subtotal += cnote.amount;
+                    });
+                    
+                    const gstPercentage = parseFloat(this.value);
+                    const gstAmount = subtotal * (gstPercentage / 100);
+                    const totalAmount = subtotal + gstAmount;
+                    
+                    document.getElementById('subtotal').textContent = formatCurrency(subtotal);
+                    document.getElementById('gstRate').textContent = gstPercentage;
+                    document.getElementById('gstAmount').textContent = formatCurrency(gstAmount);
+                    document.getElementById('totalAmount').textContent = formatCurrency(totalAmount);
+                }
+            });
+        });
+        // Add this to your existing JavaScript in billing.html
+        // Inside the saveBill event listener
+
+        saveBillBtn.addEventListener('click', function() {
+            // Show loader
+            loader.style.display = 'flex';
+            
+            // Prepare data for saving
+            const billData = {
+                dealer_name: document.getElementById('dealerName').textContent,
+                cnote_ids: selectedCNotes.map(cnote => cnote.id),
+                from_date: document.getElementById('from_date').value,
+                to_date: document.getElementById('to_date').value,
+                month: document.getElementById('month').value,
+                gst_percentage: parseFloat(document.getElementById('gstPercentage').value)
+            };
+            console.log('Saving bill with data:', billData);  // Add this line
+            
+            // Send AJAX request to save bill
+            fetch('/transporter/save-bill/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(billData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                loader.style.display = 'none';
+                if (data.status === 'success') {
+                    // Show success message
+                    saveSuccess.textContent = 'Bill saved successfully!';
+                    saveSuccess.style.display = 'block';
+                    setTimeout(() => {
+                        saveSuccess.style.display = 'none';
+                    }, 3000);
+                    
+                    // Update invoice number with the one from server
+                    document.getElementById('invoiceNo').textContent = data.bill_number;
+                    
+                    // Disable save button to prevent duplicate saves
+                    saveBillBtn.disabled = true;
+                    saveBillBtn.textContent = 'Bill Saved';
+                } else {
+                    console.error('Save failed:', data);
+                    alert(`Error: ${data.message}${data.missing_ids ? '\nMissing IDs: ' + data.missing_ids.join(', ') : ''}`);
+                }
+                
+                // Hide loader
+                loader.style.display = 'none';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while saving the bill');
+                loader.style.display = 'none';
+            });
+        });
+
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>
+
