@@ -11,6 +11,15 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib import messages
+import json
+from decimal import Decimal
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.utils import timezone
+from datetime import datetime
+import logging
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, connection, connections, transaction
@@ -28,8 +37,15 @@ from reportlab.pdfgen import canvas
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from dealer_app.models import CustomUser  # Replace `your_app_name` with your app's actual name
-
-
+from dealer_app.models import Dealer, CNotes, Article  # Correct imports
+from transporter_app.models import Bill, BillItem
+from django.shortcuts import render
+from django.http import HttpResponse
+from .models import Bill, BillItem  # Adjust model imports based on your project
+from django.template.loader import get_template  # Import get_template
+from io import BytesIO
+from django.http import FileResponse
+import os
 from .forms import StateForm, CityForm, PartyMasterForm
 from .models import (
     DDMSummary,
