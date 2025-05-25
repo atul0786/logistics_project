@@ -90,6 +90,26 @@ urlpatterns = [
     path('export-dealers-template/', views.export_dealers_template, name='export_dealers_template'),
     path('import-dealers/', views.import_dealers, name='import_dealers'),
 
+    path('billing/', views.billing, name='billing'),
+    path('save-bill/', views.save_bill, name='save_bill'),
+    path('bills/', views.bill_list, name='bill_list'),
+    path('bill/<int:bill_id>/', views.bill_detail, name='bill_detail'),
+    path('cancel-bill/<int:bill_id>/', views.cancel_bill, name='cancel_bill'),
+    path('bill/<int:bill_id>/update/', views.update_bill, name='update_bill'),
+    path('bill/<int:bill_id>/available-cnotes/', views.available_cnotes, name='available_cnotes'),
+    path('bill/<int:bill_id>/add-cnote/', views.add_cnote_to_bill, name='add_cnote_to_bill'),
+    path('bill/<int:bill_id>/remove-cnote/', views.remove_cnote_from_bill, name='remove_cnote_from_bill'),
+    path('dealers/', views.dealer_list, name='dealer_list'),
+    path('dashboard-summary/', views.dashboard_summary, name='dashboard_summary'),
+    path('bill-manage/', views.bill_manage, name='bill_manage'),
+    path('bill/<int:bill_id>/print/', views.bill_print, name='bill_print'),  # Updated pattern
+
+    # New URL for rendering the view_users page
+    path('view-users/', views.view_users, name='view_users'),
+    # New URL for the API endpoint to fetch user data
+    path('fetch-users/', views.fetch_users, name='fetch_users'),    
+    path('reset-password/', views.reset_password, name='reset_password'),
+
     
 
 
