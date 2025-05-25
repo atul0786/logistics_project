@@ -2012,3 +2012,997 @@ def import_dealers(request):
             return JsonResponse({'success': False, 'message': str(e)}, status=500)
     return JsonResponse({'success': False, 'message': 'Invalid request.'}, status=400)
 
+
+def dealer_billing(request):
+    dealers = Dealer.objects.all()  # Fetch all dealers
+    dealer_id = request.GET.get('dealer_id')  # Get dealer ID from request (if provided)
+
+    # Filter CNotes based on dealer and excluding cancelled status
+    cnotes = CNotes.objects.filter(status__exclude='cancelled')
+
+    if dealer_id:
+        cnotes = cnotes.filter(dealer_id=dealer_id)  # Filter for a specific dealer
+
+    # Aggregating billing amounts
+    billing_data = cnotes.values(
+        'dealer__dealer_code', 'dealer__dealer_name'
+    ).annotate(
+        total_freight=Sum('freight'),
+        total_charges=Sum('grand_total')
+    )
+
+    return render(request, 'billing.html', {'dealers': dealers, 'billing_data': billing_data})
+
+
+logger = logging.getLogger(__name__)
+
+@login_required
+def billing(request):
+    logger.info("📢 billing view called")
+    
+    dealers = Dealer.objects.all()
+    selected_dealer = request.GET.get('dealer', '')
+    from_date = request.GET.get('from_date')
+    to_date = request.GET.get('to_date')
+    month = request.GET.get('month')
+    selected_state = request.GET.get('state', 'all')
+    
+    logger.info(f"Request params: dealer={selected_dealer}, from_date={from_date}, to_date={to_date}, month={month}, state={selected_state}")
+    
+    cnotes = None
+    
+    if selected_dealer or from_date or to_date or month:
+        # Exclude CNotes that are already billed (present in BillItem) and not cancelled
+        billed_cnote_ids = BillItem.objects.values_list('cnote_id', flat=True)
+        cnotes = CNotes.objects.filter(~Q(status='cancelled')).exclude(id__in=billed_cnote_ids)
+        
+        if selected_dealer:
+            try:
+                dealer = Dealer.objects.get(name=selected_dealer)
+                cnotes = cnotes.filter(dealer=dealer)
+                logger.info(f"Filtered by dealer: {selected_dealer}, count: {cnotes.count()}")
+            except Dealer.DoesNotExist:
+                messages.error(request, f"Dealer '{selected_dealer}' not found.")
+                cnotes = CNotes.objects.none()
+        
+        if from_date and to_date:
+            try:
+                from_date_obj = timezone.make_aware(datetime.strptime(from_date, '%Y-%m-%d'))
+                to_date_obj = timezone.make_aware(datetime.strptime(to_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59))
+                cnotes = cnotes.filter(created_at__gte=from_date_obj, created_at__lte=to_date_obj)
+                logger.info(f"Filtered by date range: {from_date} to {to_date}, count: {cnotes.count()}")
+            except ValueError:
+                messages.error(request, "Invalid date format. Please use YYYY-MM-DD.")
+                cnotes = CNotes.objects.none()
+        
+        elif month:
+            try:
+                month_int = int(month)
+                current_year = timezone.now().year
+                cnotes = cnotes.filter(created_at__year=current_year, created_at__month=month_int)
+                logger.info(f"Filtered by month: {month}, count: {cnotes.count()}")
+            except ValueError:
+                messages.error(request, "Invalid month value.")
+                cnotes = CNotes.objects.none()
+        
+        if selected_state and selected_state.lower() != "all":
+            cnotes = cnotes.filter(dealer__state=selected_state)
+            logger.info(f"Filtered by state: {selected_state}, count: {cnotes.count()}")
+        
+        if cnotes.exists():
+            cnotes = cnotes.select_related('dealer', 'delivery_destination').prefetch_related('articles')
+            
+            for cnote in cnotes:
+                articles = Article.objects.filter(cnote=cnote)
+                cnote.total_art = articles.aggregate(total_sum=Sum('art'))['total_sum'] or 0
+                
+                art_types = []
+                said_to_contain_list = []
+                art_amounts = []
+                
+                for article in articles:
+                    art_type_name = article.art_type.art_type_name if article.art_type else 'N/A'
+                    art_types.append(art_type_name)
+                    
+                    said_to_contain = f"{article.said_to_contain or 'N/A'} ({article.art or 0})"
+                    said_to_contain_list.append(said_to_contain)
+                    
+                    art_amount = str(article.art_amount) if article.art_amount else '0'
+                    art_amounts.append(art_amount)
+                
+                cnote.art_types_display = ' / '.join(art_types) if art_types else 'N/A'
+                cnote.said_to_contain_display = ' / '.join(said_to_contain_list) if said_to_contain_list else 'N/A'
+                cnote.art_amounts_display = ' / '.join(art_amounts) if art_amounts else '0'
+    
+    context = {
+        'dealers': dealers,
+        'selected_dealer': selected_dealer,
+        'selected_from_date': from_date,
+        'selected_to_date': to_date,
+        'selected_month': month,
+        'selected_state': selected_state,
+        'cnotes': cnotes,
+        'months': range(1, 13),
+    }
+    
+    return render(request, 'transporter/billing.html', context)
+
+def generate_bill_number():
+    """Generate a sequential bill number in the format INV/MMYY/NNNN"""
+    today = timezone.now()
+    month_year = today.strftime('%m%y')
+    
+    prefix = f"INV/{month_year}/"
+    latest_bill = Bill.objects.filter(bill_number__startswith=prefix).order_by('-bill_number').first()
+    
+    if latest_bill:
+        try:
+            last_number = int(latest_bill.bill_number.split('/')[-1])
+            new_number = last_number + 1
+        except (ValueError, IndexError):
+            new_number = 1
+    else:
+        new_number = 1
+    
+    return f"{prefix}{new_number:04d}"
+
+@login_required
+def save_bill(request):
+    if request.method != 'POST':
+        logger.warning(f"Invalid request method for bill creation: {request.method}")
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
+    try:
+        # Parse JSON data
+        data = json.loads(request.body)
+        logger.info(f"Received bill save request with data: {data}")
+
+        dealer_name = data.get('dealer_name')
+        cnote_ids = [int(id_str) for id_str in data.get('cnote_ids', [])]
+        from_date = data.get('from_date')
+        to_date = data.get('to_date')
+        month = data.get('month')
+        gst_percentage = Decimal(str(data.get('gst_percentage', 18)))
+
+        # Validate required fields
+        if not dealer_name or not cnote_ids:
+            logger.warning("Missing required fields: dealer_name or cnote_ids")
+            return JsonResponse(
+                {'status': 'error', 'message': 'Dealer and CNotes are required'},
+                status=400
+            )
+
+        # Fetch dealer
+        try:
+            dealer = Dealer.objects.get(name=dealer_name)
+            logger.info(f"Found dealer: {dealer_name}")
+        except Dealer.DoesNotExist:
+            logger.error(f"Dealer not found: {dealer_name}")
+            return JsonResponse(
+                {'status': 'error', 'message': f'Dealer {dealer_name} not found'},
+                status=404
+            )
+
+        # Validate CNotes existence
+        cnotes = CNotes.objects.filter(id__in=cnote_ids)
+        if len(cnotes) != len(cnote_ids):
+            found_ids = set(cnote.id for cnote in cnotes)
+            missing_ids = set(cnote_ids) - found_ids
+            logger.error(f"Some CNotes not found. Missing IDs: {missing_ids}")
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Some CNotes were not found. Missing IDs: {missing_ids}',
+                'missing_ids': list(missing_ids)
+            }, status=404)
+        logger.info(f"Found {len(cnotes)} CNotes matching provided IDs")
+
+        # Validate CNotes are not used in active/pending bills
+        used_cnotes = BillItem.objects.filter(
+            cnote_id__in=cnote_ids,
+            bill__status__in=['active', 'pending']
+        ).select_related('bill', 'cnote')
+        if used_cnotes.exists():
+            used_cnote_details = [
+                f"CNote {item.cnote.cnote_number} (ID: {item.cnote_id}) used in bill {item.bill.bill_number}"
+                for item in used_cnotes
+            ]
+            logger.error(f"CNotes already used: {used_cnote_details}")
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Some CNotes are already used in active or pending bills',
+                'used_cnotes': used_cnote_details
+            }, status=400)
+
+        # Calculate subtotal
+        subtotal = sum(cnote.grand_total for cnote in cnotes)
+        logger.info(f"Calculated subtotal: {subtotal}")
+
+        # Generate bill number
+        bill_number = generate_bill_number()
+        logger.info(f"Generated bill number: {bill_number}")
+
+        # Get Transporter instance for the logged-in user
+        try:
+            transporter = request.user.transporter_user
+            logger.info(f"Found transporter for user {request.user.username}: {transporter}")
+            logger.info(f"Transporter ID: {transporter.id}")
+        except AttributeError:
+            logger.error(f"No Transporter associated with user {request.user.username}")
+            return JsonResponse({
+                'status': 'error',
+                'message': 'No Transporter associated with this user. Please contact the administrator.'
+            }, status=400)
+
+        # Create Bill and BillItems within a transaction
+        with transaction.atomic():
+            # Create Bill
+            bill = Bill.objects.create(
+                bill_number=bill_number,
+                dealer=dealer,
+                transporter=transporter,
+                created_by=request.user,
+                from_date=from_date if from_date else None,
+                to_date=to_date if to_date else None,
+                bill_month=month if month else None,
+                bill_year=timezone.now().year,
+                subtotal=subtotal,
+                gst_percentage=gst_percentage,
+                status='pending'
+            )
+            logger.info(f"Created bill with ID: {bill.id}")
+            logger.info(f"Bill transporter: {bill.transporter}")
+
+            # Create BillItems
+            for cnote in cnotes:
+                BillItem.objects.create(
+                    bill=bill,
+                    cnote=cnote,
+                    cnote_number=cnote.cnote_number,
+                    created_date=cnote.created_at.date(),
+                    payment_type=cnote.payment_type or 'N/A',
+                    amount=cnote.grand_total,
+                    consignee_name=cnote.consignee_name,
+                    total_art=cnote.total_art
+                )
+            logger.info(f"Created {len(cnotes)} bill items for bill {bill_number}")
+
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Bill saved successfully',
+            'bill_number': bill_number,
+            'bill_id': bill.id
+        })
+
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decode error: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON data received'}, status=400)
+
+    except ValueError as e:
+        logger.error(f"Invalid ID or GST format: {str(e)}")
+        return JsonResponse(
+            {'status': 'error', 'message': 'Invalid CNote ID or GST percentage format'},
+            status=400
+        )
+
+    except Exception as e:
+        logger.error(f"Unexpected error saving bill: {str(e)}", exc_info=True)
+        return JsonResponse(
+            {'status': 'error', 'message': f'Error saving bill: {str(e)}'},
+            status=500
+        )
+
+@login_required
+def cancel_bill(request, bill_id):
+    if request.method != 'POST':
+        logger.warning(f"Invalid request method for bill cancellation: {request.method}")
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
+    try:
+        with transaction.atomic():  # Ensure atomicity for database operations
+            # Fetch bill using get_object_or_404 for cleaner error handling
+            bill = get_object_or_404(Bill, id=bill_id)
+
+            # Check if bill is in pending status
+            if bill.status != 'pending':
+                logger.warning(f"Attempt to cancel non-pending bill {bill.bill_number} with status {bill.status}")
+                return JsonResponse(
+                    {'status': 'error', 'message': 'Only pending bills can be cancelled'},
+                    status=400
+                )
+
+            # Delete all related BillItem entries to free up CNotes
+            deleted_count = BillItem.objects.filter(bill=bill).delete()[0]
+            logger.info(f"Deleted {deleted_count} BillItem entries for bill {bill.bill_number}")
+
+            # Update bill status to cancelled
+            bill.status = 'cancelled'
+            bill.save()
+            logger.info(f"Bill {bill.bill_number} cancelled successfully")
+
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Bill {bill.bill_number} cancelled successfully. {deleted_count} CNote(s) freed.'
+            })
+
+    except Bill.DoesNotExist:
+        # This is technically redundant due to get_object_or_404, but kept for clarity
+        logger.error(f"Bill with ID {bill_id} not found")
+        return JsonResponse({'status': 'error', 'message': 'Bill not found'}, status=404)
+
+    except Exception as e:
+        logger.error(f"Error cancelling bill {bill_id}: {str(e)}", exc_info=True)
+        return JsonResponse({'status': 'error', 'message': f'Error cancelling bill: {str(e)}'}, status=500)
+
+@login_required
+def bill_list(request):
+    bills = Bill.objects.all().order_by('-created_at')
+
+    # Filtering
+    dealer = request.GET.get('dealer')
+    status = request.GET.get('status')
+    from_date = request.GET.get('from_date')
+    to_date = request.GET.get('to_date')
+    month = request.GET.get('month')
+    year = request.GET.get('year')
+    invoice_no = request.GET.get('invoice_no')
+
+    if dealer:
+        bills = bills.filter(dealer__name__icontains=dealer)
+        logger.info(f"Filtered bills by dealer: {dealer}, count: {bills.count()}")
+
+    if status:
+        bills = bills.filter(status=status)
+        logger.info(f"Filtered bills by status: {status}, count: {bills.count()}")
+
+    if from_date:
+        try:
+            from_date_obj = timezone.make_aware(datetime.strptime(from_date, '%Y-%m-%d'))
+            bills = bills.filter(created_at__gte=from_date_obj)
+            logger.info(f"Filtered bills by from_date: {from_date}, count: {bills.count()}")
+        except ValueError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid from date format'}, status=400)
+
+    if to_date:
+        try:
+            to_date_obj = timezone.make_aware(datetime.strptime(to_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59))
+            bills = bills.filter(created_at__lte=to_date_obj)
+            logger.info(f"Filtered bills by to_date: {to_date}, count: {bills.count()}")
+        except ValueError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid to date format'}, status=400)
+
+    if month:
+        try:
+            bills = bills.filter(bill_month=int(month))
+            logger.info(f"Filtered bills by month: {month}, count: {bills.count()}")
+        except ValueError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid month format'}, status=400)
+
+    if year:
+        try:
+            bills = bills.filter(bill_year=int(year))
+            logger.info(f"Filtered bills by year: {year}, count: {bills.count()}")
+        except ValueError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid year format'}, status=400)
+
+    if invoice_no:
+        bills = bills.filter(bill_number__icontains=invoice_no)
+        logger.info(f"Filtered bills by invoice_no: {invoice_no}, count: {bills.count()}")
+
+    # Pagination
+    items_per_page = 10
+    paginator = Paginator(bills, items_per_page)
+    page_number = request.GET.get('page', 1)
+
+    try:
+        page_obj = paginator.page(page_number)
+    except Exception as e:
+        logger.error(f"Pagination error: {str(e)}")
+        page_obj = paginator.page(1)
+
+    # Prepare data for JSON response
+    bills_data = []
+    for bill in page_obj:
+        bills_data.append({
+            'id': bill.id,
+            'bill_number': bill.bill_number,
+            'created_at': bill.created_at.isoformat(),
+            'dealer': {
+                'name': bill.dealer.name
+            },
+            'total_amount': float(bill.total_amount),
+            'items_count': bill.items.count(),
+            'status': bill.status
+        })
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'results': bills_data,
+            'total_pages': paginator.num_pages
+        })
+
+    # For non-AJAX requests, render the template
+    context = {
+        'bills': page_obj,
+    }
+    return render(request, 'transporter/bill_manage.html', context)
+
+
+@login_required
+def bill_detail(request, bill_id):
+    bill = Bill.objects.select_related('dealer').get(id=bill_id)
+    items = BillItem.objects.filter(bill=bill)
+    response = {
+        'id': bill.id,
+        'bill_number': bill.bill_number,
+        'created_at': bill.created_at.isoformat(),
+        'dealer': {
+            'name': bill.dealer.name,
+            'address': bill.dealer.address,
+            'gstn': bill.dealer.gstn,  # Corrected field
+            'phone_number_1': bill.dealer.phone_number_1,
+            'email': bill.dealer.email
+        },
+        'status': bill.status,
+        'items': [{
+            'id': item.id,
+            'cnote_number': item.cnote_number,
+            'created_date': item.created_date.isoformat(),
+            'payment_type': item.payment_type,
+            'amount': float(item.amount)
+        } for item in items],
+        'subtotal': float(bill.subtotal),
+        'gst_percentage': float(bill.gst_percentage),
+        'gst_amount': float(bill.gst_amount),
+        'total_amount': float(bill.total_amount)
+    }
+    return JsonResponse(response)    
+
+logger = logging.getLogger(__name__)
+
+@login_required
+def update_bill(request, bill_id):
+    if request.method not in ['POST', 'PUT']:
+        logger.warning(f"Invalid request method for bill update: {request.method}")
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
+    try:
+        # Parse JSON data
+        data = json.loads(request.body)
+        logger.info(f"Received update request for bill ID {bill_id}: {data}")
+
+        # Extract fields from frontend payload
+        created_at = data.get('created_at')
+        status = data.get('status')
+        dealer_data = data.get('dealer', {})
+        dealer_name = dealer_data.get('name') if dealer_data else None
+        items = data.get('items', [])
+        cnote_ids = [int(item['id']) for item in items if 'id' in item and item['id']]  # Extract CNote IDs
+
+        # Fetch bill
+        bill = get_object_or_404(Bill, id=bill_id)
+        logger.info(f"Found bill: {bill.bill_number}, status={bill.status}, dealer={bill.dealer.name}, items_count={bill.items.count()}")
+
+        # Validate bill status
+        if bill.status != 'pending':
+            logger.warning(f"Cannot update bill {bill.bill_number}: status is {bill.status}")
+            return JsonResponse({'status': 'error', 'message': 'Only pending bills can be updated'}, status=400)
+
+        # Validate dealer
+        if dealer_name:
+            try:
+                dealer = Dealer.objects.get(name=dealer_name)
+                logger.info(f"Dealer set to: {dealer.name}")
+            except Dealer.DoesNotExist:
+                logger.error(f"Dealer not found: {dealer_name}")
+                return JsonResponse({'status': 'error', 'message': f'Dealer {dealer_name} not found'}, status=404)
+        else:
+            dealer = bill.dealer
+            logger.info(f"No dealer_name provided, keeping dealer: {dealer.name}")
+
+        # Validate CNotes
+        if cnote_ids:
+            logger.info(f"Processing cnote_ids: {cnote_ids}")
+            # Fetch CNotes without strict dealer validation
+            cnotes = CNote.objects.filter(id__in=cnote_ids)
+            cnote_details = [(cnote.id, cnote.cnote_number, cnote.dealer.name if cnote.dealer else 'None') for cnote in cnotes]
+            logger.info(f"Found CNotes: {cnote_details}")
+
+            if len(cnotes) != len(cnote_ids):
+                found_ids = set(cnote.id for cnote in cnotes)
+                missing_ids = set(cnote_ids) - found_ids
+                logger.error(f"CNotes not found: {missing_ids}")
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Some CNotes not found: {missing_ids}',
+                    'missing_ids': list(missing_ids)
+                }, status=404)
+
+            # Check if CNotes are used in other active/pending bills
+            used_cnotes = BillItem.objects.filter(
+                cnote_id__in=cnote_ids,
+                bill__status__in=['active', 'pending'],
+                bill__id__ne=bill_id
+            ).select_related('bill', 'cnote')
+            if used_cnotes.exists():
+                used_details = [f"CNote {item.cnote.cnote_number} in bill {item.bill.bill_number}" for item in used_cnotes]
+                logger.error(f"CNotes already used: {used_details}")
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Some CNotes are used in other active/pending bills',
+                    'used_cnotes': used_details
+                }, status=400)
+
+            # Warn if dealer mismatch but proceed
+            for cnote in cnotes:
+                if cnote.dealer and cnote.dealer != dealer:
+                    logger.warning(f"CNote {cnote.cnote_number} (ID: {cnote.id}) belongs to dealer {cnote.dealer.name}, not {dealer.name}")
+                elif not cnote.dealer:
+                    logger.warning(f"CNote {cnote.cnote_number} (ID: {cnote.id}) has no dealer assigned")
+        else:
+            cnotes = bill.items.all()
+            logger.info(f"No cnote_ids provided, keeping {len(cnotes)} existing items")
+
+        # Update bill in transaction
+        with transaction.atomic():
+            # Update bill fields
+            if created_at:
+                try:
+                    bill.created_at = timezone.make_aware(datetime.strptime(created_at, '%Y-%m-%d'))
+                    logger.info(f"Set created_at: {bill.created_at}")
+                except ValueError as e:
+                    logger.error(f"Invalid created_at format: {created_at}, error: {str(e)}")
+                    return JsonResponse({'status': 'error', 'message': f'Invalid created_at format: {created_at}'}, status=400)
+            else:
+                logger.info(f"No created_at provided, keeping: {bill.created_at}")
+
+            if status in ['pending', 'paid', 'cancelled']:
+                bill.status = status
+                logger.info(f"Set status: {bill.status}")
+            else:
+                logger.info(f"No valid status provided, keeping: {bill.status}")
+
+            if dealer_name:
+                bill.dealer = dealer
+                logger.info(f"Set dealer: {dealer.name}")
+
+            # Update BillItems
+            if cnote_ids:
+                deleted_count = BillItem.objects.filter(bill=bill).delete()[0]
+                logger.info(f"Deleted {deleted_count} BillItems")
+                for cnote in cnotes:
+                    item_data = next((item for item in items if item['id'] == cnote.id), {})
+                    BillItem.objects.create(
+                        bill=bill,
+                        cnote=cnote,
+                        cnote_number=cnote.cnote_number,
+                        created_date=cnote.created_at.date(),
+                        payment_type=item_data.get('payment_type', cnote.payment_type or 'N/A'),
+                        amount=Decimal(str(item_data.get('amount', cnote.grand_total))),
+                        consignee_name=cnote.consignee_name,
+                        total_art=cnote.total_art
+                    )
+                logger.info(f"Created {len(cnotes)} new BillItems")
+            else:
+                logger.info(f"No items to update, keeping existing BillItems")
+
+            # Recalculate totals
+            bill.subtotal = sum(item.amount for item in bill.items.all())
+            bill.gst_amount = bill.subtotal * (bill.gst_percentage / Decimal('100'))
+            bill.total_amount = bill.subtotal + bill.gst_amount
+            logger.info(f"Recalculated totals: subtotal={bill.subtotal}, gst_amount={bill.gst_amount}, total_amount={bill.total_amount}")
+
+            # Save and verify
+            logger.info(f"Before save: bill_id={bill.id}, status={bill.status}, dealer={bill.dealer.name}, subtotal={bill.subtotal}, items={bill.items.count()}")
+            bill.save()
+            bill.refresh_from_db()
+            logger.info(f"After save: bill_id={bill.id}, status={bill.status}, dealer={bill.dealer.name}, subtotal={bill.subtotal}, items={bill.items.count()}")
+
+        # Prepare response
+        bill_data = {
+            'id': bill.id,
+            'bill_number': bill.bill_number,
+            'created_at': bill.created_at.isoformat(),
+            'dealer': {'name': bill.dealer.name},
+            'items': [
+                {
+                    'id': item.id,
+                    'cnote_number': item.cnote_number,
+                    'created_date': item.created_date.isoformat(),
+                    'amount': float(item.amount),
+                    'payment_type': item.payment_type
+                } for item in bill.items.all()
+            ],
+            'subtotal': float(bill.subtotal),
+            'gst_percentage': float(bill.gst_percentage),
+            'gst_amount': float(bill.gst_amount),
+            'total_amount': float(bill.total_amount),
+            'status': bill.status
+        }
+
+        logger.info(f"Bill {bill.bill_number} updated successfully: {bill_data}")
+        response = JsonResponse({'status': 'success', 'bill': bill_data})
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        return response
+
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decode error: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
+    except ValueError as e:
+        logger.error(f"Value error: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': f'Invalid input: {str(e)}'}, status=400)
+    except Exception as e:
+        logger.error(f"Unexpected error updating bill {bill_id}: {str(e)}", exc_info=True)
+        return JsonResponse({'status': 'error', 'message': f'Error: {str(e)}'}, status=500) 
+@login_required
+def available_cnotes(request, bill_id):
+    try:
+        bill = Bill.objects.get(id=bill_id)
+        # Fetch CNotes for the bill's dealer that are not associated with any bill
+        used_cnote_ids = BillItem.objects.values_list('cnote_id', flat=True)
+        cnotes = CNotes.objects.filter(
+            dealer=bill.dealer
+        ).exclude(id__in=used_cnote_ids)
+
+        cnotes_data = [
+            {
+                'id': cnote.id,
+                'cnote_number': cnote.cnote_number,
+                'created_at': cnote.created_at.isoformat(),
+                'grand_total': float(cnote.grand_total),
+                'payment_type': cnote.payment_type
+            } for cnote in cnotes
+        ]
+
+        return JsonResponse({'cnotes': cnotes_data})
+    except Bill.DoesNotExist:
+        logger.error(f"Bill with ID {bill_id} not found")
+        return JsonResponse({'status': 'error', 'message': 'Bill not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error fetching available CNotes: {str(e)}", exc_info=True)
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+
+@login_required
+@require_POST
+def add_cnote_to_bill(request, bill_id):
+    try:
+        bill = Bill.objects.get(id=bill_id)
+        data = json.loads(request.body)
+        cnote_id = data.get('cnote_id')
+
+        cnote = CNotes.objects.get(id=cnote_id)
+        if cnote.dealer != bill.dealer:
+            return JsonResponse({'status': 'error', 'message': 'CNote does not belong to the bill\'s dealer'}, status=400)
+
+        # Check if the CNote is already associated with a bill
+        if BillItem.objects.filter(cnote=cnote).exists():
+            return JsonResponse({'status': 'error', 'message': 'CNote is already associated with a bill'}, status=400)
+
+        # Create a new BillItem
+        bill_item = BillItem.objects.create(
+            bill=bill,
+            cnote=cnote,
+            cnote_number=cnote.cnote_number,
+            created_date=cnote.created_at.date(),
+            payment_type=cnote.payment_type or 'N/A',
+            amount=cnote.grand_total,
+            consignee_name=cnote.consignee_name,
+            total_art=cnote.total_art
+        )
+
+        # Update bill totals
+        bill.subtotal = sum(item.amount for item in bill.items.all())
+        bill.gst_amount = bill.subtotal * (bill.gst_percentage / Decimal('100'))
+        bill.total_amount = bill.subtotal + bill.gst_amount
+        bill.save()
+
+        bill_data = {
+            'id': bill.id,
+            'bill_number': bill.bill_number,
+            'created_at': bill.created_at.isoformat(),
+            'dealer': {
+                'name': bill.dealer.name
+            },
+            'items': [
+                {
+                    'id': item.id,
+                    'cnote_number': item.cnote_number,
+                    'created_date': item.created_date.isoformat(),
+                    'amount': float(item.amount),
+                    'payment_type': item.payment_type
+                } for item in bill.items.all()
+            ],
+            'subtotal': float(bill.subtotal),
+            'gst_percentage': float(bill.gst_percentage),
+            'gst_amount': float(bill.gst_amount),
+            'total_amount': float(bill.total_amount),
+            'status': bill.status
+        }
+
+        logger.info(f"CNote {cnote.cnote_number} added to bill {bill.bill_number}")
+        return JsonResponse({'status': 'success', 'bill': bill_data})
+    except Bill.DoesNotExist:
+        logger.error(f"Bill with ID {bill_id} not found")
+        return JsonResponse({'status': 'error', 'message': 'Bill not found'}, status=404)
+    except CNotes.DoesNotExist:
+        logger.error(f"CNote with ID {cnote_id} not found")
+        return JsonResponse({'status': 'error', 'message': 'CNote not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error adding CNote to bill: {str(e)}", exc_info=True)
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+
+@login_required
+@require_POST
+def remove_cnote_from_bill(request, bill_id):
+    try:
+        bill = Bill.objects.get(id=bill_id)
+        data = json.loads(request.body)
+        cnote_id = data.get('cnote_id')
+
+        bill_item = BillItem.objects.get(bill=bill, cnote_id=cnote_id)
+        bill_item.delete()
+
+        # Update bill totals
+        bill.subtotal = sum(item.amount for item in bill.items.all())
+        bill.gst_amount = bill.subtotal * (bill.gst_percentage / Decimal('100'))
+        bill.total_amount = bill.subtotal + bill.gst_amount
+        bill.save()
+
+        bill_data = {
+            'id': bill.id,
+            'bill_number': bill.bill_number,
+            'created_at': bill.created_at.isoformat(),
+            'dealer': {
+                'name': bill.dealer.name
+            },
+            'items': [
+                {
+                    'id': item.id,
+                    'cnote_number': item.cnote_number,
+                    'created_date': item.created_date.isoformat(),
+                    'amount': float(item.amount),
+                    'payment_type': item.payment_type
+                } for item in bill.items.all()
+            ],
+            'subtotal': float(bill.subtotal),
+            'gst_percentage': float(bill.gst_percentage),
+            'gst_amount': float(bill.gst_amount),
+            'total_amount': float(bill.total_amount),
+            'status': bill.status
+        }
+
+        logger.info(f"CNote removed from bill {bill.bill_number}")
+        return JsonResponse({'status': 'success', 'bill': bill_data})
+    except Bill.DoesNotExist:
+        logger.error(f"Bill with ID {bill_id} not found")
+        return JsonResponse({'status': 'error', 'message': 'Bill not found'}, status=404)
+    except BillItem.DoesNotExist:
+        logger.error(f"BillItem with CNote ID {cnote_id} not found in bill {bill_id}")
+        return JsonResponse({'status': 'error', 'message': 'CNote not found in this bill'}, status=404)
+    except Exception as e:
+        logger.error(f"Error removing CNote from bill: {str(e)}", exc_info=True)
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+
+@login_required
+def dealer_list(request):
+    try:
+        dealers = Dealer.objects.all()
+        dealers_data = [
+            {
+                'name': dealer.name
+            } for dealer in dealers
+        ]
+        return JsonResponse(dealers_data, safe=False)
+    except Exception as e:
+        logger.error(f"Error fetching dealers: {str(e)}", exc_info=True)
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+
+
+@login_required
+def dashboard_summary(request):
+    try:
+        bills = Bill.objects.all()
+
+        # Filtering
+        month = request.GET.get('month')
+        year = request.GET.get('year')
+        dealer = request.GET.get('dealer')
+
+        if month:
+            bills = bills.filter(bill_month=int(month))
+        if year:
+            bills = bills.filter(bill_year=int(year))
+        if dealer:
+            bills = bills.filter(dealer__name__icontains=dealer)
+
+        # Summary calculations
+        active_bills = bills.filter(status__in=['pending', 'paid']).count()
+        cancelled_bills = bills.filter(status='cancelled').count()
+        total_bills = bills.count()
+        total_amount = float(sum(bill.total_amount for bill in bills.filter(status__in=['pending', 'paid'])))
+
+        # Dealer summary
+        dealer_summary = {}
+        for bill in bills.filter(status__in=['pending', 'paid']):
+            dealer_name = bill.dealer.name
+            if dealer_name not in dealer_summary:
+                dealer_summary[dealer_name] = {
+                    'count': 0,
+                    'total_amount': 0.0
+                }
+            dealer_summary[dealer_name]['count'] += 1
+            dealer_summary[dealer_name]['total_amount'] += float(bill.total_amount)
+
+        dealer_summary_data = [
+            {
+                'dealer': dealer,
+                'count': summary['count'],
+                'total_amount': summary['total_amount'],
+                'average_amount': summary['total_amount'] / summary['count'] if summary['count'] > 0 else 0
+            }
+            for dealer, summary in dealer_summary.items()
+        ]
+
+        return JsonResponse({
+            'active_bills': active_bills,
+            'cancelled_bills': cancelled_bills,
+            'total_bills': total_bills,
+            'total_amount': total_amount,
+            'dealer_summary': dealer_summary_data
+        })
+    except Exception as e:
+        logger.error(f"Error fetching dashboard summary: {str(e)}", exc_info=True)
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    
+@login_required
+def bill_manage(request):
+    """
+    View to render the bill management page.
+    """
+    try:
+        logger.info(f"User {request.user.username} accessed the bill management page")
+        return render(request, 'transporter/bill_manage.html', {})
+    except Exception as e:
+        logger.error(f"Error rendering bill management page: {str(e)}", exc_info=True)
+        return render(request, 'transporter/bill_manage.html', {'error': 'An error occurred while loading the page'})
+
+
+def bill_print(request, bill_id):
+    try:
+        bill = Bill.objects.select_related('dealer').get(id=bill_id)
+        items = BillItem.objects.filter(bill=bill)
+        
+        context = {
+            'bill': bill,
+            'items': items,
+            'dealer': bill.dealer,
+        }
+        
+        template = get_template('transporter/bill_print.html')  # Use get_template
+        html = template.render(context)
+        
+        if request.GET.get('download', False):
+            from weasyprint import HTML
+            pdf_file = BytesIO()
+            HTML(string=html).write_pdf(pdf_file)
+            pdf_file.seek(0)
+            response = FileResponse(pdf_file, as_attachment=True, filename=f'bill_{bill.bill_number}.pdf')
+            return response
+        
+        return HttpResponse(html)
+    
+    except Bill.DoesNotExist:
+        return HttpResponse("Bill not found", status=404)
+    except Exception as e:
+        return HttpResponse(f"Error generating bill: {str(e)}", status=500)
+    
+# transporter_app/views.py
+from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import get_user_model  # Import get_user_model
+from .models import Dealer, Transporter
+
+# Get the active user model (CustomUser in your case)
+User = get_user_model()
+
+@login_required
+def reset_password(request):
+    """
+    Handle password reset for a specific user.
+    """
+    if request.method == "GET":
+        username = request.GET.get("username")
+        if not username:
+            return redirect('transporter:view_users')
+        try:
+            User.objects.get(username=username)  # Use the dynamic User model
+            return render(request, 'transporter/reset_password.html', {'username': username})
+        except User.DoesNotExist:
+            return redirect('transporter:view_users')
+
+    elif request.method == "POST":
+        username = request.POST.get("username")
+        new_password = request.POST.get("new_password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if new_password != confirm_password:
+            return JsonResponse({"success": False, "message": "Passwords do not match."})
+
+        try:
+            user = User.objects.get(username=username)  # Use the dynamic User model
+            user.set_password(new_password)
+            user.save()
+            return JsonResponse({"success": True, "message": "Password reset successfully."})
+        except User.DoesNotExist:
+            return JsonResponse({"success": False, "message": "User not found."})
+        except Exception as e:
+            return JsonResponse({"success": False, "message": f"Error resetting password: {str(e)}"})
+
+@login_required
+def view_users(request):
+    """
+    Render the view_users.html template to display all users.
+    """
+    return render(request, 'transporter/view_users.html')  # Corrected template path
+
+@login_required
+def fetch_users(request):
+    """
+    Fetch all Dealer and Transporter records and return them as JSON.
+    """
+    try:
+        # Fetch all dealers
+        dealers = Dealer.objects.all()
+        dealer_data = [
+            {
+                "role": "Dealer",
+                "dealer_code": dealer.dealer_code,
+                "username": dealer.user.username if dealer.user else '-',
+                "name": dealer.name,
+                "company_name": dealer.company_name,
+                "email": dealer.email,
+                "phone_number_1": dealer.phone_number_1,
+                "phone_number_2": dealer.phone_number_2 or '-',
+                "mobile_number_1": dealer.mobile_number_1,
+                "mobile_number_2": dealer.mobile_number_2 or '-',
+                "address": dealer.address,
+                "state": dealer.state,
+                "city": dealer.city,
+            }
+            for dealer in dealers
+        ]
+
+        # Fetch all transporters
+        transporters = Transporter.objects.all()
+        transporter_data = [
+            {
+                "role": "Transporter",
+                "transporter_id": f"T{transporter.transporter_id:04d}",
+                "username": transporter.user.username if transporter.user else '-',
+                "name": transporter.name,
+                "company_name": transporter.company_name,
+                "email": transporter.email,
+                "phone_number_1": transporter.phone_number_1,
+                "phone_number_2": transporter.phone_number_2 or '-',
+                "mobile_number_1": transporter.mobile_number_1,
+                "mobile_number_2": transporter.mobile_number_2 or '-',
+                "address": transporter.address,
+                "state": transporter.state,
+                "city": transporter.city,
+            }
+            for transporter in transporters
+        ]
+
+        # Combine the data
+        users = dealer_data + transporter_data
+
+        if not users:
+            return JsonResponse({"success": False, "message": "No users found."})
+
+        return JsonResponse({"success": True, "users": users})
+    except Exception as e:
+        return JsonResponse({"success": False, "message": f"Error fetching users: {str(e)}"})
