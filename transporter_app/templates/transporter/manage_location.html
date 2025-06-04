@@ -3,49 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Master</title>
+    <title>Manage Locations</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f0f4f8;
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200">
     <div class="container mx-auto p-6 sm:p-8 md:p-12">
+        <!-- Navigation Buttons -->
         <div class="flex justify-center mb-8">
-            <button id="cityMasterButton" class="bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 mx-2">
+            <button id="cityMasterButton" class="bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-300 mx-2 flex items-center">
                 <i class="fas fa-city mr-2"></i>City Master
             </button>
-            <button id="stateMasterButton" class="bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration- 300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 mx-2">
+            <button id="stateMasterButton" class="bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-300 mx-2 flex items-center">
                 <i class="fas fa-map-marked-alt mr-2"></i>State Master
             </button>
         </div>
 
-        <div id="cityMasterSection" class="bg-white rounded-xl shadow-2xl p-6 sm:p-8 mb-8 animate-fade-in">
-            <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold mb-8 text-center text-indigo-700">
+        <!-- City Master Section -->
+        <div id="cityMasterSection" class="bg-white rounded-xl shadow-2xl p-6 sm:p-8 mb-8">
+            <h1 class="text-4xl font-bold mb-8 text-center text-indigo-700">
                 <i class="fas fa-city mr-4"></i>City Master
             </h1>
-            <form id="cityForm" method="POST" action="{% url 'transporter:manage_location' %}" class="grid gap-6">
+            <!-- City Add Form -->
+            <form id="cityForm" class="grid gap-6">
                 {% csrf_token %}
+                <div id="cityError" class="hidden text-red-600 bg-red-100 p-3 rounded-lg mb-4"></div>
                 <div class="grid sm:grid-cols-2 gap-6">
                     <div>
-                        <label for="city" class="block font-semibold mb-2 text-gray-700">City Name:</label>
-                        <input type="text" id="city" name="name" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200" required placeholder="Enter city name">
+                        <label for="cityName" class="block font-semibold mb-2 text-gray-700">City Name:</label>
+                        <input type="text" id="cityName" name="name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" required>
                     </div>
                     <div>
-                        <label for="state" class="block font-semibold mb-2 text-gray-700">State:</label>
-                        <select id="state" name="state" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200" required>
+                        <label for="cityState" class="block font-semibold mb-2 text-gray-700">State:</label>
+                        <select id="cityState" name="state" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" required>
                             <option value="">Select a state</option>
                             {% for state in states %}
                                 <option value="{{ state.id }}">{{ state.name }}</option>
@@ -54,40 +45,35 @@
                     </div>
                 </div>
                 <div>
-                    <label for="description" class="block font-semibold mb-2 text-gray-700">Description:</label>
-                    <textarea id="description" name="description" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200" required placeholder="Enter city description" rows="3"></textarea>
+                    <label for="cityDescription" class="block font-semibold mb-2 text-gray-700">Description:</label>
+                    <textarea id="cityDescription" name="description" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" required></textarea>
                 </div>
-                <button type="submit" name="add_city" class="bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
-                    <i class="fas fa-plus-circle mr-2"></i>Add City
+                <button type="submit" id="addCityBtn" class="bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-300 flex items-center justify-center">
+                    <i class="fas fa-plus-circle mr-2"></i>
+                    <span>Add City</span>
+                    <i class="fas fa-spinner fa-spin hidden ml-2" id="cityLoading"></i>
                 </button>
             </form>
-            <div class="bg-white rounded-xl shadow-2xl p-6 sm:p-8 animate-fade-in mt-8">
-                <div class="flex flex-col sm:flex-row justify-between items-center mb-6">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-4 sm:mb-0">Cities</h2>
-                    <div class="flex items-center">
-                        <input type="text" id="searchCityInput" placeholder="Search cities..." class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 mr-4">
-                        <button id="sortCityButton" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition duration-200">
-                            <i class="fas fa-sort-alpha-down mr-2"></i>Sort
-                        </button>
-                    </div>
-                </div>
-                <table class="min-w-full bg-white border border-gray-300">
+            <!-- City Table -->
+            <div class="mt-8 overflow-x-auto">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Cities</h2>
+                <table class="min-w-full bg-white border border-gray-300 rounded-lg">
                     <thead>
                         <tr class="bg-gray-200">
-                            <th class="py-3 px-4 border-b">City Name</th>
-                            <th class="py-3 px-4 border-b">State</th>
-                            <th class="py-3 px-4 border-b">Description</th>
-                            <th class="py-3 px-4 border-b">Actions</th>
+                            <th class="py-3 px-4 border-b text-left">City Name</th>
+                            <th class="py-3 px-4 border-b text-left">State</th>
+                            <th class="py-3 px-4 border-b text-left">Description</th>
+                            <th class="py-3 px-4 border-b text-left">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="cityTableBody">
                         {% for city in cities %}
-                        <tr>
+                        <tr data-id="{{ city.id }}">
                             <td class="py-3 px-4 border-b">{{ city.name }}</td>
                             <td class="py-3 px-4 border-b">{{ city.state.name }}</td>
                             <td class="py-3 px-4 border-b">{{ city.description }}</td>
                             <td class="py-3 px-4 border-b">
-                                <button onclick="editCity({{ city.id }})" class="text-blue-600 hover:underline">Edit</ button>
+                                <button onclick="openEditCityModal({{ city.id }})" class="text-blue-600 hover:underline">Edit</button>
                                 <button onclick="deleteCity({{ city.id }})" class="text-red-600 hover:underline ml-4">Delete</button>
                             </td>
                         </tr>
@@ -97,58 +83,56 @@
             </div>
         </div>
 
-        <div id="stateMasterSection" class="bg-white rounded-xl shadow-2xl p-6 sm:p-8 mb-8 animate-fade-in hidden">
-            <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold mb-8 text-center text-indigo-700">
+        <!-- State Master Section -->
+        <div id="stateMasterSection" class="bg-white rounded-xl shadow-2xl p-6 sm:p-8 mb-8 hidden">
+            <h1 class="text-4xl font-bold mb-8 text-center text-indigo-700">
                 <i class="fas fa-map-marked-alt mr-4"></i>State Master
             </h1>
-            <form id="stateForm" method="POST" action="{% url 'transporter:manage_location' %}" class="grid gap-6">
+            <!-- State Add Form -->
+            <form id="stateForm" class="grid gap-6">
                 {% csrf_token %}
+                <div id="stateError" class="hidden text-red-600 bg-red-100 p-3 rounded-lg mb-4"></div>
                 <div class="grid sm:grid-cols-2 gap-6">
                     <div>
                         <label for="stateName" class="block font-semibold mb-2 text-gray-700">State Name:</label>
-                        <input type="text" id="stateName" name="name" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200" required placeholder="Enter state name">
+                        <input type="text" id="stateName" name="name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" required>
                     </div>
                     <div>
                         <label for="capital" class="block font-semibold mb-2 text-gray-700">Capital:</label>
-                        <input type="text" id="capital" name="capital" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200" required placeholder="Enter capital city">
+                        <input type="text" id="capital" name="capital" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" required>
                     </div>
                 </div>
                 <div>
                     <label for="stateDescription" class="block font-semibold mb-2 text-gray-700">Description:</label>
-                    <textarea id="stateDescription" name="description" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200" required placeholder="Enter state description" rows="3"></textarea>
+                    <textarea id="stateDescription" name="description" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" required></textarea>
                 </div>
-                <button type="submit" name="add_state" class="bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
-                    <i class="fas fa-plus-circle mr-2"></i>Add State
+                <button type="submit" id="addStateBtn" class="bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-300 flex items-center justify-center">
+                    <i class="fas fa-plus-circle mr-2"></i>
+                    <span>Add State</span>
+                    <i class="fas fa-spinner fa-spin hidden ml-2" id="stateLoading"></i>
                 </button>
             </form>
-            <div class="bg-white rounded-xl shadow-2xl p-6 sm:p-8 animate-fade-in mt-8">
-                <div class="flex flex-col sm:flex-row justify-between items-center mb-6">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-4 sm:mb-0">States</h2>
-                    <div class="flex items-center">
-                        <input type="text" id="searchStateInput" placeholder="Search states..." class="p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 mr-4">
-                        <button id="sortStateButton" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition duration-200">
-                            <i class="fas fa-sort-alpha-down mr-2"></i>Sort
-                        </button>
-                    </div>
-                </div>
-                <table class="min-w-full bg-white border border-gray-300">
+            <!-- State Table -->
+            <div class="mt-8 overflow-x-auto">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">States</h2>
+                <table class="min-w-full bg-white border border-gray-300 rounded-lg">
                     <thead>
                         <tr class="bg-gray-200">
-                            <th class="py-3 px-4 border-b">State Name</th>
-                            <th class="py-3 px-4 border-b">Capital</th>
-                            <th class="py-3 px-4 border-b">Description</th>
-                            <th class="py-3 px-4 border-b">Actions</th>
+                            <th class="py-3 px-4 border-b text-left">State Name</th>
+                            <th class="py-3 px-4 border-b text-left">Capital</th>
+                            <th class="py-3 px-4 border-b text-left">Description</th>
+                            <th class="py-3 px-4 border-b text-left">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="stateTableBody">
                         {% for state in states %}
-                        <tr>
+                        <tr data-id="{{ state.id }}">
                             <td class="py-3 px-4 border-b">{{ state.name }}</td>
                             <td class="py-3 px-4 border-b">{{ state.capital }}</td>
                             <td class="py-3 px-4 border-b">{{ state.description }}</td>
                             <td class="py-3 px-4 border-b">
-                                <button onclick="editState({{ state.id }})" class="text-blue-600 hover:underline">Edit</button>
-                                <button onclick="deleteState({{ state.id }})" class ="text-red-600 hover:underline ml-4">Delete</button>
+                                <button onclick="openEditStateModal({{ state.id }})" class="text-blue-600 hover:underline">Edit</button>
+                                <button onclick="deleteState({{ state.id }})" class="text-red-600 hover:underline ml-4">Delete</button>
                             </td>
                         </tr>
                         {% endfor %}
@@ -158,65 +142,343 @@
         </div>
     </div>
 
+    <!-- City Edit Modal -->
+    <div id="editCityModal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-4 text-indigo-700">Edit City</h2>
+            <form id="editCityForm" class="grid gap-4">
+                {% csrf_token %}
+                <input type="hidden" id="editCityId" name="id">
+                <div id="editCityError" class="hidden text-red-600 bg-red-100 p-3 rounded-lg mb-4"></div>
+                <div>
+                    <label for="editCityName" class="block font-semibold mb-2 text-gray-700">City Name:</label>
+                    <input type="text" id="editCityName" name="name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div>
+                    <label for="editCityState" class="block font-semibold mb-2 text-gray-700">State:</label>
+                    <select id="editCityState" name="state" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" required>
+                        <option value="">Select a state</option>
+                        {% for state in states %}
+                            <option value="{{ state.id }}">{{ state.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="editCityDescription" class="block font-semibold mb-2 text-gray-700">Description:</label>
+                    <textarea id="editCityDescription" name="description" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" required></textarea>
+                </div>
+                <div class="flex justify-end gap-4">
+                    <button type="button" onclick="closeEditCityModal()" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400">Cancel</button>
+                    <button type="submit" id="saveCityBtn" class="bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 flex items-center">
+                        <span>Save</span>
+                        <i class="fas fa-spinner fa-spin hidden ml-2" id="saveCityLoading"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- State Edit Modal -->
+    <div id="editStateModal" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-4 text-indigo-700">Edit State</h2>
+            <form id="editStateForm" class="grid gap-4">
+                {% csrf_token %}
+                <input type="hidden" id="editStateId" name="id">
+                <div id="editStateError" class="hidden text-red-600 bg-red-100 p-3 rounded-lg mb-4"></div>
+                <div>
+                    <label for="editStateName" class="block font-semibold mb-2 text-gray-700">State Name:</label>
+                    <input type="text" id="editStateName" name="name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div>
+                    <label for="editCapital" class="block font-semibold mb-2 text-gray-700">Capital:</label>
+                    <input type="text" id="editCapital" name="capital" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div>
+                    <label for="editStateDescription" class="block font-semibold mb-2 text-gray-700">Description:</label>
+                    <textarea id="editStateDescription" name="description" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" required></textarea>
+                </div>
+                <div class="flex justify-end gap-4">
+                    <button type="button" onclick="closeEditStateModal()" class="bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400">Cancel</button>
+                    <button type="submit" id="saveStateBtn" class="bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 flex items-center">
+                        <span>Save</span>
+                        <i class="fas fa-spinner fa-spin hidden ml-2" id="saveStateLoading"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        document.getElementById('cityMasterButton').addEventListener('click', function() {
+        // CSRF Token Setup (corrected header name)
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        axios.defaults.headers.common['X-CSRFToken'] = csrfToken;
+
+        // Toggle Sections
+        document.getElementById('cityMasterButton').addEventListener('click', () => {
             document.getElementById('cityMasterSection').classList.remove('hidden');
             document.getElementById('stateMasterSection').classList.add('hidden');
         });
 
-        document.getElementById('stateMasterButton').addEventListener('click', function() {
+        document.getElementById('stateMasterButton').addEventListener('click', () => {
             document.getElementById('stateMasterSection').classList.remove('hidden');
             document.getElementById('cityMasterSection').classList.add('hidden');
         });
 
-        // City Master Functionality
-        const cityTableBody = document.getElementById('cityTableBody');
-
-        function editCity(id) {
-            // Implement edit functionality here
+        // Utility Functions
+        function showError(elementId, errorData) {
+            const errorElement = document.getElementById(elementId);
+            if (typeof errorData === 'object' && errorData.error) {
+                try {
+                    const errors = JSON.parse(errorData.error);
+                    let errorMessages = '';
+                    for (const field in errors) {
+                        errors[field].forEach(err => {
+                            errorMessages += `${field}: ${err.message}<br>`;
+                        });
+                    }
+                    errorElement.innerHTML = errorMessages;
+                } catch {
+                    errorElement.textContent = errorData.error;
+                }
+            } else {
+                errorElement.textContent = errorData || 'An error occurred';
+            }
+            errorElement.classList.remove('hidden');
         }
 
-        function deleteCity(id) {
-            // Implement delete functionality here
+        function hideError(elementId) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = '';
+            errorElement.classList.add('hidden');
         }
 
-        document.getElementById('searchCityInput').addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#cityTableBody tr');
-            rows.forEach(row => {
-                const cityName = row.cells[0].textContent.toLowerCase();
-                row.style.display = cityName.includes(searchTerm) ? '' : 'none';
-            });
-        });
-
-        document.getElementById('sortCityButton').addEventListener('click', function() {
-            // Implement sorting functionality here
-        });
-
-        // State Master Functionality
-        const stateTableBody = document.getElementById('stateTableBody');
-
-        function editState(id) {
-            // Implement edit functionality here
+        function showLoading(btnId, loadingId) {
+            document.getElementById(btnId).disabled = true;
+            document.getElementById(loadingId).classList.remove('hidden');
         }
 
-        function deleteState(id) {
-            // Implement delete functionality here
+        function hideLoading(btnId, loadingId) {
+            document.getElementById(btnId).disabled = false;
+            document.getElementById(loadingId).classList.add('hidden');
         }
 
-        document.getElementById('searchStateInput').addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#stateTableBody tr');
-            rows.forEach(row => {
-                const stateName = row.cells[0].textContent.toLowerCase();
-                row.style.display = stateName.includes(searchTerm) ? '' : 'none';
-            });
+        // Optional: Check if city/state is used (requires backend endpoint)
+        async function checkCityUsage(id) {
+            try {
+                const response = await axios.get(`/transporter/check-city-usage/${id}/`);
+                return response.data.isUsed;
+            } catch {
+                return false;
+            }
+        }
+
+        async function checkStateUsage(id) {
+            try {
+                const response = await axios.get(`/transporter/check-state-usage/${id}/`);
+                return response.data.isUsed;
+            } catch {
+                return false;
+            }
+        }
+
+        // City CRUD Operations
+        document.getElementById('cityForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError('cityError');
+            showLoading('addCityBtn', 'cityLoading');
+            const formData = new FormData(e.target);
+            try {
+                const response = await axios.post('/transporter/add-city/', formData);
+                const city = response.data.city;
+                const stateName = document.querySelector(`#cityState option[value="${city.state}"]`).textContent;
+                document.getElementById('cityTableBody').insertAdjacentHTML('beforeend', `
+                    <tr data-id="${city.id}">
+                        <td class="py-3 px-4 border-b">${city.name}</td>
+                        <td class="py-3 px-4 border-b">${stateName}</td>
+                        <td class="py-3 px-4 border-b">${city.description}</td>
+                        <td class="py-3 px-4 border-b">
+                            <button onclick="openEditCityModal(${city.id})" class="text-blue-600 hover:underline">Edit</button>
+                            <button onclick="deleteCity(${city.id})" class="text-red-600 hover:underline ml-4">Delete</button>
+                        </td>
+                    </tr>
+                `);
+                e.target.reset();
+                hideLoading('addCityBtn', 'cityLoading');
+            } catch (error) {
+                showError('cityError', error.response?.data || 'Error adding city');
+                hideLoading('addCityBtn', 'cityLoading');
+            }
         });
 
-        document.getElementById('sortStateButton').addEventListener('click', function() {
-            // Implement sorting functionality here
+        async function openEditCityModal(id) {
+            hideError('editCityError');
+            try {
+                const response = await axios.get(`/transporter/edit-city/${id}/`);
+                const city = response.data.city;
+                document.getElementById('editCityId').value = city.id;
+                document.getElementById('editCityName').value = city.name;
+                document.getElementById('editCityState').value = city.state;
+                document.getElementById('editCityDescription').value = city.description;
+                document.getElementById('editCityModal').classList.remove('hidden');
+            } catch (error) {
+                alert(error.response?.data?.error || 'Error fetching city data');
+            }
+        }
+
+        function closeEditCityModal() {
+            document.getElementById('editCityModal').classList.add('hidden');
+            document.getElementById('editCityForm').reset();
+            hideError('editCityError');
+        }
+
+        document.getElementById('editCityForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError('editCityError');
+            showLoading('saveCityBtn', 'saveCityLoading');
+            const formData = new FormData(e.target);
+            const id = document.getElementById('editCityId').value;
+            try {
+                const response = await axios.post(`/transporter/edit-city/${id}/`, formData);
+                const city = response.data.city;
+                const stateName = document.querySelector(`#editCityState option[value="${city.state}"]`).textContent;
+                const row = document.querySelector(`#cityTableBody tr[data-id="${id}"]`);
+                row.innerHTML = `
+                    <td class="py-3 px-4 border-b">${city.name}</td>
+                    <td class="py-3 px-4 border-b">${stateName}</td>
+                    <td class="py-3 px-4 border-b">${city.description}</td>
+                    <td class="py-3 px-4 border-b">
+                        <button onclick="openEditCityModal(${city.id})" class="text-blue-600 hover:underline">Edit</button>
+                        <button onclick="deleteCity(${city.id})" class="text-red-600 hover:underline ml-4">Delete</button>
+                    </td>
+                `;
+                closeEditCityModal();
+                hideLoading('saveCityBtn', 'saveCityLoading');
+            } catch (error) {
+                showError('editCityError', error.response?.data || 'Error updating city');
+                hideLoading('saveCityBtn', 'saveCityLoading');
+            }
         });
+
+        async function deleteCity(id) {
+            const isUsed = await checkCityUsage(id);
+            if (isUsed) {
+                alert('This city is linked to other records (e.g., Delivery Destinations or CNotes) and cannot be deleted.');
+                return;
+            }
+            if (confirm('Are you sure you want to delete this city?')) {
+                try {
+                    await axios.post(`/transporter/delete-city/${id}/`);
+                    document.querySelector(`#cityTableBody tr[data-id="${id}"]`).remove();
+                } catch (error) {
+                    alert(error.response?.data?.error || 'Error deleting city');
+                }
+            }
+        }
+
+        // State CRUD Operations
+        document.getElementById('stateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError('stateError');
+            showLoading('addStateBtn', 'stateLoading');
+            const formData = new FormData(e.target);
+            try {
+                const response = await axios.post('/transporter/add-state/', formData);
+                const state = response.data.state;
+                document.getElementById('stateTableBody').insertAdjacentHTML('beforeend', `
+                    <tr data-id="${state.id}">
+                        <td class="py-3 px-4 border-b">${state.name}</td>
+                        <td class="py-3 px-4 border-b">${state.capital}</td>
+                        <td class="py-3 px-4 border-b">${state.description}</td>
+                        <td class="py-3 px-4 border-b">
+                            <button onclick="openEditStateModal(${state.id})" class="text-blue-600 hover:underline">Edit</button>
+                            <button onclick="deleteState(${state.id})" class="text-red-600 hover:underline ml-4">Delete</button>
+                        </td>
+                    </tr>
+                `);
+                // Add new state to city form dropdowns
+                document.getElementById('cityState').insertAdjacentHTML('beforeend', `
+                    <option value="${state.id}">${state.name}</option>
+                `);
+                document.getElementById('editCityState').insertAdjacentHTML('beforeend', `
+                    <option value="${state.id}">${state.name}</option>
+                `);
+                e.target.reset();
+                hideLoading('addStateBtn', 'stateLoading');
+            } catch (error) {
+                showError('stateError', error.response?.data || 'Error adding state');
+                hideLoading('addStateBtn', 'stateLoading');
+            }
+        });
+
+        async function openEditStateModal(id) {
+            hideError('editStateError');
+            try {
+                const response = await axios.get(`/transporter/edit-state/${id}/`);
+                const state = response.data.state;
+                document.getElementById('editStateId').value = state.id;
+                document.getElementById('editStateName').value = state.name;
+                document.getElementById('editCapital').value = state.capital;
+                document.getElementById('editStateDescription').value = state.description;
+                document.getElementById('editStateModal').classList.remove('hidden');
+            } catch (error) {
+                alert(error.response?.data?.error || 'Error fetching state data');
+            }
+        }
+
+        function closeEditStateModal() {
+            document.getElementById('editStateModal').classList.add('hidden');
+            document.getElementById('editStateForm').reset();
+            hideError('editStateError');
+        }
+
+        document.getElementById('editStateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError('editStateError');
+            showLoading('saveStateBtn', 'saveStateLoading');
+            const formData = new FormData(e.target);
+            const id = document.getElementById('editStateId').value;
+            try {
+                const response = await axios.post(`/transporter/edit-state/${id}/`, formData);
+                const state = response.data.state;
+                const row = document.querySelector(`#stateTableBody tr[data-id="${id}"]`);
+                row.innerHTML = `
+                    <td class="py-3 px-4 border-b">${state.name}</td>
+                    <td class="py-3 px-4 border-b">${state.capital}</td>
+                    <td class="py-3 px-4 border-b">${state.description}</td>
+                    <td class="py-3 px-4 border-b">
+                        <button onclick="openEditStateModal(${state.id})" class="text-blue-600 hover:underline">Edit</button>
+                        <button onclick="deleteState(${state.id})" class="text-red-600 hover:underline ml-4">Delete</button>
+                    </td>
+                `;
+                // Update state name in city dropdowns
+                document.querySelector(`#cityState option[value="${id}"]`).textContent = state.name;
+                document.querySelector(`#editCityState option[value="${id}"]`).textContent = state.name;
+                closeEditStateModal();
+                hideLoading('saveStateBtn', 'saveStateLoading');
+            } catch (error) {
+                showError('editStateError', error.response?.data || 'Error updating state');
+                hideLoading('saveStateBtn', 'saveStateLoading');
+            }
+        });
+
+        async function deleteState(id) {
+            const isUsed = await checkStateUsage(id);
+            if (isUsed) {
+                alert('This state is linked to cities or other records and cannot be deleted.');
+                return;
+            }
+            if (confirm('Are you sure you want to delete this state?')) {
+                try {
+                    await axios.post(`/transporter/delete-state/${id}/`);
+                    document.querySelector(`#stateTableBody tr[data-id="${id}"]`).remove();
+                    document.querySelector(`#cityState option[value="${id}"]`)?.remove();
+                    document.querySelector(`#editCityState option[value="${id}"]`)?.remove();
+                } catch (error) {
+                    alert(error.response?.data?.error || 'Error deleting state');
+                }
+            }
+        }
     </script>
-</html>
 </body>
 </html>
