@@ -125,7 +125,27 @@ def manage_location(request):
         'city_form': city_form,
     }
     return render(request, 'transporter/manage_location.html', context)
+    
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from .forms import CityForm
+from .models import City
 
+@login_required
+def add_city(request):
+    if request.method == 'POST':
+        form = CityForm(request.POST)
+        if form.is_valid():
+            city = form.save()
+            return JsonResponse({'city': {
+                'id': city.id,
+                'name': city.name,
+                'state': city.state.id,
+                'description': city.description
+            }})
+        return JsonResponse({'error': form.errors.as_json()}, status=400)
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+    
 @login_required
 def edit_state(request, id):
     state = get_object_or_404(State, id=id)
@@ -148,28 +168,60 @@ def delete_state(request, id):
         return redirect('transporter:manage_location')
     return render(request, 'transporter/confirm_delete_state.html', {'state': state})
 
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
+from .models import City, State
+from .forms import CityForm
+from django.db.models import ProtectedError
+
 @login_required
 def edit_city(request, id):
+    """
+    Handle GET requests to fetch city data for editing and POST requests to update a city.
+    Returns JSON with city data or validation errors.
+    """
     city = get_object_or_404(City, id=id)
-    if request.method == 'POST':
+    if request.method == 'GET':
+        return JsonResponse({
+            'city': {
+                'id': city.id,
+                'name': city.name,
+                'state': city.state.id,
+                'description': city.description
+            }
+        })
+    elif request.method == 'POST':
         form = CityForm(request.POST, instance=city)
         if form.is_valid():
-            form.save()
-            messages.success(request, "City updated successfully!")
-            return redirect('transporter:manage_location')
-    else:
-        form = CityForm(instance=city)
-    return render(request, 'transporter/edit_city.html', {'form': form, 'city': city})
+            city = form.save()
+            return JsonResponse({
+                'city': {
+                    'id': city.id,
+                    'name': city.name,
+                    'state': city.state.id,
+                    'description': city.description
+                }
+            })
+        return JsonResponse({'error': form.errors.as_json()}, status=400)
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
 
 @login_required
 def delete_city(request, id):
-    city = get_object_or_404(City, id=id)
+    """
+    Handle POST requests to delete a city.
+    Returns JSON indicating success or error.
+    """
     if request.method == 'POST':
-        city.delete()
-        messages.success(request, "City deleted successfully!")
-        return redirect('transporter:manage_location')
-    return render(request, 'transporter/confirm_delete_city.html', {'city': city})
-
+        city = get_object_or_404(City, id=id)
+        try:
+            city.delete()
+            return JsonResponse({'message': 'City deleted successfully'})
+        except ProtectedError:
+            return JsonResponse({'error': 'Cannot delete city because it is linked to other records (e.g., CNotes or Delivery Destinations).'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
 
 @login_required
 def party_master(request):
