@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Good Way Express</title>
-    
+    {% include 'pwa_script.html' %}
 
     <script src="https://unpkg.com/ionicons@5.4.0/dist/ionicons.js"></script>
     <style>
@@ -224,6 +224,13 @@
             margin-bottom: 1.5rem;
         }
 
+        /* NEW: Password input container styling */
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
         .form-input {
             width: 100%;
             background: var(--background);
@@ -235,6 +242,11 @@
             transition: all 0.3s ease;
         }
 
+        /* NEW: Password input with icon space */
+        .form-input.password-input {
+            padding-right: 2.5rem;
+        }
+
         .form-input:focus {
             border-color: var(--primary-dark);
             box-shadow: 0 0 0 2px rgba(70, 130, 180, 0.2);
@@ -242,6 +254,23 @@
 
         .form-input::placeholder {
             color: rgba(0, 0, 0, 0.5);
+        }
+
+        /* NEW: Password toggle icon styling */
+        .password-toggle {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--primary);
+            font-size: 1.25rem;
+            transition: color 0.3s ease;
+            z-index: 10;
+        }
+
+        .password-toggle:hover {
+            color: var(--primary-dark);
         }
 
         .login-btn {
@@ -315,18 +344,6 @@
     <nav class="navbar">
         <div class="nav-content">
             <h1 class="logo">GOOD WAY EXPRESS</h1>
-            
-            <div class="nav-links">
-                <a href="#home">Home</a>
-                <a href="#about">About</a>
-                <a href="#services">Services</a>
-                <a href="#contact">Contact</a>
-            </div>
-
-            <div class="search-box">
-                <input type="text" class="search-input" placeholder="Enter CNote">
-                <ion-icon name="search-outline" class="search-icon"></ion-icon>
-            </div>
         </div>
     </nav>
 
@@ -359,7 +376,11 @@
                     <input type="text" name="username" class="form-input" placeholder="Dealer ID" required>
                 </div>
                 <div class="form-group">
-                    <input type="password" name="password" class="form-input" placeholder="Password" required>
+                    <!-- NEW: Password container with toggle icon -->
+                    <div class="password-container">
+                        <input type="password" name="password" class="form-input password-input" placeholder="Password" required id="dealerPassword">
+                        <ion-icon name="eye-outline" class="password-toggle"></ion-icon>
+                    </div>
                 </div>
                 <button type="submit" class="login-btn">Login as Dealer</button>
             </form>
@@ -371,10 +392,15 @@
                     <input type="text" name="username" class="form-input" placeholder="Transporter ID" required>
                 </div>
                 <div class="form-group">
-                    <input type="password" name="password" class="form-input" placeholder="Password" required>
+                    <!-- NEW: Password container with toggle icon -->
+                    <div class="password-container">
+                        <input type="password" name="password" class="form-input password-input" placeholder="Password" required id="transporterPassword">
+                        <ion-icon name="eye-outline" class="password-toggle"></ion-icon>
+                    </div>
                 </div>
                 <button type="submit" class="login-btn">Login as Transporter</button>
             </form>
+            
             {% if messages %}
                 {% for message in messages %}
                     <div class="alert {{ message.tags }}">{{ message }}</div>
@@ -383,7 +409,7 @@
         
             <p class="support-text">
                 Unable to Login?
-                <a href="#contact">Contact Support Team</a>
+                <a href="#contact">Contact +91 9689857192</a>
             </p>
 
             <div class="social-icons">
@@ -397,6 +423,25 @@
     </main>
 
     <script>
+        // BETTER SOLUTION: Password toggle with event delegation
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('password-toggle')) {
+                const container = e.target.closest('.password-container');
+                const passwordInput = container.querySelector('.password-input');
+                const iconElement = e.target;
+                
+                if (passwordInput) {
+                    const isPassword = passwordInput.type === 'password';
+                    
+                    // Toggle input type
+                    passwordInput.type = isPassword ? 'text' : 'password';
+                    
+                    // Toggle icon
+                    iconElement.name = isPassword ? 'eye-off-outline' : 'eye-outline';
+                }
+            }
+        });
+
         // Login Switcher
         const switchBtns = document.querySelectorAll('.switch-btn');
         const switchBg = document.querySelector('.switch-bg');
@@ -430,19 +475,15 @@
 
         // Form submissions
         dealerForm.addEventListener('submit', (e) => {
-           // e.preventDefault();
-            const id = dealerForm.querySelector('input[type="text"]').value;
-            const password = dealerForm.querySelector('input[type="password"]').value;
+            const id = dealerForm.querySelector('input[name="username"]').value;
+            const password = dealerForm.querySelector('input[name="password"]').value;
             console.log('Dealer login:', { id, password });
-            // Add your dealer login logic here
         });
 
         transporterForm.addEventListener('submit', (e) => {
-            //e.preventDefault();
-            const id = transporterForm.querySelector('input[type="text"]').value;
-            const password = transporterForm.querySelector('input[type="password"]').value;
+            const id = transporterForm.querySelector('input[name="username"]').value;
+            const password = transporterForm.querySelector('input[name="password"]').value;
             console.log('Transporter login:', { id, password });
-            // Add your transporter login logic here
         });
 
         // Join button
@@ -454,7 +495,9 @@
         document.querySelectorAll('.social-icons ion-icon').forEach(icon => {
             icon.addEventListener('click', () => {
                 const platform = icon.getAttribute('name').split('-')[1];
-                alert(`${platform} integration coming soon!`);
+                if (platform && platform !== 'outline') {
+                    alert(`${platform} integration coming soon!`);
+                }
             });
         });
     </script>
