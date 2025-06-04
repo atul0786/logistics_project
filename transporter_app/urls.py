@@ -41,9 +41,10 @@ urlpatterns = [
     path('api/receive-lrs/', views.receive_lrs, name='receive_lrs'),
 
     path('mf_print/<str:ls_number>/', views.mf_print_view, name='mf_print'),
-
+    #path('add-state/', views.add_state, name='add_state'),
     path('edit-state/<int:id>/', views.edit_state, name='edit_state'),
     path('delete-state/<int:id>/', views.delete_state, name='delete_state'),
+    path('add-city/', views.add_city, name='add_city'),
     path('edit-city/<int:id>/', views.edit_city, name='edit_city'),
     path('delete-city/<int:id>/', views.delete_city, name='delete_city'),
 
