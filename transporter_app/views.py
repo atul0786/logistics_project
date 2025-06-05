@@ -1177,12 +1177,12 @@ def create_delivery_memo(request):
             # Create DDM Summary
             for cnote_number in cnotes:
                 cnote = CNotes.objects.get(cnote_number=cnote_number)
-                total_packages += cnote.total_art
-                total_amount += cnote.grand_total
+                total_packages += cnote.total_art or 0
+                total_amount += cnote.grand_total or 0
                 if cnote.payment_type == 'paid':
-                    total_paid_amount += cnote.grand_total
+                    total_paid_amount += cnote.grand_total or 0
                 elif cnote.payment_type == 'due':
-                    total_to_pay_amount += cnote.grand_total
+                    total_to_pay_amount += cnote.grand_total or 0
 
             ddm_summary = DDMSummary.objects.create(
                 ddm_no=ddm_no,
@@ -1203,19 +1203,27 @@ def create_delivery_memo(request):
             # Create DDM Details for each CNote
             for cnote_number in cnotes:
                 cnote = CNotes.objects.get(cnote_number=cnote_number)
+                # Add logging here
+                logger.info(f"Processing CNote {cnote_number}, destination: {cnote.delivery_destination}")
+                # Handle None values
+                destination = cnote.delivery_destination or 'Unknown'
+                consignee_name = cnote.consignee_name or ''
+                contact_number = cnote.consignee_mobile or ''
+                payment_type = cnote.payment_type or 'PAID'  # Fallback for payment_type
+
                 ddm_detail = DDMDetails.objects.create(
                     ddm=ddm_summary,
                     cnote_booking_date=cnote.manual_date,
                     cnote_number=cnote.cnote_number,
-                    consignee_name=cnote.consignee_name,
-                    contact_number=cnote.consignee_mobile,
-                    destination=cnote.delivery_destination,
-                    total_pkt=cnote.total_art,
-                    amount=cnote.grand_total,
-                    payment_type=cnote.payment_type,
+                    consignee_name=consignee_name,
+                    contact_number=contact_number,
+                    destination=destination,  # Use fallback if None
+                    total_pkt=cnote.total_art or 0,
+                    amount=cnote.grand_total or 0,
+                    payment_type=payment_type,
                     remark=remarks,
-                    dealer_name=cnote.dealer.dealer_code,
-                    transporter_name=cnote.consignor_name,
+                    dealer_name=cnote.dealer.dealer_code if cnote.dealer else 'N/A',
+                    transporter_name=cnote.consignor_name or '',
                     status='due delivered',
                     truck_no=truck_no,
                     driver_name=driver_name,
@@ -1241,7 +1249,7 @@ def create_delivery_memo(request):
             return JsonResponse({'status': 'error', 'message': 'CNote not found.'}, status=404)
         except Exception as e:
             logger.error(f"Error processing request: {str(e)}")
-            return JsonResponse({'status': 'error', 'message': 'Internal Server Error.'}, status=500)
+            return JsonResponse({'status': 'error', 'message': f'Internal Server Error: {str(e)}'}, status=500)
 
 @csrf_exempt
 def save_ddm_pdf(request):
