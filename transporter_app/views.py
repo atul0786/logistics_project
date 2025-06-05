@@ -1147,110 +1147,224 @@ def search_cnotes_for_ddm(request):
 
 
 logger = logging.getLogger(__name__)
+
 @csrf_exempt
 @transaction.atomic
 def create_delivery_memo(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            logger.info(f"Received data for create_delivery_memo: {data}")
+    """
+    Create a Delivery Memo (DDM) with associated details for given CNotes.
+    Returns a JSON response with the DDM number and ID on success.
+    """
+    if request.method != 'POST':
+        logger.warning(f"Invalid request method: {request.method}")
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed.'}, status=405)
 
-            cnotes = data.get('cnotes', [])
-            truck_no = data.get('truckNo', '')
-            driver_name = data.get('driverName', '')
-            driver_no = data.get('driverNo', '')
-            lorry_hire = data.get('lorryHire', 0)
-            remarks = data.get('remarks', '')
+    try:
+        # Parse request body
+        data = json.loads(request.body)
+        logger.info(f"Received data for create_delivery_memo: {data}")
 
-            if not cnotes:
-                return JsonResponse({'status': 'error', 'message': 'No cnotes provided.'}, status=400)
+        # Extract and validate required fields
+        cnotes = data.get('cnotes', [])
+        truck_no = data.get('truckNo', '').strip()
+        driver_name = data.get('driverName', '').strip()
+        driver_no = data.get('driverNo', '').strip()
+        lorry_hire = data.get('lorryHire', 0)
+        remarks = data.get('remarks', '').strip()
 
-            ddm_no = generate_sequential_ddm_number()
-            logger.info(f"Generated DDM number: {ddm_no}")
+        # Validate inputs
+        if not cnotes:
+            logger.error("No CNotes provided in the request.")
+            return JsonResponse({'status': 'error', 'message': 'At least one CNote number is required.'}, status=400)
 
-            # Initialize totals
-            total_packages = 0
-            total_paid_amount = 0
-            total_to_pay_amount = 0
-            total_amount = 0
+        if not isinstance(cnotes, list):
+            logger.error("CNotes must be provided as a list.")
+            return JsonResponse({'status': 'error', 'message': 'CNotes must be a list.'}, status=400)
 
-            # Create DDM Summary
-            for cnote_number in cnotes:
-                cnote = CNotes.objects.get(cnote_number=cnote_number)
-                total_packages += cnote.total_art or 0
-                total_amount += cnote.grand_total or 0
-                if cnote.payment_type == 'paid':
-                    total_paid_amount += cnote.grand_total or 0
-                elif cnote.payment_type == 'due':
-                    total_to_pay_amount += cnote.grand_total or 0
+        if not truck_no:
+            logger.error("Truck number is required.")
+            return JsonResponse({'status': 'error', 'message': 'Truck number is required.'}, status=400)
 
-            ddm_summary = DDMSummary.objects.create(
-                ddm_no=ddm_no,
-                total_cnotes=len(cnotes),
-                total_packages=total_packages,
-                total_paid_amount=total_paid_amount,
-                total_to_pay_amount=total_to_pay_amount,
-                total_amount=total_amount,
-                creation_date=timezone.now(),
-                updated_date=timezone.now(),
+        # Generate DDM number
+        ddm_no = generate_sequential_ddm_number()
+        logger.info(f"Generated DDM number: {ddm_no}")
+
+        # Fetch all CNotes in one query with related dealer and delivery_destination
+        cnote_numbers_set = set(cnotes)  # Remove duplicates
+        cnotes_qs = CNotes.objects.select_related('dealer', 'delivery_destination').filter(
+            cnote_number__in=cnote_numbers_set
+        )
+
+        # Check if all requested CNotes exist
+        found_cnotes = {cnote.cnote_number: cnote for cnote in cnotes_qs}
+        missing_cnotes = cnote_numbers_set - set(found_cnotes.keys())
+        if missing_cnotes:
+            logger.error(f"CNotes not found: {missing_cnotes}")
+            return JsonResponse(
+                {'status': 'error', 'message': f"CNotes not found: {', '.join(missing_cnotes)}"},
+                status=404
+            )
+
+        # Initialize totals for DDM Summary
+        total_packages = 0
+        total_paid_amount = 0
+        total_to_pay_amount = 0
+        total_amount = 0
+
+        # Calculate totals
+        for cnote_number in cnotes:
+            cnote = found_cnotes[cnote_number]
+            total_packages += cnote.total_art or 0
+            total_amount += cnote.grand_total or 0
+            if cnote.payment_type == 'paid':
+                total_paid_amount += cnote.grand_total or 0
+            elif cnote.payment_type == 'due':
+                total_to_pay_amount += cnote.grand_total or 0
+
+        # Create DDM Summary
+        ddm_summary = DDMSummary.objects.create(
+            ddm_no=ddm_no,
+            total_cnotes=len(cnotes),
+            total_packages=total_packages,
+            total_paid_amount=total_paid_amount,
+            total_to_pay_amount=total_to_pay_amount,
+            total_amount=total_amount,
+            creation_date=timezone.now(),
+            updated_date=timezone.now(),
+            truck_no=truck_no,
+            driver_name=driver_name,
+            driver_no=driver_no,
+            lorry_hire=lorry_hire
+        )
+        logger.info(f"Created DDM Summary: {ddm_summary.ddm_id}")
+
+        # Create DDM Details for each CNote (Standard Approach)
+        for cnote_number in cnotes:
+            cnote = found_cnotes[cnote_number]
+            logger.info(
+                f"Processing CNote {cnote_number}, destination: {cnote.delivery_destination}, "
+                f"booking_date: {cnote.created_at.date()}"
+            )
+
+            # Handle None values with fallbacks
+            destination = (
+                cnote.delivery_destination.name
+                if cnote.delivery_destination else 'Unknown'
+            )
+            consignee_name = cnote.consignee_name or ''
+            contact_number = cnote.consignee_mobile or ''
+            payment_type = cnote.payment_type or 'PAID'
+            dealer_name = cnote.dealer.dealer_code if cnote.dealer else 'N/A'
+            transporter_name = cnote.consignor_name or ''
+
+            # Create DDM Detail
+            ddm_detail = DDMDetails.objects.create(
+                ddm=ddm_summary,
+                cnote_booking_date=cnote.created_at.date(),  # Use created_at.date() to avoid NULL
+                cnote_number=cnote.cnote_number,
+                consignee_name=consignee_name,
+                contact_number=contact_number,
+                destination=destination,
+                total_pkt=cnote.total_art or 0,
+                amount=cnote.grand_total or 0,
+                payment_type=payment_type,
+                remark=remarks,
+                dealer_name=dealer_name,
+                transporter_name=transporter_name,
+                status='due delivered',
                 truck_no=truck_no,
                 driver_name=driver_name,
                 driver_no=driver_no,
                 lorry_hire=lorry_hire
             )
-            logger.info(f"Created DDM Summary: {ddm_summary.ddm_id}")
+            logger.info(f"Created DDM Detail: {ddm_detail.id}")
 
-            # Create DDM Details for each CNote
-            for cnote_number in cnotes:
-                cnote = CNotes.objects.get(cnote_number=cnote_number)
-                # Add logging here
-                logger.info(f"Processing CNote {cnote_number}, destination: {cnote.delivery_destination}")
-                # Handle None values
-                destination = cnote.delivery_destination or 'Unknown'
-                consignee_name = cnote.consignee_name or ''
-                contact_number = cnote.consignee_mobile or ''
-                payment_type = cnote.payment_type or 'PAID'  # Fallback for payment_type
+            # Update status in CNotes
+            cnote.status = 'due delivered'
+            cnote.save()
 
-                ddm_detail = DDMDetails.objects.create(
+            # Update status in LoadingSheetDetail
+            LoadingSheetDetail.objects.filter(cnote=cnote).update(status='due delivered')
+
+        """
+        # Optional: Bulk Creation Approach for DDM Details (Uncomment to use)
+        ddm_details_list = []
+        for cnote_number in cnotes:
+            cnote = found_cnotes[cnote_number]
+            logger.info(
+                f"Processing CNote {cnote_number}, destination: {cnote.delivery_destination}, "
+                f"booking_date: {cnote.created_at.date()}"
+            )
+
+            destination = (
+                cnote.delivery_destination.name
+                if cnote.delivery_destination else 'Unknown'
+            )
+            consignee_name = cnote.consignee_name or ''
+            contact_number = cnote.consignee_mobile or ''
+            payment_type = cnote.payment_type or 'PAID'
+            dealer_name = cnote.dealer.dealer_code if cnote.dealer else 'N/A'
+            transporter_name = cnote.consignor_name or ''
+
+            ddm_details_list.append(
+                DDMDetails(
                     ddm=ddm_summary,
-                    cnote_booking_date=cnote.manual_date,
+                    cnote_booking_date=cnote.created_at.date(),
                     cnote_number=cnote.cnote_number,
                     consignee_name=consignee_name,
                     contact_number=contact_number,
-                    destination=destination,  # Use fallback if None
+                    destination=destination,
                     total_pkt=cnote.total_art or 0,
                     amount=cnote.grand_total or 0,
                     payment_type=payment_type,
                     remark=remarks,
-                    dealer_name=cnote.dealer.dealer_code if cnote.dealer else 'N/A',
-                    transporter_name=cnote.consignor_name or '',
+                    dealer_name=dealer_name,
+                    transporter_name=transporter_name,
                     status='due delivered',
                     truck_no=truck_no,
                     driver_name=driver_name,
                     driver_no=driver_no,
                     lorry_hire=lorry_hire
                 )
-                logger.info(f"Created DDM Detail: {ddm_detail.id}")
+            )
 
-                # Update status in CNotes
-                cnote.status = 'due delivered'
-                cnote.save()
+        # Bulk create DDM Details
+        if ddm_details_list:
+            created_ddm_details = DDMDetails.objects.bulk_create(ddm_details_list)
+            logger.info(f"Created {len(created_ddm_details)} DDM Details in bulk.")
 
-                # Update status in LoadingSheetDetail
-                LoadingSheetDetail.objects.filter(cnote=cnote).update(status='due delivered')
+        # Update statuses after bulk creation
+        for cnote_number in cnotes:
+            cnote = found_cnotes[cnote_number]
+            cnote.status = 'due delivered'
+            cnote.save()
+            LoadingSheetDetail.objects.filter(cnote=cnote).update(status='due delivered')
+        """
 
-            return JsonResponse({'status': 'success', 'ddm_no': ddm_no, 'ddm_id': ddm_summary.ddm_id}, status=201)
+        return JsonResponse(
+            {
+                'status': 'success',
+                'ddm_no': ddm_no,
+                'ddm_id': ddm_summary.ddm_id,
+                'message': 'Delivery Memo created successfully.'
+            },
+            status=201
+        )
 
-        except json.JSONDecodeError:
-            logger.error("Invalid JSON format in request body.")
-            return JsonResponse({'status': 'error', 'message': 'Invalid JSON format.'}, status=400)
-        except CNotes.DoesNotExist:
-            logger.error("CNote not found.")
-            return JsonResponse({'status': 'error', 'message': 'CNote not found.'}, status=404)
-        except Exception as e:
-            logger.error(f"Error processing request: {str(e)}")
-            return JsonResponse({'status': 'error', 'message': f'Internal Server Error: {str(e)}'}, status=500)
+    except json.JSONDecodeError as e:
+        logger.error(f"Invalid JSON format in request body: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON format.'}, status=400)
 
+    except ValueError as e:
+        logger.error(f"Value error in request processing: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': f'Invalid data: {str(e)}'}, status=400)
+
+    except Exception as e:
+        logger.error(f"Unexpected error in create_delivery_memo: {str(e)}", exc_info=True)
+        return JsonResponse(
+            {'status': 'error', 'message': 'Internal Server Error. Please contact support.'},
+            status=500
+        )
 @csrf_exempt
 def save_ddm_pdf(request):
     if request.method == 'POST':
