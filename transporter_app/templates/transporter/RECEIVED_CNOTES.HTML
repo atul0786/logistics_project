@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LoadTrack Pro - Loading Sheet Details</title>
+    <title>Receive Sheet Details</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
@@ -320,15 +320,15 @@
     <header class="header">
         <div class="header-content">
             <div class="logo-section">
-                <i class="fas fa-truck fa-2x"></i>
-                <h1>LoadTrack Pro</h1>
+                
+                <h1>Good Way Express</h1>
             </div>
         </div>
     </header>
 
     <nav class="nav">
         <div class="nav-content">
-            <a href="#" class="nav-item active">
+            <!--<a href="#" class="nav-item active">
                 <i class="fas fa-home"></i>
                 Home
             </a>
@@ -351,7 +351,7 @@
             <a href="#" id="logoutBtn" class="nav-item">
                 <i class="fas fa-sign-out-alt"></i>
                 Logout
-            </a>
+            </a> -->
         </div>
     </nav>
 
@@ -399,14 +399,10 @@
                 <div class="grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem;">
                     <textarea id="remarks" class="form-control" placeholder="Enter remarks..." rows="3"></textarea>
                     <select id="godownSelect" class="form-control">
-                        <option>Select Godown</option>
-                        <option>Godown 1</option>
-                        <option>Godown 2</option>
+                        <option>{{ user.username }} Godown</option>
                     </select>
                     <select id="userSelect" class="form-control">
-                        <option>Select User</option>
-                        <option>User 1</option>
-                        <option>User 2</option>
+                        <option>User: {{ user.username }}</option>
                     </select>
                 </div>
                 <div class="action-buttons">
@@ -414,10 +410,7 @@
                         <i class="fas fa-check-circle"></i>
                         Receive
                     </button>
-                    <button class="btn btn-info" id="printBtn">
-                        <i class="fas fa-print"></i>
-                        Print All
-                    </button>
+                    
                     <button class="btn btn-danger" id="closeBtn">
                         <i class="fas fa-times-circle"></i>
                         Close
