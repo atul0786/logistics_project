@@ -128,20 +128,52 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost,http://127.0.0.1').split(',')
 CORS_ALLOW_CREDENTIALS = True
 
-# Logging
+# Ensure logs directory exists
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(exist_ok=True)  # Create logs directory if it doesn't exist
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'handlers': {
-        'console': {'class': 'logging.StreamHandler'},
-        'file': {'class': 'logging.FileHandler', 'filename': BASE_DIR / 'django.log'},
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
     },
-    'root': {'handlers': ['console', 'file'], 'level': 'INFO'},
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+            'level': 'DEBUG',
+        },
+        'file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'app.log',
+            'maxBytes': 1024 * 1024 * 5,  # 5 MB per file
+            'backupCount': 5,  # Keep 5 backup files
+            'formatter': 'verbose',
+            'level': 'DEBUG',
+        },
+    },
     'loggers': {
-        'django': {'handlers': ['console', 'file'], 'level': 'INFO', 'propagate': False},
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'dealer_app': {  # Add your app-specific logger
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'transporter_app': {  # Add your app-specific logger
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     },
 }
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
