@@ -128,9 +128,9 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost,http://127.0.0.1').split(',')
 CORS_ALLOW_CREDENTIALS = True
 
-# Ensure logs directory exists
+# Create logs directory
 LOGS_DIR = BASE_DIR / 'logs'
-LOGS_DIR.mkdir(exist_ok=True)  # Create logs directory if it doesn't exist
+LOGS_DIR.mkdir(exist_ok=True)  # Automatically create logs folder if it doesn't exist
 
 LOGGING = {
     'version': 1,
@@ -162,12 +162,12 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
-        'dealer_app': {  # Add your app-specific logger
+        'dealer_app': {
             'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': False,
         },
-        'transporter_app': {  # Add your app-specific logger
+        'transporter_app': {
             'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': False,
