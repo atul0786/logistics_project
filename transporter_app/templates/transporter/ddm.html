@@ -1059,22 +1059,66 @@
         showNotification(`${selectedCheckboxes.length} CNotes removed successfully`, 'success');
     }
 
+    // ✅ Also update the showDeliveryModal function to check for selected checkboxes
     function showDeliveryModal() {
-        if (selectedCNotes.length === 0) {
+        const checkedCheckboxes = selectedCNotesBody.querySelectorAll('input[type="checkbox"]:checked');
+        
+        if (checkedCheckboxes.length === 0) {
             showNotification('Please select at least one CNote for delivery', 'error');
             return;
         }
         
-        // Update summary before showing modal
-        updateDeliverySummary();
+        // Update summary for only checked items
+        updateDeliverySummaryForChecked();
         
         deliveryModal.style.display = 'block';
     }
+
+    // ✅ New function to update summary for only checked items
+    function updateDeliverySummaryForChecked() {
+        const checkedCheckboxes = selectedCNotesBody.querySelectorAll('input[type="checkbox"]:checked');
+        
+        let totalCNotes = checkedCheckboxes.length;
+        let totalPackages = 0;
+        let totalWeight = 0;
+        let totalValue = 0;
+        
+        checkedCheckboxes.forEach(checkbox => {
+            const row = checkbox.closest('tr');
+            const packages = parseInt(row.cells[4].textContent) || 0;
+            const weight = parseFloat(row.cells[5].textContent) || 0;
+            const value = parseFloat(row.cells[6].textContent.replace(/,/g, '')) || 0;
+            
+            totalPackages += packages;
+            totalWeight += weight;
+            totalValue += value;
+        });
+        
+        document.getElementById('summary-total-cnotes').textContent = totalCNotes;
+        document.getElementById('summary-total-packages').textContent = totalPackages;
+        document.getElementById('summary-total-weight').textContent = totalWeight.toFixed(2);
+        document.getElementById('summary-total-value').textContent = totalValue.toFixed(2);
+    }
+
+
 
     function confirmDelivery() {
         if (!validateDeliveryForm()) {
             return;
         }
+
+        // ✅ FIX: Get only the checked CNotes from the selected table
+        const checkedCheckboxes = selectedCNotesBody.querySelectorAll('input[type="checkbox"]:checked');
+        
+        if (checkedCheckboxes.length === 0) {
+            showNotification('Please select at least one CNote for delivery', 'error');
+            return;
+        }
+
+        // Extract LR numbers from checked checkboxes
+        const checkedCNotes = Array.from(checkedCheckboxes).map(checkbox => 
+            checkbox.getAttribute('data-lr')
+        );
 
         const truckNo = document.getElementById('truckNo').value;
         const driverName = document.getElementById('driverName').value;
@@ -1083,7 +1127,7 @@
         const remarks = document.getElementById('remarks').value;
 
         const deliveryData = {
-            cnotes: selectedCNotes.map(cnote => cnote.lrNo),
+            cnotes: checkedCNotes, // ✅ Only send checked CNotes
             truckNo,
             driverName,
             driverNo,
@@ -1115,8 +1159,8 @@
                 document.getElementById('successMessage').textContent = `Door Delivery Memo ${data.ddm_no} created successfully!`;
                 successModal.style.display = 'block';
                 
-                // Clear selected CNotes after successful creation
-                selectedCNotes = [];
+                // ✅ Remove only the processed CNotes from selectedCNotes array
+                selectedCNotes = selectedCNotes.filter(cnote => !checkedCNotes.includes(cnote.lrNo));
                 updateSelectedCNotesTable();
                 
                 // Hide delivery modal
@@ -1133,6 +1177,7 @@
             hideLoading();
         });
     }
+
 
     function validateDeliveryForm() {
         const truckNo = document.getElementById('truckNo');
