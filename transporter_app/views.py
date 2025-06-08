@@ -1145,7 +1145,6 @@ def search_cnotes_for_ddm(request):
 
 
 
-
 logger = logging.getLogger(__name__)
 
 @csrf_exempt
@@ -1246,9 +1245,9 @@ def create_delivery_memo(request):
                 f"booking_date: {cnote.created_at.date()}"
             )
 
-            # Handle None values with fallbacks
+            # Handle None values with fallbacks and use destination_name
             destination = (
-                cnote.delivery_destination.name
+                getattr(cnote.delivery_destination, 'destination_name', 'Unknown')
                 if cnote.delivery_destination else 'Unknown'
             )
             consignee_name = cnote.consignee_name or ''
@@ -1286,8 +1285,8 @@ def create_delivery_memo(request):
             # Update status in LoadingSheetDetail
             LoadingSheetDetail.objects.filter(cnote=cnote).update(status='due delivered')
 
-        """
         # Optional: Bulk Creation Approach for DDM Details (Uncomment to use)
+        """
         ddm_details_list = []
         for cnote_number in cnotes:
             cnote = found_cnotes[cnote_number]
@@ -1296,8 +1295,9 @@ def create_delivery_memo(request):
                 f"booking_date: {cnote.created_at.date()}"
             )
 
+            # Handle None values with fallbacks and use destination_name
             destination = (
-                cnote.delivery_destination.name
+                getattr(cnote.delivery_destination, 'destination_name', 'Unknown')
                 if cnote.delivery_destination else 'Unknown'
             )
             consignee_name = cnote.consignee_name or ''
@@ -1365,6 +1365,7 @@ def create_delivery_memo(request):
             {'status': 'error', 'message': 'Internal Server Error. Please contact support.'},
             status=500
         )
+
 @csrf_exempt
 def save_ddm_pdf(request):
     if request.method == 'POST':
