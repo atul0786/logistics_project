@@ -1808,6 +1808,8 @@ from transporter_app.models import (
     Transporter, State, City, PartyMaster, Pickup, TransporterAppReceive,
     CNote, Bill, BillItem
 )
+from .forms import StateForm, CityForm, PartyMasterForm
+from .serializers import DDMDetailsSerializer, DDMSummarySerializer
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -1835,11 +1837,9 @@ def all_booking_register(request):
 @login_required
 def booking_register_data(request):
     """
-    Fetch booking register data with FIXED model relationships
+    Fetch booking register data with optimized queries and proper error handling
     """
     try:
-        print(f"🔍 DEBUG - booking_register_data called by user: {request.user}")
-        print(f"🔍 DEBUG - Request GET params: {request.GET}")
         logger.info("Starting booking_register_data function")
         
         # Get search parameters
@@ -1857,30 +1857,32 @@ def booking_register_data(request):
             'ddm_number': request.GET.get('ddm_number', '').strip().lower(),
         }
 
-        print(f"🔍 DEBUG - Search params: {search_params}")
+        # Build optimized query using Django ORM instead of raw SQL
+        cnotes_query = CNotes.objects.select_related(
+            'dealer', 'delivery_destination'
+        ).prefetch_related(
+            'articles__art_type',
+            'loading_sheet_details__loading_sheet',
+            'ddm_details__ddm'
+        )
 
-        # FIXED: Simple query without problematic relationships
-        cnotes_query = CNotes.objects.select_related('dealer', 'delivery_destination')
-
-        # Apply basic filters
+        # Apply filters
         cnotes_query = apply_booking_filters(cnotes_query, search_params)
         
-        # Limit results for performance
-        cnotes = cnotes_query.order_by('-created_at')[:100]  # Start with 100 records
+        # Limit results for performance (max 1000 records)
+        cnotes = cnotes_query.order_by('-created_at')[:1000]
         
-        print(f"🔍 DEBUG - Found {cnotes.count()} CNotes")
-        
-        # Process data with simplified approach
+        # Process data
         cnotes_data = []
         for cnote in cnotes:
             try:
-                cnote_data = process_cnote_data_simple(cnote)
+                cnote_data = process_cnote_data(cnote)
                 cnotes_data.append(cnote_data)
             except Exception as e:
-                print(f"❌ Error processing CNotes {cnote.cnote_number}: {str(e)}")
+                logger.warning(f"Error processing CNotes {cnote.cnote_number}: {str(e)}")
                 continue
 
-        print(f"🔍 DEBUG - Processed {len(cnotes_data)} records successfully")
+        logger.info(f"Successfully processed {len(cnotes_data)} records")
         
         # Get transporter info
         transporter_info = get_transporter_info(request.user)
@@ -1892,11 +1894,9 @@ def booking_register_data(request):
             'total_records': len(cnotes_data)
         }
         
-        print(f"🔍 DEBUG - Returning response with {len(cnotes_data)} bookings")
         return JsonResponse(response_data, encoder=CustomJSONEncoder)
         
     except Exception as e:
-        print(f"❌ ERROR in booking_register_data: {str(e)}")
         logger.error(f"Error in booking_register_data: {str(e)}", exc_info=True)
         return JsonResponse({
             'error': 'An error occurred while fetching booking data',
@@ -1926,17 +1926,73 @@ def apply_booking_filters(query, params):
         query = query.filter(
             Q(cnote_number__icontains=params['search']) |
             Q(consignor_name__icontains=params['search']) |
-            Q(consignee_name__icontains=params['search'])
+            Q(consignee_name__icontains=params['search']) |
+            Q(dealer__name__icontains=params['search'])
         )
+    
+    # Dealer filter
+    if params['dealer']:
+        query = query.filter(dealer__name__icontains=params['dealer'])
+    
+    # Amount range filters
+    if params['amount_min']:
+        try:
+            min_amount = float(params['amount_min'])
+            query = query.filter(grand_total__gte=min_amount)
+        except (ValueError, TypeError):
+            logger.warning(f"Invalid amount_min: {params['amount_min']}")
+    
+    if params['amount_max']:
+        try:
+            max_amount = float(params['amount_max'])
+            query = query.filter(grand_total__lte=max_amount)
+        except (ValueError, TypeError):
+            logger.warning(f"Invalid amount_max: {params['amount_max']}")
     
     # CNotes number filter
     if params['cnote_number']:
         query = query.filter(cnote_number__icontains=params['cnote_number'])
     
-    return query
+    # Loading sheet number filter
+    if params['ls_number']:
+        query = query.filter(loading_sheet_details__loading_sheet__ls_number__icontains=params['ls_number'])
+    
+    # DDM number filter
+    if params['ddm_number']:
+        query = query.filter(ddm_details__ddm__ddm_no__icontains=params['ddm_number'])
+    
+    return query.distinct()
 
-def process_cnote_data_simple(cnote):
-    """Simplified CNotes data processing without complex relationships"""
+def process_cnote_data(cnote):
+    """Process individual CNotes data"""
+    
+    # Get articles data
+    articles = cnote.articles.all()
+    art_types = []
+    said_to_contain = []
+    art_amounts = []
+    total_articles = 0
+    
+    for article in articles:
+        art_type_name = article.art_type.art_type_name if article.art_type else 'N/A'
+        art_types.append(art_type_name)
+        
+        contain_info = f"{article.said_to_contain or 'N/A'} ({article.art or 0})"
+        said_to_contain.append(contain_info)
+        
+        art_amounts.append(float(article.art_amount or 0))
+        total_articles += article.art or 0
+    
+    # Get loading sheet info
+    loading_sheet_detail = cnote.loading_sheet_details.first()
+    loading_sheet_number = loading_sheet_detail.loading_sheet.ls_number if loading_sheet_detail else 'N/A'
+    
+    # Get DDM info
+    ddm_detail = cnote.ddm_details.first()
+    ddm_number = ddm_detail.ddm.ddm_no if ddm_detail else 'N/A'
+    
+    # Determine user type
+    user_type = 'Dealer' if cnote.dealer else 'Unknown'
     
     return {
         'id': cnote.id,
@@ -1972,16 +2028,16 @@ def process_cnote_data_simple(cnote):
         'delivery_type': cnote.delivery_type or 'N/A',
         'delivery_method': cnote.delivery_method or 'N/A',
         'status': cnote.status or 'N/A',
-        'total_art': 0,  # Simplified
-        'art_types': ['N/A'],  # Simplified
-        'said_to_contain': ['N/A'],  # Simplified
-        'art_amounts': [0],  # Simplified
+        'total_art': total_articles,
+        'art_types': art_types,
+        'said_to_contain': said_to_contain,
+        'art_amounts': art_amounts,
         'consignor_gst': cnote.consignor_gst or 'N/A',
         'consignee_gst': cnote.consignee_gst or 'N/A',
         'user': cnote.dealer.name if cnote.dealer else 'N/A',
-        'user_type': 'Dealer' if cnote.dealer else 'Unknown',
-        'loading_sheet_number': 'N/A',  # Simplified
-        'ddm_number': 'N/A',  # Simplified
+        'user_type': user_type,
+        'loading_sheet_number': loading_sheet_number,
+        'ddm_number': ddm_number,
     }
 
 def get_transporter_info(user):
@@ -2010,22 +2066,151 @@ def booking_register_view(request):
 
 @login_required
 def download_excel(request):
-    """Download booking register data as Excel file"""
+    """
+    Download booking register data as Excel file with improved performance
+    """
     try:
-        # Simple implementation for now
-        return JsonResponse({'message': 'Excel download feature coming soon'})
+        logger.info("Starting Excel download")
+        
+        # Get the same filtered data as the main view
+        search_params = {
+            'search': request.GET.get('search', '').strip().lower(),
+            'date_from': request.GET.get('date_from'),
+            'date_to': request.GET.get('date_to'),
+            'dealer': request.GET.get('dealer', '').strip().lower(),
+            'from_city': request.GET.get('from_city', '').strip().lower(),
+            'to_city': request.GET.get('to_city', '').strip().lower(),
+            'amount_min': request.GET.get('amount_min'),
+            'amount_max': request.GET.get('amount_max'),
+            'cnote_number': request.GET.get('cnote_number', '').strip().lower(),
+            'ls_number': request.GET.get('ls_number', '').strip().lower(),
+            'ddm_number': request.GET.get('ddm_number', '').strip().lower(),
+        }
+        
+        # Build query
+        cnotes_query = CNotes.objects.select_related(
+            'dealer', 'delivery_destination'
+        ).prefetch_related(
+            'articles__art_type',
+            'loading_sheet_details__loading_sheet',
+            'ddm_details__ddm'
+        )
+        
+        cnotes_query = apply_booking_filters(cnotes_query, search_params)
+        cnotes = cnotes_query.order_by('-created_at')[:5000]  # Limit for Excel export
+        
+        # Process data for Excel
+        excel_data = []
+        for cnote in cnotes:
+            try:
+                cnote_data = process_cnote_data(cnote)
+                # Flatten arrays for Excel
+                cnote_data['art_types'] = ' / '.join(cnote_data['art_types']) if cnote_data['art_types'] else 'N/A'
+                cnote_data['said_to_contain'] = ' / '.join(cnote_data['said_to_contain']) if cnote_data['said_to_contain'] else 'N/A'
+                cnote_data['art_amounts'] = ' / '.join([str(amt) for amt in cnote_data['art_amounts']]) if cnote_data['art_amounts'] else 'N/A'
+                excel_data.append(cnote_data)
+            except Exception as e:
+                logger.warning(f"Error processing CNotes {cnote.cnote_number} for Excel: {str(e)}")
+                continue
+        
+        if not excel_data:
+            return JsonResponse({'error': 'No data available for export'}, status=404)
+        
+        # Create DataFrame
+        df = pd.DataFrame(excel_data)
+        
+        # Convert datetime columns
+        datetime_columns = ['created_at']
+        for col in datetime_columns:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], errors='coerce')
+        
+        # Create HTTP response
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="booking_register_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
+        
+        # Write to Excel
+        with pd.ExcelWriter(response, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Booking Register')
+            
+            # Auto-adjust column widths
+            worksheet = writer.sheets['Booking Register']
+            for column in worksheet.columns:
+                max_length = 0
+                column_letter = column[0].column_letter
+                for cell in column:
+                    try:
+                        if len(str(cell.value)) > max_length:
+                            max_length = len(str(cell.value))
+                    except:
+                        pass
+                adjusted_width = min(max_length + 2, 50)
+                worksheet.column_dimensions[column_letter].width = adjusted_width
+        
+        logger.info(f"Excel file generated successfully with {len(excel_data)} records")
+        return response
+        
     except Exception as e:
-        logger.error(f"Error in download_excel: {str(e)}")
-        return JsonResponse({'error': 'Error generating Excel file'}, status=500)
+        logger.error(f"Error in download_excel: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'error': 'Error generating Excel file',
+            'message': str(e)
+        }, status=500)
 
-# Add any other missing functions that URLs reference
-def home(request):
-    """Home view"""
-    return render(request, 'transporter/home.html')
+# Additional utility functions for better code organization
 
-def manage_location(request):
-    """Manage location view"""
-    return render(request, 'transporter/manage_location.html')
+def validate_date_range(date_from, date_to):
+    """Validate date range parameters"""
+    try:
+        if date_from:
+            from_date = datetime.strptime(date_from, '%Y-%m-%d').date()
+        if date_to:
+            to_date = datetime.strptime(date_to, '%Y-%m-%d').date()
+        
+        if date_from and date_to and from_date > to_date:
+            raise ValueError("From date cannot be greater than to date")
+        
+        return True
+    except ValueError as e:
+        logger.warning(f"Date validation error: {str(e)}")
+        return False
+
+def get_booking_summary(cnotes_data):
+    """Calculate booking summary statistics"""
+    try:
+        total_records = len(cnotes_data)
+        total_amount = sum(item.get('grand_total', 0) for item in cnotes_data)
+        
+        paid_amount = sum(
+            item.get('grand_total', 0) 
+            for item in cnotes_data 
+            if item.get('payment_type', '').upper() == 'PAID'
+        )
+        
+        to_pay_amount = sum(
+            item.get('grand_total', 0) 
+            for item in cnotes_data 
+            if item.get('payment_type', '').upper() == 'TO PAY'
+        )
+        
+        return {
+            'total_records': total_records,
+            'total_amount': total_amount,
+            'paid_amount': paid_amount,
+            'to_pay_amount': to_pay_amount,
+            'average_amount': total_amount / total_records if total_records > 0 else 0
+        }
+    except Exception as e:
+        logger.error(f"Error calculating booking summary: {str(e)}")
+        return {
+            'total_records': 0,
+            'total_amount': 0,
+            'paid_amount': 0,
+            'to_pay_amount': 0,
+            'average_amount': 0
+        }
 
 
 from django.db import IntegrityError
