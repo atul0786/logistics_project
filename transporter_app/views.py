@@ -1840,6 +1840,13 @@ def booking_register_data(request):
     Fetch booking register data with optimized queries and proper error handling
     """
     try:
+        # Debug information
+        print(f"🔍 DEBUG - User: {request.user}")
+        print(f"🔍 DEBUG - Is authenticated: {request.user.is_authenticated}")
+        print(f"🔍 DEBUG - User type: {getattr(request.user, 'is_transporter', 'No attribute')}")
+        print(f"🔍 DEBUG - Request method: {request.method}")
+        print(f"🔍 DEBUG - Request path: {request.path}")
+        
         logger.info("Starting booking_register_data function")
         
         # Get search parameters
