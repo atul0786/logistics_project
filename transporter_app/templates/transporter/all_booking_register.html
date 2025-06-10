@@ -3,17 +3,19 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>All Booking Register Report</title>
+    <title>All Booking Register Report - Enhanced</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #3498db;
             --secondary-color: #2ecc71;
             --accent-color: #e74c3c;
+            --warning-color: #f39c12;
             --background-color: #ecf0f1;
             --text-color: #34495e;
             --border-color: #bdc3c7;
-            --header-height: 60px;
+            --header-height: 70px;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
         * {
@@ -30,7 +32,7 @@
         }
 
         header {
-            background-color: #87CEEB;
+            background: linear-gradient(135deg, #87CEEB 0%, #4682B4 100%);
             color: #333;
             padding: 1rem;
             position: fixed;
@@ -38,7 +40,7 @@
             left: 0;
             right: 0;
             z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow);
         }
 
         .container {
@@ -51,11 +53,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         .transporter-info {
             display: flex;
             align-items: center;
+            gap: 1rem;
         }
 
         .transporter-details {
@@ -64,41 +69,69 @@
         }
 
         .transporter-name {
-            font-size: 1.2em;
+            font-size: 1.3em;
             font-weight: bold;
+            color: #2c3e50;
         }
 
         .transporter-city {
             font-size: 0.9em;
-            color: #666;
+            color: #7f8c8d;
         }
 
         .search-container {
             display: flex;
             align-items: center;
+            gap: 0.5rem;
         }
 
         #lr-search {
-            padding: 0.5rem;
-            border: none;
-            border-radius: 4px 0 0 4px;
-            width: 200px;
+            padding: 0.6rem;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            width: 250px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        #lr-search:focus {
+            outline: none;
+            border-color: var(--primary-color);
         }
 
         .btn {
-            padding: 0.5rem 1rem;
+            padding: 0.6rem 1.2rem;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
         .btn-primary {
-            background-color: var(--secondary-color);
+            background-color: var(--primary-color);
             color: white;
         }
 
         .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-success {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-success:hover {
             background-color: #27ae60;
         }
 
@@ -111,25 +144,56 @@
             background-color: #c0392b;
         }
 
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+
         main {
-            margin-top: calc(var(--header-height) + 40px);
+            margin-top: calc(var(--header-height) + 20px);
             padding: 20px;
         }
         
         .filter-section {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
-            padding-top: 100px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .filter-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .filter-toggle {
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            color: var(--primary-color);
         }
 
         .filter-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
         }
 
         .filter-item {
@@ -138,16 +202,24 @@
         }
 
         .filter-item label {
-            margin-bottom: 5px;
-            font-weight: bold;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-color);
         }
 
         .filter-item select,
         .filter-item input {
-            padding: 8px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
             font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .filter-item select:focus,
+        .filter-item input:focus {
+            outline: none;
+            border-color: var(--primary-color);
         }
 
         .button-group {
@@ -155,13 +227,73 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .stats-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: 5px;
         }
 
         .search-results-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .table-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 2px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .table-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .table-wrapper {
             overflow-x: auto;
-            max-height: 500px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            max-height: 600px;
         }
 
         #booking-table {
@@ -172,18 +304,21 @@
 
         #booking-table th,
         #booking-table td {
-            padding: 12px;
+            padding: 12px 8px;
             text-align: left;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid #dee2e6;
+            font-size: 13px;
         }
 
         #booking-table th {
             background-color: #f8f9fa;
-            font-weight: bold;
+            font-weight: 600;
             position: sticky;
             top: 0;
             z-index: 10;
             cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
         }
 
         #booking-table th:hover {
@@ -194,25 +329,44 @@
             background-color: #f1f3f5;
         }
 
+        #booking-table tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
         .pagination {
             display: flex;
             justify-content: center;
-            margin-top: 20px;
+            align-items: center;
+            margin: 20px 0;
+            gap: 10px;
         }
 
         .pagination button {
-            margin: 0 5px;
-            padding: 5px 10px;
+            padding: 8px 12px;
+            background-color: white;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .pagination button:hover:not(:disabled) {
             background-color: var(--primary-color);
             color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 4px;
         }
 
         .pagination button:disabled {
-            background-color: #bdc3c7;
+            background-color: #f8f9fa;
+            color: #6c757d;
+            border-color: #dee2e6;
             cursor: not-allowed;
+        }
+
+        .pagination button.active {
+            background-color: var(--primary-color);
+            color: white;
         }
 
         .loading {
@@ -221,21 +375,27 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: rgba(255, 255, 255, 0.8);
+            background-color: rgba(255, 255, 255, 0.9);
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            z-index: 2000;
         }
 
-        .loading::after {
-            content: "";
-            width: 50px;
-            height: 50px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid var(--primary-color);
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid var(--primary-color);
             border-radius: 50%;
             animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            font-size: 1.1em;
+            color: var(--text-color);
         }
 
         @keyframes spin {
@@ -245,20 +405,24 @@
 
         .summary-table {
             width: 100%;
-            margin-top: 20px;
+            margin-top: 25px;
             border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
         }
 
         .summary-table th,
         .summary-table td {
-            padding: 10px;
-            border: 1px solid var(--border-color);
+            padding: 15px;
+            border: 1px solid #dee2e6;
             text-align: right;
         }
 
         .summary-table th {
             background-color: #f8f9fa;
-            font-weight: bold;
+            font-weight: 600;
         }
 
         .summary-row {
@@ -266,7 +430,68 @@
             background-color: #e9ecef;
         }
 
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        /* Sort indicators */
+        th[data-sort]::after {
+            content: '\f0dc';
+            font-family: 'Font Awesome 6 Free';
+            margin-left: 8px;
+            opacity: 0.5;
+            font-weight: 900;
+        }
+
+        th[data-sort].sort-asc::after {
+            content: '\f0de';
+            opacity: 1;
+        }
+
+        th[data-sort].sort-desc::after {
+            content: '\f0dd';
+            opacity: 1;
+        }
+
+        /* Links in table */
+        #booking-table td a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        #booking-table td a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive design */
         @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
             .filter-grid {
                 grid-template-columns: 1fr;
             }
@@ -276,34 +501,26 @@
                 align-items: stretch;
             }
 
-            .button-group .btn {
-                margin-bottom: 10px;
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .table-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            #booking-table th,
+            #booking-table td {
+                padding: 8px 4px;
+                font-size: 12px;
             }
         }
 
-        /* New CSS for sort indicators */
-        th[data-sort]::after {
-            content: '\25B2';
-            margin-left: 5px;
-            opacity: 0.5;
-        }
-
-        th[data-sort].sort-desc::after {
-            content: '\25BC';
-        }
-
-        th[data-sort].sort-asc::after {
-            opacity: 1;
-        }
-
-        /* Added CSS for links in table cells */
-        #booking-table td a {
-            color: #3498db;
-            text-decoration: none;
-        }
-
-        #booking-table td a:hover {
-            text-decoration: underline;
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -313,130 +530,186 @@
             <div class="header-content">
                 <div class="transporter-info">
                     <div class="transporter-details">
-                        <span class="transporter-name" id="transporter-name"></span>
-                        <span class="transporter-city" id="transporter-city"></span>
+                        <span class="transporter-name" id="transporter-name">Loading...</span>
+                        <span class="transporter-city" id="transporter-city">Loading...</span>
                     </div>
                 </div>
-                <h1>All Booking Register Report</h1>
+                <h1><i class="fas fa-chart-line"></i> All Booking Register Report</h1>
                 <div class="search-container">
-                    <input type="text" id="lr-search" placeholder="Search CNote Number">
-                    <button class="btn btn-primary" id="searchButton">Search</button>
+                    <input type="text" id="lr-search" placeholder="Quick search CNotes...">
+                    <button class="btn btn-primary" id="searchButton">
+                        <i class="fas fa-search"></i> Search
+                    </button>
                 </div>
             </div>
         </div>
     </header>
 
     <main class="container">
+        <!-- Statistics Section -->
+        <div class="stats-container" id="stats-container" style="display: none;">
+            <div class="stats-grid" id="stats-grid">
+                <!-- Stats will be populated dynamically -->
+            </div>
+        </div>
+
+        <!-- Filter Section -->
         <div class="filter-section" id="filter-section">
-            <div class="filter-grid">
-                <div class="filter-item">
-                    <label for="date-from">From Date</label>
-                    <input type="date" id="date-from" />
-                </div>
-                <div class="filter-item">
-                    <label for="date-to">To Date</label>
-                    <input type="date" id="date-to" />
-                </div>
-                <div class="filter-item">
-                    <label for="dealer">Dealer</label>
-                    <select id="dealer">
-                        <option value="">All</option>
-                    </select>
-                </div>
-                <div class="filter-item">
-                    <label for="from-city">From City</label>
-                    <select id="from-city">
-                        <option value="">All</option>
-                    </select>
-                </div>
-                <div class="filter-item">
-                    <label for="to-city">To City</label>
-                    <select id="to-city">
-                        <option value="">All</option>
-                    </select>
-                </div>               
-                <div class="filter-item">
-                    <label for="amount-min">Min Amount</label>
-                    <input type="number" id="amount-min" min="0" />
-                </div>
-                <div class="filter-item">
-                    <label for="amount-max">Max Amount</label>
-                    <input type="number" id="amount-max" min="0" />
-                </div>
-                <div class="filter-item">
-                    <label for="cnote-number">CNote Number</label>
-                    <input type="text" id="cnote-number" />
-                </div>
-                <div class="filter-item">
-                    <label for="ls-number">LS Number</label>
-                    <input type="text" id="ls-number" />
-                </div>
-                <div class="filter-item">
-                    <label for="ddm-number">DDM Number</label>
-                    <input type="text" id="ddm-number" />
-                </div>
+            <div class="filter-header">
+                <h2 class="filter-title"><i class="fas fa-filter"></i> Advanced Filters</h2>
+                <button class="filter-toggle" id="filter-toggle">
+                    <i class="fas fa-chevron-up"></i>
+                </button>
             </div>
-            <div class="button-group">
-                <button class="btn btn-primary" id="search-btn">Search</button>
-                <button class="btn btn-primary" id="download-btn">Download Excel</button>
-                <button class="btn btn-danger" id="clear-btn">Clear Filters</button>
+            <div class="filter-content" id="filter-content">
+                <div class="filter-grid">
+                    <div class="filter-item">
+                        <label for="date-from"><i class="fas fa-calendar"></i> From Date</label>
+                        <input type="date" id="date-from" />
+                    </div>
+                    <div class="filter-item">
+                        <label for="date-to"><i class="fas fa-calendar"></i> To Date</label>
+                        <input type="date" id="date-to" />
+                    </div>
+                    <div class="filter-item">
+                        <label for="dealer"><i class="fas fa-user-tie"></i> Dealer</label>
+                        <select id="dealer">
+                            <option value="">All Dealers</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label for="from-city"><i class="fas fa-map-marker-alt"></i> From City</label>
+                        <select id="from-city">
+                            <option value="">All Cities</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label for="to-city"><i class="fas fa-map-marker-alt"></i> To City</label>
+                        <select id="to-city">
+                            <option value="">All Cities</option>
+                        </select>
+                    </div>               
+                    <div class="filter-item">
+                        <label for="amount-min"><i class="fas fa-rupee-sign"></i> Min Amount</label>
+                        <input type="number" id="amount-min" min="0" step="0.01" />
+                    </div>
+                    <div class="filter-item">
+                        <label for="amount-max"><i class="fas fa-rupee-sign"></i> Max Amount</label>
+                        <input type="number" id="amount-max" min="0" step="0.01" />
+                    </div>
+                    <div class="filter-item">
+                        <label for="cnote-number"><i class="fas fa-receipt"></i> CNotes Number</label>
+                        <input type="text" id="cnote-number" placeholder="Enter CNotes number..." />
+                    </div>
+                    <div class="filter-item">
+                        <label for="ls-number"><i class="fas fa-list"></i> LS Number</label>
+                        <input type="text" id="ls-number" placeholder="Enter LS number..." />
+                    </div>
+                    <div class="filter-item">
+                        <label for="ddm-number"><i class="fas fa-truck"></i> DDM Number</label>
+                        <input type="text" id="ddm-number" placeholder="Enter DDM number..." />
+                    </div>
+                </div>
+                <div class="button-group">
+                    <div>
+                        <button class="btn btn-primary" id="search-btn">
+                            <i class="fas fa-search"></i> Apply Filters
+                        </button>
+                        <button class="btn btn-success" id="download-btn">
+                            <i class="fas fa-download"></i> Download Excel
+                        </button>
+                    </div>
+                    <div>
+                        <button class="btn btn-warning" id="reset-btn">
+                            <i class="fas fa-undo"></i> Reset Filters
+                        </button>
+                        <button class="btn btn-danger" id="clear-btn">
+                            <i class="fas fa-times"></i> Clear All
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <!-- Results Section -->
         <div class="search-results-container">
-            <table id="booking-table">
-                <thead>
-                    <tr>
-                        <th data-sort="id">Sr. No</th>
-                        <th data-sort="cnote_number">CNote Number</th>
-                        <th data-sort="booking_type">Booking Type</th>
-                        <th data-sort="delivery_destination">Delivery Destination</th>
-                        <th data-sort="consignor_name">Consignor Name</th>
-                        <th data-sort="consignee_name">Consignee Name</th>
-                        <th data-sort="payment_type">Payment Type</th>
-                        <th data-sort="grand_total">Grand Total</th>
-                        <th data-sort="created_at">Created At</th>
-                        <th data-sort="eway_bill_number">Eway Bill Number</th>
-                        <th data-sort="actual_weight">Actual Weight</th>
-                        <th data-sort="charged_weight">Charged Weight</th>
-                        <th data-sort="weight_rate">Weight Rate</th>
-                        <th data-sort="weight_amount">Weight Amount</th>
-                        <th data-sort="fix_amount">Fix Amount</th>
-                        <th data-sort="invoice_number">Invoice Number</th>
-                        <th data-sort="declared_value">Declared Value</th>
-                        <th data-sort="risk_type">Risk Type</th>
-                        <th data-sort="pod_required">POD Required</th>
-                        <th data-sort="freight">Freight</th>
-                        <th data-sort="docket_charge">Docket Charge</th>
-                        <th data-sort="door_delivery_charge">Door Delivery Charge</th>
-                        <th data-sort="handling_charge">Handling Charge</th>
-                        <th data-sort="pickup_charge">Pickup Charge</th>
-                        <th data-sort="transhipment_charge">Transhipment Charge</th>
-                        <th data-sort="insurance">Insurance</th>
-                        <th data-sort="fuel_surcharge">Fuel Surcharge</th>
-                        <th data-sort="commission">Commission</th>
-                        <th data-sort="other_charge">Other Charge</th>
-                        <th data-sort="carrier_risk">Carrier Risk</th>
-                        <th data-sort="delivery_type">Delivery Type</th>
-                        <th data-sort="delivery_method">Delivery Method</th>
-                        <th data-sort="status">Status</th>
-                        <th data-sort="total_art">Total Article</th>
-                        <th data-sort="art_types">Art Types</th>
-                        <th data-sort="said_to_contain">Said to Contain</th>
-                        <th data-sort="art_amounts">Art Amounts</th>
-                        <th data-sort="consignor_gst">Consignor GST</th>
-                        <th data-sort="consignee_gst">Consignee GST</th>
-                        <th data-sort="user">User</th>
-                        <th data-sort="user_type">User Type</th>
-                        <th data-sort="loading_sheet_number">LS Number</th>
-                        <th data-sort="ddm_number">DDM Number</th>
-                    </tr>
-                </thead>
-                <tbody id="booking-data">
-                    <!-- Data will be populated dynamically -->
-                </tbody>
-            </table>
+            <div class="table-header">
+                <div class="table-title">
+                    <i class="fas fa-table"></i> Booking Register Data
+                    <span id="record-count" class="badge"></span>
+                </div>
+                <div class="table-controls">
+                    <select id="page-size">
+                        <option value="20">20 per page</option>
+                        <option value="50">50 per page</option>
+                        <option value="100">100 per page</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="booking-table">
+                    <thead>
+                        <tr>
+                            <th data-sort="id">Sr. No</th>
+                            <th data-sort="cnote_number">CNotes Number</th>
+                            <th data-sort="booking_type">Booking Type</th>
+                            <th data-sort="delivery_destination">Delivery Destination</th>
+                            <th data-sort="consignor_name">Consignor Name</th>
+                            <th data-sort="consignee_name">Consignee Name</th>
+                            <th data-sort="payment_type">Payment Type</th>
+                            <th data-sort="grand_total">Grand Total</th>
+                            <th data-sort="created_at">Created At</th>
+                            <th data-sort="eway_bill_number">Eway Bill Number</th>
+                            <th data-sort="actual_weight">Actual Weight</th>
+                            <th data-sort="charged_weight">Charged Weight</th>
+                            <th data-sort="weight_rate">Weight Rate</th>
+                            <th data-sort="weight_amount">Weight Amount</th>
+                            <th data-sort="fix_amount">Fix Amount</th>
+                            <th data-sort="invoice_number">Invoice Number</th>
+                            <th data-sort="declared_value">Declared Value</th>
+                            <th data-sort="risk_type">Risk Type</th>
+                            <th data-sort="pod_required">POD Required</th>
+                            <th data-sort="freight">Freight</th>
+                            <th data-sort="docket_charge">Docket Charge</th>
+                            <th data-sort="door_delivery_charge">Door Delivery Charge</th>
+                            <th data-sort="handling_charge">Handling Charge</th>
+                            <th data-sort="pickup_charge">Pickup Charge</th>
+                            <th data-sort="transhipment_charge">Transhipment Charge</th>
+                            <th data-sort="insurance">Insurance</th>
+                            <th data-sort="fuel_surcharge">Fuel Surcharge</th>
+                            <th data-sort="commission">Commission</th>
+                            <th data-sort="other_charge">Other Charge</th>
+                            <th data-sort="carrier_risk">Carrier Risk</th>
+                            <th data-sort="delivery_type">Delivery Type</th>
+                            <th data-sort="delivery_method">Delivery Method</th>
+                            <th data-sort="status">Status</th>
+                            <th data-sort="total_art">Total Article</th>
+                            <th data-sort="art_types">Art Types</th>
+                            <th data-sort="said_to_contain">Said to Contain</th>
+                            <th data-sort="art_amounts">Art Amounts</th>
+                            <th data-sort="consignor_gst">Consignor GST</th>
+                            <th data-sort="consignee_gst">Consignee GST</th>
+                            <th data-sort="user">User</th>
+                            <th data-sort="user_type">User Type</th>
+                            <th data-sort="loading_sheet_number">LS Number</th>
+                            <th data-sort="ddm_number">DDM Number</th>
+                        </tr>
+                    </thead>
+                    <tbody id="booking-data">
+                        <tr>
+                            <td colspan="43" style="text-align: center; padding: 40px;">
+                                <i class="fas fa-search fa-2x" style="color: #ccc; margin-bottom: 10px;"></i>
+                                <br>Click "Apply Filters" to load booking data
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
+
         <div class="pagination" id="pagination"></div>
+
+        <!-- Summary Table -->
         <table class="summary-table">
             <thead>
                 <tr>
@@ -445,339 +718,788 @@
                     <th>To Pay</th>
                     <th>Billing</th>
                     <th>Total Amount</th>
-                    <th>GST</th>
+                    <th>GST (18%)</th>
                     <th>Grand Total</th>
                 </tr>
             </thead>
             <tbody id="summary-data">
-                <!-- Summary data will be populated dynamically -->
+                <tr>
+                    <td colspan="7" style="text-align: center; color: #6c757d;">
+                        Summary will be calculated after loading data
+                    </td>
+                </tr>
             </tbody>
         </table>
     </main>
 
-    <div id="loading" class="loading" style="display: none"></div>
+    <div id="loading" class="loading" style="display: none">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading booking data...</div>
+    </div>
 
     <script>
-        let allBookingData = [];
-        let filteredData = [];
-        let currentPage = 1;
-        const itemsPerPage = 20;
-        let currentSortColumn = '';
-        let currentSortOrder = 'asc';
-    
-        // Fetch data from server
-        function fetchBookingData() {
-            document.getElementById("loading").style.display = "flex";
-            fetch("/transporter/booking_register_data/")
-                .then(response => {
+        // Enhanced JavaScript with better error handling and performance
+        class BookingRegister {
+            constructor() {
+                this.allBookingData = [];
+                this.filteredData = [];
+                this.currentPage = 1;
+                this.itemsPerPage = 20;
+                this.currentSortColumn = '';
+                this.currentSortOrder = 'asc';
+                this.isLoading = false;
+                
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadInitialData();
+            }
+
+            setupEventListeners() {
+                // Filter toggle
+                document.getElementById('filter-toggle').addEventListener('click', this.toggleFilters.bind(this));
+                
+                // Search buttons
+                document.getElementById('search-btn').addEventListener('click', this.applyFilters.bind(this));
+                document.getElementById('searchButton').addEventListener('click', this.quickSearch.bind(this));
+                
+                // Clear buttons
+                document.getElementById('clear-btn').addEventListener('click', this.clearAllFilters.bind(this));
+                document.getElementById('reset-btn').addEventListener('click', this.resetFilters.bind(this));
+                
+                // Download button
+                document.getElementById('download-btn').addEventListener('click', this.downloadExcel.bind(this));
+                
+                // Page size change
+                document.getElementById('page-size').addEventListener('change', this.changePageSize.bind(this));
+                
+                // Sort headers
+                document.querySelectorAll('th[data-sort]').forEach(th => {
+                    th.addEventListener('click', () => this.sortTable(th.dataset.sort));
+                });
+                
+                // Filter inputs with debounce
+                const filterInputs = [
+                    'date-from', 'date-to', 'dealer', 'from-city', 'to-city',
+                    'amount-min', 'amount-max', 'cnote-number', 'ls-number', 'ddm-number'
+                ];
+                
+                filterInputs.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.addEventListener('input', this.debounce(this.applyFilters.bind(this), 500));
+                    }
+                });
+                
+                // Quick search with debounce
+                document.getElementById('lr-search').addEventListener('input', 
+                    this.debounce(this.quickSearch.bind(this), 300));
+            }
+
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            toggleFilters() {
+                const content = document.getElementById('filter-content');
+                const toggle = document.getElementById('filter-toggle');
+                const icon = toggle.querySelector('i');
+                
+                if (content.style.display === 'none') {
+                    content.style.display = 'block';
+                    icon.className = 'fas fa-chevron-up';
+                } else {
+                    content.style.display = 'none';
+                    icon.className = 'fas fa-chevron-down';
+                }
+            }
+
+            showLoading(message = 'Loading booking data...') {
+                if (this.isLoading) return;
+                this.isLoading = true;
+                
+                const loading = document.getElementById('loading');
+                const loadingText = loading.querySelector('.loading-text');
+                loadingText.textContent = message;
+                loading.style.display = 'flex';
+            }
+
+            hideLoading() {
+                this.isLoading = false;
+                document.getElementById('loading').style.display = 'none';
+            }
+
+            showAlert(message, type = 'info') {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type}`;
+                alertDiv.innerHTML = `
+                    <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                    ${message}
+                    <button onclick="this.parentElement.remove()" style="float: right; background: none; border: none; font-size: 1.2em;">&times;</button>
+                `;
+                
+                const main = document.querySelector('main');
+                main.insertBefore(alertDiv, main.firstChild);
+                
+                // Auto remove after 5 seconds
+                setTimeout(() => {
+                    if (alertDiv.parentElement) {
+                        alertDiv.remove();
+                    }
+                }, 5000);
+            }
+
+            async loadInitialData() {
+                // Don't auto-load data, wait for user to apply filters
+                this.populateDefaultFilters();
+            }
+
+            populateDefaultFilters() {
+                // Set default date range (last 30 days)
+                const today = new Date();
+                const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+                
+                document.getElementById('date-from').value = thirtyDaysAgo.toISOString().split('T')[0];
+                document.getElementById('date-to').value = today.toISOString().split('T')[0];
+            }
+
+            async fetchBookingData() {
+                try {
+                    this.showLoading('Fetching booking data...');
+                    
+                    const params = new URLSearchParams();
+                    
+                    // Add all filter parameters
+                    const filters = {
+                        search: document.getElementById('lr-search').value,
+                        date_from: document.getElementById('date-from').value,
+                        date_to: document.getElementById('date-to').value,
+                        dealer: document.getElementById('dealer').value,
+                        from_city: document.getElementById('from-city').value,
+                        to_city: document.getElementById('to-city').value,
+                        amount_min: document.getElementById('amount-min').value,
+                        amount_max: document.getElementById('amount-max').value,
+                        cnote_number: document.getElementById('cnote-number').value,
+                        ls_number: document.getElementById('ls-number').value,
+                        ddm_number: document.getElementById('ddm-number').value
+                    };
+                    
+                    Object.entries(filters).forEach(([key, value]) => {
+                        if (value) params.append(key, value);
+                    });
+                    
+                    const response = await fetch(`/transporter/booking_register_data/?${params}`);
+                    
                     if (!response.ok) {
-                        throw new Error('Network response was not ok');
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
-                    return response.json();
-                })
-                .then(data => {
+                    
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        throw new Error(data.message || data.error);
+                    }
+                    
                     if (!Array.isArray(data.bookings)) {
-                        throw new Error('Invalid data format: bookings is not an array');
+                        throw new Error('Invalid data format received from server');
                     }
-                    allBookingData = data.bookings;
+                    
+                    this.allBookingData = data.bookings;
+                    
+                    // Update transporter info
                     document.getElementById('transporter-name').textContent = data.transporter_name || 'GoodWayExpress';
                     document.getElementById('transporter-city').textContent = data.transporter_city || 'Yavatmal';
-                    populateFilters(allBookingData);
-                    applyFilters();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    document.getElementById("booking-data").innerHTML = `<tr><td colspan="44">Error loading data: ${error.message}</td></tr>`;
-                })
-                .finally(() => {
-                    document.getElementById("loading").style.display = "none";
-                });
-        }
-
-        function populateFilters(data) {
-            const dealer = document.getElementById("dealer");
-            const fromCity = document.getElementById("from-city");
-            const toCity = document.getElementById("to-city");
-
-            const dealers = [...new Set(data.map(item => item.user))];
-            const fromCities = [...new Set(data.map(item => item.delivery_destination.split(' - ')[0]))];
-            const toCities = [...new Set(data.map(item => item.delivery_destination.split(' - ')[1]))];
-
-            populateSelect(dealer, dealers);
-            populateSelect(fromCity, fromCities);
-            populateSelect(toCity, toCities);
-        }
-
-        function populateSelect(select, options) {
-            select.innerHTML = '<option value="">All</option>';
-            options.forEach(option => {
-                const optionElement = document.createElement("option");
-                optionElement.value = option;
-                optionElement.textContent = option;
-                select.appendChild(optionElement);
-            });
-        }
-
-        function applyFilters() {
-            const dateFrom = document.getElementById("date-from").value;
-            const dateTo = document.getElementById("date-to").value;
-            const dealer = document.getElementById("dealer").value.toLowerCase();
-            const fromCity = document.getElementById("from-city").value.toLowerCase();
-            const toCity = document.getElementById("to-city").value.toLowerCase();
-            const amountMin = parseFloat(document.getElementById("amount-min").value) || 0;
-            const amountMax = parseFloat(document.getElementById("amount-max").value) || Infinity;
-            const searchTerm = document.getElementById("lr-search").value.toLowerCase();
-            const cnoteNumber = document.getElementById("cnote-number").value.toLowerCase();
-            const lsNumber = document.getElementById("ls-number").value.toLowerCase();
-            const ddmNumber = document.getElementById("ddm-number").value.toLowerCase();
-
-            filteredData = allBookingData.filter((row) => {
-                const dateMatch = (!dateFrom || new Date(row.created_at) >= new Date(dateFrom)) && (!dateTo || new Date(row.created_at) <= new Date(dateTo));
-                const dealerMatch = !dealer || row.user.toLowerCase().includes(dealer);
-                const fromCityMatch = !fromCity || row.delivery_destination.split(' - ')[0].toLowerCase().includes(fromCity);
-                const toCityMatch = !toCity || row.delivery_destination.split(' - ')[1].toLowerCase().includes(toCity);
-                const amountMatch = row.grand_total >= amountMin && row.grand_total <= amountMax;
-                const searchMatch = !searchTerm || 
-                    row.cnote_number.toLowerCase().includes(searchTerm) || 
-                    row.consignor_name.toLowerCase().includes(searchTerm) ||
-                    row.consignee_name.toLowerCase().includes(searchTerm) ||
-                    row.user.toLowerCase().includes(searchTerm) ||
-                    row.user_type.toLowerCase().includes(searchTerm);
-                const cnoteMatch = !cnoteNumber || row.cnote_number.toLowerCase().includes(cnoteNumber);
-                const lsMatch = !lsNumber || (row.loading_sheet_number && row.loading_sheet_number.toString().toLowerCase().includes(lsNumber));
-                const ddmMatch = !ddmNumber || (row.ddm_number && row.ddm_number.toString().toLowerCase().includes(ddmNumber));
-
-                return dateMatch && dealerMatch && fromCityMatch && toCityMatch && amountMatch && searchMatch && cnoteMatch && lsMatch && ddmMatch;
-            });
-
-            currentPage = 1;
-            displayBookingData(currentPage);
-            updateSummary();
-        }
-
-        function displayBookingData(page) {
-            const startIndex = (page - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const pageData = filteredData.slice(startIndex, endIndex);
-
-            if (!Array.isArray(pageData)) {
-                console.error('Invalid pageData:', pageData);
-                return;
+                    
+                    this.populateFilterOptions(this.allBookingData);
+                    this.filteredData = [...this.allBookingData];
+                    this.currentPage = 1;
+                    
+                    this.displayBookingData();
+                    this.updateSummary();
+                    this.updateStats();
+                    
+                    this.showAlert(`Successfully loaded ${this.allBookingData.length} booking records`, 'info');
+                    
+                } catch (error) {
+                    console.error('Error fetching booking data:', error);
+                    this.showAlert(`Error loading data: ${error.message}`, 'error');
+                    
+                    document.getElementById('booking-data').innerHTML = `
+                        <tr>
+                            <td colspan="43" style="text-align: center; padding: 40px; color: #dc3545;">
+                                <i class="fas fa-exclamation-triangle fa-2x" style="margin-bottom: 10px;"></i>
+                                <br>Error loading data: ${error.message}
+                                <br><button class="btn btn-primary" onclick="bookingRegister.fetchBookingData()" style="margin-top: 10px;">
+                                    <i class="fas fa-redo"></i> Retry
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                } finally {
+                    this.hideLoading();
+                }
             }
 
-            const bookingData = document.getElementById("booking-data");
-            bookingData.innerHTML = "";
-            pageData.forEach((row, index) => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td>${startIndex + index + 1}</td>
-                    <td><a href="/transporter/cnotes-search/?cnote=${row.cnote_number}" target="_blank">${row.cnote_number || 'N/A'}</a></td>
-                    <td>${row.booking_type || 'N/A'}</td>
-                    <td>${row.delivery_destination || 'N/A'}</td>
-                    <td>${row.consignor_name || 'N/A'}</td>
-                    <td>${row.consignee_name || 'N/A'}</td>
-                    <td>${row.payment_type || 'N/A'}</td>
-                    <td>${(row.grand_total || 0).toFixed(2)}</td>
-                    <td>${row.created_at ? new Date(row.created_at).toLocaleString() : 'N/A'}</td>
-                    <td>${row.eway_bill_number || 'N/A'}</td>
-                    <td>${(row.actual_weight || 0).toFixed(2)}</td>
-                    <td>${(row.charged_weight || 0).toFixed(2)}</td>
-                    <td>${(row.weight_rate || 0).toFixed(2)}</td>
-                    <td>${(row.weight_amount || 0).toFixed(2)}</td>
-                    <td>${(row.fix_amount || 0).toFixed(2)}</td>
-                    <td>${row.invoice_number || 'N/A'}</td>
-                    <td>${(row.declared_value || 0).toFixed(2)}</td>
-                    <td>${row.risk_type || 'N/A'}</td>
-                    <td>${row.pod_required || 'N/A'}</td>
-                    <td>${(row.freight || 0).toFixed(2)}</td>
-                    <td>${(row.docket_charge || 0).toFixed(2)}</td>
-                    <td>${(row.door_delivery_charge || 0).toFixed(2)}</td>
-                    <td>${(row.handling_charge || 0).toFixed(2)}</td>
-                    <td>${(row.pickup_charge || 0).toFixed(2)}</td>
-                    <td>${(row.transhipment_charge || 0).toFixed(2)}</td>
-                    <td>${(row.insurance || 0).toFixed(2)}</td>
-                    <td>${(row.fuel_surcharge || 0).toFixed(2)}</td>
-                    <td>${(row.commission || 0).toFixed(2)}</td>
-                    <td>${(row.other_charge || 0).toFixed(2)}</td>
-                    <td>${row.carrier_risk || 'N/A'}</td>
-                    <td>${row.delivery_type || 'N/A'}</td>
-                    <td>${row.delivery_method || 'N/A'}</td>
-                    <td>${row.status || 'N/A'}</td>
-                    <td>${row.total_art || 'N/A'}</td>
-                    <td>${Array.isArray(row.art_types) ? row.art_types.join(' / ') : 'N/A'}</td>
-                    <td>${Array.isArray(row.said_to_contain) ? row.said_to_contain.join(' / ') : 'N/A'}</td>
-                    <td>${Array.isArray(row.art_amounts) ? row.art_amounts.map(amt => parseFloat(amt).toFixed(2)).join('/') : 'N/A'}</td>
-                    <td>${row.consignor_gst || 'N/A'}</td>
-                    <td>${row.consignee_gst || 'N/A'}</td>
-                    <td>${row.user || 'N/A'}</td>
-                    <td>${row.user_type || 'N/A'}</td>
-                    <td>${row.loading_sheet_number ? `<a href="/dealer/mf_print/${row.loading_sheet_number}/" target="_blank">${row.loading_sheet_number}</a>` : 'N/A'}</td>
-                    <td>${row.ddm_number ? `<a href="/transporter/ddm-details/?ddmId=${row.ddm_number.replace('DDM-', '')}" target="_blank">${row.ddm_number}</a>` : 'N/A'}</td>
+            populateFilterOptions(data) {
+                if (!data || data.length === 0) return;
+                
+                const dealerSelect = document.getElementById('dealer');
+                const fromCitySelect = document.getElementById('from-city');
+                const toCitySelect = document.getElementById('to-city');
+                
+                // Get unique values
+                const dealers = [...new Set(data.map(item => item.user).filter(Boolean))];
+                const destinations = data.map(item => item.delivery_destination).filter(Boolean);
+                const fromCities = [...new Set(destinations.map(dest => dest.split(' - ')[0]).filter(Boolean))];
+                const toCities = [...new Set(destinations.map(dest => dest.split(' - ')[1]).filter(Boolean))];
+                
+                // Populate selects
+                this.populateSelect(dealerSelect, dealers.sort());
+                this.populateSelect(fromCitySelect, fromCities.sort());
+                this.populateSelect(toCitySelect, toCities.sort());
+            }
+
+            populateSelect(select, options) {
+                const currentValue = select.value;
+                const defaultOption = select.querySelector('option[value=""]');
+                
+                select.innerHTML = '';
+                select.appendChild(defaultOption);
+                
+                options.forEach(option => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option;
+                    optionElement.textContent = option;
+                    select.appendChild(optionElement);
+                });
+                
+                // Restore previous selection if it still exists
+                if (currentValue && options.includes(currentValue)) {
+                    select.value = currentValue;
+                }
+            }
+
+            applyFilters() {
+                if (this.allBookingData.length === 0) {
+                    this.fetchBookingData();
+                    return;
+                }
+                
+                this.showLoading('Applying filters...');
+                
+                setTimeout(() => {
+                    try {
+                        const filters = this.getFilterValues();
+                        
+                        this.filteredData = this.allBookingData.filter(row => {
+                            return this.matchesFilters(row, filters);
+                        });
+                        
+                        this.currentPage = 1;
+                        this.displayBookingData();
+                        this.updateSummary();
+                        this.updateStats();
+                        
+                        this.showAlert(`Filtered to ${this.filteredData.length} records`, 'info');
+                        
+                    } catch (error) {
+                        console.error('Error applying filters:', error);
+                        this.showAlert('Error applying filters', 'error');
+                    } finally {
+                        this.hideLoading();
+                    }
+                }, 100);
+            }
+
+            getFilterValues() {
+                return {
+                    dateFrom: document.getElementById('date-from').value,
+                    dateTo: document.getElementById('date-to').value,
+                    dealer: document.getElementById('dealer').value.toLowerCase(),
+                    fromCity: document.getElementById('from-city').value.toLowerCase(),
+                    toCity: document.getElementById('to-city').value.toLowerCase(),
+                    amountMin: parseFloat(document.getElementById('amount-min').value) || 0,
+                    amountMax: parseFloat(document.getElementById('amount-max').value) || Infinity,
+                    searchTerm: document.getElementById('lr-search').value.toLowerCase(),
+                    cnoteNumber: document.getElementById('cnote-number').value.toLowerCase(),
+                    lsNumber: document.getElementById('ls-number').value.toLowerCase(),
+                    ddmNumber: document.getElementById('ddm-number').value.toLowerCase()
+                };
+            }
+
+            matchesFilters(row, filters) {
+                // Date range check
+                if (filters.dateFrom || filters.dateTo) {
+                    const rowDate = new Date(row.created_at);
+                    if (filters.dateFrom && rowDate < new Date(filters.dateFrom)) return false;
+                    if (filters.dateTo && rowDate > new Date(filters.dateTo + 'T23:59:59')) return false;
+                }
+                
+                // Dealer check
+                if (filters.dealer && !row.user.toLowerCase().includes(filters.dealer)) return false;
+                
+                // City checks
+                if (filters.fromCity || filters.toCity) {
+                    const destination = row.delivery_destination || '';
+                    const [fromCity, toCity] = destination.split(' - ');
+                    
+                    if (filters.fromCity && (!fromCity || !fromCity.toLowerCase().includes(filters.fromCity))) return false;
+                    if (filters.toCity && (!toCity || !toCity.toLowerCase().includes(filters.toCity))) return false;
+                }
+                
+                // Amount range check
+                const amount = row.grand_total || 0;
+                if (amount < filters.amountMin || amount > filters.amountMax) return false;
+                
+                // Search term check
+                if (filters.searchTerm) {
+                    const searchFields = [
+                        row.cnote_number, row.consignor_name, row.consignee_name, 
+                        row.user, row.user_type
+                    ].map(field => (field || '').toLowerCase());
+                    
+                    if (!searchFields.some(field => field.includes(filters.searchTerm))) return false;
+                }
+                
+                // Specific number checks
+                if (filters.cnoteNumber && !row.cnote_number.toLowerCase().includes(filters.cnoteNumber)) return false;
+                if (filters.lsNumber && (!row.loading_sheet_number || !row.loading_sheet_number.toString().toLowerCase().includes(filters.lsNumber))) return false;
+                if (filters.ddmNumber && (!row.ddm_number || !row.ddm_number.toString().toLowerCase().includes(filters.ddmNumber))) return false;
+                
+                return true;
+            }
+
+            quickSearch() {
+                this.applyFilters();
+            }
+
+            displayBookingData() {
+                const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+                const endIndex = startIndex + this.itemsPerPage;
+                const pageData = this.filteredData.slice(startIndex, endIndex);
+                
+                const bookingData = document.getElementById('booking-data');
+                
+                if (pageData.length === 0) {
+                    bookingData.innerHTML = `
+                        <tr>
+                            <td colspan="43" style="text-align: center; padding: 40px;">
+                                <i class="fas fa-search fa-2x" style="color: #ccc; margin-bottom: 10px;"></i>
+                                <br>No booking records found matching your criteria
+                                <br><small style="color: #6c757d;">Try adjusting your filters</small>
+                            </td>
+                        </tr>
+                    `;
+                    this.updatePagination();
+                    this.updateRecordCount();
+                    return;
+                }
+                
+                bookingData.innerHTML = '';
+                
+                pageData.forEach((row, index) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${startIndex + index + 1}</td>
+                        <td><a href="/transporter/cnotes-search/?cnote=${row.cnote_number}" target="_blank">${row.cnote_number || 'N/A'}</a></td>
+                        <td>${row.booking_type || 'N/A'}</td>
+                        <td>${row.delivery_destination || 'N/A'}</td>
+                        <td>${row.consignor_name || 'N/A'}</td>
+                        <td>${row.consignee_name || 'N/A'}</td>
+                        <td><span class="badge badge-${this.getPaymentTypeBadge(row.payment_type)}">${row.payment_type || 'N/A'}</span></td>
+                        <td>₹${(row.grand_total || 0).toFixed(2)}</td>
+                        <td>${row.created_at ? new Date(row.created_at).toLocaleString() : 'N/A'}</td>
+                        <td>${row.eway_bill_number || 'N/A'}</td>
+                        <td>${(row.actual_weight || 0).toFixed(2)} kg</td>
+                        <td>${(row.charged_weight || 0).toFixed(2)} kg</td>
+                        <td>₹${(row.weight_rate || 0).toFixed(2)}</td>
+                        <td>₹${(row.weight_amount || 0).toFixed(2)}</td>
+                        <td>₹${(row.fix_amount || 0).toFixed(2)}</td>
+                        <td>${row.invoice_number || 'N/A'}</td>
+                        <td>₹${(row.declared_value || 0).toFixed(2)}</td>
+                        <td>${row.risk_type || 'N/A'}</td>
+                        <td>${row.pod_required ? 'Yes' : 'No'}</td>
+                        <td>₹${(row.freight || 0).toFixed(2)}</td>
+                        <td>₹${(row.docket_charge || 0).toFixed(2)}</td>
+                        <td>₹${(row.door_delivery_charge || 0).toFixed(2)}</td>
+                        <td>₹${(row.handling_charge || 0).toFixed(2)}</td>
+                        <td>₹${(row.pickup_charge || 0).toFixed(2)}</td>
+                        <td>₹${(row.transhipment_charge || 0).toFixed(2)}</td>
+                        <td>₹${(row.insurance || 0).toFixed(2)}</td>
+                        <td>₹${(row.fuel_surcharge || 0).toFixed(2)}</td>
+                        <td>₹${(row.commission || 0).toFixed(2)}</td>
+                        <td>₹${(row.other_charge || 0).toFixed(2)}</td>
+                        <td>${row.carrier_risk || 'N/A'}</td>
+                        <td>${row.delivery_type || 'N/A'}</td>
+                        <td>${row.delivery_method || 'N/A'}</td>
+                        <td><span class="badge badge-${this.getStatusBadge(row.status)}">${row.status || 'N/A'}</span></td>
+                        <td>${row.total_art || 0}</td>
+                        <td>${Array.isArray(row.art_types) ? row.art_types.join(' / ') : 'N/A'}</td>
+                        <td>${Array.isArray(row.said_to_contain) ? row.said_to_contain.join(' / ') : 'N/A'}</td>
+                        <td>₹${Array.isArray(row.art_amounts) ? row.art_amounts.map(amt => parseFloat(amt).toFixed(2)).join(' / ') : 'N/A'}</td>
+                        <td>${row.consignor_gst || 'N/A'}</td>
+                        <td>${row.consignee_gst || 'N/A'}</td>
+                        <td>${row.user || 'N/A'}</td>
+                        <td><span class="badge badge-info">${row.user_type || 'N/A'}</span></td>
+                        <td>${row.loading_sheet_number && row.loading_sheet_number !== 'N/A' ? 
+                            `<a href="/dealer/mf_print/${row.loading_sheet_number}/" target="_blank">${row.loading_sheet_number}</a>` : 
+                            'N/A'}</td>
+                        <td>${row.ddm_number && row.ddm_number !== 'N/A' ? 
+                            `<a href="/transporter/ddm-details/?ddmId=${row.ddm_number.replace('DDM-', '')}" target="_blank">${row.ddm_number}</a>` : 
+                            'N/A'}</td>
+                    `;
+                    bookingData.appendChild(tr);
+                });
+                
+                this.updatePagination();
+                this.updateRecordCount();
+            }
+
+            getPaymentTypeBadge(paymentType) {
+                switch ((paymentType || '').toUpperCase()) {
+                    case 'PAID': return 'success';
+                    case 'TO PAY': return 'warning';
+                    case 'TBB': return 'info';
+                    default: return 'secondary';
+                }
+            }
+
+            getStatusBadge(status) {
+                switch ((status || '').toLowerCase()) {
+                    case 'delivered': return 'success';
+                    case 'in transit': return 'info';
+                    case 'pending': return 'warning';
+                    case 'cancelled': return 'danger';
+                    case 'received': return 'primary';
+                    default: return 'secondary';
+                }
+            }
+
+            updateRecordCount() {
+                const recordCount = document.getElementById('record-count');
+                recordCount.textContent = `(${this.filteredData.length} records)`;
+                recordCount.style.background = '#007bff';
+                recordCount.style.color = 'white';
+                recordCount.style.padding = '2px 8px';
+                recordCount.style.borderRadius = '12px';
+                recordCount.style.fontSize = '0.8em';
+                recordCount.style.marginLeft = '10px';
+            }
+
+            updatePagination() {
+                const totalPages = Math.ceil(this.filteredData.length / this.itemsPerPage);
+                const pagination = document.getElementById('pagination');
+                pagination.innerHTML = '';
+
+                if (totalPages <= 1) return;
+
+                // Previous button
+                const prevButton = this.createPaginationButton('Previous', this.currentPage > 1, () => {
+                    if (this.currentPage > 1) {
+                        this.currentPage--;
+                        this.displayBookingData();
+                    }
+                });
+                pagination.appendChild(prevButton);
+
+                // Page numbers
+                const startPage = Math.max(1, this.currentPage - 2);
+                const endPage = Math.min(totalPages, startPage + 4);
+
+                if (startPage > 1) {
+                    pagination.appendChild(this.createPaginationButton('1', true, () => {
+                        this.currentPage = 1;
+                        this.displayBookingData();
+                    }));
+                    
+                    if (startPage > 2) {
+                        const ellipsis = document.createElement('span');
+                        ellipsis.textContent = '...';
+                        ellipsis.style.padding = '8px 12px';
+                        pagination.appendChild(ellipsis);
+                    }
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const pageButton = this.createPaginationButton(i.toString(), true, () => {
+                        this.currentPage = i;
+                        this.displayBookingData();
+                    });
+                    
+                    if (i === this.currentPage) {
+                        pageButton.classList.add('active');
+                    }
+                    
+                    pagination.appendChild(pageButton);
+                }
+
+                if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) {
+                        const ellipsis = document.createElement('span');
+                        ellipsis.textContent = '...';
+                        ellipsis.style.padding = '8px 12px';
+                        pagination.appendChild(ellipsis);
+                    }
+                    
+                    pagination.appendChild(this.createPaginationButton(totalPages.toString(), true, () => {
+                        this.currentPage = totalPages;
+                        this.displayBookingData();
+                    }));
+                }
+
+                // Next button
+                const nextButton = this.createPaginationButton('Next', this.currentPage < totalPages, () => {
+                    if (this.currentPage < totalPages) {
+                        this.currentPage++;
+                        this.displayBookingData();
+                    }
+                });
+                pagination.appendChild(nextButton);
+            }
+
+            createPaginationButton(text, enabled, onClick) {
+                const button = document.createElement('button');
+                button.textContent = text;
+                button.disabled = !enabled;
+                if (enabled) {
+                    button.addEventListener('click', onClick);
+                }
+                return button;
+            }
+
+            changePageSize() {
+                this.itemsPerPage = parseInt(document.getElementById('page-size').value);
+                this.currentPage = 1;
+                this.displayBookingData();
+            }
+
+            updateSummary() {
+                const paid = this.filteredData.reduce((sum, row) => 
+                    sum + (row.payment_type === 'PAID' ? (row.grand_total || 0) : 0), 0);
+                const toPay = this.filteredData.reduce((sum, row) => 
+                    sum + (row.payment_type === 'TO PAY' ? (row.grand_total || 0) : 0), 0);
+                const tbb = this.filteredData.reduce((sum, row) => 
+                    sum + (row.payment_type === 'TBB' ? (row.grand_total || 0) : 0), 0);
+                
+                const totalAmount = paid + toPay + tbb;
+                const billing = totalAmount * 0.1; // 10% billing
+                const gst = totalAmount * 0.18; // 18% GST
+                const grandTotal = totalAmount + gst;
+
+                const summaryData = document.getElementById('summary-data');
+                summaryData.innerHTML = `
+                    <tr>
+                        <td><strong>Current Filter</strong></td>
+                        <td>₹${paid.toFixed(2)}</td>
+                        <td>₹${toPay.toFixed(2)}</td>
+                        <td>₹${billing.toFixed(2)}</td>
+                        <td>₹${totalAmount.toFixed(2)}</td>
+                        <td>₹${gst.toFixed(2)}</td>
+                        <td>₹${grandTotal.toFixed(2)}</td>
+                    </tr>
+                    <tr class="summary-row">
+                        <td><strong>Total (${this.filteredData.length} records)</strong></td>
+                        <td><strong>₹${paid.toFixed(2)}</strong></td>
+                        <td><strong>₹${toPay.toFixed(2)}</strong></td>
+                        <td><strong>₹${billing.toFixed(2)}</strong></td>
+                        <td><strong>₹${totalAmount.toFixed(2)}</strong></td>
+                        <td><strong>₹${gst.toFixed(2)}</strong></td>
+                        <td><strong>₹${grandTotal.toFixed(2)}</strong></td>
+                    </tr>
                 `;
-                bookingData.appendChild(tr);
-            });
+            }
 
-            updatePagination();
-        }
-
-        function updatePagination() {
-            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-            const pagination = document.getElementById("pagination");
-            pagination.innerHTML = "";
-
-            const prevButton = document.createElement("button");
-            prevButton.textContent = "Previous";
-            prevButton.disabled = currentPage === 1;
-            prevButton.addEventListener("click", () => {
-                if (currentPage > 1) {
-                    currentPage--;
-                    displayBookingData(currentPage);
+            updateStats() {
+                const statsContainer = document.getElementById('stats-container');
+                const statsGrid = document.getElementById('stats-grid');
+                
+                if (this.filteredData.length === 0) {
+                    statsContainer.style.display = 'none';
+                    return;
                 }
-            });
-            pagination.appendChild(prevButton);
+                
+                const totalRecords = this.filteredData.length;
+                const totalAmount = this.filteredData.reduce((sum, row) => sum + (row.grand_total || 0), 0);
+                const avgAmount = totalAmount / totalRecords;
+                const totalWeight = this.filteredData.reduce((sum, row) => sum + (row.actual_weight || 0), 0);
+                
+                const paidRecords = this.filteredData.filter(row => row.payment_type === 'PAID').length;
+                const toPayRecords = this.filteredData.filter(row => row.payment_type === 'TO PAY').length;
+                
+                statsGrid.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-value">${totalRecords}</div>
+                        <div class="stat-label">Total Records</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">₹${(totalAmount / 100000).toFixed(1)}L</div>
+                        <div class="stat-label">Total Amount</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">₹${avgAmount.toFixed(0)}</div>
+                        <div class="stat-label">Average Amount</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${totalWeight.toFixed(0)} kg</div>
+                        <div class="stat-label">Total Weight</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${paidRecords}</div>
+                        <div class="stat-label">Paid Bookings</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${toPayRecords}</div>
+                        <div class="stat-label">To Pay Bookings</div>
+                    </div>
+                `;
+                
+                statsContainer.style.display = 'block';
+            }
 
-            const startPage = Math.max(1, currentPage - 2);
-            const endPage = Math.min(totalPages, startPage + 4);
+            sortTable(column) {
+                if (this.currentSortColumn === column) {
+                    this.currentSortOrder = this.currentSortOrder === 'asc' ? 'desc' : 'asc';
+                } else {
+                    this.currentSortOrder = 'asc';
+                }
 
-            for (let i = startPage; i <= endPage; i++) {
-                const pageButton = document.createElement("button");
-                pageButton.textContent = i;
-                pageButton.disabled = i === currentPage;
-                pageButton.addEventListener("click", () => {
-                    currentPage = i;
-                    displayBookingData(currentPage);
+                // Update sort indicators
+                document.querySelectorAll('th[data-sort]').forEach(el => {
+                    el.classList.remove('sort-asc', 'sort-desc');
                 });
-                pagination.appendChild(pageButton);
+
+                const th = document.querySelector(`th[data-sort="${column}"]`);
+                th.classList.add(`sort-${this.currentSortOrder}`);
+
+                // Sort data
+                this.filteredData.sort((a, b) => {
+                    let valueA = a[column];
+                    let valueB = b[column];
+
+                    // Handle different data types
+                    if (typeof valueA === 'string') {
+                        valueA = valueA.toLowerCase();
+                        valueB = valueB.toLowerCase();
+                    }
+
+                    if (valueA < valueB) return this.currentSortOrder === 'asc' ? -1 : 1;
+                    if (valueA > valueB) return this.currentSortOrder === 'asc' ? 1 : -1;
+                    return 0;
+                });
+
+                this.currentSortColumn = column;
+                this.currentPage = 1;
+                this.displayBookingData();
             }
 
-            const nextButton = document.createElement("button");
-            nextButton.textContent = "Next";
-            nextButton.disabled = currentPage === totalPages;
-            nextButton.addEventListener("click", () => {
-                if (currentPage < totalPages) {
-                    currentPage++;
-                    displayBookingData(currentPage);
-                }
-            });
-            pagination.appendChild(nextButton);
-        }
-
-        function updateSummary() {
-            const paid = filteredData.reduce((sum, row) => sum + (row.payment_type === "PAID" ? row.grand_total : 0), 0);
-            const toPay = filteredData.reduce((sum, row) => sum + (row.payment_type === "TO PAY" ? row.grand_total : 0), 0);
-            const totalAmount = paid + toPay;
-            const gst = totalAmount * 0.18;
-            const grandTotal = totalAmount + gst;
-
-            const summaryData = document.getElementById("summary-data");
-            summaryData.innerHTML = `
-                <tr>
-                    <td>Auto</td>
-                    <td>${paid.toFixed(2)}</td>
-                    <td>${toPay.toFixed(2)}</td>
-                    <td>${(totalAmount * 0.1).toFixed(2)}</td>
-                    <td>${totalAmount.toFixed(2)}</td>
-                    <td>${gst.toFixed(2)}</td>
-                    <td>${grandTotal.toFixed(2)}</td>
-                </tr>
-                <tr>
-                    <td>Manual</td>
-                    <td>0.00</td>
-                    <td>0.00</td>
-                    <td>0.00</td>
-                    <td>0.00</td>
-                    <td>0.00</td>
-                    <td>0.00</td>
-                </tr>
-                <tr class="summary-row">
-                    <td>Total</td>
-                    <td>${paid.toFixed(2)}</td>
-                    <td>${toPay.toFixed(2)}</td>
-                    <td>${(totalAmount * 0.1).toFixed(2)}</td>
-                    <td>${totalAmount.toFixed(2)}</td>
-                    <td>${gst.toFixed(2)}</td>
-                    <td>${grandTotal.toFixed(2)}</td>
-                </tr>
-            `;
-        }
-
-        function sortTable(column) {
-            if (currentSortColumn === column) {
-                currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
-            } else {
-                currentSortOrder = 'asc';
-            }
-
-            document.querySelectorAll('th[data-sort]').forEach(el => {
-                el.classList.remove('sort-asc', 'sort-desc');
-            });
-
-            const th = document.querySelector(`th[data-sort="${column}"]`);
-            th.classList.add(`sort-${currentSortOrder}`);
-
-            filteredData.sort((a, b) => {
-                const valueA = a[column];
-                const valueB = b[column];
-
-                if (valueA < valueB) return currentSortOrder === 'asc' ? -1 : 1;
-                if (valueA > valueB) return currentSortOrder === 'asc' ? 1 : -1;
-                return 0;
-            });
-
-            currentSortColumn = column;
-            displayBookingData(currentPage);
-        }
-
-        function simulateLoading(callback) {
-            document.getElementById("loading").style.display = "flex";
-            setTimeout(() => {
-                document.getElementById("loading").style.display = "none";
-                callback();
-            }, 1000);
-        }
-
-        // Event listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchBookingData();
-
-            document.getElementById("search-btn").addEventListener("click", () => {
-                simulateLoading(applyFilters);
-            });
-
-            document.getElementById("clear-btn").addEventListener("click", () => {
+            clearAllFilters() {
                 document.querySelectorAll('.filter-item input, .filter-item select').forEach(el => {
                     el.value = '';
                 });
-                document.getElementById("lr-search").value = '';
-                fetchBookingData();
-            });
+                document.getElementById('lr-search').value = '';
+                
+                this.allBookingData = [];
+                this.filteredData = [];
+                this.currentPage = 1;
+                
+                document.getElementById('booking-data').innerHTML = `
+                    <tr>
+                        <td colspan="43" style="text-align: center; padding: 40px;">
+                            <i class="fas fa-search fa-2x" style="color: #ccc; margin-bottom: 10px;"></i>
+                            <br>Click "Apply Filters" to load booking data
+                        </td>
+                    </tr>
+                `;
+                
+                document.getElementById('summary-data').innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #6c757d;">
+                            Summary will be calculated after loading data
+                        </td>
+                    </tr>
+                `;
+                
+                document.getElementById('stats-container').style.display = 'none';
+                
+                this.showAlert('All filters cleared', 'info');
+            }
 
-            document.getElementById("download-btn").addEventListener("click", () => {
-                window.location.href = "/transporter/download_excel/";
-            });
+            resetFilters() {
+                this.populateDefaultFilters();
+                this.applyFilters();
+            }
 
-            document.querySelectorAll("th[data-sort]").forEach((th) => {
-                th.addEventListener("click", () => {
-                    sortTable(th.dataset.sort);
+            downloadExcel() {
+                this.showLoading('Preparing Excel download...');
+                
+                const params = new URLSearchParams();
+                const filters = this.getFilterValues();
+                
+                Object.entries(filters).forEach(([key, value]) => {
+                    if (value && value !== 0 && value !== Infinity) {
+                        params.append(key.replace(/([A-Z])/g, '_$1').toLowerCase(), value);
+                    }
                 });
-            });
+                
+                const url = `/transporter/download_excel/?${params}`;
+                
+                // Create a temporary link and click it
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `booking_register_${new Date().toISOString().split('T')[0]}.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                setTimeout(() => {
+                    this.hideLoading();
+                    this.showAlert('Excel download started', 'success');
+                }, 1000);
+            }
+        }
 
-            // Add event listeners for all filter inputs
-            const filterInputs = [
-                "date-from", "date-to", "dealer", "from-city", "to-city",
-                "amount-min", "amount-max", "lr-search", "cnote-number",
-                "ls-number", "ddm-number"
-            ];
-
-            filterInputs.forEach(id => {
-                document.getElementById(id).addEventListener('input', applyFilters);
-            });
-
-            document.getElementById("dealer").addEventListener('change', applyFilters);
-            document.getElementById("from-city").addEventListener('change', applyFilters);
-            document.getElementById("to-city").addEventListener('change', applyFilters);
+        // Initialize the application
+        let bookingRegister;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            bookingRegister = new BookingRegister();
         });
+
+        // Add some additional CSS for badges
+        const additionalStyles = `
+            .badge {
+                display: inline-block;
+                padding: 0.25em 0.6em;
+                font-size: 0.75em;
+                font-weight: 700;
+                line-height: 1;
+                text-align: center;
+                white-space: nowrap;
+                vertical-align: baseline;
+                border-radius: 0.375rem;
+            }
+            
+            .badge-primary { background-color: #007bff; color: white; }
+            .badge-secondary { background-color: #6c757d; color: white; }
+            .badge-success { background-color: #28a745; color: white; }
+            .badge-danger { background-color: #dc3545; color: white; }
+            .badge-warning { background-color: #ffc107; color: #212529; }
+            .badge-info { background-color: #17a2b8; color: white; }
+        `;
+        
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = additionalStyles;
+        document.head.appendChild(styleSheet);
     </script>
 </body>
 </html>
-
