@@ -1997,7 +1997,39 @@ def get_transporter_info(user):
         logger.warning(f"Could not get transporter info: {str(e)}")
     
     return {'name': 'GoodWayExpress', 'city': 'Yavatmal'}
+
+@login_required
+def booking_register_view(request):
+    """Render the booking register view page"""
+    try:
+        return render(request, 'transporter/booking_register.html')
+    except Exception as e:
+        logger.error(f"Error rendering booking register view: {str(e)}")
+        messages.error(request, "Error loading the booking register page.")
+        return redirect('transporter:home')
+
+@login_required
+def download_excel(request):
+    """Download booking register data as Excel file"""
+    try:
+        # Simple implementation for now
+        return JsonResponse({'message': 'Excel download feature coming soon'})
+    except Exception as e:
+        logger.error(f"Error in download_excel: {str(e)}")
+        return JsonResponse({'error': 'Error generating Excel file'}, status=500)
+
+# Add any other missing functions that URLs reference
+def home(request):
+    """Home view"""
+    return render(request, 'transporter/home.html')
+
+def manage_location(request):
+    """Manage location view"""
+    return render(request, 'transporter/manage_location.html')
+
+
 from django.db import IntegrityError
+
 
 @login_required
 def add_user(request):
