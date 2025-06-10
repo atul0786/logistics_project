@@ -1798,25 +1798,23 @@ def update_cnote(request, cnote):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
     
-# Import models
-from dealer_app.models import (
-    CustomUser, Dealer, CNotes, Article, LoadingSheetSummary, 
-    LoadingSheetDetail, DeliveryDestination, ArtType
-)
-from transporter_app.models import (
-    DDMSummary, DDMDetails, DeliveryCNote, ReceivedStatesCnotes,
-    Transporter, State, City, PartyMaster, Pickup, TransporterAppReceive,
-    CNote, Bill, BillItem
-)
-from .forms import StateForm, CityForm, PartyMasterForm
-from .serializers import DDMDetailsSerializer, DDMSummarySerializer
+import json
+import logging
+from decimal import Decimal
+from datetime import datetime
+from django.http import JsonResponse, HttpResponse
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.db import connection, connections
+import pandas as pd
+from django.utils.timezone import make_naive
 
 # Set up logging
+# Set up logging
 logger = logging.getLogger(__name__)
-User = get_user_model()
+
 
 class CustomJSONEncoder(json.JSONEncoder):
-    """Custom JSON encoder to handle Decimal and datetime objects"""
     def default(self, obj):
         if isinstance(obj, Decimal):
             return float(obj)
@@ -1826,312 +1824,551 @@ class CustomJSONEncoder(json.JSONEncoder):
 
 @login_required
 def all_booking_register(request):
-    """Render the all booking register page"""
-    try:
-        return render(request, 'transporter/all_booking_register.html')
-    except Exception as e:
-        logger.error(f"Error rendering all booking register page: {str(e)}")
-        messages.error(request, "Error loading the booking register page.")
-        return redirect('transporter:home')
+    return render(request, 'transporter/all_booking_register.html')
 
 @login_required
 def booking_register_data(request):
-    """
-    Fetch booking register data with optimized queries and proper error handling
-    """
     try:
         logger.info("Starting booking_register_data function")
         
-        # Get search parameters
-        search_params = {
-            'search': request.GET.get('search', '').strip().lower(),
-            'date_from': request.GET.get('date_from'),
-            'date_to': request.GET.get('date_to'),
-            'dealer': request.GET.get('dealer', '').strip().lower(),
-            'from_city': request.GET.get('from_city', '').strip().lower(),
-            'to_city': request.GET.get('to_city', '').strip().lower(),
-            'amount_min': request.GET.get('amount_min'),
-            'amount_max': request.GET.get('amount_max'),
-            'cnote_number': request.GET.get('cnote_number', '').strip().lower(),
-            'ls_number': request.GET.get('ls_number', '').strip().lower(),
-            'ddm_number': request.GET.get('ddm_number', '').strip().lower(),
-        }
+        # Get search parameters from the request
+        search_term = request.GET.get('search', '').strip().lower()
+        date_from = request.GET.get('date_from', '').strip()
+        date_to = request.GET.get('date_to', '').strip()
+        dealer = request.GET.get('dealer', '').strip().lower()
+        from_city = request.GET.get('from_city', '').strip().lower()
+        to_city = request.GET.get('to_city', '').strip().lower()
+        amount_min = request.GET.get('amount_min', '').strip()
+        amount_max = request.GET.get('amount_max', '').strip()
+        cnote_number = request.GET.get('cnote_number', '').strip().lower()
+        ls_number = request.GET.get('ls_number', '').strip().lower()
+        ddm_number = request.GET.get('ddm_number', '').strip().lower()
 
-        # Build optimized query using Django ORM instead of raw SQL
-        cnotes_query = CNotes.objects.select_related(
-            'dealer', 'delivery_destination'
-        ).prefetch_related(
-            'articles__art_type',
-            'loading_sheet_details__loading_sheet',
-            'ddm_details__ddm'
-        )
+        logger.info(f"Filters: search={search_term}, date_from={date_from}, date_to={date_to}, dealer={dealer}")
 
-        # Apply filters
-        cnotes_query = apply_booking_filters(cnotes_query, search_params)
-        
-        # Limit results for performance (max 1000 records)
-        cnotes = cnotes_query.order_by('-created_at')[:1000]
-        
-        # Process data
+        with connection.cursor() as cursor:
+            logger.info("Executing SQL query")
+            
+            # Main query for booking data
+            query = """
+                SELECT DISTINCT
+                    c.id,
+                    c.cnote_number,
+                    c.booking_type,
+                    c.delivery_type,
+                    c.delivery_method,
+                    c.eway_bill_number,
+                    c.manual_date,
+                    c.manual_cnote_number,
+                    c.manual_cnote_type,
+                    c.payment_type,
+                    c.consignor_name,
+                    c.consignor_address,
+                    c.consignor_mobile,
+                    c.consignor_gst,
+                    c.consignee_name,
+                    c.consignee_address,
+                    c.consignee_mobile,
+                    c.consignee_gst,
+                    c.actual_weight,
+                    c.charged_weight,
+                    c.weight_rate,
+                    c.weight_amount,
+                    c.fix_amount,
+                    c.invoice_number,
+                    c.declared_value,
+                    c.risk_type,
+                    c.pod_required,
+                    c.freight,
+                    c.docket_charge,
+                    c.door_delivery_charge,
+                    c.handling_charge,
+                    c.pickup_charge,
+                    c.transhipment_charge,
+                    c.insurance,
+                    c.fuel_surcharge,
+                    c.commission,
+                    c.other_charge,
+                    c.carrier_risk,
+                    c.grand_total,
+                    c.status,
+                    c.status_updated_at,
+                    c.created_at,
+                    c.total_art,
+                    COALESCE(d.name, 'Direct') as dealer_name,
+                    COALESCE(dd.destination_name, 'N/A') as delivery_destination,
+                    CASE 
+                        WHEN d.name IS NOT NULL THEN 'Dealer'
+                        ELSE 'Direct'
+                    END as user_type,
+                    COALESCE(ls.ls_number::text, 'N/A') as loading_sheet_number,
+                    COALESCE(ddm.ddm_no, 'N/A') as ddm_number,
+                    STRING_AGG(DISTINCT COALESCE(at.art_type_name, 'N/A'), ' / ') as art_types,
+                    STRING_AGG(DISTINCT COALESCE(a.said_to_contain, 'N/A'), ' / ') as said_to_contain,
+                    STRING_AGG(DISTINCT COALESCE(a.art_amount::text, '0'), ' / ') as art_amounts
+                FROM dealer_app_cnotes c
+                LEFT JOIN dealer_app_dealer d ON c.dealer_id = d.dealer_id
+                LEFT JOIN dealer_app_deliverydestination dd ON c.delivery_destination_id = dd.id
+                LEFT JOIN dealer_app_loadingsheetdetail lsd ON c.id = lsd.cnote_id
+                LEFT JOIN dealer_app_loadingsheetsummary ls ON lsd.loading_sheet_id = ls.ls_number
+                LEFT JOIN transporter_app_ddmdetails ddmd ON c.cnote_number = ddmd.cnote_number
+                LEFT JOIN transporter_app_ddmsummary ddm ON ddmd.ddm_id = ddm.ddm_id
+                LEFT JOIN dealer_app_article a ON c.id = a.cnote_id
+                LEFT JOIN dealer_app_arttype at ON a.art_type_id = at.id
+                WHERE 1=1
+            """
+            
+            params = []
+
+            # Apply filters with proper parameter binding
+            if search_term:
+                query += """ AND (
+                    LOWER(c.cnote_number) LIKE %s OR
+                    LOWER(c.consignor_name) LIKE %s OR
+                    LOWER(c.consignee_name) LIKE %s OR
+                    LOWER(COALESCE(d.name, '')) LIKE %s
+                )"""
+                search_param = f'%{search_term}%'
+                params.extend([search_param] * 4)
+
+            if date_from:
+                query += " AND c.created_at >= %s"
+                params.append(date_from)
+
+            if date_to:
+                query += " AND c.created_at <= %s"
+                params.append(date_to + ' 23:59:59')
+
+            # Dealer filter logic को improve करें
+            if dealer and dealer.lower() != 'all':
+                query += " AND LOWER(COALESCE(d.name, 'direct')) LIKE %s"
+                params.append(f'%{dealer}%')
+
+            if from_city:
+                query += " AND LOWER(COALESCE(dd.destination_name, '')) LIKE %s"
+                params.append(f'%{from_city}%')
+
+            if to_city:
+                query += " AND LOWER(COALESCE(dd.destination_name, '')) LIKE %s"
+                params.append(f'%{to_city}%')
+
+            if amount_min:
+                try:
+                    query += " AND c.grand_total >= %s"
+                    params.append(float(amount_min))
+                except ValueError:
+                    logger.warning(f"Invalid amount_min: {amount_min}")
+
+            if amount_max:
+                try:
+                    query += " AND c.grand_total <= %s"
+                    params.append(float(amount_max))
+                except ValueError:
+                    logger.warning(f"Invalid amount_max: {amount_max}")
+
+            if cnote_number:
+                query += " AND LOWER(c.cnote_number) LIKE %s"
+                params.append(f'%{cnote_number}%')
+
+            if ls_number:
+                query += " AND LOWER(COALESCE(ls.ls_number::text, '')) LIKE %s"
+                params.append(f'%{ls_number}%')
+
+            if ddm_number:
+                query += " AND LOWER(COALESCE(ddm.ddm_no, '')) LIKE %s"
+                params.append(f'%{ddm_number}%')
+
+            # Group by and order
+            query += """
+                GROUP BY 
+                    c.id,
+                    c.cnote_number,
+                    c.booking_type,
+                    c.delivery_type,
+                    c.delivery_method,
+                    c.eway_bill_number,
+                    c.manual_date,
+                    c.manual_cnote_number,
+                    c.manual_cnote_type,
+                    c.payment_type,
+                    c.consignor_name,
+                    c.consignor_address,
+                    c.consignor_mobile,
+                    c.consignor_gst,
+                    c.consignee_name,
+                    c.consignee_address,
+                    c.consignee_mobile,
+                    c.consignee_gst,
+                    c.actual_weight,
+                    c.charged_weight,
+                    c.weight_rate,
+                    c.weight_amount,
+                    c.fix_amount,
+                    c.invoice_number,
+                    c.declared_value,
+                    c.risk_type,
+                    c.pod_required,
+                    c.freight,
+                    c.docket_charge,
+                    c.door_delivery_charge,
+                    c.handling_charge,
+                    c.pickup_charge,
+                    c.transhipment_charge,
+                    c.insurance,
+                    c.fuel_surcharge,
+                    c.commission,
+                    c.other_charge,
+                    c.carrier_risk,
+                    c.grand_total,
+                    c.status,
+                    c.status_updated_at,
+                    c.created_at,
+                    c.total_art,
+                    d.name,
+                    dd.destination_name,
+                    ls.ls_number,
+                    ddm.ddm_no
+                ORDER BY c.created_at DESC
+                LIMIT 1000
+            """
+
+            logger.info(f"Executing query with {len(params)} parameters")
+            cursor.execute(query, params)
+            cnotes = cursor.fetchall()
+            logger.info(f"Fetched {len(cnotes)} records from the database")
+
+            # अब same cursor के अंदर dealers query भी execute करें
+            dealers_query = """
+                SELECT DISTINCT COALESCE(d.name, 'Direct') as dealer_name
+                FROM dealer_app_cnotes c
+                LEFT JOIN dealer_app_dealer d ON c.dealer_id = d.dealer_id
+                WHERE COALESCE(d.name, 'Direct') IS NOT NULL
+                ORDER BY dealer_name
+            """
+            
+            cursor.execute(dealers_query)
+            all_dealers = [row[0] for row in cursor.fetchall()]
+            logger.info(f"Fetched {len(all_dealers)} unique dealers")
+
+        # Process the results
         cnotes_data = []
+        column_names = [col[0] for col in cursor.description if col[0] != 'dealer_name']  # Remove dealer_name from column names as it's processed separately
+        
+        # Get column names from the main query
+        main_column_names = [
+            'id', 'cnote_number', 'booking_type', 'delivery_type', 'delivery_method',
+            'eway_bill_number', 'manual_date', 'manual_cnote_number', 'manual_cnote_type',
+            'payment_type', 'consignor_name', 'consignor_address', 'consignor_mobile',
+            'consignor_gst', 'consignee_name', 'consignee_address', 'consignee_mobile',
+            'consignee_gst', 'actual_weight', 'charged_weight', 'weight_rate',
+            'weight_amount', 'fix_amount', 'invoice_number', 'declared_value',
+            'risk_type', 'pod_required', 'freight', 'docket_charge',
+            'door_delivery_charge', 'handling_charge', 'pickup_charge',
+            'transhipment_charge', 'insurance', 'fuel_surcharge', 'commission',
+            'other_charge', 'carrier_risk', 'grand_total', 'status',
+            'status_updated_at', 'created_at', 'total_art', 'dealer_name',
+            'delivery_destination', 'user_type', 'loading_sheet_number',
+            'ddm_number', 'art_types', 'said_to_contain', 'art_amounts'
+        ]
+        
         for cnote in cnotes:
             try:
-                cnote_data = process_cnote_data(cnote)
-                cnotes_data.append(cnote_data)
+                cnote_dict = dict(zip(main_column_names, cnote))
+                
+                # Process aggregated fields safely
+                art_types = cnote_dict.get('art_types', '') or ''
+                said_to_contain = cnote_dict.get('said_to_contain', '') or ''
+                art_amounts = cnote_dict.get('art_amounts', '') or ''
+                
+                # Convert to arrays, handling None and empty strings
+                cnote_dict['art_types'] = [x.strip() for x in art_types.split(' / ') if x.strip() and x.strip() != 'N/A'] if art_types else []
+                cnote_dict['said_to_contain'] = [x.strip() for x in said_to_contain.split(' / ') if x.strip() and x.strip() != 'N/A'] if said_to_contain else []
+                cnote_dict['art_amounts'] = [float(x.strip()) for x in art_amounts.split(' / ') if x.strip() and x.strip() != 'N/A' and x.strip() != '0'] if art_amounts else []
+                
+                # Set user and user_type
+                cnote_dict['user'] = cnote_dict.get('dealer_name') or 'Direct'
+                cnote_dict['user_type'] = cnote_dict.get('user_type') or 'Direct'
+                
+                # Convert Decimal and datetime objects
+                for key, value in cnote_dict.items():
+                    if isinstance(value, Decimal):
+                        cnote_dict[key] = float(value)
+                    elif isinstance(value, datetime):
+                        cnote_dict[key] = value.isoformat()
+                    elif value is None:
+                        cnote_dict[key] = 'N/A' if key in ['loading_sheet_number', 'ddm_number'] else None
+                
+                cnotes_data.append(cnote_dict)
+                
             except Exception as e:
-                logger.warning(f"Error processing CNotes {cnote.cnote_number}: {str(e)}")
+                logger.error(f"Error processing cnote record: {str(e)}")
                 continue
 
         logger.info(f"Successfully processed {len(cnotes_data)} records")
         
         # Get transporter info
-        transporter_info = get_transporter_info(request.user)
+        transporter_name = 'GoodWayExpress'
+        transporter_city = 'Yavatmal'
         
+        try:
+            if hasattr(request.user, 'transporter'):
+                transporter = request.user.transporter
+                transporter_name = transporter.name or transporter_name
+                transporter_city = transporter.city or transporter_city
+        except Exception as e:
+            logger.warning(f"Could not get transporter info: {str(e)}")
+
         response_data = {
             'bookings': cnotes_data,
-            'transporter_name': transporter_info['name'],
-            'transporter_city': transporter_info['city'],
+            'dealers': all_dealers,  # सभी dealers की list add करें
+            'transporter_name': transporter_name,
+            'transporter_city': transporter_city,
             'total_records': len(cnotes_data)
         }
         
-        return JsonResponse(response_data, encoder=CustomJSONEncoder)
+        # Use custom JSON encoder
+        json_data = json.dumps(response_data, cls=CustomJSONEncoder, ensure_ascii=False)
+        
+        response = HttpResponse(json_data, content_type='application/json; charset=utf-8')
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        
+        return response
         
     except Exception as e:
         logger.error(f"Error in booking_register_data: {str(e)}", exc_info=True)
         return JsonResponse({
-            'error': 'An error occurred while fetching booking data',
-            'message': str(e)
+            'error': str(e),
+            'bookings': [],
+            'dealers': [],
+            'transporter_name': 'GoodWayExpress',
+            'transporter_city': 'Yavatmal',
+            'total_records': 0
         }, status=500)
-
-def apply_booking_filters(query, params):
-    """Apply filters to the booking query"""
-    
-    # Date range filter
-    if params['date_from']:
-        try:
-            from_date = datetime.strptime(params['date_from'], '%Y-%m-%d').date()
-            query = query.filter(created_at__date__gte=from_date)
-        except ValueError:
-            logger.warning(f"Invalid from_date format: {params['date_from']}")
-    
-    if params['date_to']:
-        try:
-            to_date = datetime.strptime(params['date_to'], '%Y-%m-%d').date()
-            query = query.filter(created_at__date__lte=to_date)
-        except ValueError:
-            logger.warning(f"Invalid to_date format: {params['date_to']}")
-    
-    # Search term filter
-    if params['search']:
-        query = query.filter(
-            Q(cnote_number__icontains=params['search']) |
-            Q(consignor_name__icontains=params['search']) |
-            Q(consignee_name__icontains=params['search']) |
-            Q(dealer__name__icontains=params['search'])
-        )
-    
-    # Dealer filter
-    if params['dealer']:
-        query = query.filter(dealer__name__icontains=params['dealer'])
-    
-    # Amount range filters
-    if params['amount_min']:
-        try:
-            min_amount = float(params['amount_min'])
-            query = query.filter(grand_total__gte=min_amount)
-        except (ValueError, TypeError):
-            logger.warning(f"Invalid amount_min: {params['amount_min']}")
-    
-    if params['amount_max']:
-        try:
-            max_amount = float(params['amount_max'])
-            query = query.filter(grand_total__lte=max_amount)
-        except (ValueError, TypeError):
-            logger.warning(f"Invalid amount_max: {params['amount_max']}")
-    
-    # CNotes number filter
-    if params['cnote_number']:
-        query = query.filter(cnote_number__icontains=params['cnote_number'])
-    
-    # Loading sheet number filter
-    if params['ls_number']:
-        query = query.filter(loading_sheet_details__loading_sheet__ls_number__icontains=params['ls_number'])
-    
-    # DDM number filter
-    if params['ddm_number']:
-        query = query.filter(ddm_details__ddm__ddm_no__icontains=params['ddm_number'])
-    
-    return query.distinct()
-
-def process_cnote_data(cnote):
-    """Process individual CNotes data"""
-    
-    # Get articles data
-    articles = cnote.articles.all()
-    art_types = []
-    said_to_contain = []
-    art_amounts = []
-    total_articles = 0
-    
-    for article in articles:
-        art_type_name = article.art_type.art_type_name if article.art_type else 'N/A'
-        art_types.append(art_type_name)
-        
-        contain_info = f"{article.said_to_contain or 'N/A'} ({article.art or 0})"
-        said_to_contain.append(contain_info)
-        
-        art_amounts.append(float(article.art_amount or 0))
-        total_articles += article.art or 0
-    
-    # Get loading sheet info
-    loading_sheet_detail = cnote.loading_sheet_details.first()
-    loading_sheet_number = loading_sheet_detail.loading_sheet.ls_number if loading_sheet_detail else 'N/A'
-    
-    # Get DDM info
-    ddm_detail = cnote.ddm_details.first()
-    ddm_number = ddm_detail.ddm.ddm_no if ddm_detail else 'N/A'
-    
-    # Determine user type
-    user_type = 'Dealer' if cnote.dealer else 'Unknown'
-    
-    return {
-        'id': cnote.id,
-        'cnote_number': cnote.cnote_number,
-        'booking_type': cnote.booking_type or 'N/A',
-        'delivery_destination': cnote.delivery_destination.destination_name if cnote.delivery_destination else 'N/A',
-        'consignor_name': cnote.consignor_name or 'N/A',
-        'consignee_name': cnote.consignee_name or 'N/A',
-        'payment_type': cnote.payment_type or 'N/A',
-        'grand_total': float(cnote.grand_total or 0),
-        'created_at': cnote.created_at.isoformat() if cnote.created_at else None,
-        'eway_bill_number': cnote.eway_bill_number or 'N/A',
-        'actual_weight': float(cnote.actual_weight or 0),
-        'charged_weight': float(cnote.charged_weight or 0),
-        'weight_rate': float(cnote.weight_rate or 0),
-        'weight_amount': float(cnote.weight_amount or 0),
-        'fix_amount': float(cnote.fix_amount or 0),
-        'invoice_number': cnote.invoice_number or 'N/A',
-        'declared_value': float(cnote.declared_value or 0),
-        'risk_type': cnote.risk_type or 'N/A',
-        'pod_required': cnote.pod_required or 'N/A',
-        'freight': float(cnote.freight or 0),
-        'docket_charge': float(cnote.docket_charge or 0),
-        'door_delivery_charge': float(cnote.door_delivery_charge or 0),
-        'handling_charge': float(cnote.handling_charge or 0),
-        'pickup_charge': float(cnote.pickup_charge or 0),
-        'transhipment_charge': float(cnote.transhipment_charge or 0),
-        'insurance': float(cnote.insurance or 0),
-        'fuel_surcharge': float(cnote.fuel_surcharge or 0),
-        'commission': float(cnote.commission or 0),
-        'other_charge': float(cnote.other_charge or 0),
-        'carrier_risk': cnote.carrier_risk or 'N/A',
-        'delivery_type': cnote.delivery_type or 'N/A',
-        'delivery_method': cnote.delivery_method or 'N/A',
-        'status': cnote.status or 'N/A',
-        'total_art': total_articles,
-        'art_types': art_types,
-        'said_to_contain': said_to_contain,
-        'art_amounts': art_amounts,
-        'consignor_gst': cnote.consignor_gst or 'N/A',
-        'consignee_gst': cnote.consignee_gst or 'N/A',
-        'user': cnote.dealer.name if cnote.dealer else 'N/A',
-        'user_type': user_type,
-        'loading_sheet_number': loading_sheet_number,
-        'ddm_number': ddm_number,
-    }
-
-def get_transporter_info(user):
-    """Get transporter information for the current user"""
-    try:
-        if hasattr(user, 'transporter'):
-            transporter = user.transporter
-            return {
-                'name': transporter.name or 'N/A',
-                'city': transporter.city or 'N/A'
-            }
-    except Exception as e:
-        logger.warning(f"Could not get transporter info: {str(e)}")
-    
-    return {'name': 'GoodWayExpress', 'city': 'Yavatmal'}
 
 @login_required
 def booking_register_view(request):
-    """Render the booking register view page"""
-    try:
-        return render(request, 'transporter/booking_register.html')
-    except Exception as e:
-        logger.error(f"Error rendering booking register view: {str(e)}")
-        messages.error(request, "Error loading the booking register page.")
-        return redirect('transporter:home')
+    return render(request, 'transporter/booking_register.html')
 
 @login_required
 def download_excel(request):
-    """
-    Download booking register data as Excel file with improved performance
-    """
     try:
-        logger.info("Starting Excel download")
+        logger.info("Starting download_excel function")
         
-        # Get the same filtered data as the main view
-        search_params = {
-            'search': request.GET.get('search', '').strip().lower(),
-            'date_from': request.GET.get('date_from'),
-            'date_to': request.GET.get('date_to'),
-            'dealer': request.GET.get('dealer', '').strip().lower(),
-            'from_city': request.GET.get('from_city', '').strip().lower(),
-            'to_city': request.GET.get('to_city', '').strip().lower(),
-            'amount_min': request.GET.get('amount_min'),
-            'amount_max': request.GET.get('amount_max'),
-            'cnote_number': request.GET.get('cnote_number', '').strip().lower(),
-            'ls_number': request.GET.get('ls_number', '').strip().lower(),
-            'ddm_number': request.GET.get('ddm_number', '').strip().lower(),
-        }
+        # Get the same filters as the main data function
+        search_term = request.GET.get('search', '').strip().lower()
+        date_from = request.GET.get('date_from', '').strip()
+        date_to = request.GET.get('date_to', '').strip()
+        dealer = request.GET.get('dealer', '').strip().lower()
+        from_city = request.GET.get('from_city', '').strip().lower()
+        to_city = request.GET.get('to_city', '').strip().lower()
+        amount_min = request.GET.get('amount_min', '').strip()
+        amount_max = request.GET.get('amount_max', '').strip()
+        cnote_number = request.GET.get('cnote_number', '').strip().lower()
+        ls_number = request.GET.get('ls_number', '').strip().lower()
+        ddm_number = request.GET.get('ddm_number', '').strip().lower()
         
-        # Build query
-        cnotes_query = CNotes.objects.select_related(
-            'dealer', 'delivery_destination'
-        ).prefetch_related(
-            'articles__art_type',
-            'loading_sheet_details__loading_sheet',
-            'ddm_details__ddm'
-        )
-        
-        cnotes_query = apply_booking_filters(cnotes_query, search_params)
-        cnotes = cnotes_query.order_by('-created_at')[:5000]  # Limit for Excel export
-        
-        # Process data for Excel
-        excel_data = []
-        for cnote in cnotes:
+        with connection.cursor() as cursor:
+            # Use the same query as the main function but without LIMIT
+            query = """
+                SELECT DISTINCT
+                    c.id,
+                    c.cnote_number,
+                    c.booking_type,
+                    c.delivery_type,
+                    c.delivery_method,
+                    c.eway_bill_number,
+                    c.manual_date,
+                    c.manual_cnote_number,
+                    c.manual_cnote_type,
+                    c.payment_type,
+                    c.consignor_name,
+                    c.consignor_address,
+                    c.consignor_mobile,
+                    c.consignor_gst,
+                    c.consignee_name,
+                    c.consignee_address,
+                    c.consignee_mobile,
+                    c.consignee_gst,
+                    c.actual_weight,
+                    c.charged_weight,
+                    c.weight_rate,
+                    c.weight_amount,
+                    c.fix_amount,
+                    c.invoice_number,
+                    c.declared_value,
+                    c.risk_type,
+                    c.pod_required,
+                    c.freight,
+                    c.docket_charge,
+                    c.door_delivery_charge,
+                    c.handling_charge,
+                    c.pickup_charge,
+                    c.transhipment_charge,
+                    c.insurance,
+                    c.fuel_surcharge,
+                    c.commission,
+                    c.other_charge,
+                    c.carrier_risk,
+                    c.grand_total,
+                    c.status,
+                    c.status_updated_at,
+                    c.created_at,
+                    c.total_art,
+                    COALESCE(d.name, 'Direct') as dealer_name,
+                    COALESCE(dd.destination_name, 'N/A') as delivery_destination,
+                    CASE 
+                        WHEN d.name IS NOT NULL THEN 'Dealer'
+                        ELSE 'Direct'
+                    END as user_type,
+                    COALESCE(ls.ls_number::text, 'N/A') as loading_sheet_number,
+                    COALESCE(ddm.ddm_no, 'N/A') as ddm_number,
+                    STRING_AGG(DISTINCT COALESCE(at.art_type_name, 'N/A'), ' / ') as art_types,
+                    STRING_AGG(DISTINCT COALESCE(a.said_to_contain, 'N/A'), ' / ') as said_to_contain,
+                    STRING_AGG(DISTINCT COALESCE(a.art_amount::text, '0'), ' / ') as art_amounts
+                FROM dealer_app_cnotes c
+                LEFT JOIN dealer_app_dealer d ON c.dealer_id = d.dealer_id
+                LEFT JOIN dealer_app_deliverydestination dd ON c.delivery_destination_id = dd.id
+                LEFT JOIN dealer_app_loadingsheetdetail lsd ON c.id = lsd.cnote_id
+                LEFT JOIN dealer_app_loadingsheetsummary ls ON lsd.loading_sheet_id = ls.ls_number
+                LEFT JOIN transporter_app_ddmdetails ddmd ON c.cnote_number = ddmd.cnote_number
+                LEFT JOIN transporter_app_ddmsummary ddm ON ddmd.ddm_id = ddm.ddm_id
+                LEFT JOIN dealer_app_article a ON c.id = a.cnote_id
+                LEFT JOIN dealer_app_arttype at ON a.art_type_id = at.id
+                WHERE 1=1
+            """
+            
+            params = []
+            
+            # Apply the same filters
+            if search_term:
+                query += """ AND (
+                    LOWER(c.cnote_number) LIKE %s OR
+                    LOWER(c.consignor_name) LIKE %s OR
+                    LOWER(c.consignee_name) LIKE %s OR
+                    LOWER(COALESCE(d.name, '')) LIKE %s
+                )"""
+                search_param = f'%{search_term}%'
+                params.extend([search_param] * 4)
+
+            if date_from:
+                query += " AND c.created_at >= %s"
+                params.append(date_from)
+
+            if date_to:
+                query += " AND c.created_at <= %s"
+                params.append(date_to + ' 23:59:59')
+
+            if dealer and dealer.lower() != 'all':
+                query += " AND LOWER(COALESCE(d.name, 'direct')) LIKE %s"
+                params.append(f'%{dealer}%')
+
+            if from_city:
+                query += " AND LOWER(COALESCE(dd.destination_name, '')) LIKE %s"
+                params.append(f'%{from_city}%')
+
+            if to_city:
+                query += " AND LOWER(COALESCE(dd.destination_name, '')) LIKE %s"
+                params.append(f'%{to_city}%')
+
+            if amount_min:
+                try:
+                    query += " AND c.grand_total >= %s"
+                    params.append(float(amount_min))
+                except ValueError:
+                    pass
+
+            if amount_max:
+                try:
+                    query += " AND c.grand_total <= %s"
+                    params.append(float(amount_max))
+                except ValueError:
+                    pass
+
+            if cnote_number:
+                query += " AND LOWER(c.cnote_number) LIKE %s"
+                params.append(f'%{cnote_number}%')
+
+            if ls_number:
+                query += " AND LOWER(COALESCE(ls.ls_number::text, '')) LIKE %s"
+                params.append(f'%{ls_number}%')
+
+            if ddm_number:
+                query += " AND LOWER(COALESCE(ddm.ddm_no, '')) LIKE %s"
+                params.append(f'%{ddm_number}%')
+
+            query += """
+                GROUP BY 
+                    c.id, c.cnote_number, c.booking_type, c.delivery_type, c.delivery_method,
+                    c.eway_bill_number, c.manual_date, c.manual_cnote_number, c.manual_cnote_type,
+                    c.payment_type, c.consignor_name, c.consignor_address, c.consignor_mobile,
+                    c.consignor_gst, c.consignee_name, c.consignee_address, c.consignee_mobile,
+                    c.consignee_gst, c.actual_weight, c.charged_weight, c.weight_rate,
+                    c.weight_amount, c.fix_amount, c.invoice_number, c.declared_value,
+                    c.risk_type, c.pod_required, c.freight, c.docket_charge,
+                    c.door_delivery_charge, c.handling_charge, c.pickup_charge,
+                    c.transhipment_charge, c.insurance, c.fuel_surcharge, c.commission,
+                    c.other_charge, c.carrier_risk, c.grand_total, c.status,
+                    c.status_updated_at, c.created_at, c.total_art, d.name,
+                    dd.destination_name, ls.ls_number, ddm.ddm_no
+                ORDER BY c.created_at DESC
+            """
+            
+            cursor.execute(query, params)
+            columns = [col[0] for col in cursor.description]
+            bookings = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+        logger.info(f"Fetched {len(bookings)} records for Excel download")
+
+        # Process the data for Excel
+        processed_bookings = []
+        for booking in bookings:
             try:
-                cnote_data = process_cnote_data(cnote)
-                # Flatten arrays for Excel
-                cnote_data['art_types'] = ' / '.join(cnote_data['art_types']) if cnote_data['art_types'] else 'N/A'
-                cnote_data['said_to_contain'] = ' / '.join(cnote_data['said_to_contain']) if cnote_data['said_to_contain'] else 'N/A'
-                cnote_data['art_amounts'] = ' / '.join([str(amt) for amt in cnote_data['art_amounts']]) if cnote_data['art_amounts'] else 'N/A'
-                excel_data.append(cnote_data)
+                # Convert Decimal objects to float
+                for key, value in booking.items():
+                    if isinstance(value, Decimal):
+                        booking[key] = float(value)
+                    elif isinstance(value, datetime):
+                        booking[key] = value.strftime('%Y-%m-%d %H:%M:%S')
+                    elif value is None:
+                        booking[key] = ''
+                
+                # Process aggregated fields
+                art_types = booking.get('art_types', '') or ''
+                said_to_contain = booking.get('said_to_contain', '') or ''
+                art_amounts = booking.get('art_amounts', '') or ''
+                
+                booking['art_types'] = art_types.replace(' / ', ', ') if art_types != 'N/A' else ''
+                booking['said_to_contain'] = said_to_contain.replace(' / ', ', ') if said_to_contain != 'N/A' else ''
+                booking['art_amounts'] = art_amounts.replace(' / ', ', ') if art_amounts != 'N/A' else ''
+                
+                processed_bookings.append(booking)
+                
             except Exception as e:
-                logger.warning(f"Error processing CNotes {cnote.cnote_number} for Excel: {str(e)}")
+                logger.error(f"Error processing booking for Excel: {str(e)}")
                 continue
+
+        # Convert to DataFrame
+        df = pd.DataFrame(processed_bookings)
         
-        if not excel_data:
-            return JsonResponse({'error': 'No data available for export'}, status=404)
-        
-        # Create DataFrame
-        df = pd.DataFrame(excel_data)
-        
-        # Convert datetime columns
-        datetime_columns = ['created_at']
-        for col in datetime_columns:
-            if col in df.columns:
-                df[col] = pd.to_datetime(df[col], errors='coerce')
-        
-        # Create HTTP response
-        response = HttpResponse(
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
-        response['Content-Disposition'] = f'attachment; filename="booking_register_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
-        
-        # Write to Excel
+        if df.empty:
+            # Return empty Excel file
+            response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            response['Content-Disposition'] = 'attachment; filename="booking_register_empty.xlsx"'
+            
+            empty_df = pd.DataFrame({'Message': ['No data found for the selected filters']})
+            with pd.ExcelWriter(response, engine='openpyxl') as writer:
+                empty_df.to_excel(writer, index=False, sheet_name='No Data')
+            
+            return response
+
+        # Create an HTTP response with the Excel file
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        filename = f"booking_register_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        # Use Pandas to write the DataFrame to the response
         with pd.ExcelWriter(response, engine='openpyxl') as writer:
             df.to_excel(writer, index=False, sheet_name='Booking Register')
             
@@ -2148,70 +2385,13 @@ def download_excel(request):
                         pass
                 adjusted_width = min(max_length + 2, 50)
                 worksheet.column_dimensions[column_letter].width = adjusted_width
-        
-        logger.info(f"Excel file generated successfully with {len(excel_data)} records")
+
+        logger.info("Excel file generated successfully")
         return response
         
     except Exception as e:
         logger.error(f"Error in download_excel: {str(e)}", exc_info=True)
-        return JsonResponse({
-            'error': 'Error generating Excel file',
-            'message': str(e)
-        }, status=500)
-
-# Additional utility functions for better code organization
-
-def validate_date_range(date_from, date_to):
-    """Validate date range parameters"""
-    try:
-        if date_from:
-            from_date = datetime.strptime(date_from, '%Y-%m-%d').date()
-        if date_to:
-            to_date = datetime.strptime(date_to, '%Y-%m-%d').date()
-        
-        if date_from and date_to and from_date > to_date:
-            raise ValueError("From date cannot be greater than to date")
-        
-        return True
-    except ValueError as e:
-        logger.warning(f"Date validation error: {str(e)}")
-        return False
-
-def get_booking_summary(cnotes_data):
-    """Calculate booking summary statistics"""
-    try:
-        total_records = len(cnotes_data)
-        total_amount = sum(item.get('grand_total', 0) for item in cnotes_data)
-        
-        paid_amount = sum(
-            item.get('grand_total', 0) 
-            for item in cnotes_data 
-            if item.get('payment_type', '').upper() == 'PAID'
-        )
-        
-        to_pay_amount = sum(
-            item.get('grand_total', 0) 
-            for item in cnotes_data 
-            if item.get('payment_type', '').upper() == 'TO PAY'
-        )
-        
-        return {
-            'total_records': total_records,
-            'total_amount': total_amount,
-            'paid_amount': paid_amount,
-            'to_pay_amount': to_pay_amount,
-            'average_amount': total_amount / total_records if total_records > 0 else 0
-        }
-    except Exception as e:
-        logger.error(f"Error calculating booking summary: {str(e)}")
-        return {
-            'total_records': 0,
-            'total_amount': 0,
-            'paid_amount': 0,
-            'to_pay_amount': 0,
-            'average_amount': 0
-        }
-
+        return HttpResponse(f"Error generating Excel: {e}", status=500)
 
 from django.db import IntegrityError
 
