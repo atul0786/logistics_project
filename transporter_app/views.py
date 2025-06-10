@@ -1837,17 +1837,17 @@ def all_booking_register(request):
 @login_required
 def booking_register_data(request):
     """
-    Fetch booking register data with optimized queries and proper error handling
+    Fetch booking register data with FIXED model relationships
     """
     try:
+        logger.info("Starting booking_register_data function")
+        
         # Debug information
         print(f"🔍 DEBUG - User: {request.user}")
         print(f"🔍 DEBUG - Is authenticated: {request.user.is_authenticated}")
         print(f"🔍 DEBUG - User type: {getattr(request.user, 'is_transporter', 'No attribute')}")
         print(f"🔍 DEBUG - Request method: {request.method}")
         print(f"🔍 DEBUG - Request path: {request.path}")
-        
-        logger.info("Starting booking_register_data function")
         
         # Get search parameters
         search_params = {
@@ -1864,13 +1864,12 @@ def booking_register_data(request):
             'ddm_number': request.GET.get('ddm_number', '').strip().lower(),
         }
 
-        # Build optimized query using Django ORM instead of raw SQL
+        # FIXED: Build optimized query with CORRECT relationship names
         cnotes_query = CNotes.objects.select_related(
             'dealer', 'delivery_destination'
         ).prefetch_related(
-            'articles__art_type',
-            'loading_sheet_details__loading_sheet',
-            'ddm_details__ddm'
+            'article_set__art_type',  # FIXED: Use reverse relationship
+            'loadingsheetdetail_set__loading_sheet',  # FIXED: Use reverse relationship
         )
 
         # Apply filters
@@ -1883,7 +1882,7 @@ def booking_register_data(request):
         cnotes_data = []
         for cnote in cnotes:
             try:
-                cnote_data = process_cnote_data(cnote)
+                cnote_data = process_cnote_data_fixed(cnote)  # FIXED function
                 cnotes_data.append(cnote_data)
             except Exception as e:
                 logger.warning(f"Error processing CNotes {cnote.cnote_number}: {str(e)}")
@@ -1962,19 +1961,15 @@ def apply_booking_filters(query, params):
     
     # Loading sheet number filter
     if params['ls_number']:
-        query = query.filter(loading_sheet_details__loading_sheet__ls_number__icontains=params['ls_number'])
-    
-    # DDM number filter
-    if params['ddm_number']:
-        query = query.filter(ddm_details__ddm__ddm_no__icontains=params['ddm_number'])
+        query = query.filter(loadingsheetdetail_set__loading_sheet__ls_number__icontains=params['ls_number'])
     
     return query.distinct()
 
-def process_cnote_data(cnote):
-    """Process individual CNotes data"""
+def process_cnote_data_fixed(cnote):
+    """FIXED: Process individual CNotes data with correct relationships"""
     
-    # Get articles data
-    articles = cnote.articles.all()
+    # Get articles data using CORRECT reverse relationship
+    articles = cnote.article_set.all()  # FIXED: Use article_set instead of articles
     art_types = []
     said_to_contain = []
     art_amounts = []
@@ -1990,13 +1985,19 @@ def process_cnote_data(cnote):
         art_amounts.append(float(article.art_amount or 0))
         total_articles += article.art or 0
     
-    # Get loading sheet info
-    loading_sheet_detail = cnote.loading_sheet_details.first()
+    # Get loading sheet info using CORRECT reverse relationship
+    loading_sheet_detail = cnote.loadingsheetdetail_set.first()  # FIXED: Use loadingsheetdetail_set
     loading_sheet_number = loading_sheet_detail.loading_sheet.ls_number if loading_sheet_detail else 'N/A'
     
-    # Get DDM info
-    ddm_detail = cnote.ddm_details.first()
-    ddm_number = ddm_detail.ddm.ddm_no if ddm_detail else 'N/A'
+    # Get DDM info - Check if DDMDetails has cnote_number field
+    ddm_number = 'N/A'
+    try:
+        # Try to find DDM details by cnote_number
+        ddm_detail = DDMDetails.objects.filter(cnote_number=cnote.cnote_number).first()
+        if ddm_detail and ddm_detail.ddm:
+            ddm_number = ddm_detail.ddm.ddm_no
+    except Exception as e:
+        logger.warning(f"Could not get DDM info for {cnote.cnote_number}: {str(e)}")
     
     # Determine user type
     user_type = 'Dealer' if cnote.dealer else 'Unknown'
@@ -2074,7 +2075,7 @@ def booking_register_view(request):
 @login_required
 def download_excel(request):
     """
-    Download booking register data as Excel file with improved performance
+    Download booking register data as Excel file with FIXED relationships
     """
     try:
         logger.info("Starting Excel download")
@@ -2094,13 +2095,12 @@ def download_excel(request):
             'ddm_number': request.GET.get('ddm_number', '').strip().lower(),
         }
         
-        # Build query
+        # Build query with FIXED relationships
         cnotes_query = CNotes.objects.select_related(
             'dealer', 'delivery_destination'
         ).prefetch_related(
-            'articles__art_type',
-            'loading_sheet_details__loading_sheet',
-            'ddm_details__ddm'
+            'article_set__art_type',  # FIXED
+            'loadingsheetdetail_set__loading_sheet',  # FIXED
         )
         
         cnotes_query = apply_booking_filters(cnotes_query, search_params)
@@ -2110,7 +2110,7 @@ def download_excel(request):
         excel_data = []
         for cnote in cnotes:
             try:
-                cnote_data = process_cnote_data(cnote)
+                cnote_data = process_cnote_data_fixed(cnote)  # FIXED function
                 # Flatten arrays for Excel
                 cnote_data['art_types'] = ' / '.join(cnote_data['art_types']) if cnote_data['art_types'] else 'N/A'
                 cnote_data['said_to_contain'] = ' / '.join(cnote_data['said_to_contain']) if cnote_data['said_to_contain'] else 'N/A'
@@ -2165,59 +2165,6 @@ def download_excel(request):
             'error': 'Error generating Excel file',
             'message': str(e)
         }, status=500)
-
-# Additional utility functions for better code organization
-
-def validate_date_range(date_from, date_to):
-    """Validate date range parameters"""
-    try:
-        if date_from:
-            from_date = datetime.strptime(date_from, '%Y-%m-%d').date()
-        if date_to:
-            to_date = datetime.strptime(date_to, '%Y-%m-%d').date()
-        
-        if date_from and date_to and from_date > to_date:
-            raise ValueError("From date cannot be greater than to date")
-        
-        return True
-    except ValueError as e:
-        logger.warning(f"Date validation error: {str(e)}")
-        return False
-
-def get_booking_summary(cnotes_data):
-    """Calculate booking summary statistics"""
-    try:
-        total_records = len(cnotes_data)
-        total_amount = sum(item.get('grand_total', 0) for item in cnotes_data)
-        
-        paid_amount = sum(
-            item.get('grand_total', 0) 
-            for item in cnotes_data 
-            if item.get('payment_type', '').upper() == 'PAID'
-        )
-        
-        to_pay_amount = sum(
-            item.get('grand_total', 0) 
-            for item in cnotes_data 
-            if item.get('payment_type', '').upper() == 'TO PAY'
-        )
-        
-        return {
-            'total_records': total_records,
-            'total_amount': total_amount,
-            'paid_amount': paid_amount,
-            'to_pay_amount': to_pay_amount,
-            'average_amount': total_amount / total_records if total_records > 0 else 0
-        }
-    except Exception as e:
-        logger.error(f"Error calculating booking summary: {str(e)}")
-        return {
-            'total_records': 0,
-            'total_amount': 0,
-            'paid_amount': 0,
-            'to_pay_amount': 0,
-            'average_amount': 0
-        }
 
 
 from django.db import IntegrityError
