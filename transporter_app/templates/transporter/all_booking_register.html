@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>All Booking Register Report - Enhanced</title>
+    <title>All Booking Register Report - Fixed</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -230,40 +230,6 @@
             gap: 15px;
         }
 
-        .stats-container {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            margin-bottom: 25px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            border-left: 4px solid var(--primary-color);
-        }
-
-        .stat-value {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-
-        .stat-label {
-            font-size: 0.9em;
-            color: #6c757d;
-            margin-top: 5px;
-        }
-
         .search-results-container {
             background: white;
             border-radius: 12px;
@@ -485,6 +451,26 @@
             text-decoration: underline;
         }
 
+        /* Badge styles */
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.6em;
+            font-size: 0.75em;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.375rem;
+        }
+        
+        .badge-primary { background-color: #007bff; color: white; }
+        .badge-secondary { background-color: #6c757d; color: white; }
+        .badge-success { background-color: #28a745; color: white; }
+        .badge-danger { background-color: #dc3545; color: white; }
+        .badge-warning { background-color: #ffc107; color: #212529; }
+        .badge-info { background-color: #17a2b8; color: white; }
+
         /* Responsive design */
         @media (max-width: 768px) {
             .header-content {
@@ -546,13 +532,6 @@
     </header>
 
     <main class="container">
-        <!-- Statistics Section -->
-        <div class="stats-container" id="stats-container" style="display: none;">
-            <div class="stats-grid" id="stats-grid">
-                <!-- Stats will be populated dynamically -->
-            </div>
-        </div>
-
         <!-- Filter Section -->
         <div class="filter-section" id="filter-section">
             <div class="filter-header">
@@ -860,8 +839,9 @@
             }
 
             async loadInitialData() {
-                // Don't auto-load data, wait for user to apply filters
                 this.populateDefaultFilters();
+                // Auto-load data with default filters
+                await this.fetchBookingData();
             }
 
             populateDefaultFilters() {
@@ -898,19 +878,43 @@
                         if (value) params.append(key, value);
                     });
                     
-                    const response = await fetch(`/transporter/booking_register_data/?${params}`);
+                    // Try multiple possible endpoints
+                    const endpoints = [
+                        '/transporter/booking_register_data/',
+                        '/transporter/booking-register-data/',
+                        '/booking_register_data/',
+                        '/booking-register-data/'
+                    ];
                     
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                    let response = null;
+                    let lastError = null;
+                    
+                    for (const endpoint of endpoints) {
+                        try {
+                            console.log(`Trying endpoint: ${endpoint}?${params}`);
+                            response = await fetch(`${endpoint}?${params}`);
+                            if (response.ok) {
+                                console.log(`Success with endpoint: ${endpoint}`);
+                                break;
+                            }
+                        } catch (error) {
+                            console.log(`Failed with endpoint ${endpoint}:`, error);
+                            lastError = error;
+                        }
+                    }
+                    
+                    if (!response || !response.ok) {
+                        throw new Error(`All endpoints failed. Last error: ${lastError?.message || 'Unknown error'}`);
                     }
                     
                     const data = await response.json();
+                    console.log('Received data:', data);
                     
                     if (data.error) {
                         throw new Error(data.message || data.error);
                     }
                     
-                    if (!Array.isArray(data.bookings)) {
+                    if (!data.bookings || !Array.isArray(data.bookings)) {
                         throw new Error('Invalid data format received from server');
                     }
                     
@@ -920,13 +924,20 @@
                     document.getElementById('transporter-name').textContent = data.transporter_name || 'GoodWayExpress';
                     document.getElementById('transporter-city').textContent = data.transporter_city || 'Yavatmal';
                     
-                    this.populateFilterOptions(this.allBookingData);
+                    // Populate dealer dropdown with all dealers from server
+                    if (data.dealers && Array.isArray(data.dealers)) {
+                        const dealerSelect = document.getElementById('dealer');
+                        this.populateSelect(dealerSelect, data.dealers);
+                    } else {
+                        // Fallback: populate from booking data
+                        this.populateFilterOptions(this.allBookingData);
+                    }
+                    
                     this.filteredData = [...this.allBookingData];
                     this.currentPage = 1;
                     
                     this.displayBookingData();
                     this.updateSummary();
-                    this.updateStats();
                     
                     this.showAlert(`Successfully loaded ${this.allBookingData.length} booking records`, 'info');
                     
@@ -936,7 +947,7 @@
                     
                     document.getElementById('booking-data').innerHTML = `
                         <tr>
-                            <td colspan="43" style="text-align: center; padding: 40px; color: #dc3545;">
+                            <td colspan="43" style="text-align: center; padding: 40px;">
                                 <i class="fas fa-exclamation-triangle fa-2x" style="margin-bottom: 10px;"></i>
                                 <br>Error loading data: ${error.message}
                                 <br><button class="btn btn-primary" onclick="bookingRegister.fetchBookingData()" style="margin-top: 10px;">
@@ -957,11 +968,21 @@
                 const fromCitySelect = document.getElementById('from-city');
                 const toCitySelect = document.getElementById('to-city');
                 
-                // Get unique values
+                // Get unique values from data
                 const dealers = [...new Set(data.map(item => item.user).filter(Boolean))];
                 const destinations = data.map(item => item.delivery_destination).filter(Boolean);
-                const fromCities = [...new Set(destinations.map(dest => dest.split(' - ')[0]).filter(Boolean))];
-                const toCities = [...new Set(destinations.map(dest => dest.split(' - ')[1]).filter(Boolean))];
+                const fromCities = [...new Set(destinations.map(dest => {
+                    if (typeof dest === 'string' && dest.includes(' - ')) {
+                        return dest.split(' - ')[0];
+                    }
+                    return dest;
+                }).filter(Boolean))];
+                const toCities = [...new Set(destinations.map(dest => {
+                    if (typeof dest === 'string' && dest.includes(' - ')) {
+                        return dest.split(' - ')[1];
+                    }
+                    return dest;
+                }).filter(Boolean))];
                 
                 // Populate selects
                 this.populateSelect(dealerSelect, dealers.sort());
@@ -974,7 +995,9 @@
                 const defaultOption = select.querySelector('option[value=""]');
                 
                 select.innerHTML = '';
-                select.appendChild(defaultOption);
+                if (defaultOption) {
+                    select.appendChild(defaultOption);
+                }
                 
                 options.forEach(option => {
                     const optionElement = document.createElement('option');
@@ -1008,7 +1031,6 @@
                         this.currentPage = 1;
                         this.displayBookingData();
                         this.updateSummary();
-                        this.updateStats();
                         
                         this.showAlert(`Filtered to ${this.filteredData.length} records`, 'info');
                         
@@ -1038,45 +1060,59 @@
             }
 
             matchesFilters(row, filters) {
-                // Date range check
-                if (filters.dateFrom || filters.dateTo) {
-                    const rowDate = new Date(row.created_at);
-                    if (filters.dateFrom && rowDate < new Date(filters.dateFrom)) return false;
-                    if (filters.dateTo && rowDate > new Date(filters.dateTo + 'T23:59:59')) return false;
-                }
-                
-                // Dealer check
-                if (filters.dealer && !row.user.toLowerCase().includes(filters.dealer)) return false;
-                
-                // City checks
-                if (filters.fromCity || filters.toCity) {
-                    const destination = row.delivery_destination || '';
-                    const [fromCity, toCity] = destination.split(' - ');
+                try {
+                    // Date range check
+                    if (filters.dateFrom || filters.dateTo) {
+                        const rowDate = new Date(row.created_at);
+                        if (filters.dateFrom && rowDate < new Date(filters.dateFrom)) return false;
+                        if (filters.dateTo && rowDate > new Date(filters.dateTo + 'T23:59:59')) return false;
+                    }
                     
-                    if (filters.fromCity && (!fromCity || !fromCity.toLowerCase().includes(filters.fromCity))) return false;
-                    if (filters.toCity && (!toCity || !toCity.toLowerCase().includes(filters.toCity))) return false;
-                }
-                
-                // Amount range check
-                const amount = row.grand_total || 0;
-                if (amount < filters.amountMin || amount > filters.amountMax) return false;
-                
-                // Search term check
-                if (filters.searchTerm) {
-                    const searchFields = [
-                        row.cnote_number, row.consignor_name, row.consignee_name, 
-                        row.user, row.user_type
-                    ].map(field => (field || '').toLowerCase());
+                    // Dealer check - improved logic
+                    if (filters.dealer && filters.dealer.toLowerCase() !== 'all') {
+                        const dealerName = (row.user || '').toLowerCase();
+                        if (!dealerName.includes(filters.dealer)) return false;
+                    }
                     
-                    if (!searchFields.some(field => field.includes(filters.searchTerm))) return false;
+                    // City checks
+                    if (filters.fromCity || filters.toCity) {
+                        const destination = row.delivery_destination || '';
+                        if (typeof destination === 'string' && destination.includes(' - ')) {
+                            const [fromCity, toCity] = destination.split(' - ');
+                            
+                            if (filters.fromCity && (!fromCity || !fromCity.toLowerCase().includes(filters.fromCity))) return false;
+                            if (filters.toCity && (!toCity || !toCity.toLowerCase().includes(filters.toCity))) return false;
+                        } else {
+                            // If destination doesn't have the expected format, check against the whole string
+                            if (filters.fromCity && !destination.toLowerCase().includes(filters.fromCity)) return false;
+                            if (filters.toCity && !destination.toLowerCase().includes(filters.toCity)) return false;
+                        }
+                    }
+                    
+                    // Amount range check
+                    const amount = parseFloat(row.grand_total) || 0;
+                    if (amount < filters.amountMin || amount > filters.amountMax) return false;
+                    
+                    // Search term check
+                    if (filters.searchTerm) {
+                        const searchFields = [
+                            row.cnote_number, row.consignor_name, row.consignee_name, 
+                            row.user, row.user_type
+                        ].map(field => (field || '').toLowerCase());
+                        
+                        if (!searchFields.some(field => field.includes(filters.searchTerm))) return false;
+                    }
+                    
+                    // Specific number checks
+                    if (filters.cnoteNumber && (!row.cnote_number || !row.cnote_number.toLowerCase().includes(filters.cnoteNumber))) return false;
+                    if (filters.lsNumber && (!row.loading_sheet_number || !row.loading_sheet_number.toString().toLowerCase().includes(filters.lsNumber))) return false;
+                    if (filters.ddmNumber && (!row.ddm_number || !row.ddm_number.toString().toLowerCase().includes(filters.ddmNumber))) return false;
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Error in matchesFilters:', error, row);
+                    return false;
                 }
-                
-                // Specific number checks
-                if (filters.cnoteNumber && !row.cnote_number.toLowerCase().includes(filters.cnoteNumber)) return false;
-                if (filters.lsNumber && (!row.loading_sheet_number || !row.loading_sheet_number.toString().toLowerCase().includes(filters.lsNumber))) return false;
-                if (filters.ddmNumber && (!row.ddm_number || !row.ddm_number.toString().toLowerCase().includes(filters.ddmNumber))) return false;
-                
-                return true;
             }
 
             quickSearch() {
@@ -1108,57 +1144,91 @@
                 bookingData.innerHTML = '';
                 
                 pageData.forEach((row, index) => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${startIndex + index + 1}</td>
-                        <td><a href="/transporter/cnotes-search/?cnote=${row.cnote_number}" target="_blank">${row.cnote_number || 'N/A'}</a></td>
-                        <td>${row.booking_type || 'N/A'}</td>
-                        <td>${row.delivery_destination || 'N/A'}</td>
-                        <td>${row.consignor_name || 'N/A'}</td>
-                        <td>${row.consignee_name || 'N/A'}</td>
-                        <td><span class="badge badge-${this.getPaymentTypeBadge(row.payment_type)}">${row.payment_type || 'N/A'}</span></td>
-                        <td>₹${(row.grand_total || 0).toFixed(2)}</td>
-                        <td>${row.created_at ? new Date(row.created_at).toLocaleString() : 'N/A'}</td>
-                        <td>${row.eway_bill_number || 'N/A'}</td>
-                        <td>${(row.actual_weight || 0).toFixed(2)} kg</td>
-                        <td>${(row.charged_weight || 0).toFixed(2)} kg</td>
-                        <td>₹${(row.weight_rate || 0).toFixed(2)}</td>
-                        <td>₹${(row.weight_amount || 0).toFixed(2)}</td>
-                        <td>₹${(row.fix_amount || 0).toFixed(2)}</td>
-                        <td>${row.invoice_number || 'N/A'}</td>
-                        <td>₹${(row.declared_value || 0).toFixed(2)}</td>
-                        <td>${row.risk_type || 'N/A'}</td>
-                        <td>${row.pod_required ? 'Yes' : 'No'}</td>
-                        <td>₹${(row.freight || 0).toFixed(2)}</td>
-                        <td>₹${(row.docket_charge || 0).toFixed(2)}</td>
-                        <td>₹${(row.door_delivery_charge || 0).toFixed(2)}</td>
-                        <td>₹${(row.handling_charge || 0).toFixed(2)}</td>
-                        <td>₹${(row.pickup_charge || 0).toFixed(2)}</td>
-                        <td>₹${(row.transhipment_charge || 0).toFixed(2)}</td>
-                        <td>₹${(row.insurance || 0).toFixed(2)}</td>
-                        <td>₹${(row.fuel_surcharge || 0).toFixed(2)}</td>
-                        <td>₹${(row.commission || 0).toFixed(2)}</td>
-                        <td>₹${(row.other_charge || 0).toFixed(2)}</td>
-                        <td>${row.carrier_risk || 'N/A'}</td>
-                        <td>${row.delivery_type || 'N/A'}</td>
-                        <td>${row.delivery_method || 'N/A'}</td>
-                        <td><span class="badge badge-${this.getStatusBadge(row.status)}">${row.status || 'N/A'}</span></td>
-                        <td>${row.total_art || 0}</td>
-                        <td>${Array.isArray(row.art_types) ? row.art_types.join(' / ') : 'N/A'}</td>
-                        <td>${Array.isArray(row.said_to_contain) ? row.said_to_contain.join(' / ') : 'N/A'}</td>
-                        <td>₹${Array.isArray(row.art_amounts) ? row.art_amounts.map(amt => parseFloat(amt).toFixed(2)).join(' / ') : 'N/A'}</td>
-                        <td>${row.consignor_gst || 'N/A'}</td>
-                        <td>${row.consignee_gst || 'N/A'}</td>
-                        <td>${row.user || 'N/A'}</td>
-                        <td><span class="badge badge-info">${row.user_type || 'N/A'}</span></td>
-                        <td>${row.loading_sheet_number && row.loading_sheet_number !== 'N/A' ? 
-                            `<a href="/dealer/mf_print/${row.loading_sheet_number}/" target="_blank">${row.loading_sheet_number}</a>` : 
-                            'N/A'}</td>
-                        <td>${row.ddm_number && row.ddm_number !== 'N/A' ? 
-                            `<a href="/transporter/ddm-details/?ddmId=${row.ddm_number.replace('DDM-', '')}" target="_blank">${row.ddm_number}</a>` : 
-                            'N/A'}</td>
-                    `;
-                    bookingData.appendChild(tr);
+                    try {
+                        const tr = document.createElement('tr');
+                        
+                        // Safe value extraction with fallbacks
+                        const safeValue = (value, fallback = 'N/A') => {
+                            if (value === null || value === undefined || value === '') return fallback;
+                            return value;
+                        };
+                        
+                        const safeNumber = (value, decimals = 2) => {
+                            const num = parseFloat(value);
+                            return isNaN(num) ? 0 : num.toFixed(decimals);
+                        };
+                        
+                        const safeDate = (dateStr) => {
+                            if (!dateStr) return 'N/A';
+                            try {
+                                return new Date(dateStr).toLocaleString();
+                            } catch {
+                                return dateStr;
+                            }
+                        };
+                        
+                        const safeArray = (arr, joinStr = ' / ') => {
+                            if (!Array.isArray(arr)) return 'N/A';
+                            return arr.length > 0 ? arr.join(joinStr) : 'N/A';
+                        };
+                        
+                        tr.innerHTML = `
+                            <td>${startIndex + index + 1}</td>
+                            <td><a href="/dealer/view-cnote/${safeValue(row.cnote_number)}/" target="_blank">${safeValue(row.cnote_number)}</a></td>
+                            <td>${safeValue(row.booking_type)}</td>
+                            <td>${safeValue(row.delivery_destination)}</td>
+                            <td>${safeValue(row.consignor_name)}</td>
+                            <td>${safeValue(row.consignee_name)}</td>
+                            <td><span class="badge badge-${this.getPaymentTypeBadge(row.payment_type)}">${safeValue(row.payment_type)}</span></td>
+                            <td>₹${safeNumber(row.grand_total)}</td>
+                            <td>${safeDate(row.created_at)}</td>
+                            <td>${safeValue(row.eway_bill_number)}</td>
+                            <td>${safeNumber(row.actual_weight)} kg</td>
+                            <td>${safeNumber(row.charged_weight)} kg</td>
+                            <td>₹${safeNumber(row.weight_rate)}</td>
+                            <td>₹${safeNumber(row.weight_amount)}</td>
+                            <td>₹${safeNumber(row.fix_amount)}</td>
+                            <td>${safeValue(row.invoice_number)}</td>
+                            <td>₹${safeNumber(row.declared_value)}</td>
+                            <td>${safeValue(row.risk_type)}</td>
+                            <td>${row.pod_required ? 'Yes' : 'No'}</td>
+                            <td>₹${safeNumber(row.freight)}</td>
+                            <td>₹${safeNumber(row.docket_charge)}</td>
+                            <td>₹${safeNumber(row.door_delivery_charge)}</td>
+                            <td>₹${safeNumber(row.handling_charge)}</td>
+                            <td>₹${safeNumber(row.pickup_charge)}</td>
+                            <td>₹${safeNumber(row.transhipment_charge)}</td>
+                            <td>₹${safeNumber(row.insurance)}</td>
+                            <td>₹${safeNumber(row.fuel_surcharge)}</td>
+                            <td>₹${safeNumber(row.commission)}</td>
+                            <td>₹${safeNumber(row.other_charge)}</td>
+                            <td>${safeValue(row.carrier_risk)}</td>
+                            <td>${safeValue(row.delivery_type)}</td>
+                            <td>${safeValue(row.delivery_method)}</td>
+                            <td><span class="badge badge-${this.getStatusBadge(row.status)}">${safeValue(row.status)}</span></td>
+                            <td>${safeValue(row.total_art, 0)}</td>
+                            <td>${safeArray(row.art_types)}</td>
+                            <td>${safeArray(row.said_to_contain)}</td>
+                            <td>₹${safeArray(row.art_amounts ? row.art_amounts.map(amt => safeNumber(amt)) : [])}</td>
+                            <td>${safeValue(row.consignor_gst)}</td>
+                            <td>${safeValue(row.consignee_gst)}</td>
+                            <td>${safeValue(row.user)}</td>
+                            <td><span class="badge badge-info">${safeValue(row.user_type)}</span></td>
+                            <td>${row.loading_sheet_number && row.loading_sheet_number !== 'N/A' && row.loading_sheet_number !== '0' ? 
+                                `<a href="/dealer/mf_print/${row.loading_sheet_number}/" target="_blank">${row.loading_sheet_number}</a>` : 
+                                'N/A'}</td>
+                            <td>${row.ddm_number && row.ddm_number !== 'N/A' && row.ddm_number !== '0' ? 
+                                `<a href="/transporter/ddm-details/" target="_blank" onclick="searchDDM('${row.ddm_number}')">${row.ddm_number}</a>` : 
+                                'N/A'}</td>
+                        `;
+                        bookingData.appendChild(tr);
+                    } catch (error) {
+                        console.error('Error rendering row:', error, row);
+                        // Add a simple error row
+                        const errorTr = document.createElement('tr');
+                        errorTr.innerHTML = `<td colspan="43" style="color: red;">Error rendering row ${index + 1}</td>`;
+                        bookingData.appendChild(errorTr);
+                    }
                 });
                 
                 this.updatePagination();
@@ -1284,122 +1354,92 @@
             }
 
             updateSummary() {
-                const paid = this.filteredData.reduce((sum, row) => 
-                    sum + (row.payment_type === 'PAID' ? (row.grand_total || 0) : 0), 0);
-                const toPay = this.filteredData.reduce((sum, row) => 
-                    sum + (row.payment_type === 'TO PAY' ? (row.grand_total || 0) : 0), 0);
-                const tbb = this.filteredData.reduce((sum, row) => 
-                    sum + (row.payment_type === 'TBB' ? (row.grand_total || 0) : 0), 0);
-                
-                const totalAmount = paid + toPay + tbb;
-                const billing = totalAmount * 0.1; // 10% billing
-                const gst = totalAmount * 0.18; // 18% GST
-                const grandTotal = totalAmount + gst;
+                try {
+                    const paid = this.filteredData.reduce((sum, row) => 
+                        sum + (row.payment_type === 'PAID' ? (parseFloat(row.grand_total) || 0) : 0), 0);
+                    const toPay = this.filteredData.reduce((sum, row) => 
+                        sum + (row.payment_type === 'TO PAY' ? (parseFloat(row.grand_total) || 0) : 0), 0);
+                    const tbb = this.filteredData.reduce((sum, row) => 
+                        sum + (row.payment_type === 'TBB' ? (parseFloat(row.grand_total) || 0) : 0), 0);
+                    
+                    const totalAmount = paid + toPay + tbb;
+                    const billing = totalAmount * 0.1; // 10% billing
+                    const gst = totalAmount * 0.18; // 18% GST
+                    const grandTotal = totalAmount + gst;
 
-                const summaryData = document.getElementById('summary-data');
-                summaryData.innerHTML = `
-                    <tr>
-                        <td><strong>Current Filter</strong></td>
-                        <td>₹${paid.toFixed(2)}</td>
-                        <td>₹${toPay.toFixed(2)}</td>
-                        <td>₹${billing.toFixed(2)}</td>
-                        <td>₹${totalAmount.toFixed(2)}</td>
-                        <td>₹${gst.toFixed(2)}</td>
-                        <td>₹${grandTotal.toFixed(2)}</td>
-                    </tr>
-                    <tr class="summary-row">
-                        <td><strong>Total (${this.filteredData.length} records)</strong></td>
-                        <td><strong>₹${paid.toFixed(2)}</strong></td>
-                        <td><strong>₹${toPay.toFixed(2)}</strong></td>
-                        <td><strong>₹${billing.toFixed(2)}</strong></td>
-                        <td><strong>₹${totalAmount.toFixed(2)}</strong></td>
-                        <td><strong>₹${gst.toFixed(2)}</strong></td>
-                        <td><strong>₹${grandTotal.toFixed(2)}</strong></td>
-                    </tr>
-                `;
-            }
-
-            updateStats() {
-                const statsContainer = document.getElementById('stats-container');
-                const statsGrid = document.getElementById('stats-grid');
-                
-                if (this.filteredData.length === 0) {
-                    statsContainer.style.display = 'none';
-                    return;
+                    const summaryData = document.getElementById('summary-data');
+                    summaryData.innerHTML = `
+                        <tr>
+                            <td><strong>Current Filter</strong></td>
+                            <td>₹${paid.toFixed(2)}</td>
+                            <td>₹${toPay.toFixed(2)}</td>
+                            <td>₹${billing.toFixed(2)}</td>
+                            <td>₹${totalAmount.toFixed(2)}</td>
+                            <td>₹${gst.toFixed(2)}</td>
+                            <td>₹${grandTotal.toFixed(2)}</td>
+                        </tr>
+                        <tr class="summary-row">
+                            <td><strong>Total (${this.filteredData.length} records)</strong></td>
+                            <td><strong>₹${paid.toFixed(2)}</strong></td>
+                            <td><strong>₹${toPay.toFixed(2)}</strong></td>
+                            <td><strong>₹${billing.toFixed(2)}</strong></td>
+                            <td><strong>₹${totalAmount.toFixed(2)}</strong></td>
+                            <td><strong>₹${gst.toFixed(2)}</strong></td>
+                            <td><strong>₹${grandTotal.toFixed(2)}</strong></td>
+                        </tr>
+                    `;
+                } catch (error) {
+                    console.error('Error updating summary:', error);
                 }
-                
-                const totalRecords = this.filteredData.length;
-                const totalAmount = this.filteredData.reduce((sum, row) => sum + (row.grand_total || 0), 0);
-                const avgAmount = totalAmount / totalRecords;
-                const totalWeight = this.filteredData.reduce((sum, row) => sum + (row.actual_weight || 0), 0);
-                
-                const paidRecords = this.filteredData.filter(row => row.payment_type === 'PAID').length;
-                const toPayRecords = this.filteredData.filter(row => row.payment_type === 'TO PAY').length;
-                
-                statsGrid.innerHTML = `
-                    <div class="stat-card">
-                        <div class="stat-value">${totalRecords}</div>
-                        <div class="stat-label">Total Records</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">₹${(totalAmount / 100000).toFixed(1)}L</div>
-                        <div class="stat-label">Total Amount</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">₹${avgAmount.toFixed(0)}</div>
-                        <div class="stat-label">Average Amount</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${totalWeight.toFixed(0)} kg</div>
-                        <div class="stat-label">Total Weight</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${paidRecords}</div>
-                        <div class="stat-label">Paid Bookings</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">${toPayRecords}</div>
-                        <div class="stat-label">To Pay Bookings</div>
-                    </div>
-                `;
-                
-                statsContainer.style.display = 'block';
             }
 
             sortTable(column) {
-                if (this.currentSortColumn === column) {
-                    this.currentSortOrder = this.currentSortOrder === 'asc' ? 'desc' : 'asc';
-                } else {
-                    this.currentSortOrder = 'asc';
-                }
-
-                // Update sort indicators
-                document.querySelectorAll('th[data-sort]').forEach(el => {
-                    el.classList.remove('sort-asc', 'sort-desc');
-                });
-
-                const th = document.querySelector(`th[data-sort="${column}"]`);
-                th.classList.add(`sort-${this.currentSortOrder}`);
-
-                // Sort data
-                this.filteredData.sort((a, b) => {
-                    let valueA = a[column];
-                    let valueB = b[column];
-
-                    // Handle different data types
-                    if (typeof valueA === 'string') {
-                        valueA = valueA.toLowerCase();
-                        valueB = valueB.toLowerCase();
+                try {
+                    if (this.currentSortColumn === column) {
+                        this.currentSortOrder = this.currentSortOrder === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        this.currentSortOrder = 'asc';
                     }
 
-                    if (valueA < valueB) return this.currentSortOrder === 'asc' ? -1 : 1;
-                    if (valueA > valueB) return this.currentSortOrder === 'asc' ? 1 : -1;
-                    return 0;
-                });
+                    // Update sort indicators
+                    document.querySelectorAll('th[data-sort]').forEach(el => {
+                        el.classList.remove('sort-asc', 'sort-desc');
+                    });
 
-                this.currentSortColumn = column;
-                this.currentPage = 1;
-                this.displayBookingData();
+                    const th = document.querySelector(`th[data-sort="${column}"]`);
+                    if (th) {
+                        th.classList.add(`sort-${this.currentSortOrder}`);
+                    }
+
+                    // Sort data
+                    this.filteredData.sort((a, b) => {
+                        let valueA = a[column];
+                        let valueB = b[column];
+
+                        // Handle null/undefined values
+                        if (valueA == null) valueA = '';
+                        if (valueB == null) valueB = '';
+
+                        // Handle different data types
+                        if (typeof valueA === 'string') {
+                            valueA = valueA.toLowerCase();
+                            valueB = valueB.toLowerCase();
+                        } else if (typeof valueA === 'number') {
+                            valueA = parseFloat(valueA) || 0;
+                            valueB = parseFloat(valueB) || 0;
+                        }
+
+                        if (valueA < valueB) return this.currentSortOrder === 'asc' ? -1 : 1;
+                        if (valueA > valueB) return this.currentSortOrder === 'asc' ? 1 : -1;
+                        return 0;
+                    });
+
+                    this.currentSortColumn = column;
+                    this.currentPage = 1;
+                    this.displayBookingData();
+                } catch (error) {
+                    console.error('Error sorting table:', error);
+                }
             }
 
             clearAllFilters() {
@@ -1451,21 +1491,49 @@
                     }
                 });
                 
-                const url = `/transporter/download_excel/?${params}`;
+                // Try multiple possible endpoints for Excel download
+                const endpoints = [
+                    '/transporter/download_excel/',
+                    '/transporter/download-excel/',
+                    '/download_excel/',
+                    '/download-excel/'
+                ];
                 
-                // Create a temporary link and click it
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `booking_register_${new Date().toISOString().split('T')[0]}.xlsx`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                let downloadUrl = null;
+                for (const endpoint of endpoints) {
+                    try {
+                        downloadUrl = `${endpoint}?${params}`;
+                        break;
+                    } catch (error) {
+                        console.log(`Failed with endpoint ${endpoint}:`, error);
+                    }
+                }
                 
-                setTimeout(() => {
+                if (downloadUrl) {
+                    // Create a temporary link and click it
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    link.download = `booking_register_${new Date().toISOString().split('T')[0]}.xlsx`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    setTimeout(() => {
+                        this.hideLoading();
+                        this.showAlert('Excel download started', 'success');
+                    }, 1000);
+                } else {
                     this.hideLoading();
-                    this.showAlert('Excel download started', 'success');
-                }, 1000);
+                    this.showAlert('Excel download failed - endpoint not found', 'error');
+                }
             }
+        }
+
+        // DDM search function
+        function searchDDM(ddmNumber) {
+            // DDM details page पर redirect करें और search parameter के साथ
+            const url = `/transporter/ddm-details/?search=${encodeURIComponent(ddmNumber)}`;
+            window.open(url, '_blank');
         }
 
         // Initialize the application
@@ -1474,32 +1542,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             bookingRegister = new BookingRegister();
         });
-
-        // Add some additional CSS for badges
-        const additionalStyles = `
-            .badge {
-                display: inline-block;
-                padding: 0.25em 0.6em;
-                font-size: 0.75em;
-                font-weight: 700;
-                line-height: 1;
-                text-align: center;
-                white-space: nowrap;
-                vertical-align: baseline;
-                border-radius: 0.375rem;
-            }
-            
-            .badge-primary { background-color: #007bff; color: white; }
-            .badge-secondary { background-color: #6c757d; color: white; }
-            .badge-success { background-color: #28a745; color: white; }
-            .badge-danger { background-color: #dc3545; color: white; }
-            .badge-warning { background-color: #ffc107; color: #212529; }
-            .badge-info { background-color: #17a2b8; color: white; }
-        `;
-        
-        const styleSheet = document.createElement('style');
-        styleSheet.textContent = additionalStyles;
-        document.head.appendChild(styleSheet);
     </script>
 </body>
 </html>
