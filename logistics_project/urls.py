@@ -12,6 +12,8 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(next_page='/login/'), name='logout'),
     path('dealer/', include(('dealer_app.urls', 'dealer'), namespace='dealer')),
     path('transporter/', include(('transporter_app.urls', 'transporter'), namespace='transporter')),
+    path('glitchtip-debug/', trigger_error),
+
 ]
 
 if settings.DEBUG:
