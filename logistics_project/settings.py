@@ -2,6 +2,20 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
+sentry_sdk.init(
+    dsn="https://22a98797a6824447b9ec83b52f06fcda@app.glitchtip.com/11692",
+    integrations=[DjangoIntegration()],
+    auto_session_tracking=False,
+    traces_sample_rate=0.01,  # 1% performance tracing
+    send_default_pii=True,    # To capture user data
+    release="1.0.0",
+    environment="production",
+)
+
+
 # Load environment variables from .env file
 load_dotenv()
 
