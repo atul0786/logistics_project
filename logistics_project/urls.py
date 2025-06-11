@@ -4,6 +4,13 @@ from django.views.generic import RedirectView
 from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
+from django.urls import path
+from django.http import HttpResponse
+
+# 🔥 Add this test view
+def trigger_error(request):
+    division_by_zero = 1 / 0
+    return HttpResponse("This should never return.")  # Not actually needed
 
 urlpatterns = [
     path('admin/', admin.site.urls),
