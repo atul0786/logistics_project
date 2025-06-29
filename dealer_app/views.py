@@ -113,7 +113,11 @@ from django.http import HttpResponse
 from django.db.models import Q
 from collections import defaultdict
 from django.contrib.postgres.aggregates import StringAgg
-import win32print
+import platform
+if platform.system() == "Windows":
+    import win32print
+else:
+    win32print = None
 import win32ui
 from PIL import Image, ImageWin
 from io import BytesIO
@@ -1694,10 +1698,18 @@ import qrcode
 from django.shortcuts import get_object_or_404, render
 from .models import CNotes, Parcel, Article, QRPrinterSetting
 from PIL import Image, ImageWin
-import win32print
+import platform
+if platform.system() == "Windows":
+    import win32print
+else:
+    win32print = None
 import win32ui
 from django.contrib.auth.decorators import login_required
-import win32print
+import platform
+if platform.system() == "Windows":
+    import win32print
+else:
+    win32print = None
 from .models import QRPrinterSetting
 from .forms import QRPrinterSelectionForm
 from .utils import generate_qr_base64, send_qr_to_printer_using_html
