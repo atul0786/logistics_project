@@ -144,6 +144,16 @@
     }
 </style>
 
+{% if can_direct_print %}
+    <div style="text-align: right; margin: 20px 5% 0 0;">
+        <button class="btn btn-success" onclick="window.print()">🖨️ Print Now</button>
+    </div>
+{% else %}
+    <div style="color:red; text-align: center; margin: 20px auto;">
+        <b>⚠️ Direct printing is disabled on this server (Linux VPS).</b>
+    </div>
+{% endif %}
+
 <div class="page-break"></div>
 
 {% for item in qr_images %}
