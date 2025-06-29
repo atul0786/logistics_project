@@ -116,9 +116,10 @@ from django.contrib.postgres.aggregates import StringAgg
 import platform
 if platform.system() == "Windows":
     import win32print
+    import win32ui
 else:
     win32print = None
-import win32ui
+    win32ui = None
 from PIL import Image, ImageWin
 from io import BytesIO
 import base64
@@ -1685,41 +1686,33 @@ def create_cnotes(request):
 # ✅ STEP 3: Create `print_with_qr` View for Dual QR Logic
 
 
-
 import base64
-from io import BytesIO
-import qrcode
-from django.shortcuts import get_object_or_404, render
-from .models import CNotes, Parcel, Article
-# ✅ STEP 3: Create `print_with_qr` View for Dual QR Logic
-import base64
-from io import BytesIO
-import qrcode
-from django.shortcuts import get_object_or_404, render
-from .models import CNotes, Parcel, Article, QRPrinterSetting
-from PIL import Image, ImageWin
 import platform
-if platform.system() == "Windows":
-    import win32print
-else:
-    win32print = None
-import win32ui
-from django.contrib.auth.decorators import login_required
-import platform
-if platform.system() == "Windows":
-    import win32print
-else:
-    win32print = None
-from .models import QRPrinterSetting
-from .forms import QRPrinterSelectionForm
-from .utils import generate_qr_base64, send_qr_to_printer_using_html
-from django.template.loader import render_to_string  # ✅ यह main import है
-
-
-
-import imgkit
 import tempfile
 import os
+from io import BytesIO
+from PIL import Image
+
+# Windows-safe printer imports
+if platform.system() == "Windows":
+    from PIL import ImageWin
+    import win32print
+    import win32ui
+else:
+    win32print = None
+    win32ui = None
+    ImageWin = None
+
+import qrcode
+import imgkit
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.template.loader import render_to_string
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+
+from .models import CNotes, Parcel, Article, QRPrinterSetting
+from .forms import QRPrinterSelectionForm
 
 def send_qr_to_printer_using_html(html_string, printer_name):
     try:
@@ -1752,23 +1745,26 @@ def send_qr_to_printer_using_html(html_string, printer_name):
 
         print("✅ Image generated successfully.")
 
-        # Step 4: Load image and send to printer
-        image = Image.open(img_path)
-        hprinter = win32print.OpenPrinter(printer_name)
-        hdc = win32ui.CreateDC()
-        hdc.CreatePrinterDC(printer_name)
-        hdc.StartDoc("Parcel QR Label")
-        hdc.StartPage()
-
-        dib = ImageWin.Dib(image)
-        dib.draw(hdc.GetHandleOutput(), (0, 0, image.width, image.height))
-
-        hdc.EndPage()
-        hdc.EndDoc()
-        hdc.DeleteDC()
-        win32print.ClosePrinter(hprinter)
-
-        print(f"🖨️ Sent image to printer: {printer_name}")
+        # Step 4: Load image and send to printer (only on Windows)
+        if win32print and win32ui and ImageWin:
+            image = Image.open(img_path)
+            hprinter = win32print.OpenPrinter(printer_name)
+            hdc = win32ui.CreateDC()
+            hdc.CreatePrinterDC(printer_name)
+            hdc.StartDoc("Parcel QR Label")
+            hdc.StartPage()
+        
+            dib = ImageWin.Dib(image)
+            dib.draw(hdc.GetHandleOutput(), (0, 0, image.width, image.height))
+        
+            hdc.EndPage()
+            hdc.EndDoc()
+            hdc.DeleteDC()
+            win32print.ClosePrinter(hprinter)
+        
+            print(f"🖨️ Sent image to printer: {printer_name}")
+        else:
+            print("⚠️ Direct printing is disabled on this system (likely Linux)")
 
         # Step 5: Clean up
         os.remove(html_path)
@@ -1787,7 +1783,10 @@ def select_qr_printer(request):
     dealer = request.user.dealer
 
     # List installed printers
-    installed = [printer[2] for printer in win32print.EnumPrinters(2)]
+    if win32print:
+        installed = [printer[2] for printer in win32print.EnumPrinters(2)]
+    else:
+        installed = []
     installed.insert(0, "❌ No QR Printer (Use A4 Sheet)")
 
     # Get saved setting
@@ -1959,6 +1958,8 @@ def print_with_qr(request, cnote_number):
         'qr_images': qr_images,
         'company_name': 'Good Way Express',
     }
+    context['can_direct_print'] = True if win32print and win32ui else False
+
 
     # Show results and return appropriate template
     if printer_name and not printer_name.lower().startswith("❌"):
