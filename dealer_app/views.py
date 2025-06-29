@@ -1958,7 +1958,6 @@ def print_with_qr(request, cnote_number):
         'qr_images': qr_images,
         'company_name': 'Good Way Express',
     }
-    context['can_direct_print'] = True if win32print and win32ui else False
 
 
     # Show results and return appropriate template
