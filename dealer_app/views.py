@@ -113,6 +113,13 @@ from django.http import HttpResponse
 from django.db.models import Q
 from collections import defaultdict
 from django.contrib.postgres.aggregates import StringAgg
+import win32print
+import win32ui
+from PIL import Image, ImageWin
+from io import BytesIO
+import base64
+from PIL import Image, ImageWin, ImageFont, ImageDraw
+import qrcode
 
 
 # Set up logging   
@@ -1669,6 +1676,289 @@ def create_cnotes(request):
         'last_cnote': last_cnote,  # Pass the last CNote to the template
     }
     return render(request, 'dealer/create_cnotes.html', context)
+
+
+# ✅ STEP 3: Create `print_with_qr` View for Dual QR Logic
+
+
+
+import base64
+from io import BytesIO
+import qrcode
+from django.shortcuts import get_object_or_404, render
+from .models import CNotes, Parcel, Article
+# ✅ STEP 3: Create `print_with_qr` View for Dual QR Logic
+import base64
+from io import BytesIO
+import qrcode
+from django.shortcuts import get_object_or_404, render
+from .models import CNotes, Parcel, Article, QRPrinterSetting
+from PIL import Image, ImageWin
+import win32print
+import win32ui
+from django.contrib.auth.decorators import login_required
+import win32print
+from .models import QRPrinterSetting
+from .forms import QRPrinterSelectionForm
+from .utils import generate_qr_base64, send_qr_to_printer_using_html
+from django.template.loader import render_to_string  # ✅ यह main import है
+
+
+
+import imgkit
+import tempfile
+import os
+
+def send_qr_to_printer_using_html(html_string, printer_name):
+    try:
+        print("\n🛠️ [STEP 1] Saving HTML content to file...")
+
+        # Step 1: Save HTML to file
+        with tempfile.NamedTemporaryFile(suffix='.html', delete=False, mode='w', encoding='utf-8') as html_file:
+            html_file.write(html_string)
+            html_path = html_file.name
+
+        print(f"✅ HTML saved at: {html_path}")
+
+        # Step 2: Output image path
+        img_path = html_path.replace(".html", ".jpg")
+        print(f"📸 Image will be saved at: {img_path}")
+
+        # Step 3: Convert HTML to image using wkhtmltoimage
+        options = {
+            'format': 'jpg',
+            'zoom': '1.3',
+            'encoding': 'UTF-8',
+            'enable-local-file-access': '',
+            'quality': '100',
+        }
+
+        config = imgkit.config()  # uses system-installed wkhtmltoimage
+        local_file_url = f"file:///{html_path.replace(os.sep, '/')}"  # file:// works for Windows
+        print(f"🔗 Loading URL: {local_file_url}")
+        imgkit.from_url(local_file_url, img_path, options=options, config=config)
+
+        print("✅ Image generated successfully.")
+
+        # Step 4: Load image and send to printer
+        image = Image.open(img_path)
+        hprinter = win32print.OpenPrinter(printer_name)
+        hdc = win32ui.CreateDC()
+        hdc.CreatePrinterDC(printer_name)
+        hdc.StartDoc("Parcel QR Label")
+        hdc.StartPage()
+
+        dib = ImageWin.Dib(image)
+        dib.draw(hdc.GetHandleOutput(), (0, 0, image.width, image.height))
+
+        hdc.EndPage()
+        hdc.EndDoc()
+        hdc.DeleteDC()
+        win32print.ClosePrinter(hprinter)
+
+        print(f"🖨️ Sent image to printer: {printer_name}")
+
+        # Step 5: Clean up
+        os.remove(html_path)
+        os.remove(img_path)
+
+        return True
+
+    except Exception as e:
+        print(f"❌ QR HTML Print Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+@login_required
+def select_qr_printer(request):
+    dealer = request.user.dealer
+
+    # List installed printers
+    installed = [printer[2] for printer in win32print.EnumPrinters(2)]
+    installed.insert(0, "❌ No QR Printer (Use A4 Sheet)")
+
+    # Get saved setting
+    setting = QRPrinterSetting.objects.filter(dealer=dealer).first()
+    saved_printer = setting.printer_name if setting else None
+
+    if request.method == 'POST':
+        form = QRPrinterSelectionForm(request.POST, printers=installed)
+        if form.is_valid():
+            printer_name = form.cleaned_data['printer_name']
+
+            if printer_name.startswith("❌"):
+                if setting:
+                    setting.delete()
+                messages.success(request, "✅ QR printer removed. A4 layout will be used.")
+            else:
+                if setting:
+                    setting.printer_name = printer_name
+                    setting.save()
+                else:
+                    QRPrinterSetting.objects.create(dealer=dealer, printer_name=printer_name)
+                messages.success(request, f"✅ QR Printer set to: {printer_name}")
+
+            return redirect('dealer:select_qr_printer')
+
+    else:
+        form = QRPrinterSelectionForm(printers=installed, initial={
+            'printer_name': saved_printer or "❌ No QR Printer (Use A4 Sheet)"
+        })
+
+    return render(request, 'dealer/select_qr_printer.html', {
+        'form': form,
+        'saved_printer': saved_printer,
+    })
+
+def generate_qr_base64(data):
+    """Generate QR code and return as base64 string"""
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=10,
+        border=2,
+    )
+    qr.add_data(data)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+@login_required
+def print_with_qr(request, cnote_number):
+    print(f"\n🛠️ Starting QR print for CN: {cnote_number}")
+    
+    cnote = get_object_or_404(CNotes, cnote_number=cnote_number)
+    articles = Article.objects.filter(cnote=cnote).order_by('id')
+    total_art = sum(article.art for article in articles if article.art is not None)
+
+    print(f"📊 Total articles: {len(articles)}, Total items: {total_art}")
+
+    try:
+        setting = QRPrinterSetting.objects.get(dealer=cnote.dealer)
+        printer_name = setting.printer_name
+        print(f"🖨️ Using printer: {printer_name}")
+    except QRPrinterSetting.DoesNotExist:
+        printer_name = None
+        print("📄 No printer configured, using A4 layout")
+
+    qr_images = []
+    overall_item_counter = 1
+    successful_prints = 0
+    failed_prints = 0
+
+    for article in articles:
+        item_quantity = article.art if article.art else 1
+        item_description = article.said_to_contain
+
+        print(f"📦 Processing: {item_description} (Qty: {item_quantity})")
+
+        for item_number in range(1, item_quantity + 1):
+            item_type_clean = item_description.upper().replace(' ', '').replace('-', '')[:10]
+            unique_tracking_id = f"{cnote.cnote_number}-{item_type_clean}-{item_number}"
+
+            booking_date = cnote.created_at.strftime("%d/%m/%y") if cnote.created_at else "N/A"
+            qr_string = f"ID:{unique_tracking_id}|CN:{cnote.cnote_number}|TYPE:{item_description}|NUM:{item_number}/{item_quantity}|DATE:{booking_date}|FROM:{cnote.consignor_name}|TO:{cnote.consignee_name}|DEST:{cnote.delivery_destination.destination_name}|COMPANY:Good Way Express"
+            qr_img = generate_qr_base64(qr_string)
+
+            # Complete context for grid template
+            single_qr_context = {
+                'qr': qr_img,
+                'tracking_code': unique_tracking_id,
+                'cn': cnote.cnote_number,
+                'sender': cnote.consignor_name,
+                'item': item_description,
+                'receiver': cnote.consignee_name,
+                'mob': cnote.consignee_mobile,
+                'to': cnote.delivery_destination.destination_name,
+                'qty': f"{item_number} of {item_quantity}",
+                'from_city': cnote.dealer.city,
+                'date': booking_date,
+                'cnote': cnote,
+                'item_description': item_description,
+                'item_number': item_number,
+                'total_of_this_type': item_quantity,
+                'overall_position': overall_item_counter,
+                'total_items': total_art,
+            }
+
+            qr_images.append(single_qr_context)
+
+            # Print individual QR if printer is configured
+            if printer_name and not printer_name.lower().startswith("❌"):
+                print(f"🖨️ Printing QR {overall_item_counter}/{total_art}: {item_description} ({item_number}/{item_quantity})")
+                
+                # Complete context for single print template
+                template_context = {
+                    'qr': qr_img,
+                    'tracking_code': unique_tracking_id,
+                    'cn': cnote.cnote_number,
+                    'sender': cnote.consignor_name,
+                    'item': item_description,
+                    'receiver': cnote.consignee_name,
+                    'mob': cnote.consignee_mobile,
+                    'to': cnote.delivery_destination.destination_name,
+                    'from_city': cnote.dealer.city,
+                    'date': booking_date,
+                    
+                    # ✅ ALL QUANTITY VARIABLES - यहां है main fix
+                    'item_number': item_number,
+                    'total_of_this_type': item_quantity,
+                    'overall_position': overall_item_counter,
+                    'total_items': total_art,
+                    
+                    # ✅ FALLBACK VARIABLES
+                    'current_item': overall_item_counter,
+                    'total_quantity': total_art,
+                    'position': overall_item_counter,
+                    'total': total_art,
+                    'qty': f"{item_number} of {item_quantity}",
+                }
+                
+                # Debug print to verify values
+                print(f"📊 Context: overall_position={overall_item_counter}, total_items={total_art}, item_number={item_number}, total_of_this_type={item_quantity}")
+                
+                try:
+                    html_output = render_to_string('dealer/qr_single_print_template.html', template_context)
+                    success = send_qr_to_printer_using_html(html_output, printer_name)
+                    
+                    if success:
+                        successful_prints += 1
+                        print(f"✅ Successfully printed QR {overall_item_counter}")
+                    else:
+                        failed_prints += 1
+                        print(f"❌ Failed to print QR {overall_item_counter}")
+                        
+                except Exception as e:
+                    failed_prints += 1
+                    print(f"❌ Template error for QR {overall_item_counter}: {e}")
+
+            overall_item_counter += 1
+
+    # Final context for templates
+    context = {
+        'cnote': cnote,
+        'dealer': cnote.dealer,
+        'articles': articles,
+        'total_art': total_art,
+        'qr_images': qr_images,
+        'company_name': 'Good Way Express',
+    }
+
+    # Show results and return appropriate template
+    if printer_name and not printer_name.lower().startswith("❌"):
+        if successful_prints > 0:
+            messages.success(request, f"✅ {successful_prints} QR codes printed successfully!")
+        if failed_prints > 0:
+            messages.error(request, f"❌ {failed_prints} QR codes failed to print.")
+        
+        print(f"📊 Print Summary: {successful_prints} successful, {failed_prints} failed")
+        return render(request, 'dealer/cnote_success_only.html', context)
+    else:
+        return render(request, 'dealer/cnote_success_with_qr_grid.html', context)  
 
 
 
