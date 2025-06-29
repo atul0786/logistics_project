@@ -7,6 +7,14 @@ from .models import (
 )
 from transporter_app.models import Transporter
 
+
+from .models import QRPrinterSetting
+
+@admin.register(QRPrinterSetting)
+class QRPrinterSettingAdmin(admin.ModelAdmin):
+    list_display = ['dealer', 'printer_name', 'created_at']
+
+
 class CustomUserAdmin(UserAdmin):
     model = CustomUser    
     list_display = ('username', 'email', 'dealer_name', 'is_dealer', 'is_transporter', 'is_staff')
