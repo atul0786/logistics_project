@@ -1,0 +1,843 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logistics Form</title>
+    <style>
+        @media print {
+            @page {
+                size: A4;
+                margin: 0;
+            }
+            .form-container {
+                page-break-inside: avoid;
+            }
+            body {
+                background: white !important;
+                padding: 0 !important;
+            }
+            .page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 5mm !important;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+            font-size: 9pt;
+        }
+
+        body {
+            background: #f0f0f0;
+            padding: 5mm;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 7mm;
+            display: flex;
+            flex-direction: column;
+            gap: 7mm;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .form-container {
+            border: 1px solid black;
+            height: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            display: flex;
+            border-bottom: 1px solid black;
+            min-height: 25mm;
+        }
+
+        .logo-section {
+            width: 25%;
+            border-right: 1px solid black;
+            padding: 2mm;
+        }
+
+        .booking-details {
+            width: 25%;
+            border-right: 1px solid black;
+            padding: 2mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            line-height: 1.4;
+        }
+
+        .date-section {
+            width: 25%;
+            border-right: 1px solid black;
+            padding: 2mm;
+            display: flex;
+            flex-direction: column;
+            gap: 2mm;
+            line-height: 1.4;
+        }
+
+        .qr-section {
+            width: 25%;
+            padding: 2mm;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+
+        .qr-code {
+            width: 100%;
+            height: 100%;
+            min-height: 21mm;
+            max-height: 23mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+
+        .qr-code img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain;
+            display: block;
+        }
+
+        .main-content {
+            display: flex;
+            padding: 2mm;
+            gap: 4mm;
+            min-height: 22mm;
+            border-bottom: 1px solid black;
+        }
+
+        .from-section, .to-section {
+            width: 50%;
+            line-height: 1.5;
+        }
+
+        .table-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 35mm;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            height: 100%;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 2mm;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f8f8f8;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .charges-details {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2mm 4mm;
+            align-content: start;
+        }
+
+        .charges-label {
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .charges-value {
+            text-align: right;
+        }
+
+        strong {
+            font-weight: bold;
+        }
+
+        p {
+            margin: 0;
+            padding: 0;
+        }
+
+        .description-cell {
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .action-button {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-button:hover {
+            background-color: #b91c1c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        @media print {
+            .button-container {
+                display: none;
+            }
+        }
+
+        @media screen and (max-width: 600px) {
+            .button-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .action-button {
+                margin: 5px 0;
+                width: 80%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="button-container">
+            <button class="action-button" id="createCnoteBtn">Create CNote</button>
+            <button class="action-button" id="printBtn">Print</button>
+        </div>
+
+        <!-- Form 1 -->
+        <div class="form-container">
+            <div class="header">
+                <div class="logo-section">
+                    <div class="logo">
+                        <img src="{% static 'images/logo.jpg' %}" alt="Company Logo" style="width: 100%; height: auto; max-height: 25mm;">                
+                    </div>
+                </div>                
+                <div class="booking-details">
+                    <p><strong>Goodway Express</strong></p>
+                    <p><strong>(Yavatmal District Daily Parcel)</strong></p>
+                    <p><strong>CUST NO:</strong> 9923799699</p>
+                    <p><strong>TRANSPORTER ID:</strong> 27AUYDM5847P2Z9</p>
+                    <p><strong>Email:</strong> Goodwayytl123@gmail.com</p>
+                </div>
+                <div class="date-section">
+                    <p><strong>CN No:</strong> {{ cnote.cnote_number }}</p>
+                    <p><strong>Date :</strong> {{ cnote.created_at|date:"d/m/Y" }}</p>
+                    <p><strong>Freight Type:</strong> {{ cnote.payment_type }}</p>
+                    <p><strong>Total Art:</strong>
+                        {% for article in articles %}
+                            {{ article.art }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                        (Total: {{ total_art }})
+                    </p>
+                </div>
+                <div class="qr-section">
+                    <div class="qr-code" id="qrcode1"></div>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="from-section">
+                    <p><strong>From: {{ dealer.address }}</strong></p>
+                    <p><strong>Consignor :</strong>{{ cnote.consignor_name }}</p>
+                    <p><strong>Mobile No :</strong>{{ cnote.consignor_mobile }}</p>
+                    <p><strong>Address :</strong> {{ cnote.consignor_address }}</p>
+                    <p><strong>GSTN :</strong> {{ cnote.consignor_gst|default:"N/A" }}</p>
+                </div>
+                <div class="to-section">
+                    <p><strong>To: {{ cnote.delivery_destination }}</strong></p>
+                    <p><strong>Consignee :</strong>{{ cnote.consignee_name }}</p>
+                    <p><strong>Mobile No :</strong>{{ cnote.consignee_mobile }}</p>
+                    <p><strong>Address :</strong>{{ cnote.consignee_address }}</p>
+                    <p><strong>GSTN :</strong>{{ cnote.consignee_gst|default:"N/A" }}</p>
+                </div>
+            </div>
+
+            <div class="table-section">
+                <div class="article-details" style="display: flex; justify-content: space-between;">
+                    <div class="left-section" style="width: 48%;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Qty.</th>
+                                    <th>DESCRIPTION</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for article in articles %}
+                                <tr>
+                                    <td>{{ article.art }}</td>
+                                    <td class="description-cell">{{ article.said_to_contain }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="2">No articles found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="charges-details" style="width: 48%;">
+                        <div class="charges-item">
+                            <span class="charges-label">INV NO:</span>
+                            <span class="charges-value">{{ cnote.invoice_number }}</span>
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Declared Value:</span>
+                            <span class="charges-value">{{ cnote.declared_value }}</span>
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Actual Weight:</span>
+                            <span class="charges-value">{{ cnote.actual_weight }}</span>
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Charged Weight:</span>
+                            <span class="charges-value">{{ cnote.charged_weight }}</span>
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Freight:</span>
+                            <span class="charges-value">₹{{ cnote.freight|floatformat:2 }}</span>
+                        </div>
+                        <div class="hidden">
+                            <div class="charges-item">
+                                <span class="charges-label">Docket Charge</span>
+                                <input type="number" id="docketCharge" name="docket_charge" value="0" step="0.01" oninput="calculateTotal()" />
+                            </div>
+                            <div class="charges-item">
+                                <span class="charges-label">Door Dly.</span>
+                                <input type="number" id="doorDlyCharge" name="door_delivery_charge" value="0" step="0.01" oninput="calculateTotal()" />
+                            </div>
+                            <div class="charges-item">
+                                <span class="charges-label">Handling</span>
+                                <input type="number" id="handlingCharge" name="handling_charge" value="0" step="0.01" oninput="calculateTotal()" />
+                            </div>
+                            <div class="charges-item">
+                                <span class="charges-label">Pickup</span>
+                                <input type="number" id="pickupCharge" name="pickup_charge" value="0" step="0.01" oninput="calculateTotal()" />
+                            </div>
+                            <div class="charges-item">
+                                <span class="charges-label">Transhipment Charge</span>
+                                <input type="number" id="transhipmentCharge" name="transhipment_charge" value="0" step="0.01" oninput="calculateTotal()" />
+                            </div>
+                            <div class="charges-item">
+                                <span class="charges-label">Insurance</span>
+                                <input type="number" id="insurance" name="insurance" value="0" step="0.01" oninput="calculateTotal()" />
+                            </div>
+                            <div class="charges-item">
+                                <span class="charges-label">Fuel Surcharge</span>
+                                <input type="number" id="fuelSurcharge" name="fuel_surcharge" value="0" step="0.01" oninput="calculateTotal()" />
+                            </div>
+                            <div class="charges-item">
+                                <span class="charges-label">Commission</span>
+                                <input type="number" id="commission" name="commission" value="0" step="0.01" oninput="calculateTotal()" />
+                            </div>
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Other:</span>
+                            <span class="charges-value" id="otherCharges">₹0.00</span>                       
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Total:</span>
+                            <span class="charges-value">₹{{ cnote.grand_total|floatformat:2 }}</span>
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Risk Type:</span>
+                            <span class="charges-value">OWNER RISK</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form 2 (Copy) -->
+        <div class="form-container">
+            <div class="header">
+                <div class="logo-section">
+                    <div class="logo">
+                        <img src="{% static 'images/logo.jpg' %}" alt="Company Logo" style="width: 100%; height: auto; max-height: 25mm;">                
+                    </div>
+                </div>                
+                <div class="booking-details">
+                    <p><strong>Goodway Express</strong></p>
+                    <p><strong>(Yavatmal District Daily Parcel)</strong></p>
+                    <p><strong>CUST NO:</strong> 9923799699</p>
+                    <p><strong>TRANSPORTER ID:</strong> 27AUYDM5847P2Z9</p>
+                    <p><strong>Email:</strong> Goodwayytl123@gmail.com</p>
+                </div>
+                <div class="date-section">
+                    <p><strong>CN No:</strong> {{ cnote.cnote_number }}</p>
+                    <p><strong>Date :</strong> {{ cnote.created_at|date:"d/m/Y" }}</p>
+                    <p><strong>Freight Type:</strong> {{ cnote.payment_type }}</p>
+                    <p><strong>Total Art:</strong>
+                        {% for article in articles %}
+                            {{ article.art }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                        (Total: {{ total_art }})
+                    </p>
+                </div>
+                <div class="qr-section">
+                    <div class="qr-code" id="qrcode2"></div>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="from-section">
+                    <p><strong>From: {{ dealer.address }}</strong></p>
+                    <p><strong>Consignor :</strong>{{ cnote.consignor_name }}</p>
+                    <p><strong>Mobile No :</strong>{{ cnote.consignor_mobile }}</p>
+                    <p><strong>Address :</strong> {{ cnote.consignor_address }}</p>
+                    <p><strong>GSTN :</strong> {{ cnote.consignor_gst|default:"N/A" }}</p>
+                </div>
+                <div class="to-section">
+                    <p><strong>To: {{ cnote.delivery_destination }}</strong></p>
+                    <p><strong>Consignee :</strong>{{ cnote.consignee_name }}</p>
+                    <p><strong>Mobile No :</strong>{{ cnote.consignee_mobile }}</p>
+                    <p><strong>Address :</strong>{{ cnote.consignee_address }}</p>
+                    <p><strong>GSTN :</strong>{{ cnote.consignee_gst|default:"N/A" }}</p>
+                </div>
+            </div>
+
+            <div class="table-section">
+                <div class="article-details" style="display: flex; justify-content: space-between;">
+                    <div class="left-section" style="width: 48%;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Qty.</th>
+                                    <th>DESCRIPTION</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for article in articles %}
+                                <tr>
+                                    <td>{{ article.art }}</td>
+                                    <td class="description-cell">{{ article.said_to_contain }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="2">No articles found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="charges-details" style="width: 48%;">
+                        <div class="charges-item">
+                            <span class="charges-label">INV NO:</span>
+                            <span class="charges-value">{{ cnote.invoice_number }}</span>
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Declared Value:</span>
+                            <span class="charges-value">{{ cnote.declared_value }}</span>
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Actual Weight:</span>
+                            <span class="charges-value">{{ cnote.actual_weight }}</span>
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Charged Weight:</span>
+                            <span class="charges-value">{{ cnote.charged_weight }}</span>
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Freight:</span>
+                            <span class="charges-value">₹{{ cnote.freight|floatformat:2 }}</span>
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Other:</span>
+                            <span class="charges-value">₹0.00</span>                       
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Total:</span>
+                            <span class="charges-value">₹{{ cnote.grand_total|floatformat:2 }}</span>
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Risk Type:</span>
+                            <span class="charges-value">OWNER RISK</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form 3 (Copy) -->
+        <div class="form-container">
+            <div class="header">
+                <div class="logo-section">
+                    <div class="logo">
+                        <img src="{% static 'images/logo.jpg' %}" alt="Company Logo" style="width: 100%; height: auto; max-height: 25mm;">                
+                    </div>
+                </div>                
+                <div class="booking-details">
+                    <p><strong>Goodway Express</strong></p>
+                    <p><strong>(Yavatmal District Daily Parcel)</strong></p>
+                    <p><strong>CUST NO:</strong> 9923799699</p>
+                    <p><strong>TRANSPORTER ID:</strong> 27AUYDM5847P2Z9</p>
+                    <p><strong>Email:</strong> Goodwayytl123@gmail.com</p>
+                </div>
+                <div class="date-section">
+                    <p><strong>CN No:</strong> {{ cnote.cnote_number }}</p>
+                    <p><strong>Date :</strong> {{ cnote.created_at|date:"d/m/Y" }}</p>
+                    <p><strong>Freight Type:</strong> {{ cnote.payment_type }}</p>
+                    <p><strong>Total Art:</strong>
+                        {% for article in articles %}
+                            {{ article.art }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                        (Total: {{ total_art }})
+                    </p>
+                </div>
+                <div class="qr-section">
+                    <div class="qr-code" id="qrcode3"></div>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="from-section">
+                    <p><strong>From: {{ dealer.address }}</strong></p>
+                    <p><strong>Consignor :</strong>{{ cnote.consignor_name }}</p>
+                    <p><strong>Mobile No :</strong>{{ cnote.consignor_mobile }}</p>
+                    <p><strong>Address :</strong> {{ cnote.consignor_address }}</p>
+                    <p><strong>GSTN :</strong> {{ cnote.consignor_gst|default:"N/A" }}</p>
+                </div>
+                <div class="to-section">
+                    <p><strong>To: {{ cnote.delivery_destination }}</strong></p>
+                    <p><strong>Consignee :</strong>{{ cnote.consignee_name }}</p>
+                    <p><strong>Mobile No :</strong>{{ cnote.consignee_mobile }}</p>
+                    <p><strong>Address :</strong>{{ cnote.consignee_address }}</p>
+                    <p><strong>GSTN :</strong>{{ cnote.consignee_gst|default:"N/A" }}</p>
+                </div>
+            </div>
+
+            <div class="table-section">
+                <div class="article-details" style="display: flex; justify-content: space-between;">
+                    <div class="left-section" style="width: 48%;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Qty.</th>
+                                    <th>DESCRIPTION</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for article in articles %}
+                                <tr>
+                                    <td>{{ article.art }}</td>
+                                    <td class="description-cell">{{ article.said_to_contain }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="2">No articles found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="charges-details" style="width: 48%;">
+                        <div class="charges-item">
+                            <span class="charges-label">INV NO:</span>
+                            <span class="charges-value">{{ cnote.invoice_number }}</span>
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Declared Value:</span>
+                            <span class="charges-value">{{ cnote.declared_value }}</span>
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Actual Weight:</span>
+                            <span class="charges-value">{{ cnote.actual_weight }}</span>
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Charged Weight:</span>
+                            <span class="charges-value">{{ cnote.charged_weight }}</span>
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Freight:</span>
+                            <span class="charges-value">₹{{ cnote.freight|floatformat:2 }}</span>
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Other:</span>
+                            <span class="charges-value">₹0.00</span>                       
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Total:</span>
+                            <span class="charges-value">₹{{ cnote.grand_total|floatformat:2 }}</span>
+                        </div>
+                        <div class="charges-item">
+                            <span class="charges-label">Risk Type:</span>
+                            <span class="charges-value">OWNER RISK</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% block extra_content %}{% endblock %}
+
+    </div>
+
+
+    <!-- ENHANCED QR CODE SYSTEM WITH DETAILED ARTICLE INFORMATION -->
+    <script>
+    console.log('🔥 ENHANCED QR SYSTEM WITH ARTICLE DETAILS INITIALIZING...');
+
+    // Enhanced QR Code Generation with Complete Article Details
+    function createDetailedQR(elementId) {
+        const element = document.getElementById(elementId);
+        if (!element) {
+            console.error(`❌ Element ${elementId} not found`);
+            return false;
+        }
+
+        console.log(`🎯 Creating detailed QR for ${elementId}`);
+
+        // Build detailed article information
+        let articleDetails = '';
+        {% for article in articles %}
+            articleDetails += `ART{{ forloop.counter }}:QTY-{{ article.art }}|DESC-{{ article.said_to_contain }}|AMT-Rs{{ article.art_amount|floatformat:2 }}|`;
+        {% endfor %}
+
+        // Complete QR data with all article details
+        const qrData = `CN:{{ cnote.cnote_number }}|DT:{{ cnote.created_at|date:"d/m/Y" }}|FR:{{ dealer.address }}|TO:{{ cnote.delivery_destination }}|SNDR:{{ cnote.consignor_name }}|SPH:{{ cnote.consignor_mobile }}|RCVR:{{ cnote.consignee_name }}|RPH:{{ cnote.consignee_mobile }}|RADDR:{{ cnote.consignee_address }}|TOT_AMT:Rs{{ cnote.grand_total|floatformat:2 }}|TOT_ART:{{ total_art }}|WT:{{ cnote.actual_weight }}|CHG_WT:{{ cnote.charged_weight }}|INV:{{ cnote.invoice_number }}|DECL:{{ cnote.declared_value }}|FREIGHT:Rs{{ cnote.freight|floatformat:2 }}|PAY_TYPE:{{ cnote.payment_type }}|${articleDetails}CO:Goodway Express|PH:9923799699|EMAIL:Goodwayytl123@gmail.com|TRANS_ID:27AUYDM5847P2Z9|RISK:OWNER RISK`;
+
+        // Method 1: QR Server API (Most reliable)
+        try {
+            const encodedData = encodeURIComponent(qrData);
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodedData}&ecc=M&format=png&margin=0`;
+            
+            element.innerHTML = `<img src="${qrUrl}" alt="QR Code" style="width: 100%; height: 100%; object-fit: contain;" onload="console.log('✅ Detailed QR loaded for ${elementId}')" onerror="fallbackDetailedQR('${elementId}')">`;
+            
+            console.log(`✅ Detailed QR created for ${elementId}`);
+            return true;
+            
+        } catch (error) {
+            console.error(`❌ QR Server failed for ${elementId}:`, error);
+            return fallbackDetailedQR(elementId);
+        }
+    }
+
+    // Method 2: Fallback with Essential Article Data
+    function fallbackDetailedQR(elementId) {
+        console.log(`🔄 Fallback detailed QR for ${elementId}`);
+        
+        const element = document.getElementById(elementId);
+        if (!element) return false;
+
+        // Simplified but complete article data
+        let simpleArticles = '';
+        {% for article in articles %}
+            simpleArticles += `{{ forloop.counter }}.{{ article.art }}x{{ article.said_to_contain }}-Rs{{ article.art_amount|floatformat:2 }} `;
+        {% endfor %}
+
+        const qrData = `CN:{{ cnote.cnote_number }} Date:{{ cnote.created_at|date:"d/m/Y" }} From:{{ dealer.address }} To:{{ cnote.delivery_destination }} Consignor:{{ cnote.consignor_name }} Mobile:{{ cnote.consignor_mobile }} Consignee:{{ cnote.consignee_name }} Mobile:{{ cnote.consignee_mobile }} Total:Rs{{ cnote.grand_total|floatformat:2 }} Articles:${simpleArticles}Weight:{{ cnote.actual_weight }}kg Invoice:{{ cnote.invoice_number }} Freight:Rs{{ cnote.freight|floatformat:2 }} Company:Goodway Express Contact:9923799699`;
+        
+        try {
+            const encodedData = encodeURIComponent(qrData);
+            const googleQR = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodedData}&chld=M|0`;
+            
+            element.innerHTML = `<img src="${googleQR}" alt="QR Code" style="width: 100%; height: 100%; object-fit: contain;" onload="console.log('✅ Fallback detailed QR loaded for ${elementId}')" onerror="finalDetailedFallback('${elementId}')">`;
+            
+            console.log(`✅ Fallback detailed QR created for ${elementId}`);
+            return true;
+            
+        } catch (error) {
+            console.error(`❌ Google Charts failed for ${elementId}:`, error);
+            return finalDetailedFallback(elementId);
+        }
+    }
+
+    // Method 3: Final Text Fallback with Article Summary
+    function finalDetailedFallback(elementId) {
+        console.log(`🆘 Final detailed fallback for ${elementId}`);
+        
+        const element = document.getElementById(elementId);
+        if (!element) return false;
+
+        // Create detailed text display
+        let articleSummary = '';
+        {% for article in articles %}
+            articleSummary += `<div style="font-size: 8px;">{{ article.art }}x {{ article.said_to_contain }} - Rs{{ article.art_amount|floatformat:2 }}</div>`;
+        {% endfor %}
+
+        element.innerHTML = `
+            <div style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; text-align: center; background: white; color: black; padding: 3px; line-height: 1.1;">
+                <div style="font-weight: bold; font-size: 11px; margin-bottom: 2px;">{{ cnote.cnote_number }}</div>
+                <div style="font-size: 8px; margin-bottom: 2px;">{{ cnote.created_at|date:"d/m/Y" }}</div>
+                <div style="font-size: 8px; margin-bottom: 2px;">{{ dealer.address }} → {{ cnote.delivery_destination }}</div>
+                <div style="font-size: 8px; margin-bottom: 2px;">{{ cnote.consignor_name }} → {{ cnote.consignee_name }}</div>
+                <div style="font-size: 8px; margin-bottom: 2px;">{{ cnote.consignor_mobile }} → {{ cnote.consignee_mobile }}</div>
+                <div style="border-top: 1px solid #ccc; padding-top: 2px; margin-top: 2px; width: 100%;">
+                    ${articleSummary}
+                </div>
+                <div style="font-weight: bold; font-size: 9px; margin-top: 2px;">Total: Rs{{ cnote.grand_total|floatformat:2 }}</div>
+                <div style="font-size: 7px;">Goodway Express - 9923799699</div>
+            </div>
+        `;
+        
+        console.log(`✅ Detailed text fallback created for ${elementId}`);
+        return true;
+    }
+
+    // PRODUCTION INITIALIZATION SYSTEM
+    function initDetailedQRSystem() {
+        console.log('🚀 INITIALIZING DETAILED QR SYSTEM...');
+        
+        // Create QR codes for all forms
+        const qrElements = ['qrcode1', 'qrcode2', 'qrcode3'];
+        let successCount = 0;
+        
+        qrElements.forEach((elementId, index) => {
+            setTimeout(() => {
+                if (createDetailedQR(elementId)) {
+                    successCount++;
+                }
+                
+                // Check if all QR codes are processed
+                if (index === qrElements.length - 1) {
+                    setTimeout(() => {
+                        console.log(`🎯 DETAILED QR SYSTEM COMPLETE: ${successCount}/${qrElements.length} QR codes created`);
+                        
+                        // Verify all QR codes are visible
+                        verifyDetailedQRCodes();
+                    }, 1000);
+                }
+            }, index * 200); // Stagger creation to avoid overload
+        });
+    }
+
+    // Verification system
+    function verifyDetailedQRCodes() {
+        console.log('🔍 VERIFYING DETAILED QR CODES...');
+        
+        const qrElements = ['qrcode1', 'qrcode2', 'qrcode3'];
+        let verifiedCount = 0;
+        
+        qrElements.forEach(elementId => {
+            const element = document.getElementById(elementId);
+            if (element && element.innerHTML.trim() !== '') {
+                verifiedCount++;
+                console.log(`✅ ${elementId} verified with article details`);
+            } else {
+                console.log(`❌ ${elementId} failed - retrying...`);
+                // Retry failed QR codes
+                setTimeout(() => createDetailedQR(elementId), 500);
+            }
+        });
+        
+        console.log(`🎯 DETAILED VERIFICATION COMPLETE: ${verifiedCount}/${qrElements.length} QR codes verified`);
+        
+        if (verifiedCount === qrElements.length) {
+            console.log('🎉 ALL DETAILED QR CODES SUCCESSFULLY CREATED AND VERIFIED!');
+        }
+    }
+
+    // MULTIPLE INITIALIZATION TRIGGERS
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('📄 DOM loaded - starting detailed QR system');
+        setTimeout(initDetailedQRSystem, 100);
+    });
+
+    window.addEventListener('load', function() {
+        console.log('🌐 Window loaded - backup detailed QR initialization');
+        setTimeout(initDetailedQRSystem, 300);
+    });
+
+    setTimeout(function() {
+        console.log('⏰ Delayed initialization - ensuring detailed QR codes');
+        initDetailedQRSystem();
+    }, 1000);
+
+    // Auto-retry system
+    setInterval(function() {
+        const qrElements = ['qrcode1', 'qrcode2', 'qrcode3'];
+        qrElements.forEach(elementId => {
+            const element = document.getElementById(elementId);
+            if (element && element.innerHTML.trim() === '') {
+                console.log(`🔄 Auto-retry for detailed ${elementId}`);
+                createDetailedQR(elementId);
+            }
+        });
+    }, 5000);
+
+    console.log('🎯 DETAILED QR SYSTEM LOADED AND READY!');
+    </script>
+
+    <script>
+        function calculateTotal() {
+            const docketCharge = parseFloat(document.getElementById('docketCharge').value) || 0;
+            const doorDlyCharge = parseFloat(document.getElementById('doorDlyCharge').value) || 0;
+            const handlingCharge = parseFloat(document.getElementById('handlingCharge').value) || 0;
+            const pickupCharge = parseFloat(document.getElementById('pickupCharge').value) || 0;
+            const transhipmentCharge = parseFloat(document.getElementById('transhipmentCharge').value) || 0;
+            const insurance = parseFloat(document.getElementById('insurance').value) || 0;
+            const fuelSurcharge = parseFloat(document.getElementById('fuelSurcharge').value) || 0;
+            const commission = parseFloat(document.getElementById('commission').value) || 0;
+
+            const total = docketCharge + doorDlyCharge + handlingCharge + pickupCharge + 
+                          transhipmentCharge + insurance + fuelSurcharge + commission;
+
+            document.getElementById('otherCharges').innerText = `₹${total.toFixed(2)}`;
+        }
+        
+        const createCnotesUrl = "{% url 'dealer:create_cnotes' %}";
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const createCnoteBtn = document.getElementById('createCnoteBtn');
+            const printBtn = document.getElementById('printBtn');
+
+            if (createCnoteBtn) {
+                createCnoteBtn.addEventListener('click', function() {
+                    window.location.href = createCnotesUrl;
+                });
+            }
+            
+            if (printBtn) {
+                printBtn.addEventListener('click', function() {
+                    window.print();
+                    setTimeout(() => {
+                        window.location.href = createCnotesUrl;
+                    }, 100);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

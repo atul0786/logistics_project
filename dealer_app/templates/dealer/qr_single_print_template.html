@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: white;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* ✅ WIDTH AUR BHI BADHAYA - HEIGHT SAME RAKHA */
+        .qr-sticker-box {
+            width: 6in; /* 5.2in se 6in - WIDTH AUR BADHAYA */
+            height: 3.2in; /* HEIGHT SAME RAKHA */
+            border: 3px solid #333;
+            padding: 18px; /* 15px se 18px - EXTRA PADDING */
+            display: table;
+            table-layout: fixed;
+            background: #fff;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+
+        /* ✅ LEFT COLUMN - QR CODE AT BOTTOM */
+        .qr-left {
+            display: table-cell;
+            width: 180px; /* 170px se 180px - THODA BADHAYA */
+            vertical-align: bottom;
+            text-align: center;
+            padding-right: 20px; /* 15px se 20px - EXTRA SPACE */
+            border-right: 2px solid #ddd;
+            position: relative;
+        }
+
+        /* Logo space at top */
+        .logo-space {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 20px;
+            height: 80px;
+            width: 160px; /* 155px se 160px */
+            margin-bottom: 12px;
+        }
+
+        /* QR section at bottom */
+        .qr-section {
+            text-align: center;
+        }
+
+        /* ✅ QR CODE SIZE SAME RAKHA */
+        .qr-left img {
+            width: 150px;
+            height: 150px;
+            border: 2px solid #999;
+            display: block;
+            margin: 0 auto 12px auto;
+        }
+
+        /* ✅ TRACKING CODE - SAME FONT + WEIGHT */
+        .tracking-code {
+            font-size: 12pt;
+            background: #e8f4fd;
+            padding: 6px 8px;
+            border-radius: 4px;
+            text-align: center;
+            font-family: monospace;
+            font-weight: 900;
+            color: #2c5aa0;
+            border: 2px solid #2c5aa0;
+            word-wrap: break-word;
+            width: 100%;
+        }
+
+        /* ✅ RIGHT COLUMN - DATA (MAXIMUM EXTRA SPACE) */
+        .qr-right {
+            display: table-cell;
+            vertical-align: top;
+            padding-left: 35px; /* 25px se 35px - MAXIMUM EXTRA SPACE */
+        }
+
+        /* ✅ COMPANY NAME HEADER - SAME MAXIMUM FONT + WEIGHT */
+        .company-name {
+            font-weight: 900;
+            font-size: 20pt;
+            color: #2c5aa0;
+            text-align: center;
+            margin-bottom: 10px;
+            border-bottom: 3px solid #2c5aa0;
+            padding-bottom: 5px;
+        }
+
+        /* ✅ ITEM TYPE BADGE - SAME MAXIMUM SIZE + WEIGHT */
+        .item-type-badge {
+            background: #6f42c1;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 14pt;
+            font-weight: 900;
+            display: inline-block;
+            margin-bottom: 8px;
+            text-align: center;
+            word-wrap: break-word;
+            max-width: 100%;
+            line-height: 1.3;
+        }
+
+        /* ✅ INFO ROWS - SAME MAXIMUM FONT */
+        .info-row {
+            margin-bottom: 5px;
+            font-size: 15pt;
+            line-height: 1.4;
+        }
+
+        /* ✅ INFO LABELS - EXTRA WIDTH SPACE */
+        .info-label {
+            font-weight: 900;
+            color: #333;
+            display: inline-block;
+            min-width: 110px; /* 90px se 110px - EXTRA WIDTH SPACE */
+            margin-right: 15px; /* 10px se 15px - EXTRA SPACING */
+        }
+
+        .info-value {
+            color: #555;
+            display: inline;
+            font-weight: 700;
+        }
+
+        /* ✅ HIGHLIGHT STYLES - SAME MAXIMUM SIZE + WEIGHT */
+        .highlight {
+            background-color: #fff3cd;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 900;
+            color: #856404;
+            border: 2px solid #ffeaa7;
+        }
+
+        .item-highlight {
+            background-color: #d1ecf1;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 900;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+
+        .date-highlight {
+            background-color: #e8f5e8;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 900;
+            color: #2d5016;
+            border: 2px solid #c3e6c3;
+        }
+
+        /* ✅ PRINT OPTIMIZATION */
+        @media print {
+            body { margin: 0; padding: 0; }
+            .qr-sticker-box { 
+                page-break-inside: avoid;
+                margin: 0;
+            }
+            
+            /* ✅ Ensure colors print properly */
+            * {
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+        }
+
+        /* ✅ HIGH DPI - SAME MAXIMUM FONTS */
+        @media (min-resolution: 300dpi) {
+            .info-row {
+                font-size: 17pt;
+            }
+            .tracking-code {
+                font-size: 14pt;
+            }
+            .item-type-badge {
+                font-size: 16pt;
+            }
+            .company-name {
+                font-size: 24pt;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="qr-sticker-box">
+        <!-- ✅ LEFT COLUMN: QR CODE AT BOTTOM -->
+        <div class="qr-left">
+            <!-- Logo Space at Top -->
+            <div class="logo-space">
+                <!-- Logo will be added here later -->
+            </div>
+            
+            <!-- QR Section at Bottom -->
+            <div class="qr-section">
+                <img src="data:image/png;base64,{{ qr }}" alt="QR Code">
+                <div class="tracking-code">{{ tracking_code }}</div>
+            </div>
+        </div>
+
+        <!-- ✅ RIGHT COLUMN: DATA - MAXIMUM WIDE SPACE -->
+        <div class="qr-right">
+            <!-- Company Name Header -->
+            <div class="company-name">Good Way Express</div>
+            
+            <!-- Item Type Badge -->
+            <div class="item-type-badge">{{ item|upper }}</div>
+            
+            <!-- CN Number -->
+            <div class="info-row">
+                <span class="info-label">CN No:</span>
+                <span class="info-value highlight">{{ cn }}</span>
+            </div>
+            
+            <!-- Sender -->
+            <div class="info-row">
+                <span class="info-label">Sender:</span>
+                <span class="info-value">{{ sender }}</span>
+            </div>
+            
+            <!-- ✅ Item Quantity -->
+            <div class="info-row">
+                <span class="info-label">Item:</span>
+                <span class="info-value item-highlight">
+                    {% if item_number and total_of_this_type %}
+                        {{ item_number }} of {{ total_of_this_type }}
+                    {% elif item.item_number and item.total_of_this_type %}
+                        {{ item.item_number }} of {{ item.total_of_this_type }}
+                    {% else %}
+                        1 of 1
+                    {% endif %}
+                </span>
+            </div>
+            
+            <!-- Date -->
+            <div class="info-row">
+                <span class="info-label">Date:</span>
+                <span class="info-value date-highlight">{{ date }}</span>
+            </div>
+            
+            <!-- Receiver -->
+            <div class="info-row">
+                <span class="info-label">Receiver:</span>
+                <span class="info-value">{{ receiver }}</span>
+            </div>
+            
+            <!-- Mobile -->
+            <div class="info-row">
+                <span class="info-label">Mob No:</span>
+                <span class="info-value">{{ mob }}</span>
+            </div>
+            
+            <!-- Destination -->
+            <div class="info-row">
+                <span class="info-label">To:</span>
+                <span class="info-value">{{ to }}</span>
+            </div>
+
+            <!-- ✅ Qty Field -->
+            <div class="info-row">
+                <span class="info-label">Qty:</span>
+                <span class="info-value highlight">
+                    {% if overall_position and total_items %}
+                        {{ overall_position }} of {{ total_items }}
+                    {% elif item.overall_position and item.total_items %}
+                        {{ item.overall_position }} of {{ item.total_items }}
+                    {% elif current_item and total_quantity %}
+                        {{ current_item }} of {{ total_quantity }}
+                    {% elif position and total %}
+                        {{ position }} of {{ total }}
+                    {% else %}
+                        1 of 1
+                    {% endif %}
+                </span>
+            </div>
+            
+            <!-- From -->
+            <div class="info-row">
+                <span class="info-label">From:</span>
+                <span class="info-value">{{ from_city }}</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

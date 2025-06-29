@@ -1,0 +1,239 @@
+<!-- ✅ Corrected Individual Item Tracking System -->
+<!-- File: templates/dealer/cnote_success_with_qr_grid.html -->
+
+{% extends 'dealer/cnote_success_only.html' %}
+
+{% block extra_content %}
+<style>
+    .page-break { page-break-after: always; }
+    .qr-grid-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        width: 95%;
+        margin: 0 auto;
+        gap: 10px;
+    }
+    .qr-sticker-box {
+        width: 48%;
+        height: 290px;
+        border: 2px solid #333;
+        margin: 8px 0;
+        padding: 12px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        font-size: 10pt;
+        font-family: Arial, sans-serif;
+        background: white;
+        border-radius: 4px;
+        position: relative;
+    }
+    .qr-left {
+        flex: 0 0 130px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 12px;
+        border-right: 1px solid #ddd;
+        padding-bottom: 10px;
+    }
+    .qr-left img {
+        width: 120px;
+        height: 120px;
+        border: 1px solid #ccc;
+    }
+    .tracking-code {
+        font-size: 7pt;
+        margin-top: 5px;
+        background: #e8f4fd;
+        padding: 3px 2px;
+        border-radius: 3px;
+        text-align: center;
+        font-family: monospace;
+        width: 100%;
+        font-weight: bold;
+        color: #2c5aa0;
+        border: 1px solid #2c5aa0;
+    }
+    .qr-right {
+        flex: 1;
+        padding-left: 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        line-height: 1.4;
+    }
+    .company-name {
+        font-weight: bold;
+        font-size: 12pt;
+        color: #2c5aa0;
+        text-align: center;
+        margin-bottom: 8px;
+        border-bottom: 2px solid #2c5aa0;
+        padding-bottom: 4px;
+    }
+    .info-row {
+        display: flex;
+        margin-bottom: 4px;
+        align-items: flex-start;
+    }
+    .info-label {
+        font-weight: bold;
+        min-width: 65px;
+        color: #333;
+        flex-shrink: 0;
+        font-size: 9pt;
+    }
+    .info-value {
+        flex: 1;
+        color: #555;
+        word-wrap: break-word;
+        font-size: 9pt;
+    }
+    .highlight {
+        background-color: #fff3cd;
+        padding: 2px 4px;
+        border-radius: 2px;
+        font-weight: bold;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+    .item-highlight {
+        background-color: #d1ecf1;
+        padding: 4px 6px;
+        border-radius: 3px;
+        font-weight: bold;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+        font-size: 10pt;
+    }
+    .date-highlight {
+        background-color: #e8f5e8;
+        padding: 2px 4px;
+        border-radius: 2px;
+        font-weight: bold;
+        color: #2d5016;
+        border: 1px solid #c3e6c3;
+    }
+    /* Flexible item type badge for long names */
+    .item-type-badge {
+        background: #6f42c1;
+        color: white;
+        padding: 3px 6px;
+        border-radius: 3px;
+        font-size: 8pt;
+        font-weight: bold;
+        display: inline-block;
+        margin-bottom: 4px;
+        text-align: center;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+        line-height: 1.2;
+        max-width: 100%;
+        min-height: 16px;
+    }
+    /* Logo space available at top of qr-left section */
+    .logo-space {
+        height: 80px;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+</style>
+
+<div class="page-break"></div>
+
+{% for item in qr_images %}
+    {% if forloop.counter0|divisibleby:6 and forloop.counter0 > 0 %}
+        </div><div class="page-break"></div><div class="qr-grid-container">
+    {% elif forloop.counter0|divisibleby:2 and forloop.counter0 == 0 %}
+        <div class="qr-grid-container">
+    {% elif forloop.counter0|divisibleby:2 and forloop.counter0 > 0 %}
+        </div><div class="qr-grid-container">
+    {% endif %}
+
+    <div class="qr-sticker-box">
+        <div class="qr-left">
+            <!-- Logo Space (for future use) -->
+            <div class="logo-space">
+                <!-- Logo will be added here later -->
+            </div>
+            
+            <!-- QR Code and Tracking Code moved to bottom -->
+            <img src="data:image/png;base64,{{ item.qr }}" alt="QR Code">
+            <div class="tracking-code">{{ item.tracking_code }}</div>
+        </div>
+        
+        <div class="qr-right">
+            <!-- Company Name Header -->
+            <div class="company-name">Good Way Express</div>
+            
+            <!-- Flexible Item Type Badge (handles long medicine names) -->
+            <div class="item-type-badge">{{ item.item_description|upper }}</div>
+            
+            <!-- CN Number -->
+            <div class="info-row">
+                <span class="info-label">CN No:</span>
+                <span class="info-value highlight">{{ cnote.cnote_number }}</span>
+            </div>
+            
+            <!-- Sender -->
+            <div class="info-row">
+                <span class="info-label">Sender:</span>
+                <span class="info-value">{{ cnote.consignor_name }}</span>
+            </div>
+            
+            <!-- Simplified Item Information (just numbers) -->
+            <div class="info-row">
+                <span class="info-label">Item:</span>
+                <div class="info-value item-highlight">
+                    {{ item.item_number }} of {{ item.total_of_this_type }}
+                </div>
+            </div>
+            
+            <!-- Date -->
+            <div class="info-row">
+                <span class="info-label">Date:</span>
+                <span class="info-value date-highlight">{{ cnote.created_at|date:"d/m/y" }}</span>
+            </div>
+            
+            <!-- Receiver -->
+            <div class="info-row">
+                <span class="info-label">Receiver:</span>
+                <span class="info-value">{{ cnote.consignee_name }}</span>
+            </div>
+            
+            <!-- Mobile -->
+            <div class="info-row">
+                <span class="info-label">Mob No:</span>
+                <span class="info-value">{{ cnote.consignee_mobile }}</span>
+            </div>
+            
+            <!-- Destination -->
+            <div class="info-row">
+                <span class="info-label">To:</span>
+                <span class="info-value">{{ cnote.delivery_destination.destination_name }}</span>
+            </div>
+            
+            <!-- Qty -->
+            <div class="info-row">
+                <span class="info-label">Qty:</span>
+                <span class="info-value highlight">{{ item.overall_position }} of {{ item.total_items }}</span>
+            </div>
+            
+            <!-- From -->
+            <div class="info-row">
+                <span class="info-label">From:</span>
+                <span class="info-value">{{ cnote.dealer.city }}</span>
+            </div>
+        </div>
+    </div>
+
+    {% if forloop.last %}
+        </div>
+    {% endif %}
+{% endfor %}
+{% endblock %}
