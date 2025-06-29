@@ -1,6 +1,4 @@
-<!-- ✅ Corrected Individual Item Tracking System -->
-<!-- File: templates/dealer/cnote_success_with_qr_grid.html -->
-
+<!-- ✅ RESPONSIVE QR GRID TEMPLATE WITH AUTO-ADJUSTING TEXT -->
 {% extends 'dealer/cnote_success_only.html' %}
 
 {% block extra_content %}
@@ -14,6 +12,8 @@
         margin: 0 auto;
         gap: 10px;
     }
+    
+    /* ✅ RESPONSIVE STICKER BOX */
     .qr-sticker-box {
         width: 48%;
         height: 290px;
@@ -30,6 +30,7 @@
         border-radius: 4px;
         position: relative;
     }
+    
     .qr-left {
         flex: 0 0 130px;
         display: flex;
@@ -40,11 +41,13 @@
         border-right: 1px solid #ddd;
         padding-bottom: 10px;
     }
+    
     .qr-left img {
         width: 120px;
         height: 120px;
         border: 1px solid #ccc;
     }
+    
     .tracking-code {
         font-size: 7pt;
         margin-top: 5px;
@@ -58,6 +61,7 @@
         color: #2c5aa0;
         border: 1px solid #2c5aa0;
     }
+    
     .qr-right {
         flex: 1;
         padding-left: 12px;
@@ -66,6 +70,7 @@
         justify-content: flex-start;
         line-height: 1.4;
     }
+    
     .company-name {
         font-weight: bold;
         font-size: 12pt;
@@ -75,11 +80,14 @@
         border-bottom: 2px solid #2c5aa0;
         padding-bottom: 4px;
     }
+    
+    /* ✅ RESPONSIVE INFO ROWS */
     .info-row {
         display: flex;
         margin-bottom: 4px;
         align-items: flex-start;
     }
+    
     .info-label {
         font-weight: bold;
         min-width: 65px;
@@ -87,12 +95,49 @@
         flex-shrink: 0;
         font-size: 9pt;
     }
+    
+    /* ✅ AUTO-ADJUSTING INFO VALUES */
     .info-value {
         flex: 1;
         color: #555;
         word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
         font-size: 9pt;
+        line-height: 1.2;
     }
+    
+    /* ✅ AUTO-ADJUSTING TEXT CLASSES */
+    .auto-adjust-text {
+        font-size: 9pt;
+        line-height: 1.2;
+        max-width: 100%;
+        overflow: hidden;
+        display: block;
+    }
+    
+    .auto-adjust-text.long-text {
+        font-size: 8pt;
+        line-height: 1.1;
+    }
+    
+    .auto-adjust-text.very-long-text {
+        font-size: 7pt;
+        line-height: 1.0;
+    }
+    
+    .auto-adjust-text.extra-long-text {
+        font-size: 6pt;
+        line-height: 0.9;
+    }
+    
+    /* ✅ MOBILE NUMBER FORMATTING */
+    .mobile-text {
+        font-family: monospace;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+    }
+    
     .highlight {
         background-color: #fff3cd;
         padding: 2px 4px;
@@ -101,6 +146,7 @@
         color: #856404;
         border: 1px solid #ffeaa7;
     }
+    
     .item-highlight {
         background-color: #d1ecf1;
         padding: 4px 6px;
@@ -110,6 +156,7 @@
         border: 1px solid #bee5eb;
         font-size: 10pt;
     }
+    
     .date-highlight {
         background-color: #e8f5e8;
         padding: 2px 4px;
@@ -118,7 +165,8 @@
         color: #2d5016;
         border: 1px solid #c3e6c3;
     }
-    /* Flexible item type badge for long names */
+    
+    /* ✅ FLEXIBLE ITEM TYPE BADGE */
     .item-type-badge {
         background: #6f42c1;
         color: white;
@@ -136,7 +184,7 @@
         max-width: 100%;
         min-height: 16px;
     }
-    /* Logo space available at top of qr-left section */
+    
     .logo-space {
         height: 80px;
         width: 100%;
@@ -157,36 +205,30 @@
 
     <div class="qr-sticker-box">
         <div class="qr-left">
-            <!-- Logo Space (for future use) -->
             <div class="logo-space">
-                <!-- Logo will be added here later -->
+                <!-- Logo space -->
             </div>
             
-            <!-- QR Code and Tracking Code moved to bottom -->
             <img src="data:image/png;base64,{{ item.qr }}" alt="QR Code">
             <div class="tracking-code">{{ item.tracking_code }}</div>
         </div>
         
         <div class="qr-right">
-            <!-- Company Name Header -->
             <div class="company-name">Good Way Express</div>
             
-            <!-- Flexible Item Type Badge (handles long medicine names) -->
             <div class="item-type-badge">{{ item.item_description|upper }}</div>
             
-            <!-- CN Number -->
             <div class="info-row">
                 <span class="info-label">CN No:</span>
                 <span class="info-value highlight">{{ cnote.cnote_number }}</span>
             </div>
             
-            <!-- Sender -->
+            <!-- ✅ AUTO-ADJUSTING SENDER -->
             <div class="info-row">
                 <span class="info-label">Sender:</span>
-                <span class="info-value">{{ cnote.consignor_name }}</span>
+                <span class="info-value auto-adjust-text sender-name-{{ forloop.counter0 }}">{{ cnote.consignor_name }}</span>
             </div>
             
-            <!-- Simplified Item Information (just numbers) -->
             <div class="info-row">
                 <span class="info-label">Item:</span>
                 <div class="info-value item-highlight">
@@ -194,37 +236,33 @@
                 </div>
             </div>
             
-            <!-- Date -->
             <div class="info-row">
                 <span class="info-label">Date:</span>
                 <span class="info-value date-highlight">{{ cnote.created_at|date:"d/m/y" }}</span>
             </div>
             
-            <!-- Receiver -->
+            <!-- ✅ AUTO-ADJUSTING RECEIVER -->
             <div class="info-row">
                 <span class="info-label">Receiver:</span>
-                <span class="info-value">{{ cnote.consignee_name }}</span>
+                <span class="info-value auto-adjust-text receiver-name-{{ forloop.counter0 }}">{{ cnote.consignee_name }}</span>
             </div>
             
-            <!-- Mobile -->
+            <!-- ✅ AUTO-ADJUSTING MOBILE -->
             <div class="info-row">
                 <span class="info-label">Mob No:</span>
-                <span class="info-value">{{ cnote.consignee_mobile }}</span>
+                <span class="info-value mobile-text mobile-number-{{ forloop.counter0 }}">{{ cnote.consignee_mobile }}</span>
             </div>
             
-            <!-- Destination -->
             <div class="info-row">
                 <span class="info-label">To:</span>
                 <span class="info-value">{{ cnote.delivery_destination.destination_name }}</span>
             </div>
             
-            <!-- Qty -->
             <div class="info-row">
                 <span class="info-label">Qty:</span>
                 <span class="info-value highlight">{{ item.overall_position }} of {{ item.total_items }}</span>
             </div>
             
-            <!-- From -->
             <div class="info-row">
                 <span class="info-label">From:</span>
                 <span class="info-value">{{ cnote.dealer.city }}</span>
@@ -236,4 +274,84 @@
         </div>
     {% endif %}
 {% endfor %}
+
+<!-- ✅ JAVASCRIPT FOR AUTO TEXT ADJUSTMENT IN GRID -->
+<script>
+    // ✅ AUTO TEXT ADJUSTMENT FOR GRID ITEMS
+    function adjustGridTextSizes() {
+        console.log('🔧 Starting grid text adjustment...');
+        
+        // ✅ GET ALL STICKER BOXES
+        const stickerBoxes = document.querySelectorAll('.qr-sticker-box');
+        
+        stickerBoxes.forEach((box, index) => {
+            console.log(`📦 Processing sticker box ${index + 1}`);
+            
+            // ✅ ADJUST SENDER NAMES
+            const senderElement = box.querySelector(`.sender-name-${index}`);
+            if (senderElement) {
+                const senderText = senderElement.textContent || '';
+                console.log(`📝 Sender ${index + 1} length:`, senderText.length);
+                
+                senderElement.classList.remove('long-text', 'very-long-text', 'extra-long-text');
+                
+                if (senderText.length > 40) {
+                    senderElement.classList.add('extra-long-text');
+                } else if (senderText.length > 25) {
+                    senderElement.classList.add('very-long-text');
+                } else if (senderText.length > 15) {
+                    senderElement.classList.add('long-text');
+                }
+            }
+            
+            // ✅ ADJUST RECEIVER NAMES
+            const receiverElement = box.querySelector(`.receiver-name-${index}`);
+            if (receiverElement) {
+                const receiverText = receiverElement.textContent || '';
+                console.log(`📝 Receiver ${index + 1} length:`, receiverText.length);
+                
+                receiverElement.classList.remove('long-text', 'very-long-text', 'extra-long-text');
+                
+                if (receiverText.length > 40) {
+                    receiverElement.classList.add('extra-long-text');
+                } else if (receiverText.length > 25) {
+                    receiverElement.classList.add('very-long-text');
+                } else if (receiverText.length > 15) {
+                    receiverElement.classList.add('long-text');
+                }
+            }
+            
+            // ✅ FORMAT MOBILE NUMBERS
+            const mobileElement = box.querySelector(`.mobile-number-${index}`);
+            if (mobileElement) {
+                const mobileText = mobileElement.textContent || '';
+                if (mobileText.length === 10) {
+                    const formatted = mobileText.replace(/(\d{5})(\d{5})/, '$1 $2');
+                    mobileElement.textContent = formatted;
+                }
+            }
+        });
+        
+        console.log('🎯 Grid text adjustment completed!');
+    }
+    
+    // ✅ RUN ADJUSTMENT ON PAGE LOAD
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('📄 DOM loaded - starting grid text adjustment');
+        setTimeout(adjustGridTextSizes, 200);
+    });
+    
+    window.addEventListener('load', function() {
+        console.log('🌐 Window loaded - backup grid text adjustment');
+        setTimeout(adjustGridTextSizes, 400);
+    });
+    
+    // ✅ BACKUP ADJUSTMENT
+    setTimeout(function() {
+        console.log('⏰ Delayed grid text adjustment');
+        adjustGridTextSizes();
+    }, 1000);
+    
+    console.log('🎯 GRID AUTO TEXT ADJUSTMENT SYSTEM LOADED!');
+</script>
 {% endblock %}
