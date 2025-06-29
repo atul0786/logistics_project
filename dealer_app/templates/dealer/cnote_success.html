@@ -306,6 +306,8 @@
     <div class="button-container">
         <button class="action-button" id="createCnoteBtn">Create CNote</button>
         <button class="action-button" id="printBtn">Print</button>
+        <a href="{% url 'dealer:print_with_qr' cnote.cnote_number %}" class="action-button">Print with QR Code</a>
+
     </div>
         <!-- Form 1 -->
         <div class="form-container">
