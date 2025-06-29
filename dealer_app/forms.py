@@ -4,6 +4,7 @@ from django.forms import inlineformset_factory
 from .models import CNote, Dealer, DeliveryDestination, DeliveryType, ArtType, BookingType, Article
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Field, Fieldset, ButtonHolder, Submit
+from .models import CNotes, Article  # Make sure you're importing CNotes
 
 # Login form for dealer users
 class DealerLoginForm(AuthenticationForm):
@@ -176,3 +177,19 @@ class DealerForm(forms.ModelForm):
 
 # Set the template pack for crispy forms (e.g., bootstrap4)
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
+
+
+from django import forms
+
+class QRPrinterSelectionForm(forms.Form):
+    printer_name = forms.ChoiceField(label="Select QR Printer", choices=[])
+
+    def __init__(self, *args, **kwargs):
+        printers = kwargs.pop('printers', [])
+        super().__init__(*args, **kwargs)
+
+        # ✅ Add "No QR Printer" at the top
+        printers.insert(0, "❌ No QR Printer (Use A4 Sheet)")
+
+        self.fields['printer_name'].choices = [(p, p) for p in printers]
