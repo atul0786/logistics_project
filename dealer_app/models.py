@@ -10,6 +10,11 @@ from django.apps import apps
 from django.db.models.signals import pre_delete
 from django.utils import timezone
 
+class QRPrinterSetting(models.Model):
+    dealer = models.OneToOneField('Dealer', on_delete=models.CASCADE)  # ✅ use string 'Dealer'
+    printer_name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
 
 # City and State Choices
 CITY_CHOICES = [
@@ -286,6 +291,18 @@ class CNotes(models.Model):
             self.save()
         else:
             raise ValueError(f"Invalid status: {new_status}")
+
+class Parcel(models.Model):
+    cnote = models.ForeignKey('CNotes', on_delete=models.CASCADE)    
+    parcel_number = models.IntegerField()
+    qr_code_id = models.CharField(max_length=100, unique=True)
+    receiver_name = models.CharField(max_length=100)
+    destination = models.CharField(max_length=100)
+    from_city = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return self.qr_code_id
+
 
 class Article(models.Model):
     cnote = models.ForeignKey(CNotes, on_delete=models.CASCADE, related_name='articles')
