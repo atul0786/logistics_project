@@ -16,12 +16,12 @@
             margin: 0;
         }
 
-        /* ✅ WIDTH AUR BHI BADHAYA - HEIGHT SAME RAKHA */
+        /* ✅ RESPONSIVE STICKER BOX */
         .qr-sticker-box {
-            width: 6in; /* 5.2in se 6in - WIDTH AUR BADHAYA */
-            height: 3.2in; /* HEIGHT SAME RAKHA */
+            width: 6in;
+            height: 3.2in;
             border: 3px solid #333;
-            padding: 18px; /* 15px se 18px - EXTRA PADDING */
+            padding: 18px;
             display: table;
             table-layout: fixed;
             background: #fff;
@@ -30,34 +30,31 @@
             margin: 0;
         }
 
-        /* ✅ LEFT COLUMN - QR CODE AT BOTTOM */
+        /* ✅ LEFT COLUMN - QR CODE */
         .qr-left {
             display: table-cell;
-            width: 180px; /* 170px se 180px - THODA BADHAYA */
+            width: 180px;
             vertical-align: bottom;
             text-align: center;
-            padding-right: 20px; /* 15px se 20px - EXTRA SPACE */
+            padding-right: 20px;
             border-right: 2px solid #ddd;
             position: relative;
         }
 
-        /* Logo space at top */
         .logo-space {
             position: absolute;
             top: 0;
             left: 0;
             right: 20px;
             height: 80px;
-            width: 160px; /* 155px se 160px */
+            width: 160px;
             margin-bottom: 12px;
         }
 
-        /* QR section at bottom */
         .qr-section {
             text-align: center;
         }
 
-        /* ✅ QR CODE SIZE SAME RAKHA */
         .qr-left img {
             width: 150px;
             height: 150px;
@@ -66,7 +63,6 @@
             margin: 0 auto 12px auto;
         }
 
-        /* ✅ TRACKING CODE - SAME FONT + WEIGHT */
         .tracking-code {
             font-size: 12pt;
             background: #e8f4fd;
@@ -81,14 +77,13 @@
             width: 100%;
         }
 
-        /* ✅ RIGHT COLUMN - DATA (MAXIMUM EXTRA SPACE) */
+        /* ✅ RIGHT COLUMN - AUTO ADJUSTING TEXT */
         .qr-right {
             display: table-cell;
             vertical-align: top;
-            padding-left: 35px; /* 25px se 35px - MAXIMUM EXTRA SPACE */
+            padding-left: 35px;
         }
 
-        /* ✅ COMPANY NAME HEADER - SAME MAXIMUM FONT + WEIGHT */
         .company-name {
             font-weight: 900;
             font-size: 20pt;
@@ -99,7 +94,6 @@
             padding-bottom: 5px;
         }
 
-        /* ✅ ITEM TYPE BADGE - SAME MAXIMUM SIZE + WEIGHT */
         .item-type-badge {
             background: #6f42c1;
             color: white;
@@ -115,29 +109,66 @@
             line-height: 1.3;
         }
 
-        /* ✅ INFO ROWS - SAME MAXIMUM FONT */
+        /* ✅ AUTO-ADJUSTING INFO ROWS */
         .info-row {
             margin-bottom: 5px;
             font-size: 15pt;
             line-height: 1.4;
+            display: flex;
+            align-items: flex-start;
         }
 
-        /* ✅ INFO LABELS - EXTRA WIDTH SPACE */
         .info-label {
             font-weight: 900;
             color: #333;
-            display: inline-block;
-            min-width: 110px; /* 90px se 110px - EXTRA WIDTH SPACE */
-            margin-right: 15px; /* 10px se 15px - EXTRA SPACING */
+            min-width: 110px;
+            margin-right: 15px;
+            flex-shrink: 0;
         }
 
+        /* ✅ RESPONSIVE TEXT VALUES */
         .info-value {
             color: #555;
-            display: inline;
             font-weight: 700;
+            flex: 1;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
         }
 
-        /* ✅ HIGHLIGHT STYLES - SAME MAXIMUM SIZE + WEIGHT */
+        /* ✅ AUTO-ADJUSTING NAME CLASSES */
+        .auto-adjust-text {
+            font-size: 15pt;
+            line-height: 1.2;
+            max-width: 100%;
+            overflow: hidden;
+            display: block;
+        }
+
+        /* ✅ AUTOMATIC FONT SIZE REDUCTION FOR LONG NAMES */
+        .auto-adjust-text.long-text {
+            font-size: 12pt;
+            line-height: 1.1;
+        }
+
+        .auto-adjust-text.very-long-text {
+            font-size: 10pt;
+            line-height: 1.0;
+        }
+
+        .auto-adjust-text.extra-long-text {
+            font-size: 8pt;
+            line-height: 0.9;
+        }
+
+        /* ✅ MOBILE NUMBER AUTO-ADJUST */
+        .mobile-text {
+            font-family: monospace;
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+
+        /* ✅ HIGHLIGHT STYLES */
         .highlight {
             background-color: #fff3cd;
             padding: 4px 8px;
@@ -172,53 +203,47 @@
                 page-break-inside: avoid;
                 margin: 0;
             }
-            
-            /* ✅ Ensure colors print properly */
             * {
                 -webkit-print-color-adjust: exact;
                 color-adjust: exact;
             }
         }
 
-        /* ✅ HIGH DPI - SAME MAXIMUM FONTS */
+        /* ✅ HIGH DPI ADJUSTMENTS */
         @media (min-resolution: 300dpi) {
             .info-row {
                 font-size: 17pt;
             }
-            .tracking-code {
+            .auto-adjust-text.long-text {
                 font-size: 14pt;
             }
-            .item-type-badge {
-                font-size: 16pt;
+            .auto-adjust-text.very-long-text {
+                font-size: 12pt;
             }
-            .company-name {
-                font-size: 24pt;
+            .auto-adjust-text.extra-long-text {
+                font-size: 10pt;
             }
         }
     </style>
 </head>
 <body>
     <div class="qr-sticker-box">
-        <!-- ✅ LEFT COLUMN: QR CODE AT BOTTOM -->
+        <!-- LEFT COLUMN: QR CODE -->
         <div class="qr-left">
-            <!-- Logo Space at Top -->
             <div class="logo-space">
-                <!-- Logo will be added here later -->
+                <!-- Logo space -->
             </div>
             
-            <!-- QR Section at Bottom -->
             <div class="qr-section">
                 <img src="data:image/png;base64,{{ qr }}" alt="QR Code">
                 <div class="tracking-code">{{ tracking_code }}</div>
             </div>
         </div>
 
-        <!-- ✅ RIGHT COLUMN: DATA - MAXIMUM WIDE SPACE -->
+        <!-- RIGHT COLUMN: AUTO-ADJUSTING DATA -->
         <div class="qr-right">
-            <!-- Company Name Header -->
             <div class="company-name">Good Way Express</div>
             
-            <!-- Item Type Badge -->
             <div class="item-type-badge">{{ item|upper }}</div>
             
             <!-- CN Number -->
@@ -227,74 +252,144 @@
                 <span class="info-value highlight">{{ cn }}</span>
             </div>
             
-            <!-- Sender -->
+            <!-- ✅ AUTO-ADJUSTING SENDER NAME -->
             <div class="info-row">
                 <span class="info-label">Sender:</span>
-                <span class="info-value">{{ sender }}</span>
+                <span class="info-value auto-adjust-text" id="sender-name">{{ sender }}</span>
             </div>
             
-            <!-- ✅ Item Quantity -->
             <div class="info-row">
                 <span class="info-label">Item:</span>
                 <span class="info-value item-highlight">
                     {% if item_number and total_of_this_type %}
                         {{ item_number }} of {{ total_of_this_type }}
-                    {% elif item.item_number and item.total_of_this_type %}
-                        {{ item.item_number }} of {{ item.total_of_this_type }}
                     {% else %}
                         1 of 1
                     {% endif %}
                 </span>
             </div>
             
-            <!-- Date -->
             <div class="info-row">
                 <span class="info-label">Date:</span>
                 <span class="info-value date-highlight">{{ date }}</span>
             </div>
             
-            <!-- Receiver -->
+            <!-- ✅ AUTO-ADJUSTING RECEIVER NAME -->
             <div class="info-row">
                 <span class="info-label">Receiver:</span>
-                <span class="info-value">{{ receiver }}</span>
+                <span class="info-value auto-adjust-text" id="receiver-name">{{ receiver }}</span>
             </div>
             
-            <!-- Mobile -->
+            <!-- ✅ AUTO-ADJUSTING MOBILE NUMBER -->
             <div class="info-row">
                 <span class="info-label">Mob No:</span>
-                <span class="info-value">{{ mob }}</span>
+                <span class="info-value mobile-text" id="mobile-number">{{ mob }}</span>
             </div>
             
-            <!-- Destination -->
             <div class="info-row">
                 <span class="info-label">To:</span>
                 <span class="info-value">{{ to }}</span>
             </div>
 
-            <!-- ✅ Qty Field -->
             <div class="info-row">
                 <span class="info-label">Qty:</span>
                 <span class="info-value highlight">
                     {% if overall_position and total_items %}
                         {{ overall_position }} of {{ total_items }}
-                    {% elif item.overall_position and item.total_items %}
-                        {{ item.overall_position }} of {{ item.total_items }}
-                    {% elif current_item and total_quantity %}
-                        {{ current_item }} of {{ total_quantity }}
-                    {% elif position and total %}
-                        {{ position }} of {{ total }}
                     {% else %}
                         1 of 1
                     {% endif %}
                 </span>
             </div>
             
-            <!-- From -->
             <div class="info-row">
                 <span class="info-label">From:</span>
                 <span class="info-value">{{ from_city }}</span>
             </div>
         </div>
     </div>
+
+    <!-- ✅ JAVASCRIPT FOR AUTO TEXT ADJUSTMENT -->
+    <script>
+        // ✅ AUTO TEXT SIZE ADJUSTMENT FUNCTION
+        function adjustTextSize() {
+            console.log('🔧 Starting auto text adjustment...');
+            
+            // ✅ ADJUST SENDER NAME
+            const senderElement = document.getElementById('sender-name');
+            if (senderElement) {
+                const senderText = senderElement.textContent || '';
+                console.log('📝 Sender text length:', senderText.length);
+                
+                // Remove existing classes
+                senderElement.classList.remove('long-text', 'very-long-text', 'extra-long-text');
+                
+                if (senderText.length > 50) {
+                    senderElement.classList.add('extra-long-text');
+                    console.log('✅ Applied extra-long-text to sender');
+                } else if (senderText.length > 35) {
+                    senderElement.classList.add('very-long-text');
+                    console.log('✅ Applied very-long-text to sender');
+                } else if (senderText.length > 20) {
+                    senderElement.classList.add('long-text');
+                    console.log('✅ Applied long-text to sender');
+                }
+            }
+            
+            // ✅ ADJUST RECEIVER NAME
+            const receiverElement = document.getElementById('receiver-name');
+            if (receiverElement) {
+                const receiverText = receiverElement.textContent || '';
+                console.log('📝 Receiver text length:', receiverText.length);
+                
+                // Remove existing classes
+                receiverElement.classList.remove('long-text', 'very-long-text', 'extra-long-text');
+                
+                if (receiverText.length > 50) {
+                    receiverElement.classList.add('extra-long-text');
+                    console.log('✅ Applied extra-long-text to receiver');
+                } else if (receiverText.length > 35) {
+                    receiverElement.classList.add('very-long-text');
+                    console.log('✅ Applied very-long-text to receiver');
+                } else if (receiverText.length > 20) {
+                    receiverElement.classList.add('long-text');
+                    console.log('✅ Applied long-text to receiver');
+                }
+            }
+            
+            // ✅ ADJUST MOBILE NUMBER FORMAT
+            const mobileElement = document.getElementById('mobile-number');
+            if (mobileElement) {
+                const mobileText = mobileElement.textContent || '';
+                // Format mobile number with spaces for better readability
+                if (mobileText.length === 10) {
+                    const formatted = mobileText.replace(/(\d{5})(\d{5})/, '$1 $2');
+                    mobileElement.textContent = formatted;
+                    console.log('✅ Formatted mobile number:', formatted);
+                }
+            }
+            
+            console.log('🎯 Auto text adjustment completed!');
+        }
+        
+        // ✅ RUN ADJUSTMENT ON PAGE LOAD
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 DOM loaded - starting text adjustment');
+            setTimeout(adjustTextSize, 100);
+        });
+        
+        window.addEventListener('load', function() {
+            console.log('🌐 Window loaded - backup text adjustment');
+            setTimeout(adjustTextSize, 200);
+        });
+        
+        // ✅ BACKUP ADJUSTMENT
+        setTimeout(function() {
+            console.log('⏰ Delayed text adjustment');
+            adjustTextSize();
+        }, 500);
+        
+        console.log('🎯 AUTO TEXT ADJUSTMENT SYSTEM LOADED!');
+    </script>
 </body>
 </html>
