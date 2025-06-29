@@ -148,7 +148,7 @@ class ArticleForm(forms.ModelForm):
         fields = ['article_type', 'art', 'art_type', 'said_to_contain', 'art_amount']
 
 ArticleFormSet = inlineformset_factory(
-    CNote, Article, form=ArticleForm,
+    CNotes, Article, form=ArticleForm,
     extra=1, can_delete=True, can_delete_extra=True
 )
 
