@@ -83,6 +83,10 @@ urlpatterns = [
     path('get_cnote/<int:cnote_id>/', views.get_cnote, name='get_cnote'),
     path('update_cnote/<int:cnote_id>/', views.update_cnote, name='update_cnote'),
     path('delete_cnote/<int:cnote_id>/', views.delete_cnote, name='delete_cnote'),
+
+    path('print_with_qr/<str:cnote_number>/', views.print_with_qr, name='print_with_qr'),
+    path('qr-printer-setting/', views.select_qr_printer, name='select_qr_printer'),
+
 ]
 
 # Serve media files during development
