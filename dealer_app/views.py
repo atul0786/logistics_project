@@ -1973,6 +1973,18 @@ def print_with_qr(request, cnote_number):
         return render(request, 'dealer/cnote_success_with_qr_grid.html', context)  
 
 
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+@csrf_exempt
+def save_printer_data(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        print("Received printer list:", data)  # Optional: Save to DB if needed
+        return JsonResponse({"status": "ok"})
+    return JsonResponse({"error": "invalid method"}, status=405)
+
 
 logger = logging.getLogger(__name__)
 def search_cnote(request):
