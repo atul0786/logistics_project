@@ -1778,18 +1778,17 @@ def send_qr_to_printer_using_html(html_string, printer_name):
         traceback.print_exc()
         return False
 
+from .models import ClientPrinters  # add this at the top
+
 @login_required
 def select_qr_printer(request):
     dealer = request.user.dealer
 
-    # List installed printers
-    if win32print:
-        installed = [printer[2] for printer in win32print.EnumPrinters(2)]
-    else:
-        installed = []
+    # ✅ Fetch printers saved by client setup script
+    installed = list(ClientPrinters.objects.filter(dealer=dealer).values_list("printer_name", flat=True))
     installed.insert(0, "❌ No QR Printer (Use A4 Sheet)")
 
-    # Get saved setting
+    # ✅ Get current setting
     setting = QRPrinterSetting.objects.filter(dealer=dealer).first()
     saved_printer = setting.printer_name if setting else None
 
