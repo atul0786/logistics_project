@@ -86,6 +86,8 @@ urlpatterns = [
 
     path('print_with_qr/<str:cnote_number>/', views.print_with_qr, name='print_with_qr'),
     path('qr-printer-setting/', views.select_qr_printer, name='select_qr_printer'),
+    path('api/save_printers/', views.save_printer_data, name='save_printer_data'),
+
 
 ]
 
