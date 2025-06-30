@@ -515,6 +515,8 @@
     </div>
 
     <script>
+            const dealerId = {{ request.user.dealer.dealer_id }};
+
         // ✅ Form submission with loading state
         document.getElementById('printerForm').addEventListener('submit', function() {
             const saveBtn = document.getElementById('saveBtn');
