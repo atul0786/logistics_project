@@ -465,3 +465,14 @@ def revert_cnote_status(sender, instance, **kwargs):
 
     # Delete the loading sheet details
     LoadingSheetDetail.objects.filter(loading_sheet=instance).delete()
+
+
+
+
+class ClientPrinters(models.Model):
+    dealer = models.ForeignKey(Dealer, on_delete=models.CASCADE)
+    printer_name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.dealer} - {self.printer_name}"
