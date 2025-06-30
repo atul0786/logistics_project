@@ -89,6 +89,7 @@ urlpatterns = [
     path('api/save_printers/', views.save_printer_data, name='save_printer_data'),
 
 
+
 ]
 
 # Serve media files during development
