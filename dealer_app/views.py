@@ -1979,11 +1979,14 @@ import json
 @csrf_exempt
 def save_printer_data(request):
     if request.method == "POST":
-        data = json.loads(request.body)
-        print("✅ Received printer list from:", data.get("client_id"))
-        print("Printers:", data.get("printers"))
-        return JsonResponse({"status": "saved"})
-    return JsonResponse({"error": "invalid method"}, status=405)
+        try:
+            data = json.loads(request.body)
+            print("📬 Printer data received from client:", data.get("client_id"))
+            print("🖨️ Printers:", data.get("printers"))
+            return JsonResponse({"status": "success"})
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+    return JsonResponse({"error": "Invalid method"}, status=405)
 
 
 logger = logging.getLogger(__name__)
