@@ -1972,6 +1972,7 @@ def print_with_qr(request, cnote_number):
     else:
         return render(request, 'dealer/cnote_success_with_qr_grid.html', context)  
 
+from .models import ClientPrinters, Dealer
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
@@ -1981,12 +1982,25 @@ def save_printer_data(request):
     if request.method == "POST":
         try:
             data = json.loads(request.body)
-            print("📬 Printer data received from client:", data.get("client_id"))
-            print("🖨️ Printers:", data.get("printers"))
-            return JsonResponse({"status": "success"})
+            client_id = data.get("client_id")
+            printers = data.get("printers", [])
+
+            if not client_id:
+                return JsonResponse({"error": "client_id required"}, status=400)
+
+            dealer = Dealer.objects.get(dealer_id=client_id)
+
+            # Clear old printers
+            ClientPrinters.objects.filter(dealer=dealer).delete()
+
+            for p in printers:
+                ClientPrinters.objects.create(dealer=dealer, printer_name=p)
+
+            return JsonResponse({"status": "ok"})
         except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
-    return JsonResponse({"error": "Invalid method"}, status=405)
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "invalid method"}, status=405)
 
 
 logger = logging.getLogger(__name__)
