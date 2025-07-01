@@ -1782,44 +1782,61 @@ from .models import ClientPrinters  # add this at the top
 
 @login_required
 def select_qr_printer(request):
+    """
+    QR Printer selection page for dealers
+    """
     dealer = request.user.dealer
 
-    # ✅ Fetch printers saved by client setup script
-    installed = list(ClientPrinters.objects.filter(dealer=dealer).values_list("printer_name", flat=True))
-    installed.insert(0, "❌ No QR Printer (Use A4 Sheet)")
+    # Fetch printers detected by client setup script
+    detected_printers = list(
+        ClientPrinters.objects.filter(dealer=dealer).values_list("printer_name", flat=True)
+    )
+    
+    # Add default option
+    printer_choices = ["❌ No QR Printer (Use A4 Sheet)"] + detected_printers
 
-    # ✅ Get current setting
-    setting = QRPrinterSetting.objects.filter(dealer=dealer).first()
-    saved_printer = setting.printer_name if setting else None
+    # Get current setting
+    current_setting = QRPrinterSetting.objects.filter(dealer=dealer).first()
+    saved_printer = current_setting.printer_name if current_setting else None
 
     if request.method == 'POST':
-        form = QRPrinterSelectionForm(request.POST, printers=installed)
+        form = QRPrinterSelectionForm(request.POST, printers=printer_choices)
         if form.is_valid():
-            printer_name = form.cleaned_data['printer_name']
+            selected_printer = form.cleaned_data['printer_name']
 
-            if printer_name.startswith("❌"):
-                if setting:
-                    setting.delete()
+            if selected_printer.startswith("❌"):
+                # Remove QR printer setting
+                if current_setting:
+                    current_setting.delete()
                 messages.success(request, "✅ QR printer removed. A4 layout will be used.")
             else:
-                if setting:
-                    setting.printer_name = printer_name
-                    setting.save()
+                # Save or update QR printer setting
+                if current_setting:
+                    current_setting.printer_name = selected_printer
+                    current_setting.save()
                 else:
-                    QRPrinterSetting.objects.create(dealer=dealer, printer_name=printer_name)
-                messages.success(request, f"✅ QR Printer set to: {printer_name}")
+                    QRPrinterSetting.objects.create(
+                        dealer=dealer, 
+                        printer_name=selected_printer
+                    )
+                messages.success(request, f"✅ QR Printer set to: {selected_printer}")
 
             return redirect('dealer:select_qr_printer')
 
     else:
-        form = QRPrinterSelectionForm(printers=installed, initial={
-            'printer_name': saved_printer or "❌ No QR Printer (Use A4 Sheet)"
-        })
+        initial_printer = saved_printer if saved_printer in printer_choices else "❌ No QR Printer (Use A4 Sheet)"
+        form = QRPrinterSelectionForm(
+            printers=printer_choices, 
+            initial={'printer_name': initial_printer}
+        )
 
     return render(request, 'dealer/select_qr_printer.html', {
         'form': form,
         'saved_printer': saved_printer,
+        'detected_printers': detected_printers,
+        'dealer': dealer,
     })
+
 
 def generate_qr_base64(data):
     """Generate QR code and return as base64 string"""
@@ -1971,13 +1988,19 @@ def print_with_qr(request, cnote_number):
     else:
         return render(request, 'dealer/cnote_success_with_qr_grid.html', context)  
 
-from .models import ClientPrinters, Dealer
+# Add these imports to your existing views.py
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
+from .models import ClientPrinters, Dealer, QRPrinterSetting
+from .forms import QRPrinterSelectionForm
 
+# Add this view to your existing views.py
 @csrf_exempt
 def save_printer_data(request):
+    """
+    API endpoint to receive printer data from client setup script
+    """
     if request.method == "POST":
         try:
             data = json.loads(request.body)
@@ -1987,20 +2010,35 @@ def save_printer_data(request):
             if not client_id:
                 return JsonResponse({"error": "client_id required"}, status=400)
 
-            dealer = Dealer.objects.get(dealer_id=client_id)
+            # Find dealer by dealer_id
+            try:
+                dealer = Dealer.objects.get(dealer_id=client_id)
+            except Dealer.DoesNotExist:
+                return JsonResponse({"error": f"Dealer with ID {client_id} not found"}, status=404)
 
-            # Clear old printers
+            # Clear old printers for this dealer
             ClientPrinters.objects.filter(dealer=dealer).delete()
 
-            for p in printers:
-                ClientPrinters.objects.create(dealer=dealer, printer_name=p)
+            # Save new printers
+            for printer_name in printers:
+                if printer_name.strip():  # Only save non-empty printer names
+                    ClientPrinters.objects.create(
+                        dealer=dealer, 
+                        printer_name=printer_name.strip()
+                    )
 
-            return JsonResponse({"status": "ok"})
+            return JsonResponse({
+                "status": "success",
+                "message": f"Saved {len(printers)} printers for dealer {dealer.name}",
+                "dealer_name": dealer.name
+            })
+
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON data"}, status=400)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
-    return JsonResponse({"error": "invalid method"}, status=405)
-
+    return JsonResponse({"error": "Only POST method allowed"}, status=405)
 
 logger = logging.getLogger(__name__)
 def search_cnote(request):
