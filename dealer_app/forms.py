@@ -183,13 +183,14 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 from django import forms
 
 class QRPrinterSelectionForm(forms.Form):
-    printer_name = forms.ChoiceField(label="Select QR Printer", choices=[])
-
     def __init__(self, *args, **kwargs):
         printers = kwargs.pop('printers', [])
         super().__init__(*args, **kwargs)
-
-        # ✅ Add "No QR Printer" at the top
-        printers.insert(0, "❌ No QR Printer (Use A4 Sheet)")
-
-        self.fields['printer_name'].choices = [(p, p) for p in printers]
+        self.fields['printer_name'] = forms.ChoiceField(
+            choices=[(printer, printer) for printer in printers],
+            widget=forms.Select(attrs={
+                'class': 'form-control',
+                'id': 'printer_name'
+            }),
+            label='Select QR Printer'
+        )
