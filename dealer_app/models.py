@@ -468,11 +468,22 @@ def revert_cnote_status(sender, instance, **kwargs):
 
 
 
-
 class ClientPrinters(models.Model):
-    dealer = models.ForeignKey(Dealer, on_delete=models.CASCADE)
+    dealer = models.ForeignKey(Dealer, on_delete=models.CASCADE, related_name='client_printers')
     printer_name = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    
+    class Meta:
+        unique_together = ['dealer', 'printer_name']
+    
     def __str__(self):
-        return f"{self.dealer} - {self.printer_name}"
+        return f"{self.dealer.name} - {self.printer_name}"
+
+class QRPrinterSetting(models.Model):
+    dealer = models.OneToOneField(Dealer, on_delete=models.CASCADE)
+    printer_name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.dealer.name} - {self.printer_name}"
