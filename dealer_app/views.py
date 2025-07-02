@@ -2022,6 +2022,8 @@ def generate_qr_base64(data):
     img.save(buffer, format="PNG")
     return base64.b64encode(buffer.getvalue()).decode('utf-8')
 
+# ✅ FIX - print_with_qr function के अंत में proper indentation करें
+
 @login_required
 def print_with_qr(request, cnote_number):
     print(f"\n🛠️ Starting QR print for CN: {cnote_number}")
@@ -2098,23 +2100,11 @@ def print_with_qr(request, cnote_number):
                     'to': cnote.delivery_destination.destination_name,
                     'from_city': cnote.dealer.city,
                     'date': booking_date,
-                    
-                    # ✅ ALL QUANTITY VARIABLES - यहां है main fix
                     'item_number': item_number,
                     'total_of_this_type': item_quantity,
                     'overall_position': overall_item_counter,
                     'total_items': total_art,
-                    
-                    # ✅ FALLBACK VARIABLES
-                    'current_item': overall_item_counter,
-                    'total_quantity': total_art,
-                    'position': overall_item_counter,
-                    'total': total_art,
-                    'qty': f"{item_number} of {item_quantity}",
                 }
-                
-                # Debug print to verify values
-                print(f"📊 Context: overall_position={overall_item_counter}, total_items={total_art}, item_number={item_number}, total_of_this_type={item_quantity}")
                 
                 try:
                     html_output = render_to_string('dealer/qr_single_print_template.html', template_context)
@@ -2143,38 +2133,37 @@ def print_with_qr(request, cnote_number):
         'company_name': 'Good Way Express',
     }
 
-
-# Show results and return appropriate template
-if printer_name and not printer_name.lower().startswith("❌"):
-    # Check if PDF printer was used
-    is_pdf_printer = (
-        "microsoft print to pdf" in printer_name.lower() or 
-        "print to pdf" in printer_name.lower() or
-        "pdf" in printer_name.lower()
-    )
-    
-    if is_pdf_printer:
-        # PDF printer messages
-        if successful_prints > 0:
-            messages.success(request, f"✅ {successful_prints} QR labels opened in browser for PDF printing!")
-            messages.info(request, "📄 Each label will open in browser - Select 'Microsoft Print to PDF' and save")
-            messages.info(request, "💡 Print dialog opens automatically, or press Ctrl+P manually")
-        if failed_prints > 0:
-            messages.error(request, f"❌ {failed_prints} QR labels failed to open in browser")
+    # ✅ IMPORTANT: यह सब function के अंदर होना चाहिए (proper indentation)
+    # Show results and return appropriate template
+    if printer_name and not printer_name.lower().startswith("❌"):
+        # Check if PDF printer was used
+        is_pdf_printer = (
+            "microsoft print to pdf" in printer_name.lower() or 
+            "print to pdf" in printer_name.lower() or
+            "pdf" in printer_name.lower()
+        )
+        
+        if is_pdf_printer:
+            # PDF printer messages
+            if successful_prints > 0:
+                messages.success(request, f"✅ {successful_prints} QR labels opened in browser for PDF printing!")
+                messages.info(request, "📄 Each label will open in browser - Select 'Microsoft Print to PDF' and save")
+                messages.info(request, "💡 Print dialog opens automatically, or press Ctrl+P manually")
+            if failed_prints > 0:
+                messages.error(request, f"❌ {failed_prints} QR labels failed to open in browser")
+        else:
+            # Physical printer messages  
+            if successful_prints > 0:
+                messages.success(request, f"✅ {successful_prints} QR codes sent to physical printer: {printer_name}")
+            if failed_prints > 0:
+                messages.error(request, f"❌ {failed_prints} QR codes failed to print on machine")
+                messages.warning(request, "🔧 Check if printer is connected and drivers are installed")
+        
+        print(f"📊 Print Summary: {successful_prints} successful, {failed_prints} failed")
+        return render(request, 'dealer/cnote_success_only.html', context)
     else:
-        # Physical printer messages  
-        if successful_prints > 0:
-            messages.success(request, f"✅ {successful_prints} QR codes sent to physical printer: {printer_name}")
-        if failed_prints > 0:
-            messages.error(request, f"❌ {failed_prints} QR codes failed to print on machine")
-            messages.warning(request, "🔧 Check if printer is connected and drivers are installed")
-    
-    print(f"📊 Print Summary: {successful_prints} successful, {failed_prints} failed")
-    return render(request, 'dealer/cnote_success_only.html', context)
-else:
-    messages.info(request, "📋 No printer configured. Showing QR grid layout for manual printing.")
-    return render(request, 'dealer/cnote_success_with_qr_grid.html', context)
-
+        messages.info(request, "📋 No printer configured. Showing QR grid layout for manual printing.")
+        return render(request, 'dealer/cnote_success_with_qr_grid.html', context)
 
 # Add these imports to your existing views.py
 from django.views.decorators.csrf import csrf_exempt
