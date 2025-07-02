@@ -125,9 +125,12 @@ from io import BytesIO
 import base64
 from PIL import Image, ImageWin, ImageFont, ImageDraw
 import qrcode
-# ✅ ADD - Existing imports के साथ add करें
+# ✅ ADD - Top of file में
 import webbrowser
 import threading
+from django.conf import settings
+from django.http import HttpResponse
+import platform
 
 
 # Set up logging   
@@ -1717,14 +1720,15 @@ from django.contrib.auth.decorators import login_required
 from .models import CNotes, Parcel, Article, QRPrinterSetting
 from .forms import QRPrinterSelectionForm
 
+# ✅ REPLACE - Complete function
 def send_qr_to_printer_using_html(html_string, printer_name):
     """
-    Smart function: Physical printer के लिए machine approach, PDF printer के लिए browser approach
+    Smart function: Server-friendly PDF generation
     """
     try:
         print(f"\n🛠️ [STEP 1] Processing QR for printer: {printer_name}")
 
-        # ✅ CHECK: Microsoft Print to PDF या PDF printer detect करें
+        # Check if it's Microsoft Print to PDF or PDF printer
         is_pdf_printer = (
             "microsoft print to pdf" in printer_name.lower() or 
             "print to pdf" in printer_name.lower() or
@@ -1732,15 +1736,19 @@ def send_qr_to_printer_using_html(html_string, printer_name):
         )
 
         if is_pdf_printer:
-            # 📄 PDF PRINTER APPROACH - Browser based
-            print("📄 Detected PDF printer - using browser-based approach")
+            # 📄 PDF PRINTER APPROACH - Server-friendly
+            print("📄 Detected PDF printer - using server-friendly approach")
             
-            # Create temporary HTML file with print optimization
-            temp_dir = tempfile.mkdtemp()
-            html_filename = f"QR_Label_{int(time.time())}.html"
-            html_filepath = os.path.join(temp_dir, html_filename)
+            # Create media directory for QR files if not exists
+            qr_media_dir = os.path.join(settings.MEDIA_ROOT, 'qr_labels')
+            os.makedirs(qr_media_dir, exist_ok=True)
             
-            # Enhanced HTML with print-specific CSS and auto-print
+            # Create unique filename
+            timestamp = int(time.time())
+            html_filename = f"QR_Label_{timestamp}.html"
+            html_filepath = os.path.join(qr_media_dir, html_filename)
+            
+            # Enhanced HTML with print-specific CSS
             enhanced_html = f"""
             <!DOCTYPE html>
             <html>
@@ -1766,6 +1774,7 @@ def send_qr_to_printer_using_html(html_string, printer_name):
                         body {{
                             padding: 20px;
                             background: #f0f0f0;
+                            font-family: Arial, sans-serif;
                         }}
                         .print-area {{
                             background: white;
@@ -1790,23 +1799,36 @@ def send_qr_to_printer_using_html(html_string, printer_name):
                             border-radius: 5px;
                             cursor: pointer;
                             margin: 5px;
+                            text-decoration: none;
+                            display: inline-block;
                         }}
                         .btn:hover {{
                             background: #0056b3;
                         }}
+                        .download-link {{
+                            background: #28a745;
+                            color: white;
+                            padding: 15px 25px;
+                            border-radius: 5px;
+                            text-decoration: none;
+                            display: inline-block;
+                            margin: 10px 0;
+                            font-weight: bold;
+                        }}
                     }}
                 </style>
                 <script>
-                    window.onload = function() {{
-                        // Auto-open print dialog after 1.5 seconds
-                        setTimeout(function() {{
-                            window.print();
-                        }}, 1500);
-                    }};
-                    
                     function printNow() {{
                         window.print();
                     }}
+                    
+                    // Auto print after page loads (optional)
+                    window.onload = function() {{
+                        setTimeout(function() {{
+                            // Uncomment next line for auto-print
+                            // window.print();
+                        }}, 1000);
+                    }};
                 </script>
             </head>
             <body>
@@ -1814,8 +1836,8 @@ def send_qr_to_printer_using_html(html_string, printer_name):
                     <h4>📄 QR Label Ready for PDF Printing</h4>
                     <p><strong>Instructions:</strong></p>
                     <ul>
-                        <li>✅ Print dialog will open automatically</li>
-                        <li>🖨️ Select "<strong>Microsoft Print to PDF</strong>" as printer</li>
+                        <li>🖨️ Press <strong>Ctrl+P</strong> to open print dialog</li>
+                        <li>📄 Select "<strong>Microsoft Print to PDF</strong>" as printer</li>
                         <li>💾 Click "Print" to save as PDF file</li>
                         <li>📁 Choose location to save the QR label</li>
                     </ul>
@@ -1833,20 +1855,32 @@ def send_qr_to_printer_using_html(html_string, printer_name):
             with open(html_filepath, 'w', encoding='utf-8') as f:
                 f.write(enhanced_html)
             
-            # Open in default browser
-            file_url = f"file:///{html_filepath.replace(os.sep, '/')}"
-            webbrowser.open(file_url)
+            print(f"✅ QR label HTML created: {html_filepath}")
             
-            print(f"✅ QR label opened in browser for PDF printing: {file_url}")
-            print("📄 Print dialog will open automatically - Select 'Microsoft Print to PDF'")
+            # Try to open in browser (will work on desktop, fail on server)
+            try:
+                # Check if we're on a server (no display)
+                if os.environ.get('DISPLAY') or platform.system() == "Windows":
+                    # Desktop environment - try to open browser
+                    file_url = f"file:///{html_filepath.replace(os.sep, '/')}"
+                    webbrowser.open(file_url)
+                    print(f"✅ Opened in browser: {file_url}")
+                else:
+                    # Server environment - just create file
+                    print(f"📄 Server environment detected - HTML file created for download")
+                    print(f"🔗 File location: {html_filepath}")
+                    
+            except Exception as browser_error:
+                print(f"⚠️ Browser open failed (normal on server): {browser_error}")
+                print(f"📄 HTML file created successfully: {html_filepath}")
             
-            # Clean up file after 90 seconds (enough time for user to print)
+            # Clean up file after 10 minutes
             def cleanup():
-                time.sleep(90)
+                time.sleep(600)  # 10 minutes
                 try:
-                    os.remove(html_filepath)
-                    os.rmdir(temp_dir)
-                    print("🗑️ Temporary PDF files cleaned up")
+                    if os.path.exists(html_filepath):
+                        os.remove(html_filepath)
+                        print("🗑️ QR HTML file cleaned up")
                 except:
                     pass
             
@@ -1919,12 +1953,10 @@ def send_qr_to_printer_using_html(html_string, printer_name):
                         
                     except Exception as printer_error:
                         print(f"❌ Physical printer error: {printer_error}")
-                        print("⚠️ Make sure printer is connected and drivers are installed")
                         return False
                         
                 else:
                     print("⚠️ Windows printer drivers not available")
-                    print("💡 Install win32print for physical printer support")
                     return False
 
                 # Step 5: Clean up temporary files
@@ -1939,7 +1971,6 @@ def send_qr_to_printer_using_html(html_string, printer_name):
 
             except ImportError as e:
                 print(f"❌ imgkit not available for machine printing: {e}")
-                print("💡 Install wkhtmltopdf and imgkit for physical printer support")
                 return False
 
     except Exception as e:
@@ -1947,7 +1978,7 @@ def send_qr_to_printer_using_html(html_string, printer_name):
         import traceback
         traceback.print_exc()
         return False
-
+        
 @login_required
 def select_qr_printer(request):
     """
@@ -2143,14 +2174,16 @@ def print_with_qr(request, cnote_number):
             "pdf" in printer_name.lower()
         )
         
+        # ✅ UPDATE - Messages section में
         if is_pdf_printer:
             # PDF printer messages
             if successful_prints > 0:
-                messages.success(request, f"✅ {successful_prints} QR labels opened in browser for PDF printing!")
-                messages.info(request, "📄 Each label will open in browser - Select 'Microsoft Print to PDF' and save")
-                messages.info(request, "💡 Print dialog opens automatically, or press Ctrl+P manually")
+                messages.success(request, f"✅ {successful_prints} QR labels created successfully!")
+                messages.info(request, "📄 QR HTML files created in media/qr_labels/ folder")
+                messages.info(request, "💡 Download and open each file, then press Ctrl+P to print as PDF")
+                messages.warning(request, "🖥️ On server: Files are saved for download. On desktop: Browser will open automatically.")
             if failed_prints > 0:
-                messages.error(request, f"❌ {failed_prints} QR labels failed to open in browser")
+                messages.error(request, f"❌ {failed_prints} QR labels failed to create")
         else:
             # Physical printer messages  
             if successful_prints > 0:
