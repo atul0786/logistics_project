@@ -125,6 +125,9 @@ from io import BytesIO
 import base64
 from PIL import Image, ImageWin, ImageFont, ImageDraw
 import qrcode
+# ✅ ADD - Existing imports के साथ add करें
+import webbrowser
+import threading
 
 
 # Set up logging   
@@ -1715,70 +1718,235 @@ from .models import CNotes, Parcel, Article, QRPrinterSetting
 from .forms import QRPrinterSelectionForm
 
 def send_qr_to_printer_using_html(html_string, printer_name):
+    """
+    Smart function: Physical printer के लिए machine approach, PDF printer के लिए browser approach
+    """
     try:
-        print("\n🛠️ [STEP 1] Saving HTML content to file...")
+        print(f"\n🛠️ [STEP 1] Processing QR for printer: {printer_name}")
 
-        # Step 1: Save HTML to file
-        with tempfile.NamedTemporaryFile(suffix='.html', delete=False, mode='w', encoding='utf-8') as html_file:
-            html_file.write(html_string)
-            html_path = html_file.name
+        # ✅ CHECK: Microsoft Print to PDF या PDF printer detect करें
+        is_pdf_printer = (
+            "microsoft print to pdf" in printer_name.lower() or 
+            "print to pdf" in printer_name.lower() or
+            "pdf" in printer_name.lower()
+        )
 
-        print(f"✅ HTML saved at: {html_path}")
+        if is_pdf_printer:
+            # 📄 PDF PRINTER APPROACH - Browser based
+            print("📄 Detected PDF printer - using browser-based approach")
+            
+            # Create temporary HTML file with print optimization
+            temp_dir = tempfile.mkdtemp()
+            html_filename = f"QR_Label_{int(time.time())}.html"
+            html_filepath = os.path.join(temp_dir, html_filename)
+            
+            # Enhanced HTML with print-specific CSS and auto-print
+            enhanced_html = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>QR Label - Print to PDF</title>
+                <style>
+                    @media print {{
+                        @page {{
+                            size: 6in 3.2in;
+                            margin: 0.1in;
+                        }}
+                        body {{
+                            margin: 0;
+                            padding: 0;
+                            font-family: Arial, sans-serif;
+                        }}
+                        .no-print {{
+                            display: none !important;
+                        }}
+                    }}
+                    @media screen {{
+                        body {{
+                            padding: 20px;
+                            background: #f0f0f0;
+                        }}
+                        .print-area {{
+                            background: white;
+                            padding: 20px;
+                            border: 1px solid #ccc;
+                            max-width: 600px;
+                            margin: 0 auto;
+                            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                        }}
+                        .print-instructions {{
+                            background: #e7f3ff;
+                            padding: 15px;
+                            border-radius: 5px;
+                            margin-bottom: 20px;
+                            border-left: 4px solid #007bff;
+                        }}
+                        .btn {{
+                            background: #007bff;
+                            color: white;
+                            padding: 10px 20px;
+                            border: none;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            margin: 5px;
+                        }}
+                        .btn:hover {{
+                            background: #0056b3;
+                        }}
+                    }}
+                </style>
+                <script>
+                    window.onload = function() {{
+                        // Auto-open print dialog after 1.5 seconds
+                        setTimeout(function() {{
+                            window.print();
+                        }}, 1500);
+                    }};
+                    
+                    function printNow() {{
+                        window.print();
+                    }}
+                </script>
+            </head>
+            <body>
+                <div class="print-instructions no-print">
+                    <h4>📄 QR Label Ready for PDF Printing</h4>
+                    <p><strong>Instructions:</strong></p>
+                    <ul>
+                        <li>✅ Print dialog will open automatically</li>
+                        <li>🖨️ Select "<strong>Microsoft Print to PDF</strong>" as printer</li>
+                        <li>💾 Click "Print" to save as PDF file</li>
+                        <li>📁 Choose location to save the QR label</li>
+                    </ul>
+                    <button class="btn" onclick="printNow()">🖨️ Print Now (Ctrl+P)</button>
+                    <button class="btn" onclick="window.close()">❌ Close Window</button>
+                </div>
+                <div class="print-area">
+                    {html_string}
+                </div>
+            </body>
+            </html>
+            """
+            
+            # Write HTML file
+            with open(html_filepath, 'w', encoding='utf-8') as f:
+                f.write(enhanced_html)
+            
+            # Open in default browser
+            file_url = f"file:///{html_filepath.replace(os.sep, '/')}"
+            webbrowser.open(file_url)
+            
+            print(f"✅ QR label opened in browser for PDF printing: {file_url}")
+            print("📄 Print dialog will open automatically - Select 'Microsoft Print to PDF'")
+            
+            # Clean up file after 90 seconds (enough time for user to print)
+            def cleanup():
+                time.sleep(90)
+                try:
+                    os.remove(html_filepath)
+                    os.rmdir(temp_dir)
+                    print("🗑️ Temporary PDF files cleaned up")
+                except:
+                    pass
+            
+            threading.Thread(target=cleanup, daemon=True).start()
+            
+            return True
 
-        # Step 2: Output image path
-        img_path = html_path.replace(".html", ".jpg")
-        print(f"📸 Image will be saved at: {img_path}")
-
-        # Step 3: Convert HTML to image using wkhtmltoimage
-        options = {
-            'format': 'jpg',
-            'zoom': '1.3',
-            'encoding': 'UTF-8',
-            'enable-local-file-access': '',
-            'quality': '100',
-        }
-
-        config = imgkit.config()  # uses system-installed wkhtmltoimage
-        local_file_url = f"file:///{html_path.replace(os.sep, '/')}"  # file:// works for Windows
-        print(f"🔗 Loading URL: {local_file_url}")
-        imgkit.from_url(local_file_url, img_path, options=options, config=config)
-
-        print("✅ Image generated successfully.")
-
-        # Step 4: Load image and send to printer (only on Windows)
-        if win32print and win32ui and ImageWin:
-            image = Image.open(img_path)
-            hprinter = win32print.OpenPrinter(printer_name)
-            hdc = win32ui.CreateDC()
-            hdc.CreatePrinterDC(printer_name)
-            hdc.StartDoc("Parcel QR Label")
-            hdc.StartPage()
-        
-            dib = ImageWin.Dib(image)
-            dib.draw(hdc.GetHandleOutput(), (0, 0, image.width, image.height))
-        
-            hdc.EndPage()
-            hdc.EndDoc()
-            hdc.DeleteDC()
-            win32print.ClosePrinter(hprinter)
-        
-            print(f"🖨️ Sent image to printer: {printer_name}")
         else:
-            print("⚠️ Direct printing is disabled on this system (likely Linux)")
+            # 🖨️ PHYSICAL PRINTER APPROACH - Original machine logic
+            print("🖨️ Detected physical printer - using direct machine approach")
+            
+            # Step 1: Save HTML to file
+            with tempfile.NamedTemporaryFile(suffix='.html', delete=False, mode='w', encoding='utf-8') as html_file:
+                html_file.write(html_string)
+                html_path = html_file.name
 
-        # Step 5: Clean up
-        os.remove(html_path)
-        os.remove(img_path)
+            print(f"✅ HTML saved at: {html_path}")
 
-        return True
+            # Step 2: Output image path
+            img_path = html_path.replace(".html", ".jpg")
+            print(f"📸 Image will be saved at: {img_path}")
+
+            # Step 3: Convert HTML to image using wkhtmltoimage
+            try:
+                import imgkit
+                options = {
+                    'format': 'jpg',
+                    'zoom': '1.3',
+                    'encoding': 'UTF-8',
+                    'enable-local-file-access': '',
+                    'quality': '100',
+                    'width': 600,
+                    'height': 320,
+                }
+
+                config = imgkit.config()
+                local_file_url = f"file:///{html_path.replace(os.sep, '/')}"
+                print(f"🔗 Loading URL for machine printing: {local_file_url}")
+                imgkit.from_url(local_file_url, img_path, options=options, config=config)
+
+                print("✅ Image generated successfully for machine printing.")
+
+                # Step 4: Send to physical printer (only on Windows with printer drivers)
+                if win32print and win32ui and ImageWin:
+                    try:
+                        image = Image.open(img_path)
+                        
+                        # Open printer
+                        hprinter = win32print.OpenPrinter(printer_name)
+                        
+                        # Create device context
+                        hdc = win32ui.CreateDC()
+                        hdc.CreatePrinterDC(printer_name)
+                        
+                        # Start print job
+                        hdc.StartDoc("QR Label Print Job")
+                        hdc.StartPage()
+                    
+                        # Convert image and send to printer
+                        dib = ImageWin.Dib(image)
+                        dib.draw(hdc.GetHandleOutput(), (0, 0, image.width, image.height))
+                    
+                        # End print job
+                        hdc.EndPage()
+                        hdc.EndDoc()
+                        hdc.DeleteDC()
+                        win32print.ClosePrinter(hprinter)
+                    
+                        print(f"🖨️ Successfully sent to physical printer: {printer_name}")
+                        
+                    except Exception as printer_error:
+                        print(f"❌ Physical printer error: {printer_error}")
+                        print("⚠️ Make sure printer is connected and drivers are installed")
+                        return False
+                        
+                else:
+                    print("⚠️ Windows printer drivers not available")
+                    print("💡 Install win32print for physical printer support")
+                    return False
+
+                # Step 5: Clean up temporary files
+                try:
+                    os.remove(html_path)
+                    os.remove(img_path)
+                    print("🗑️ Temporary machine files cleaned up")
+                except:
+                    pass
+
+                return True
+
+            except ImportError as e:
+                print(f"❌ imgkit not available for machine printing: {e}")
+                print("💡 Install wkhtmltopdf and imgkit for physical printer support")
+                return False
 
     except Exception as e:
-        print(f"❌ QR HTML Print Error: {e}")
+        print(f"❌ QR Print Error: {e}")
         import traceback
         traceback.print_exc()
         return False
-
-from .models import ClientPrinters  # add this at the top
 
 @login_required
 def select_qr_printer(request):
@@ -1976,17 +2144,37 @@ def print_with_qr(request, cnote_number):
     }
 
 
-    # Show results and return appropriate template
-    if printer_name and not printer_name.lower().startswith("❌"):
+# Show results and return appropriate template
+if printer_name and not printer_name.lower().startswith("❌"):
+    # Check if PDF printer was used
+    is_pdf_printer = (
+        "microsoft print to pdf" in printer_name.lower() or 
+        "print to pdf" in printer_name.lower() or
+        "pdf" in printer_name.lower()
+    )
+    
+    if is_pdf_printer:
+        # PDF printer messages
         if successful_prints > 0:
-            messages.success(request, f"✅ {successful_prints} QR codes printed successfully!")
+            messages.success(request, f"✅ {successful_prints} QR labels opened in browser for PDF printing!")
+            messages.info(request, "📄 Each label will open in browser - Select 'Microsoft Print to PDF' and save")
+            messages.info(request, "💡 Print dialog opens automatically, or press Ctrl+P manually")
         if failed_prints > 0:
-            messages.error(request, f"❌ {failed_prints} QR codes failed to print.")
-        
-        print(f"📊 Print Summary: {successful_prints} successful, {failed_prints} failed")
-        return render(request, 'dealer/cnote_success_only.html', context)
+            messages.error(request, f"❌ {failed_prints} QR labels failed to open in browser")
     else:
-        return render(request, 'dealer/cnote_success_with_qr_grid.html', context)  
+        # Physical printer messages  
+        if successful_prints > 0:
+            messages.success(request, f"✅ {successful_prints} QR codes sent to physical printer: {printer_name}")
+        if failed_prints > 0:
+            messages.error(request, f"❌ {failed_prints} QR codes failed to print on machine")
+            messages.warning(request, "🔧 Check if printer is connected and drivers are installed")
+    
+    print(f"📊 Print Summary: {successful_prints} successful, {failed_prints} failed")
+    return render(request, 'dealer/cnote_success_only.html', context)
+else:
+    messages.info(request, "📋 No printer configured. Showing QR grid layout for manual printing.")
+    return render(request, 'dealer/cnote_success_with_qr_grid.html', context)
+
 
 # Add these imports to your existing views.py
 from django.views.decorators.csrf import csrf_exempt
