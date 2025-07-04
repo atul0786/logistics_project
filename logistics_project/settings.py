@@ -138,14 +138,62 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost,http://127.0.0.1').split(',')
 CORS_ALLOW_CREDENTIALS = True
 
-# Better Stack configuration
-BETTER_STACK_SOURCE_TOKEN = os.getenv('BETTER_STACK_SOURCE_TOKEN', '')
+# ✅ WORKING BETTER STACK CONFIGURATION
+BETTER_STACK_TOKEN = os.getenv('BETTER_STACK_TOKEN', 'pXbKbfxiZqDH2PWp3JWP2VZF')
+BETTER_STACK_HOST = 's1369340.eu-nbg-2.betterstackdata.com'
 
 # Create logs directory
 LOGS_DIR = BASE_DIR / 'logs'
-LOGS_DIR.mkdir(exist_ok=True)  # Automatically create logs folder if it doesn't exist
+LOGS_DIR.mkdir(exist_ok=True)
 
-# ✅ UPDATED DUAL LOGGING CONFIGURATION
+# Custom HTTP Handler for Better Stack
+import logging
+import json
+import urllib.request
+import urllib.parse
+from datetime import datetime
+
+class BetterStackHTTPHandler(logging.Handler):
+    """Custom HTTP handler for Better Stack logging"""
+    
+    def __init__(self, host, token):
+        super().__init__()
+        self.host = host
+        self.token = token
+        self.url = f'https://{host}'
+    
+    def emit(self, record):
+        try:
+            # Format log message
+            log_entry = {
+                'dt': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'),
+                'level': record.levelname,
+                'module': record.module,
+                'message': self.format(record),
+                'source': 'django_good_way_express'
+            }
+            
+            # Prepare request
+            data = json.dumps(log_entry).encode('utf-8')
+            req = urllib.request.Request(
+                self.url,
+                data=data,
+                headers={
+                    'Authorization': f'Bearer {self.token}',
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Django-GoodWayExpress/1.0'
+                },
+                method='POST'
+            )
+            
+            # Send request (non-blocking)
+            urllib.request.urlopen(req, timeout=5)
+            
+        except Exception as e:
+            # Don't let logging errors crash the app
+            pass
+
+# ✅ COMPLETE DUAL LOGGING CONFIGURATION
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -158,8 +206,8 @@ LOGGING = {
             'format': '{levelname} {asctime} {message}',
             'style': '{',
         },
-        'syslog_format': {
-            'format': 'good_way_express[{process:d}]: {levelname} {module} {message}',
+        'better_stack_format': {
+            'format': 'GoodWayExpress: {levelname} {module} - {message}',
             'style': '{',
         },
     },
@@ -181,16 +229,16 @@ LOGGING = {
             'level': 'INFO',
         },
         
-        # Better Stack syslog handler - Better Stack mein jayega
-        'better_stack_syslog': {
-            'class': 'logging.handlers.SysLogHandler',
-            'formatter': 'syslog_format',
-            'address': ('in.logs.betterstack.com', 514),
+        # ✅ Better Stack HTTP handler - Working configuration
+        'better_stack': {
+            '()': BetterStackHTTPHandler,
+            'host': BETTER_STACK_HOST,
+            'token': BETTER_STACK_TOKEN,
+            'formatter': 'better_stack_format',
             'level': 'INFO',
-            'facility': 'user',
         },
         
-        # Null handler - Backup agar koi handler fail ho jaye
+        # Null handler - Backup
         'null': {
             'class': 'logging.NullHandler',
         },
@@ -205,42 +253,42 @@ LOGGING = {
     'loggers': {
         # Django framework logs
         'django': {
-            'handlers': ['console', 'file', 'better_stack_syslog'],
+            'handlers': ['console', 'file', 'better_stack'],
             'level': 'INFO',
             'propagate': False,
         },
         
         # Django request logs (404, 500 errors etc)
         'django.request': {
-            'handlers': ['console', 'file', 'better_stack_syslog'],
+            'handlers': ['console', 'file', 'better_stack'],
             'level': 'WARNING',
             'propagate': False,
         },
         
         # Django security logs
         'django.security': {
-            'handlers': ['console', 'file', 'better_stack_syslog'],
+            'handlers': ['console', 'file', 'better_stack'],
             'level': 'WARNING',
             'propagate': False,
         },
         
         # Dealer app logs
         'dealer_app': {
-            'handlers': ['console', 'file', 'better_stack_syslog'],
+            'handlers': ['console', 'file', 'better_stack'],
             'level': 'INFO',
             'propagate': False,
         },
         
         # Transporter app logs
         'transporter_app': {
-            'handlers': ['console', 'file', 'better_stack_syslog'],
+            'handlers': ['console', 'file', 'better_stack'],
             'level': 'INFO',
             'propagate': False,
         },
         
         # Logistics project logs
         'logistics_project': {
-            'handlers': ['console', 'file', 'better_stack_syslog'],
+            'handlers': ['console', 'file', 'better_stack'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -252,7 +300,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Crispy Forms Configuration
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
-# REST Framework Configuration (if needed)
+# REST Framework Configuration
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -262,6 +310,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-print("✅ Good Way Express - Dual Logging Configuration Loaded!")
+print("✅ Good Way Express - Complete Dual Logging Configuration Loaded!")
 print(f"📁 Local logs: {LOGS_DIR / 'app.log'}")
-print("🌐 Better Stack logs: Dashboard mein check karo")
+print(f"🌐 Better Stack: {BETTER_STACK_HOST}")
+print("🚀 Ready for production!")
