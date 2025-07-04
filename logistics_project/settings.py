@@ -1,7 +1,6 @@
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
@@ -15,7 +14,6 @@ sentry_sdk.init(
     environment="production",
 )
 
-
 # Load environment variables from .env file
 load_dotenv()
 
@@ -26,7 +24,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-default-key')
 DEBUG = False
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '147.93.110.231,localhost,127.0.0.1,tphg1.clk800.online').split(',')
-
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -105,8 +102,6 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'logistics_project', 'static'),
 ]
-
-
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
@@ -143,60 +138,130 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost,http://127.0.0.1').split(',')
 CORS_ALLOW_CREDENTIALS = True
 
+# Better Stack configuration
+BETTER_STACK_SOURCE_TOKEN = os.getenv('BETTER_STACK_SOURCE_TOKEN', '')
+
 # Create logs directory
 LOGS_DIR = BASE_DIR / 'logs'
 LOGS_DIR.mkdir(exist_ok=True)  # Automatically create logs folder if it doesn't exist
 
+# ✅ UPDATED DUAL LOGGING CONFIGURATION
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {asctime} {message}',
+            'style': '{',
+        },
+        'syslog_format': {
+            'format': 'good_way_express[{process:d}]: {levelname} {module} {message}',
             'style': '{',
         },
     },
     'handlers': {
+        # Console handler - Terminal mein dikhega
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
-            'level': 'DEBUG',
+            'formatter': 'simple',
+            'level': 'INFO',
         },
+        
+        # File handler - Local file mein save hoga (WORKING)
         'file': {
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': LOGS_DIR / 'app.log',
-            'maxBytes': 1024 * 1024 * 5,  # 5 MB
+            'maxBytes': 1024 * 1024 * 10,  # 10 MB
             'backupCount': 5,
             'formatter': 'verbose',
-            'level': 'DEBUG',
-        },
-        'syslog': {
-            'class': 'logging.handlers.SysLogHandler',
-            'formatter': 'verbose',
-            'address': ('localhost', 514),
             'level': 'INFO',
         },
+        
+        # Better Stack syslog handler - Better Stack mein jayega
+        'better_stack_syslog': {
+            'class': 'logging.handlers.SysLogHandler',
+            'formatter': 'syslog_format',
+            'address': ('in.logs.betterstack.com', 514),
+            'level': 'INFO',
+            'facility': 'user',
+        },
+        
+        # Null handler - Backup agar koi handler fail ho jaye
+        'null': {
+            'class': 'logging.NullHandler',
+        },
     },
+    
+    # Root logger
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'INFO',
+    },
+    
     'loggers': {
+        # Django framework logs
         'django': {
-            'handlers': ['console', 'file', 'syslog'],
-            'level': 'DEBUG',
+            'handlers': ['console', 'file', 'better_stack_syslog'],
+            'level': 'INFO',
             'propagate': False,
         },
+        
+        # Django request logs (404, 500 errors etc)
+        'django.request': {
+            'handlers': ['console', 'file', 'better_stack_syslog'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        
+        # Django security logs
+        'django.security': {
+            'handlers': ['console', 'file', 'better_stack_syslog'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        
+        # Dealer app logs
         'dealer_app': {
-            'handlers': ['console', 'file', 'syslog'],
-            'level': 'DEBUG',
+            'handlers': ['console', 'file', 'better_stack_syslog'],
+            'level': 'INFO',
             'propagate': False,
         },
+        
+        # Transporter app logs
         'transporter_app': {
-            'handlers': ['console', 'file', 'syslog'],
-            'level': 'DEBUG',
+            'handlers': ['console', 'file', 'better_stack_syslog'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        
+        # Logistics project logs
+        'logistics_project': {
+            'handlers': ['console', 'file', 'better_stack_syslog'],
+            'level': 'INFO',
             'propagate': False,
         },
     },
 }
 
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Crispy Forms Configuration
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
+# REST Framework Configuration (if needed)
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+}
+
+print("✅ Good Way Express - Dual Logging Configuration Loaded!")
+print(f"📁 Local logs: {LOGS_DIR / 'app.log'}")
+print("🌐 Better Stack logs: Dashboard mein check karo")
