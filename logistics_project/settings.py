@@ -164,30 +164,37 @@ LOGGING = {
         'file': {
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': LOGS_DIR / 'app.log',
-            'maxBytes': 1024 * 1024 * 5,  # 5 MB per file
-            'backupCount': 5,  # Keep 5 backup files
+            'maxBytes': 1024 * 1024 * 5,  # 5 MB
+            'backupCount': 5,
             'formatter': 'verbose',
             'level': 'DEBUG',
+        },
+        'syslog': {
+            'class': 'logging.handlers.SysLogHandler',
+            'formatter': 'verbose',
+            'address': ('localhost', 514),
+            'level': 'INFO',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'file', 'syslog'],
             'level': 'DEBUG',
             'propagate': False,
         },
         'dealer_app': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'file', 'syslog'],
             'level': 'DEBUG',
             'propagate': False,
         },
         'transporter_app': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'file', 'syslog'],
             'level': 'DEBUG',
             'propagate': False,
         },
     },
 }
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
