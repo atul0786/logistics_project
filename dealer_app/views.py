@@ -2053,6 +2053,125 @@ def generate_qr_base64(data):
     img.save(buffer, format="PNG")
     return base64.b64encode(buffer.getvalue()).decode('utf-8')
 
+
+
+
+# ✅ ENHANCED PDF PRINTING FUNCTION
+def send_qr_to_pdf_printer(html_string, printer_name, cnote_number, item_number):
+    """
+    Enhanced PDF printing function that works with Microsoft Print to PDF
+    """
+    try:
+        print(f"\n🖨️ [PDF PRINT] Starting PDF print for {cnote_number}-{item_number}")
+        
+        # Create a unique filename for each QR sticker
+        timestamp = int(time.time())
+        pdf_filename = f"QR_Sticker_{cnote_number}_{item_number}_{timestamp}.pdf"
+        
+        # Get user's Downloads folder
+        import os
+        downloads_path = os.path.join(os.path.expanduser("~"), "Downloads", "QR_Stickers")
+        
+        # Create QR_Stickers folder if it doesn't exist
+        if not os.path.exists(downloads_path):
+            os.makedirs(downloads_path)
+            print(f"📁 Created folder: {downloads_path}")
+        
+        pdf_path = os.path.join(downloads_path, pdf_filename)
+        
+        # Step 1: Save HTML to temporary file
+        with tempfile.NamedTemporaryFile(suffix='.html', delete=False, mode='w', encoding='utf-8') as html_file:
+            html_file.write(html_string)
+            html_path = html_file.name
+
+        print(f"✅ HTML saved at: {html_path}")
+
+        # Step 2: Convert HTML to PDF using wkhtmltopdf
+        try:
+            import pdfkit
+            
+            # PDF options for QR sticker size
+            options = {
+                'page-size': 'A6',  # Small page size for sticker
+                'margin-top': '0.1in',
+                'margin-right': '0.1in',
+                'margin-bottom': '0.1in',
+                'margin-left': '0.1in',
+                'encoding': "UTF-8",
+                'no-outline': None,
+                'enable-local-file-access': None,
+                'zoom': '1.0',
+                'dpi': 300,
+            }
+            
+            # Convert HTML to PDF
+            pdfkit.from_file(html_path, pdf_path, options=options)
+            print(f"✅ PDF created: {pdf_path}")
+            
+        except ImportError:
+            # Fallback: Use weasyprint if pdfkit not available
+            try:
+                import weasyprint
+                
+                # Convert HTML to PDF using weasyprint
+                html_doc = weasyprint.HTML(filename=html_path)
+                html_doc.write_pdf(pdf_path)
+                print(f"✅ PDF created using weasyprint: {pdf_path}")
+                
+            except ImportError:
+                print("❌ Neither pdfkit nor weasyprint available. Installing pdfkit...")
+                
+                # Try to install pdfkit
+                subprocess.run([sys.executable, "-m", "pip", "install", "pdfkit"], check=True)
+                import pdfkit
+                
+                options = {
+                    'page-size': 'A6',
+                    'margin-top': '0.1in',
+                    'margin-right': '0.1in', 
+                    'margin-bottom': '0.1in',
+                    'margin-left': '0.1in',
+                    'encoding': "UTF-8",
+                    'no-outline': None,
+                    'enable-local-file-access': None,
+                }
+                
+                pdfkit.from_file(html_path, pdf_path, options=options)
+                print(f"✅ PDF created after installing pdfkit: {pdf_path}")
+
+        # Step 3: If printer is "Microsoft Print to PDF", just save the file
+        if "Microsoft Print to PDF" in printer_name or "Print to PDF" in printer_name:
+            print(f"📄 PDF saved for Microsoft Print to PDF: {pdf_path}")
+            
+        # Step 4: For other printers, try to print the PDF
+        elif win32print and platform.system() == "Windows":
+            try:
+                # Print PDF using Windows API
+                import subprocess
+                subprocess.run([
+                    "powershell", 
+                    "-Command", 
+                    f'Start-Process -FilePath "{pdf_path}" -Verb Print -WindowStyle Hidden'
+                ], check=True)
+                print(f"🖨️ PDF sent to printer: {printer_name}")
+                
+            except Exception as e:
+                print(f"⚠️ Could not auto-print PDF: {e}")
+                print(f"📄 PDF saved manually: {pdf_path}")
+
+        # Step 5: Clean up temporary HTML file
+        os.remove(html_path)
+        
+        print(f"✅ QR Sticker PDF created successfully: {pdf_filename}")
+        return True, pdf_path
+
+    except Exception as e:
+        print(f"❌ PDF Print Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return False, None
+
+
 # ✅ FIX - print_with_qr function के अंत में proper indentation करें
 
 @login_required
