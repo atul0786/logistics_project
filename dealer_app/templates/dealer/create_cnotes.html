@@ -1088,6 +1088,10 @@
             const originalConsignorAddress = document.getElementById("consignorAddress").value;
             const paymentTypeInput = document.getElementById('paymentType');
             const paymentTypeHeader = document.getElementById('paymentTypeHeader');
+            const submitBtn = document.getElementById('submitBtn'); // Added submit button reference
+
+            let isSubmitting = false;
+            let originalSubmitText = submitBtn.textContent;
 
             const dropdownList = document.getElementById("dropdownList");
             const dropdownArrow = document.getElementById("dropdownArrow");
@@ -1561,6 +1565,12 @@
             // Enhanced Form Submission with Popup Notifications
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
+                
+                if (isSubmitting) {
+                    showPopupMessage("⚠️ Form पहले से submit हो रहा है! Form is already being submitted, please wait...");
+                    return;
+                }
+
                 calculateWeightAmount();
                 calculateGrandTotal();
 
@@ -1575,7 +1585,7 @@
                 const selectedDestinationId = deliveryDestinationIdInput.value;
                 const destinationName = deliveryDestinationInput.value.trim();
                 if (!selectedDestinationId || !destinationName) {
-                    showPopupMessage("⚠️ कृपया vali delivery destination select करें! Please select a valid delivery destination from the dropdown.");
+                    showPopupMessage("⚠️ कृपया valid delivery destination select करें! Please select a valid delivery destination from the dropdown.");
                     return;
                 }
 
@@ -1625,6 +1635,12 @@
                 if (articleValidationFailed) {
                     return;
                 }
+
+                isSubmitting = true;
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Saving... कृपया प्रतीक्षा करें';
+                submitBtn.style.backgroundColor = '#cccccc';
+                submitBtn.style.cursor = 'not-allowed';
 
                 // Define all charge fields with their exact backend field names
                 const chargeFields = {
@@ -1702,6 +1718,9 @@
                         // Show success message before redirect
                         showPopupMessage("✅ Form successfully submitted! फॉर्म सफलतापूर्वक submit हो गया!", 'success');
                         
+                        // Keep button disabled during redirect
+                        submitBtn.textContent = 'Success! Redirecting...';
+                        
                         // Redirect after a short delay
                         setTimeout(() => {
                             window.location.href = data.redirect_url;
@@ -1709,6 +1728,7 @@
                     } else {
                         console.error('Error in server response:', data.error);
                         showPopupMessage('❌ Error: ' + data.error);
+                        resetSubmissionState();
                     }
                 })
                 .catch(error => {
@@ -1717,8 +1737,17 @@
                     if (!error.redirect_url) {
                         showPopupMessage('❌ Form submit करने में error आया है! An error occurred while saving the data. Please try again.');
                     }
+                    resetSubmissionState();
                 });
             });
+
+            function resetSubmissionState() {
+                isSubmitting = false;
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalSubmitText;
+                submitBtn.style.backgroundColor = '#4caf50';
+                submitBtn.style.cursor = 'pointer';
+            }
 
             function validateForm() {
                 const requiredFields = form.querySelectorAll('[required]');
