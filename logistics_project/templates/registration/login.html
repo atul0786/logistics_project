@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Good Way Express</title>
+
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#0d6efd">
+    
+    <!-- PWA iOS support -->
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+
     
 
     <script src="https://unpkg.com/ionicons@5.4.0/dist/ionicons.js"></script>
@@ -501,5 +509,18 @@
             });
         });
     </script>
+    <!-- Register Service Worker -->
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/service-worker.js")
+        .then(function(reg) {
+          console.log("✅ Service Worker registered with scope:", reg.scope);
+        })
+        .catch(function(err) {
+          console.log("❌ Service Worker registration failed:", err);
+        });
+      }
+    </script>
+
 </body>
 </html>
