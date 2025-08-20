@@ -1,11 +1,10 @@
-cat > logistics_project/static/manifest.json <<'EOF'
 {
   "name": "Good Way Express",
   "short_name": "GW Express",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0d6efd"
+  "theme_color": "#0d6efd",
+  "description": "Good Way Express Logistics Progressive Web App",
+  "icons": []
 }
-EOF
-
