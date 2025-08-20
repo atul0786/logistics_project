@@ -23,11 +23,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-default-key')
 DEBUG = False
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '147.93.110.231,localhost,127.0.0.1,tphg1.clk800.online').split(',')
+
+# Allowed Hosts
+ALLOWED_HOSTS = os.getenv(
+    'ALLOWED_HOSTS',
+    'goodwayexpress.online,www.goodwayexpress.online,147.93.110.231,localhost,127.0.0.1'
+).split(',')
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
+
 
 # Installed apps
 INSTALLED_APPS = [
