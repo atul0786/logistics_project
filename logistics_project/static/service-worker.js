@@ -1,40 +1,55 @@
+const CACHE_NAME = "gwx-cache-v1";
 
-cat > logistics_project/static/service-worker.js <<'EOF'
-const CACHE_NAME = "gwx-v1";
+// Minimum assets (manifest itself + root page)
 const ASSETS = [
   "/",
   "/manifest.json"
 ];
 
-self.addEventListener("install", (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+// Install: Cache essential assets
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS);
+    })
   );
 });
 
-self.addEventListener("activate", (e) => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+// Activate: Clear old caches
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+      )
     )
   );
 });
 
-self.addEventListener("fetch", (e) => {
-  if (e.request.method !== "GET") return;
-  e.respondWith(
-    caches.match(e.request).then((cached) => {
-      const fetchPromise = fetch(e.request).then((response) => {
-        try {
-          if (response && response.status === 200 && response.type === "basic") {
+// Fetch: Cache-first, fallback to network
+self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") return;
+
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      if (cached) {
+        return cached;
+      }
+      return fetch(event.request)
+        .then((response) => {
+          if (
+            response &&
+            response.status === 200 &&
+            response.type === "basic"
+          ) {
             const respClone = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(e.request, respClone));
+            caches.open(CACHE_NAME).then((cache) =>
+              cache.put(event.request, respClone)
+            );
           }
-        } catch (err) {}
-        return response;
-      }).catch(() => cached);
-      return cached || fetchPromise;
+          return response;
+        })
+        .catch(() => cached);
     })
   );
 });
-EOF
