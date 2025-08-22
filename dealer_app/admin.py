@@ -7,7 +7,6 @@ from .models import (
 )
 from transporter_app.models import Transporter
 
-
 from .models import QRPrinterSetting
 
 @admin.register(QRPrinterSetting)
