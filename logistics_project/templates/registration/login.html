@@ -3,214 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Good Way Express</title>
-
-    <!-- Manifest -->
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#0d6efd">
-    
-    <!-- PWA iOS support -->
-    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
-
-    
-
-    <script src="https://unpkg.com/ionicons@5.4.0/dist/ionicons.js"></script>
+    <title>Good Way Express - Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        :root {
-            --primary: #4682b4;
-            --primary-dark: #3a6d96;
-            --white: #ffffff;
-            --black: #000000;
-            --background: #f0f0f0;
         }
 
         body {
-            min-height: 100vh;
-            background-color: var(--background);
-            color: var(--black);
-        }
-
-        .navbar {
-            position: fixed;
-            width: 100%;
-            background: var(--primary);
-            z-index: 1000;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .nav-content {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 2rem;
-            height: 5rem;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.4;
+            background-color: #f5f9fc;
+            color: #2c3e50;
+            height: 100vh;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+        }
+
+        /* Header Styles - Matching create_cnotes */
+        .header-container {
+            display: flex;
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            color: white;
+            padding: 5px 10px;
             align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            flex: 0 0 200px;
         }
 
         .logo {
-            color: var(--white);
-            font-size: 1.75rem;
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2.5rem;
-        }
-
-        .nav-links a {
-            color: var(--white);
-            text-decoration: none;
-            font-size: 1rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .nav-links a:hover {
-            color: var(--black);
-        }
-
-        .search-box {
-            position: relative;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: white;
             display: flex;
             align-items: center;
+            justify-content: center;
+            margin-right: 10px;
         }
 
-        .search-input {
-            background: var(--white);
-            border: 2px solid var(--primary-dark);
-            color: var(--black);
-            padding: 0.75rem 2.5rem 0.75rem 1.25rem;
-            border-radius: 1rem;
-            outline: none;
-            width: 220px;
-            transition: all 0.3s ease;
+        .logo i {
+            color: #3498db;
+            font-size: 24px;
         }
 
-        .search-input:focus {
-            width: 260px;
-            box-shadow: 0 0 10px rgba(70, 130, 180, 0.3);
+        .company-name {
+            font-weight: bold;
         }
 
-        .search-icon {
-            position: absolute;
-            right: 1rem;
-            color: var(--primary);
-            font-size: 1.25rem;
-            pointer-events: none;
-        }
-
-        main {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 8rem 2rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 4rem;
-        }
-
-        .hero {
-            color: var(--black);
-            max-width: 56rem;
-            animation: fadeInUp 1s ease-out;
-        }
-
-        .hero h1 {
-            font-size: 4.5rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            line-height: 1.1;
-        }
-
-        .hero span {
-            color: var(--primary);
-            font-size: 5.5rem;
-            display: block;
-            margin: 0.5rem 0;
-        }
-
-        .hero p {
-            font-size: 1.25rem;
-            line-height: 1.8;
-            margin-bottom: 2.5rem;
-            color: var(--black);
-        }
-
-        .join-btn {
-            background: var(--primary);
-            color: var(--white);
-            padding: 1rem 2.5rem;
-            border: none;
-            border-radius: 1rem;
-            font-size: 1.125rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .join-btn:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-        }
-
-        .login-container {
-            background: var(--white);
-            padding: 2.5rem;
-            border-radius: 1.5rem;
-            width: 100%;
-            max-width: 28rem;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-
-        .login-switcher {
-            display: flex;
-            background: var(--background);
-            padding: 0.5rem;
-            border-radius: 1rem;
-            margin-bottom: 2rem;
-            position: relative;
-        }
-
-        .switch-btn {
+        /* Main Content */
+        .main-content {
             flex: 1;
-            padding: 0.75rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-card {
+            background-color: white;
+            border-radius: 6px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .login-info {
+            flex: 1;
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            color: white;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-info h2 {
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .login-info ul {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        .login-info li {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        .login-info i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        .login-form-container {
+            flex: 1;
+            padding: 30px;
+        }
+
+        .form-header {
             text-align: center;
-            color: var(--black);
-            cursor: pointer;
+            margin-bottom: 25px;
+        }
+
+        .form-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .form-subtitle {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        /* Tabs */
+        .login-tabs {
+            display: flex;
+            background: #ecf0f1;
+            border-radius: 4px;
+            padding: 4px;
+            margin-bottom: 20px;
             position: relative;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background: none;
+            border: none;
+            color: #7f8c8d;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 4px;
             z-index: 1;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
         }
 
-        .switch-btn.active {
-            color: var(--white);
+        .tab-button.active {
+            color: white;
         }
 
-        .switch-bg {
+        .tab-indicator {
             position: absolute;
-            top: 0.5rem;
-            left: 0.5rem;
-            width: calc(50% - 0.5rem);
-            height: calc(100% - 1rem);
-            background: var(--primary);
-            border-radius: 0.75rem;
-            transition: transform 0.3s ease;
+            top: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            height: calc(100% - 8px);
+            background: #3498db;
+            border-radius: 4px;
+            transition: all 0.3s ease;
         }
 
-        .switch-bg.transporter {
+        .tab-indicator.transporter {
             transform: translateX(100%);
         }
 
@@ -228,214 +187,263 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* Form Elements */
         .form-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 15px;
         }
 
-        /* NEW: Password input container styling */
-        .password-container {
-            position: relative;
-            display: flex;
-            align-items: center;
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.85em;
+            color: #34495e;
         }
 
         .form-input {
             width: 100%;
-            background: var(--background);
-            border: 1px solid var(--primary);
-            border-radius: 0.5rem;
-            padding: 0.75rem;
-            color: var(--black);
-            outline: none;
-            transition: all 0.3s ease;
-        }
-
-        /* NEW: Password input with icon space */
-        .form-input.password-input {
-            padding-right: 2.5rem;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9em;
+            background-color: #f9f9f9;
         }
 
         .form-input:focus {
-            border-color: var(--primary-dark);
-            box-shadow: 0 0 0 2px rgba(70, 130, 180, 0.2);
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
         }
 
-        .form-input::placeholder {
-            color: rgba(0, 0, 0, 0.5);
+        .password-container {
+            position: relative;
         }
 
-        /* NEW: Password toggle icon styling */
         .password-toggle {
             position: absolute;
-            right: 0.75rem;
+            right: 12px;
             top: 50%;
             transform: translateY(-50%);
+            color: #7f8c8d;
             cursor: pointer;
-            color: var(--primary);
-            font-size: 1.25rem;
-            transition: color 0.3s ease;
-            z-index: 10;
         }
 
-        .password-toggle:hover {
-            color: var(--primary-dark);
-        }
-
-        .login-btn {
+        .login-button {
             width: 100%;
-            background: var(--primary);
-            color: var(--white);
-            padding: 1rem;
+            padding: 12px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
             border: none;
-            border-radius: 0.75rem;
-            font-weight: 600;
+            border-radius: 4px;
+            font-size: 1em;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s;
+            margin-top: 10px;
         }
 
-        .login-btn:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
+        .login-button:hover {
+            background: linear-gradient(135deg, #2980b9, #1c6ea4);
+        }
+
+        .support-section {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
         }
 
         .support-text {
-            text-align: center;
-            color: var(--black);
-            margin-top: 1.5rem;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            font-size: 0.9em;
         }
 
-        .support-text a {
-            color: var(--primary);
+        .support-link {
+            color: #3498db;
             text-decoration: none;
+            font-weight: 500;
         }
 
-        .social-icons {
-            display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            margin-top: 2rem;
+        .support-link:hover {
+            text-decoration: underline;
         }
 
-        .social-icons ion-icon {
-            font-size: 1.5rem;
-            color: var(--primary);
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .alert {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-size: 0.9em;
         }
 
-        .social-icons ion-icon:hover {
-            color: var(--primary-dark);
-            transform: translateY(-2px);
+        .alert-error {
+            color: #c62828;
+            background-color: #ffebee;
+            border: 1px solid #ffcdd2;
         }
 
+        .alert-success {
+            color: #2e7d32;
+            background-color: #e8f5e9;
+            border: 1px solid #c8e6c9;
+        }
+
+        /* Footer */
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            font-size: 0.8em;
+        }
+
+        /* Responsive Design */
         @media (max-width: 768px) {
-            main {
+            .login-card {
                 flex-direction: column;
-                padding-top: 6rem;
             }
-
-            .hero h1 {
-                font-size: 3rem;
+            
+            .login-info {
+                padding: 20px;
             }
-
-            .hero span {
-                font-size: 4rem;
+            
+            .login-form-container {
+                padding: 20px;
             }
+        }
 
-            .nav-links {
-                display: none;
+        @media (max-width: 480px) {
+            .header-container {
+                flex-direction: column;
+                text-align: center;
+                padding: 10px;
+            }
+            
+            .logo-section {
+                flex: 1;
+                margin-bottom: 10px;
+            }
+            
+            .login-info h2 {
+                font-size: 1.5rem;
             }
         }
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-content">
-            <h1 class="logo">GOOD WAY EXPRESS</h1>
-        </div>
-    </nav>
-
-    <main>
-        <div class="hero">
-            <h1>
-                Good
-                <span>Way</span>
-                Express
-            </h1>
-            <p>
-                We are a leading one-stop logistics service provider helping you reach your exact
-                delivery destination on time without delay and damages. Experience our cost-effective
-                logistics services today.
-            </p>
-            <button class="join-btn">JOIN US</button>
-        </div>
-
-        <div class="login-container">
-            <div class="login-switcher">
-                <div class="switch-bg"></div>
-                <div class="switch-btn active" data-type="dealer">Dealer</div>
-                <div class="switch-btn" data-type="transporter">Transporter</div>
+    <!-- Header - Matching create_cnotes -->
+    <div class="header-container">
+        <div class="logo-section">
+            <div class="logo">
+                <i class="fas fa-truck"></i>
             </div>
+            <div class="company-name">
+                <p>Good Way</p>
+                <p>Express</p>
+            </div>
+        </div>
+    </div>
 
-            <form method="POST" action="{% url 'dealer:login_redirect' %}" id="dealerForm" class="login-form active">                
-                {% csrf_token %}
-                <input type="hidden" name="user_type" value="dealer">
-                <div class="form-group">
-                    <input type="text" name="username" class="form-input" placeholder="Dealer ID" required>
-                </div>
-                <div class="form-group">
-                    <!-- NEW: Password container with toggle icon -->
-                    <div class="password-container">
-                        <input type="password" name="password" class="form-input password-input" placeholder="Password" required id="dealerPassword">
-                        <ion-icon name="eye-outline" class="password-toggle"></ion-icon>
-                    </div>
-                </div>
-                <button type="submit" class="login-btn">Login as Dealer</button>
-            </form>
-
-            <form method="POST" action="{% url 'dealer:login_redirect' %}" id="transporterForm" class="login-form">
-                {% csrf_token %}
-                <input type="hidden" name="user_type" value="transporter">
-                <div class="form-group">
-                    <input type="text" name="username" class="form-input" placeholder="Transporter ID" required>
-                </div>
-                <div class="form-group">
-                    <!-- NEW: Password container with toggle icon -->
-                    <div class="password-container">
-                        <input type="password" name="password" class="form-input password-input" placeholder="Password" required id="transporterPassword">
-                        <ion-icon name="eye-outline" class="password-toggle"></ion-icon>
-                    </div>
-                </div>
-                <button type="submit" class="login-btn">Login as Transporter</button>
-            </form>
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="login-card">
+            <div class="login-info">
+                <h2>Welcome to Good Way Express</h2>
+                <p>We are a leading one-stop logistics service provider helping you reach your exact delivery destination on time without delay and damages.</p>
+                
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> Fast and reliable delivery</li>
+                    <li><i class="fas fa-check-circle"></i> Real-time tracking</li>
+                    <li><i class="fas fa-check-circle"></i> Secure handling</li>
+                    <li><i class="fas fa-check-circle"></i> Nationwide coverage</li>
+                </ul>
+                
+                <button class="login-button">JOIN OUR NETWORK</button>
+            </div>
             
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert {{ message.tags }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        
-            <p class="support-text">
-                Unable to Login?
-                <a href="#contact">Contact +91 9689857192</a>
-            </p>
-
-            <div class="social-icons">
-                <ion-icon name="logo-facebook"></ion-icon>
-                <ion-icon name="logo-instagram"></ion-icon>
-                <ion-icon name="logo-twitter"></ion-icon>
-                <ion-icon name="mail-outline"></ion-icon>
-                <ion-icon name="call-outline"></ion-icon>
+            <div class="login-form-container">
+                <div class="form-header">
+                    <h2 class="form-title">Login to Your Account</h2>
+                    <p class="form-subtitle">Access the logistics management platform</p>
+                </div>
+                
+                <div class="login-tabs">
+                    <div class="tab-indicator"></div>
+                    <button class="tab-button active" data-type="dealer">Dealer Login</button>
+                    <button class="tab-button" data-type="transporter">Transporter Login</button>
+                </div>
+                
+                <!-- Dealer Login Form -->
+                <form method="POST" action="{% url 'dealer:login_redirect' %}" id="dealerForm" class="login-form active">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_type" value="dealer">
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="dealerUsername">Dealer ID</label>
+                        <input type="text" id="dealerUsername" name="username" class="form-input" placeholder="Enter your dealer ID" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="dealerPassword">Password</label>
+                        <div class="password-container">
+                            <input type="password" id="dealerPassword" name="password" class="form-input" placeholder="Enter your password" required>
+                            <i class="fas fa-eye password-toggle"></i>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="login-button">Login as Dealer</button>
+                </form>
+                
+                <!-- Transporter Login Form -->
+                <form method="POST" action="{% url 'dealer:login_redirect' %}" id="transporterForm" class="login-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_type" value="transporter">
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="transporterUsername">Transporter ID</label>
+                        <input type="text" id="transporterUsername" name="username" class="form-input" placeholder="Enter your transporter ID" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="transporterPassword">Password</label>
+                        <div class="password-container">
+                            <input type="password" id="transporterPassword" name="password" class="form-input" placeholder="Enter your password" required>
+                            <i class="fas fa-eye password-toggle"></i>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="login-button">Login as Transporter</button>
+                </form>
+                
+                <!-- Messages -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <!-- Support Section -->
+                <div class="support-section">
+                    <p class="support-text">Having trouble logging in?</p>
+                    <a href="tel:+919689857192" class="support-link">Contact Support: +91 9689857192</a>
+                </div>
             </div>
         </div>
-    </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>© 2023 Good Way Express. All rights reserved.</p>
+    </footer>
 
     <script>
-        // BETTER SOLUTION: Password toggle with event delegation
+        // Password toggle functionality
         document.addEventListener('click', function(e) {
             if (e.target.classList.contains('password-toggle')) {
                 const container = e.target.closest('.password-container');
-                const passwordInput = container.querySelector('.password-input');
+                const passwordInput = container.querySelector('input');
                 const iconElement = e.target;
                 
                 if (passwordInput) {
@@ -445,29 +453,30 @@
                     passwordInput.type = isPassword ? 'text' : 'password';
                     
                     // Toggle icon
-                    iconElement.name = isPassword ? 'eye-off-outline' : 'eye-outline';
+                    iconElement.classList.toggle('fa-eye');
+                    iconElement.classList.toggle('fa-eye-slash');
                 }
             }
         });
 
-        // Login Switcher
-        const switchBtns = document.querySelectorAll('.switch-btn');
-        const switchBg = document.querySelector('.switch-bg');
+        // Login tabs functionality
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabIndicator = document.querySelector('.tab-indicator');
         const dealerForm = document.getElementById('dealerForm');
         const transporterForm = document.getElementById('transporterForm');
 
-        switchBtns.forEach(btn => {
+        tabButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 // Remove active class from all buttons
-                switchBtns.forEach(b => b.classList.remove('active'));
+                tabButtons.forEach(b => b.classList.remove('active'));
                 // Add active class to clicked button
                 btn.classList.add('active');
 
-                // Move background
+                // Move indicator
                 if (btn.dataset.type === 'transporter') {
-                    switchBg.classList.add('transporter');
+                    tabIndicator.classList.add('transporter');
                 } else {
-                    switchBg.classList.remove('transporter');
+                    tabIndicator.classList.remove('transporter');
                 }
 
                 // Switch forms
@@ -481,46 +490,10 @@
             });
         });
 
-        // Form submissions
-        dealerForm.addEventListener('submit', (e) => {
-            const id = dealerForm.querySelector('input[name="username"]').value;
-            const password = dealerForm.querySelector('input[name="password"]').value;
-            console.log('Dealer login:', { id, password });
-        });
-
-        transporterForm.addEventListener('submit', (e) => {
-            const id = transporterForm.querySelector('input[name="username"]').value;
-            const password = transporterForm.querySelector('input[name="password"]').value;
-            console.log('Transporter login:', { id, password });
-        });
-
         // Join button
-        document.querySelector('.join-btn').addEventListener('click', () => {
-            alert('Join functionality coming soon!');
-        });
-
-        // Social icons
-        document.querySelectorAll('.social-icons ion-icon').forEach(icon => {
-            icon.addEventListener('click', () => {
-                const platform = icon.getAttribute('name').split('-')[1];
-                if (platform && platform !== 'outline') {
-                    alert(`${platform} integration coming soon!`);
-                }
-            });
+        document.querySelector('.login-info .login-button').addEventListener('click', () => {
+            alert('Join our network functionality coming soon!');
         });
     </script>
-    <!-- Register Service Worker -->
-    <script>
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/service-worker.js")
-        .then(function(reg) {
-          console.log("✅ Service Worker registered with scope:", reg.scope);
-        })
-        .catch(function(err) {
-          console.log("❌ Service Worker registration failed:", err);
-        });
-      }
-    </script>
-
 </body>
 </html>
