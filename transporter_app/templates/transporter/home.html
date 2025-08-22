@@ -545,10 +545,14 @@
                     
                 </div>
             </nav>
-            <button onclick="handleLogout()" class="logout-button">
-                <i data-lucide="log-out"></i>
-                Logout
-            </button>
+            <form method="post" action="{% url 'logout' %}" style="margin-top: auto;">
+                {% csrf_token %}
+                <button type="submit" class="logout-button">
+                    <i data-lucide="log-out"></i>
+                    Logout
+                </button>
+            </form>
+
         </aside>
 
         <main class="main-content">
