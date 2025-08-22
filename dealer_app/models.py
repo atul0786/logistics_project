@@ -47,6 +47,9 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.username
 
+  class Meta:
+        swappable = 'AUTH_USER_MODEL'
+
 class Dealer(models.Model):
     user = models.OneToOneField(get_user_model(), on_delete=models.CASCADE, null=True)
     dealer_id = models.AutoField(primary_key=True)
