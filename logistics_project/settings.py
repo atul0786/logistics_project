@@ -73,6 +73,8 @@ INSTALLED_APPS = [
     'dealer_app',
     'transporter_app',
 ]
+AUTH_USER_MODEL = 'dealer_app.CustomUser'
+
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
