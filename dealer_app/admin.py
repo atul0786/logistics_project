@@ -15,6 +15,7 @@ class QRPrinterSettingAdmin(admin.ModelAdmin):
     list_display = ['dealer', 'printer_name', 'created_at']
 
 
+@admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     model = CustomUser    
     list_display = ('username', 'email', 'dealer_name', 'is_dealer', 'is_transporter', 'is_staff')
@@ -26,10 +27,14 @@ class CustomUserAdmin(UserAdmin):
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         ('Personal info', {'fields': ('first_name', 'last_name', 'email', 'dealer_name')}),
-        ('Permissions', {'fields': ('is_dealer', 'is_transporter', 'is_staff', 'is_active', 'is_superuser', 'groups', 'user_permissions')}), 
+        ('Permissions', {
+            'fields': (
+                'is_dealer', 'is_transporter', 'is_staff', 
+                'is_active', 'is_superuser', 'groups', 'user_permissions'
+            )
+        }), 
         ('Important dates', {'fields': ('last_login', 'date_joined')}), 
     )
-
 @admin.register(Dealer)
 class DealerAdmin(admin.ModelAdmin):
     list_display = ('dealer_id', 'dealer_code', 'user', 'name', 'company_name', 'email', 'phone_number_1', 'state', 'city', 'branch_service_type', 'created_at', 'get_transporter_name')
