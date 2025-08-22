@@ -16,6 +16,8 @@ urlpatterns = [
     # Home and basic views
     path('home/', views.home, name='home'),
     path('manage-location/', views.manage_location, name='manage_location'),
+    path("logout/", auth_views.LogoutView.as_view(next_page='/login/'), name="logout"),
+
     
     # Party management
     path('party-master/', views.party_master, name='party_master'),
