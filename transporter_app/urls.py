@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from django.views.generic import TemplateView
 from .views import received_cnote_view
+from django.contrib.auth import views as auth_views
 from .views import receive_cnotes
 
 from django.urls import path
