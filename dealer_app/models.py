@@ -10,10 +10,6 @@ from django.apps import apps
 from django.db.models.signals import pre_delete
 from django.utils import timezone
 
-class QRPrinterSetting(models.Model):
-    dealer = models.OneToOneField('Dealer', on_delete=models.CASCADE)  # ✅ use string 'Dealer'
-    printer_name = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
 
 
 # City and State Choices
@@ -43,11 +39,30 @@ class CustomUser(AbstractUser):
     is_dealer = models.BooleanField(default=False)
     is_transporter = models.BooleanField(default=False)
     dealer_name = models.CharField(max_length=255, null=True, blank=True)
+    
+    # ✅ ये fields explicitly add करें
+    groups = models.ManyToManyField(
+        'auth.Group',
+        verbose_name='groups',
+        blank=True,
+        help_text='The groups this user belongs to.',
+        related_name="customuser_groups",  # Unique related_name
+        related_query_name="customuser",
+    )
+    
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        verbose_name='user permissions',
+        blank=True,
+        help_text='Specific permissions for this user.',
+        related_name="customuser_permissions",  # Unique related_name
+        related_query_name="customuser",
+    )
 
     def __str__(self):
         return self.username
 
-  class Meta:
+    class Meta:
         swappable = 'AUTH_USER_MODEL'
 
 class Dealer(models.Model):
