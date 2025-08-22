@@ -40,26 +40,6 @@ class CustomUser(AbstractUser):
     is_transporter = models.BooleanField(default=False)
     dealer_name = models.CharField(max_length=255, null=True, blank=True)
 
-    # ✅ Override groups with unique related_name
-    groups = models.ManyToManyField(
-        'auth.Group',
-        verbose_name='groups',
-        blank=True,
-        help_text='The groups this user belongs to.',
-        related_name="customuser_set",         # unique name (common convention is *_set)
-        related_query_name="customuser",
-    )
-
-    # ✅ Override user_permissions with unique related_name
-    user_permissions = models.ManyToManyField(
-        'auth.Permission',
-        verbose_name='user permissions',
-        blank=True,
-        help_text='Specific permissions for this user.',
-        related_name="customuser_set",         # unique name
-        related_query_name="customuser",
-    )
-
     def __str__(self):
         return self.username
 
