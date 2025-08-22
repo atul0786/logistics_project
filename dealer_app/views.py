@@ -1008,21 +1008,6 @@ def cnote_options(request, cnote_id):
     return render(request, 'dealer/cnote_options.html', {'cnote': cnote})
 
 
-@login_required
-def view_pending_pickups(request, transporter_id):
-    # Get the transporter object based on the ID
-    transporter = get_object_or_404(Transporter, id=transporter_id)
-
-    # Fetch the pending pickups for this transporter
-    pending_pickups = Pickup.objects.filter(transporter=transporter, status='pending')
-
-    # Render the template with the pending pickups
-    return render(request, 'dealer/view_pending_pickups.html', {
-        'transporter': transporter,
-        'pending_pickups': pending_pickups
-    })
-
-
 
 @login_required
 def view_pending_pickups(request, transporter_id):
