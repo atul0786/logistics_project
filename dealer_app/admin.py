@@ -200,4 +200,4 @@ class LoadingSheetDetailAdmin(admin.ModelAdmin):
     ordering = ('loading_sheet', 'cnote')
     list_per_page = 20
 
-admin.site.register(CustomUser, CustomUserAdmin)
+
