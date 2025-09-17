@@ -89,6 +89,9 @@ urlpatterns = [
     path('qr-printer-setting/', views.select_qr_printer, name='select_qr_printer'),
     path('api/save_printers/', views.save_printer_data, name='save_printer_data'),
 
+    path('export-loading-sheet/<int:ls_number>/', views.export_loading_sheet_excel, name='export_loading_sheet_excel'),
+
+
 
 ]
 
