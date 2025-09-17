@@ -119,4 +119,10 @@ urlpatterns = [
     # API endpoints
     path('dealers/', views.dealer_list, name='dealer_list'),
     path('dashboard-summary/', views.dashboard_summary, name='dashboard_summary'),
+
+    # loading sheet register
+    path('loading_sheet_report/', views.loading_sheet_report, name='loading_sheet_report'),
+    path('api/loading-sheet-reports/', views.loading_sheet_reports, name='loading_sheet_reports'),
+    path('api/loading-sheet-details/<int:ls_number>/', views.loading_sheet_details, name='loading_sheet_details'),
+    
 ]
