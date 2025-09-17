@@ -3128,3 +3128,89 @@ def save_cnote(request):
     except Exception as e:
         logger.error(f"Error updating CNote {cnote_number}: {str(e)}")
         return JsonResponse({'success': False, 'error': 'Failed to update CNote'}, status=400)
+
+
+
+
+# In dealer_app/views.py (for the export functionality)
+
+from django.http import HttpResponse
+import openpyxl
+from openpyxl.styles import Font, Alignment
+
+# In dealer_app/views.py
+
+@login_required
+def export_loading_sheet_excel(request, ls_number):
+    try:
+        # Get the loading sheet summary
+        summary = LoadingSheetSummary.objects.select_related("dealer", "transporter").get(ls_number=ls_number)
+        
+        # Get all loading sheet details for this loading sheet
+        details = LoadingSheetDetail.objects.filter(loading_sheet=summary).select_related("cnote")
+        
+        # Create Excel workbook
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = f"LS_{ls_number}"
+        
+        # Add header
+        ws.merge_cells('A1:F1')
+        ws['A1'] = f"Loading Sheet - {ls_number}"
+        ws['A1'].font = Font(size=16, bold=True)
+        ws['A1'].alignment = Alignment(horizontal='center')
+        
+        # Add basic information
+        ws.append([])
+        ws.append(['Date:', summary.created_at.strftime("%Y-%m-%d") if summary.created_at else ""])
+        ws.append(['Dealer:', summary.dealer.name if summary.dealer else "-"])
+        ws.append(['Transporter:', summary.transporter.company_name if summary.transporter else "-"])
+        ws.append(['Status:', summary.status or ""])
+        ws.append([])
+        
+        # Add financial summary
+        ws.append(['Financial Summary'])
+        ws.append(['Total Paid Amount:', f"₹{float(summary.total_paid_amount or 0):.2f}"])
+        ws.append(['Total ToPay Amount:', f"₹{float(summary.total_topay_amount or 0):.2f}"])
+        ws.append(['Total TBB Amount:', f"₹{float(summary.total_tbb_amount or 0):.2f}"])
+        ws.append(['Total FOC Amount:', f"₹{float(summary.total_foc_amount or 0):.2f}"])
+        ws.append(['Total ART:', summary.total_art or 0])
+        ws.append(['Total Consignment Notes:', details.count()])
+        ws.append([])
+        
+        # Add consignment notes table header
+        ws.append(['Consignment Notes'])
+        ws.append(['CN Number', 'Destination', 'Consignee', 'Pieces', 'Weight', 'Amount'])
+        
+        # Add consignment note data
+        for detail in details:
+            cn = detail.cnote
+            # Use the correct field names from your CNotes model
+            ws.append([
+                cn.cnote_number if cn else "-",
+                detail.destination or "-",
+                cn.consignee_name if cn else "-",  # Fixed: consignee_name instead of consignee
+                cn.actual_weight if cn else 0,     # Using actual_weight instead of pieces
+                cn.charged_weight if cn else 0,    # Using charged_weight instead of weight
+                f"₹{float(cn.grand_total if cn else 0):.2f}"  # Using grand_total instead of amount
+            ])
+        
+        # Style the header row (row 13 for the consignment notes table)
+        for cell in ws[13]:
+            cell.font = Font(bold=True)
+        
+        # Create response
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename=loading_sheet_{ls_number}.xlsx'
+        
+        # Save workbook to response
+        wb.save(response)
+        return response
+        
+    except LoadingSheetSummary.DoesNotExist:
+        return HttpResponse("Loading sheet not found", status=404)
+    except Exception as e:
+        print(f"Error exporting loading sheet: {str(e)}")
+        return HttpResponse(f"Error: {str(e)}", status=500)
