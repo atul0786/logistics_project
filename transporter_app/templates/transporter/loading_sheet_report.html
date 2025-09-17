@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading Sheet Booking Register - Good Way Express</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.4;
+            background-color: #f5f9fc;
+            color: #2c3e50;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 8px;
+            height: calc(100vh - 50px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Styles - Matching create_cnotes */
+        .header-container {
+            display: flex;
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            flex: 0 0 200px;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+
+        .logo i {
+            color: #3498db;
+            font-size: 24px;
+        }
+
+        .user-info {
+            flex: 1;
+            text-align: left;
+            padding: 0 15px;
+        }
+
+        .user-info p {
+            margin: 2px 0;
+            font-size: 0.9em;
+        }
+
+        .search-section {
+            flex: 0 0 300px;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background-color: white;
+            border-radius: 20px;
+            padding: 5px 10px;
+            width: 100%;
+        }
+
+        .search-bar input {
+            border: none;
+            outline: none;
+            padding: 5px;
+            width: 100%;
+            font-size: 0.9em;
+        }
+
+        .search-bar button {
+            background-color: #2980b9;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 5px 12px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+
+        .logout-section {
+            flex: 0 0 100px;
+            text-align: right;
+        }
+
+        .logout-button button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 6px 15px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        /* Navigation Styles - Matching create_cnotes */
+        .nav-container {
+            display: flex;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 0;
+        }
+
+        nav ul {
+            list-style-type: none;
+            display: flex;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+        }
+
+        nav ul li {
+            position: relative;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            display: block;
+            transition: background-color 0.3s ease;
+            font-size: 0.9em;
+            white-space: nowrap;
+        }
+
+        nav ul li a:hover {
+            background-color: #3498db;
+        }
+
+        nav ul li ul {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: #2c3e50;
+            min-width: 200px;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 0 0 4px 4px;
+        }
+
+        nav ul li:hover > ul {
+            display: block;
+        }
+
+        nav ul li ul li {
+            width: 100%;
+        }
+
+        nav ul li ul li a {
+            padding: 10px 15px;
+            background-color: #2c3e50;
+        }
+
+        nav ul li ul li a:hover {
+            background-color: #3498db;
+        }
+
+        /* Function Keys - Matching create_cnotes */
+        .function-keys {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .function-keys span {
+            font-size: 0.8em;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            padding: 8px 12px;
+            background: linear-gradient(135deg, #ecf0f1, #bdc3c7);
+            border: 1px solid #95a5a6;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            min-width: 80px;
+        }
+
+        .function-keys span:hover {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .function-keys span.active {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            border-color: #27ae60;
+        }
+
+        /* Filter Section */
+        .filters {
+            background-color: white;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .filters h2 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-item label {
+            font-size: 0.8em;
+            font-weight: bold;
+            color: #34495e;
+        }
+
+        .filter-item input, .filter-item select {
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.85em;
+            background-color: #f9f9f9;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .report-container {
+            flex: 1;
+            background-color: white;
+            padding: 12px;
+            border-radius: 6px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.08);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .report-title {
+            font-size: 1.1em;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .report-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .report-controls button {
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .report-controls button:hover {
+            background: linear-gradient(135deg, #2980b9, #1c6ea4);
+        }
+
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto;
+            flex: 1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8em;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+            position: sticky;
+            top: 0;
+            font-weight: 500;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f7ff;
+        }
+
+        /* Status Indicators */
+        .status-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .status-dispatched { background-color: #3498db; color: #fff; }
+        .status-received { background-color: #2ecc71; color: #fff; }
+        .status-cancelled { background-color: #e74c3c; color: #fff; }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 15px;
+            gap: 10px;
+        }
+
+        .pagination button {
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .pagination button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .pagination span {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+
+        /* Summary Cards */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+
+        .summary-card h3 {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+
+        .summary-card .value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 1400px) {
+            .header-container {
+                flex-wrap: wrap;
+            }
+            
+            .logo-section, .user-info, .search-section, .logout-section {
+                flex: 1 1 100%;
+                margin-bottom: 5px;
+            }
+            
+            .filter-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            nav ul li a {
+                padding: 10px 8px;
+                font-size: 0.8em;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Error message */
+        .error-message {
+            color: #e74c3c;
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 900px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            color: #000;
+        }
+
+        .modal-header {
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5em;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .modal-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-print {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .detail-table th, .detail-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .detail-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .detail-section {
+            margin-bottom: 25px;
+        }
+
+        .detail-section h3 {
+            color: #3498db;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #3498db;
+        }
+    </style>
+</head>
+<body>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <div class="container">
+        <!-- Header - Matching create_cnotes -->
+        <div class="header-container">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="{% static 'images/logo.jpg' %}" alt="Company Logo" style="width: 100%; height: auto; max-height: 25mm;">                
+                </div>
+                <div>
+                    <p style="font-weight: bold;">Good Way</p>
+                    <p style="font-weight: bold;">Express</p>
+                </div>
+            </div>
+            
+            <div class="user-info">
+                <p>Welcome {{ transporter_name }} </p>
+                <p id="currentDateTime" style="margin-top: 2px; font-size: 0.8em;"></p>  
+            </div>
+            
+            <div class="search-section">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Search loading sheets..." />
+                    <button type="button" id="searchButton">Search</button>
+                </div>
+            </div>
+            
+            <div class="logout-section">
+                <form action="{% url 'logout' %}" method="post" class="logout-button">
+                    {% csrf_token %}
+                    <button type="submit" id="logoutBtn">Logout</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Navigation - Matching create_cnotes -->
+        <div class="nav-container">
+            <nav>
+                <ul>
+                    <li>
+                        <a href="{% url 'dealer:create_cnotes' %}"><i class="fas fa-home"></i> Home</a>
+                    </li>
+                    <li>
+                        <a href="#"><i class="fas fa-cogs"></i> Operations</a>
+                        <ul>
+                            <li>
+                                <a href="{% url 'dealer:create_cnotes' %}"> Booking</a>
+                            </li>
+                            <li>
+                                <a href="{% url 'dealer:import_cnotes' %}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Bulk Booking</a>
+                            </li>
+                            <li>
+                                <a href="{% url 'dealer:loading_sheet' %}"target="_blank" rel="noopener noreferrer"> Loading Sheet</a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <li>
+                        <a href="#"><i class="fas fa-tools"></i> Master</a>
+                            <ul>
+                                <li>
+                                    <a href="{% url 'dealer:select_qr_printer' %}" target="_blank">QR Printer Setting</a>
+                                </li>
+                            </ul>
+                    </li>
+
+                    
+                    <li>
+                        <a href="{% url 'dealer:booking_register' %}"target="_blank" rel="noopener noreferrer"><i class="fas fa-chart-bar"></i> Report</a>
+                        <ul>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Function Keys - Matching create_cnotes -->
+        <div class="function-keys">
+            <span id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</span>
+            <span id="exportBtn"><i class="fas fa-download"></i> Export</span>
+            <span id="printBtn"><i class="fas fa-print"></i> Print</span>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filters">
+            <h2><i class="fas fa-filter"></i> Filter Loading Sheets</h2>
+            <div class="filter-grid">
+                <div class="filter-item">
+                    <label for="dateFrom">From Date</label>
+                    <input type="date" id="dateFrom" name="date_from" value="2025-04-01">
+                </div>
+                <div class="filter-item">
+                    <label for="dateTo">To Date</label>
+                    <input type="date" id="dateTo" name="date_to" value="2025-09-16">
+                </div>
+                <div class="filter-item">
+                    <label for="dealerFilter">Dealer</label>
+                    <select id="dealerFilter" name="dealer">
+                        <option value="">All Dealers</option>
+                        {% for dealer in dealers %}
+                        <option value="{{ dealer.dealer_id }}">{{ dealer.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label for="statusFilter">Status</label>
+                    <select id="statusFilter" name="status">
+                        <option value="">All Status</option>
+                        <option value="dispatched">Dispatched</option>
+                        <option value="received">Received</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label>&nbsp;</label>
+                    <button id="applyFilters" style="padding: 6px; background: #2ecc71; color: white; border: none; border-radius: 4px; cursor: pointer;">Apply Filters</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card">
+                <h3>Total Loading Sheets</h3>
+                <div class="value" id="totalSheets">0</div>
+            </div>
+            <div class="summary-card">
+                <h3>Total Consignment Notes</h3>
+                <div class="value" id="totalCnotes">0</div>
+            </div>
+            <div class="summary-card">
+                <h3>Total ART</h3>
+                <div class="value" id="totalArt">0</div>
+            </div>
+            <div class="summary-card">
+                <h3>Total Value</h3>
+                <div class="value" id="totalValue">₹0</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="report-container">
+                <div class="report-header">
+                    <div class="report-title">Loading Sheet Booking Register</div>
+                    <div class="report-controls">
+                        <button id="prevPage"><i class="fas fa-chevron-left"></i> Previous</button>
+                        <button id="nextPage">Next <i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="loadingSheetTable">
+                        <thead>
+                            <tr>
+                                <th>Loading Sheet No</th>
+                                <th>Date</th>
+                                <th>Dealer</th>
+                                <th>Transporter</th>
+                                <th>Consignment Notes</th>
+                                <th>ART</th>
+                                <th>Paid Amount</th>
+                                <th>ToPay Amount</th>
+                                <th>TBB Amount</th>
+                                <th>FOC Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination">
+                    <button id="firstPage" disabled>First</button>
+                    <button id="prevPageBtn" disabled>Previous</button>
+                    <span id="pageInfo">Page 1 of 1</span>
+                    <button id="nextPageBtn" disabled>Next</button>
+                    <button id="lastPage" disabled>Last</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal for Loading Sheet Details -->
+        <div id="loadingSheetModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                
+                <div class="modal-header">
+                    <h2 class="modal-title">Loading Sheet Details</h2>
+                </div>
+                
+                <div class="modal-body" id="modalBody">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="modal-btn btn-print" id="modalPrintBtn">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                    <button class="modal-btn btn-download" id="modalDownloadBtn">
+                        <i class="fas fa-download"></i> Download Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Current state
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let filteredData = [];
+        let allData = [];
+        let currentLoadingSheetId = null;
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // Update current date and time
+            function updateDateTime() {
+                const now = new Date();
+                const options = { 
+                    timeZone: "Asia/Kolkata",
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: true
+                };
+                const dateTimeString = now.toLocaleString("en-US", options);
+                document.getElementById("currentDateTime").textContent = dateTimeString;
+            }
+            
+            setInterval(updateDateTime, 1000);
+            updateDateTime();
+            
+            // Fetch data from backend
+            fetchLoadingSheets();
+            
+            // Event listeners
+            document.getElementById('applyFilters').addEventListener('click', applyFilters);
+            document.getElementById('refreshBtn').addEventListener('click', fetchLoadingSheets);
+            document.getElementById('exportBtn').addEventListener('click', exportData);
+            document.getElementById('printBtn').addEventListener('click', printReport);
+            document.getElementById('searchButton').addEventListener('click', searchData);
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchData();
+                }
+            });
+            
+            // Pagination events
+            document.getElementById('firstPage').addEventListener('click', function() {
+                currentPage = 1;
+                renderTable();
+            });
+            
+            document.getElementById('prevPageBtn').addEventListener('click', function() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTable();
+                }
+            });
+            
+            document.getElementById('nextPageBtn').addEventListener('click', function() {
+                if (currentPage < Math.ceil(filteredData.length / itemsPerPage)) {
+                    currentPage++;
+                    renderTable();
+                }
+            });
+            
+            document.getElementById('lastPage').addEventListener('click', function() {
+                currentPage = Math.ceil(filteredData.length / itemsPerPage);
+                renderTable();
+            });
+            
+            // Modal events
+            document.querySelector('.close-modal').addEventListener('click', function() {
+                document.getElementById('loadingSheetModal').style.display = 'none';
+            });
+            
+            document.getElementById('modalPrintBtn').addEventListener('click', function() {
+                if (currentLoadingSheetId) {
+                    window.open(`/dealer/mf_print/${currentLoadingSheetId}/`, '_blank');
+                }
+            });
+            
+            document.getElementById('modalDownloadBtn').addEventListener('click', function() {
+                if (currentLoadingSheetId) {
+                    window.location.href = `/dealer/export-loading-sheet/${currentLoadingSheetId}/`;
+                }
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                const modal = document.getElementById('loadingSheetModal');
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+
+        // Function to fetch loading sheets from backend
+        function fetchLoadingSheets() {
+            // Show loading spinner
+            document.getElementById('tableBody').innerHTML = `
+                <tr>
+                    <td colspan="12" class="loading">
+                        <div class="loading-spinner"></div>
+                    </td>
+                </tr>
+            `;
+
+            const params = new URLSearchParams({
+                date_from: document.getElementById('dateFrom').value,
+                date_to: document.getElementById('dateTo').value,
+                dealer: document.getElementById('dealerFilter').value,
+                status: document.getElementById('statusFilter').value,
+            });
+
+            fetch(`/transporter/api/loading-sheet-reports/?${params.toString()}`)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.error || `Server error: ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    if (data && data.loading_sheets) {
+                        allData = data.loading_sheets;
+                        applyFilters();
+                        
+                        // Update summary cards
+                        document.getElementById('totalSheets').textContent = data.total_count || 0;
+                        document.getElementById('totalCnotes').textContent = data.total_cnotes || 0;
+                        document.getElementById('totalArt').textContent = data.total_art || 0;
+                        document.getElementById('totalValue').textContent = `₹${(data.total_value || 0).toLocaleString()}`;
+                    } else {
+                        throw new Error('Invalid data format received from server');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching loading sheets:', error);
+                    // Show error message
+                    document.getElementById('tableBody').innerHTML = `
+                        <tr>
+                            <td colspan="12" class="error-message">
+                                Error loading data: ${error.message}
+                            </td>
+                        </tr>
+                    `;
+                    
+                    // Reset summary cards
+                    document.getElementById('totalSheets').textContent = '0';
+                    document.getElementById('totalCnotes').textContent = '0';
+                    document.getElementById('totalArt').textContent = '0';
+                    document.getElementById('totalValue').textContent = '₹0';
+                });
+        }
+
+        // Function to apply filters
+        function applyFilters() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const dealer = document.getElementById('dealerFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            
+            // Filter data based on selected filters
+            filteredData = allData.filter(item => {
+                let include = true;
+                
+                // Date filtering
+                const itemDate = new Date(item.created_at);
+                const filterDateFrom = dateFrom ? new Date(dateFrom) : null;
+                const filterDateTo = dateTo ? new Date(dateTo) : null;
+                
+                if (filterDateFrom && itemDate < filterDateFrom) include = false;
+                if (filterDateTo && itemDate > new Date(filterDateTo.getTime() + 86400000)) include = false;
+                
+                // Dealer filtering
+                if (dealer && item.dealer_id !== undefined) {
+                    if (item.dealer_id != dealer) include = false;
+                } else if (dealer && item.dealer_name) {
+                    const dealerOption = document.querySelector(`#dealerFilter option[value="${dealer}"]`);
+                    if (dealerOption && item.dealer_name !== dealerOption.textContent) include = false;
+                }
+                
+                // Status filtering
+                if (status && item.status !== status) include = false;
+                
+                return include;
+            });
+            
+            currentPage = 1;
+            renderTable();
+        }
+
+        // Function to search data
+        function searchData() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (!searchTerm) {
+                filteredData = allData;
+            } else {
+                filteredData = allData.filter(item => {
+                    return (
+                        (item.ls_number && item.ls_number.toString().toLowerCase().includes(searchTerm)) ||
+                        (item.dealer_name && item.dealer_name.toLowerCase().includes(searchTerm)) ||
+                        (item.transporter_name && item.transporter_name.toLowerCase().includes(searchTerm)) ||
+                        (item.status && item.status.toLowerCase().includes(searchTerm))
+                    );
+                });
+            }
+            
+            currentPage = 1;
+            renderTable();
+        }
+
+        // Function to render the table
+        function renderTable() {
+            const tableBody = document.getElementById('tableBody');
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, filteredData.length);
+            
+            // Clear table
+            tableBody.innerHTML = '';
+            
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="12" style="text-align: center; padding: 20px;">
+                            No loading sheets found matching your criteria.
+                        </td>
+                    </tr>
+                `;
+            } else {
+                // Add rows
+                for (let i = startIndex; i < endIndex; i++) {
+                    const item = filteredData[i];
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td>${item.ls_number || '-'}</td>
+                        <td>${formatDate(item.created_at)}</td>
+                        <td>${item.dealer_name || '-'}</td>
+                        <td>${item.transporter_name || '-'}</td>
+                        <td>${item.total_cnote || 0}</td>
+                        <td>${item.total_art || 0}</td>
+                        <td>₹${(item.total_paid_amount || 0).toFixed(2)}</td>
+                        <td>₹${(item.total_topay_amount || 0).toFixed(2)}</td>
+                        <td>₹${(item.total_tbb_amount || 0).toFixed(2)}</td>
+                        <td>₹${(item.total_foc_amount || 0).toFixed(2)}</td>
+                        <td><span class="status-indicator status-${item.status}">${capitalizeFirstLetter(item.status)}</span></td>
+                        <td>
+                            <button class="view-btn" data-id="${item.ls_number}" style="padding: 4px 8px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                }
+            }
+            
+            // Update pagination controls
+            updatePagination();
+            
+            // Add event listeners to view buttons
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    viewLoadingSheet(id);
+                });
+            });
+        }
+
+        // Function to update pagination controls
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+            
+            document.getElementById('firstPage').disabled = currentPage === 1;
+            document.getElementById('prevPageBtn').disabled = currentPage === 1;
+            document.getElementById('nextPageBtn').disabled = currentPage === totalPages;
+            document.getElementById('lastPage').disabled = currentPage === totalPages;
+        }
+
+        // Function to format date
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        // Function to capitalize first letter
+        function capitalizeFirstLetter(string) {
+            if (!string) return '';
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+
+        // Function to view loading sheet details
+        function viewLoadingSheet(id) {
+            currentLoadingSheetId = id;
+            
+            // Show loading in modal
+            document.getElementById('modalBody').innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                </div>
+            `;
+            
+            // Show the modal
+            document.getElementById('loadingSheetModal').style.display = 'block';
+            
+            // Try to fetch details from API, but fallback to basic info if it fails
+            fetch(`/transporter/api/loading-sheet-details/${id}/`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    // Populate modal with details
+                    populateModal(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching loading sheet details:', error);
+                    // Fallback to showing basic info from table data
+                    showBasicInfo(id);
+                });
+        }
+        
+        // Function to show basic info when detailed fetch fails
+        function showBasicInfo(id) {
+            // Find the loading sheet in our existing data
+            const sheet = allData.find(item => item.ls_number == id);
+            
+            if (sheet) {
+                const modalBody = document.getElementById('modalBody');
+                
+                modalBody.innerHTML = `
+                    <div class="detail-section">
+                        <h3>Basic Information</h3>
+                        <table class="detail-table">
+                            <tr>
+                                <th>Loading Sheet Number</th>
+                                <td>${sheet.ls_number || '-'}</td>
+                                <th>Date</th>
+                                <td>${formatDate(sheet.created_at) || '-'}</td>
+                            </tr>
+                            <tr>
+                                <th>Dealer</th>
+                                <td>${sheet.dealer_name || '-'}</td>
+                                <th>Transporter</th>
+                                <td>${sheet.transporter_name || '-'}</td>
+                            </tr>
+                            <tr>
+                                <th>Status</th>
+                                <td colspan="3"><span class="status-indicator status-${sheet.status}">${capitalizeFirstLetter(sheet.status)}</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h3>Financial Summary</h3>
+                        <table class="detail-table">
+                            <tr>
+                                <th>Total Paid Amount</th>
+                                <td>₹${(sheet.total_paid_amount || 0).toFixed(2)}</td>
+                                <th>Total ToPay Amount</th>
+                                <td>₹${(sheet.total_topay_amount || 0).toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <th>Total TBB Amount</th>
+                                <td>₹${(sheet.total_tbb_amount || 0).toFixed(2)}</td>
+                                <th>Total FOC Amount</th>
+                                <td>₹${(sheet.total_foc_amount || 0).toFixed(2)}</td>
+                            </tr>
+                            <tr>
+                                <th>Total ART</th>
+                                <td>${sheet.total_art || 0}</td>
+                                <th>Total Consignment Notes</th>
+                                <td>${sheet.total_cnote || 0}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="error-message">
+                        Note: Could not load detailed consignment information due to a server error.
+                    </div>
+                `;
+            } else {
+                document.getElementById('modalBody').innerHTML = `
+                    <div class="error-message">
+                        Error loading details: Could not find loading sheet with ID ${id}
+                    </div>
+                `;
+            }
+        }
+        
+        // Function to populate modal with loading sheet details
+        function populateModal(data) {
+            const modalBody = document.getElementById('modalBody');
+            
+            let html = `
+                <div class="detail-section">
+                    <h3>Basic Information</h3>
+                    <table class="detail-table">
+                        <tr>
+                            <th>Loading Sheet Number</th>
+                            <td>${data.ls_number || currentLoadingSheetId || '-'}</td>
+                            <th>Date</th>
+                            <td>${formatDate(data.created_at) || '-'}</td>
+                        </tr>
+                        <tr>
+                            <th>Dealer</th>
+                            <td>${data.dealer_name || '-'}</td>
+                            <th>Transporter</th>
+                            <td>${data.transporter_name || '-'}</td>
+                        </tr>
+                        <tr>
+                            <th>Status</th>
+                            <td colspan="3"><span class="status-indicator status-${data.status}">${capitalizeFirstLetter(data.status)}</span></td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="detail-section">
+                    <h3>Financial Summary</h3>
+                    <table class="detail-table">
+                        <tr>
+                            <th>Total Paid Amount</th>
+                            <td>₹${(data.total_paid_amount || 0).toFixed(2)}</td>
+                            <th>Total ToPay Amount</th>
+                            <td>₹${(data.total_topay_amount || 0).toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <th>Total TBB Amount</th>
+                            <td>₹${(data.total_tbb_amount || 0).toFixed(2)}</td>
+                            <th>Total FOC Amount</th>
+                            <td>₹${(data.total_foc_amount || 0).toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <th>Total ART</th>
+                            <td>${data.total_art || 0}</td>
+                            <th>Total Consignment Notes</th>
+                            <td>${data.total_cnote || 0}</td>
+                        </tr>
+                    </table>
+                </div>
+            `;
+            
+            // Add consignment note details if available
+            if (data.consignment_notes && data.consignment_notes.length > 0) {
+                html += `
+                    <div class="detail-section">
+                        <h3>Consignment Notes</h3>
+                        <table class="detail-table">
+                            <thead>
+                                <tr>
+                                    <th>CN Number</th>
+                                    <th>Destination</th>
+                                    <th>Consignee</th>
+                                    <th>Pieces</th>
+                                    <th>Weight</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                data.consignment_notes.forEach(note => {
+                    html += `
+                        <tr>
+                            <td>${note.cn_number || '-'}</td>
+                            <td>${note.destination || '-'}</td>
+                            <td>${note.consignee || '-'}</td>
+                            <td>${note.pieces || 0}</td>
+                            <td>${note.weight || 0}</td>
+                            <td>₹${(note.amount || 0).toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            modalBody.innerHTML = html;
+        }
+
+        // Function to export data
+        function exportData() {
+            alert('Export functionality would be implemented here.\nData would be exported in CSV or Excel format.');
+        }
+
+        // Function to print report
+        function printReport() {
+            alert('Print functionality would be implemented here.\nA printer-friendly version of the report would be generated.');
+        }
+    </script>
+</body>
+</html>
