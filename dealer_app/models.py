@@ -486,3 +486,12 @@ class QRPrinterSetting(models.Model):
     
     def __str__(self):
         return f"{self.dealer.name} - {self.printer_name}"
+
+
+
+
+@property
+def id(self):
+    return self.dealer_id
+
+
