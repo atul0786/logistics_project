@@ -3529,3 +3529,180 @@ def fetch_users(request):
         return JsonResponse({"success": True, "users": users})
     except Exception as e:
         return JsonResponse({"success": False, "message": f"Error fetching users: {str(e)}"})
+
+
+from django.shortcuts import render
+from django.http import JsonResponse
+from django.db.models import Sum, Q
+from django.contrib.auth.decorators import login_required
+from dealer_app.models import LoadingSheetSummary, LoadingSheetDetail
+from dealer_app.models import Dealer
+from transporter_app.models import Transporter
+import json
+
+@login_required
+def loading_sheet_report(request):
+    dealers = Dealer.objects.all()
+    transporters = Transporter.objects.all()
+    destinations = LoadingSheetDetail.objects.values_list('destination', flat=True).distinct()
+
+    # Get the logged-in user's transporter, if it exists
+    transporter = None
+    transporter_name = "-"
+    if hasattr(request.user, "transporter"):
+        transporter = request.user.transporter
+        transporter_name = transporter.company_name  # ya transporter.user.username
+
+    context = {
+        'dealers': dealers,
+        'transporter': transporter,
+        'transporter_name': transporter_name,
+        'vehicles': transporters,  
+        'destinations': destinations,
+        'users': []
+    }
+    return render(request, 'transporter/loading_sheet_report.html', context)
+
+@login_required
+def loading_sheet_reports(request):
+    try:
+        # Debug: Print request parameters
+        print("API Request Parameters:")
+        print(f"date_from: {request.GET.get('date_from')}")
+        print(f"date_to: {request.GET.get('date_to')}")
+        print(f"dealer: {request.GET.get('dealer')}")
+        print(f"status: {request.GET.get('status')}")
+        
+        # Check if there are any LoadingSheetSummary objects in the database
+        total_sheets = LoadingSheetSummary.objects.count()
+        print(f"Total LoadingSheetSummary objects in database: {total_sheets}")
+        
+        # Filters from request
+        date_from = request.GET.get("date_from")
+        date_to = request.GET.get("date_to")
+        dealer_id = request.GET.get("dealer")
+        status = request.GET.get("status")
+
+        # Base queryset
+        queryset = LoadingSheetSummary.objects.select_related("dealer", "transporter").all().order_by("-created_at")
+
+        # Apply filters
+        if date_from:
+            queryset = queryset.filter(created_at__date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(created_at__date__lte=date_to)
+        if dealer_id and dealer_id != "":
+            queryset = queryset.filter(dealer_id=dealer_id)
+        if status and status != "":
+            queryset = queryset.filter(status=status)
+
+        # Debug: Print query count
+        print(f"Total loading sheets found after filtering: {queryset.count()}")
+
+        # Prepare response
+        data = []
+        total_cnotes = 0
+        total_art = 0
+        total_paid_amount = 0
+        total_topay_amount = 0
+        total_tbb_amount = 0
+        total_foc_amount = 0
+
+        for sheet in queryset:
+            # Calculate total consignment notes
+            cnote_count = sheet.details.count()
+            total_cnotes += cnote_count
+            
+            # Add other totals
+            total_art += sheet.total_art or 0
+            total_paid_amount += float(sheet.total_paid_amount or 0)
+            total_topay_amount += float(sheet.total_topay_amount or 0)
+            total_tbb_amount += float(sheet.total_tbb_amount or 0)
+            total_foc_amount += float(sheet.total_foc_amount or 0)
+            
+            data.append({
+                "ls_number": sheet.ls_number,
+                "created_at": sheet.created_at.strftime("%Y-%m-%d") if sheet.created_at else "",
+                "dealer_id": sheet.dealer.dealer_id if sheet.dealer else None,   # ✅ FIXED
+                "dealer_name": sheet.dealer.name if sheet.dealer else "-",       # ✅ include dealer name
+                "transporter_name": sheet.transporter.company_name if sheet.transporter else "-",
+                "total_cnote": cnote_count,
+                "total_art": sheet.total_art or 0,
+                "total_paid_amount": float(sheet.total_paid_amount or 0),
+                "total_topay_amount": float(sheet.total_topay_amount or 0),
+                "total_tbb_amount": float(sheet.total_tbb_amount or 0),
+                "total_foc_amount": float(sheet.total_foc_amount or 0),
+                "status": sheet.status or "",
+            })
+
+        # Debug: Print final response data
+        print(f"Final data: {data}")
+
+        return JsonResponse({
+            "loading_sheets": data,
+            "total_count": queryset.count(),
+            "total_cnotes": total_cnotes,
+            "total_art": total_art,
+            "total_value": total_paid_amount + total_topay_amount + total_tbb_amount + total_foc_amount,
+        })
+    
+    except Exception as e:
+        print(f"Error in loading_sheet_reports: {str(e)}")
+        return JsonResponse({
+            "loading_sheets": [],
+            "total_count": 0,
+            "total_cnotes": 0,
+            "total_art": 0,
+            "total_value": 0,
+            "error": str(e)
+        }, status=500)
+    
+
+# In transporter_app/views.py
+
+@login_required
+def loading_sheet_details(request, ls_number):
+    try:
+        # Get the loading sheet summary
+        summary = LoadingSheetSummary.objects.get(ls_number=ls_number)
+        
+        # Get all consignment notes for this loading sheet
+        details = LoadingSheetDetail.objects.filter(loading_sheet=summary).select_related("cnote")
+        
+        # Prepare response data
+        data = {
+            "ls_number": summary.ls_number,
+            "created_at": summary.created_at.strftime("%Y-%m-%d") if summary.created_at else "",
+            "dealer_name": summary.dealer.name if summary.dealer else "-",
+            "transporter_name": summary.transporter.company_name if summary.transporter else "-",
+            "total_cnote": details.count(),
+            "total_art": summary.total_art or 0,
+            "total_paid_amount": float(summary.total_paid_amount or 0),
+            "total_topay_amount": float(summary.total_topay_amount or 0),
+            "total_tbb_amount": float(summary.total_tbb_amount or 0),
+            "total_foc_amount": float(summary.total_foc_amount or 0),
+            "status": summary.status or "",
+            "consignment_notes": []
+        }
+        
+        # Add consignment note details
+        for detail in details:
+            cn = detail.cnote
+            data["consignment_notes"].append({
+                "cn_number": cn.cnote_number if cn else "-",
+                "destination": detail.destination or "-",
+                "consignee": cn.consignee_name if cn else "-",  # Fixed: consignee_name instead of consignee
+                "pieces": cn.actual_weight if cn else 0,        # Using actual_weight instead of pieces
+                "weight": cn.charged_weight if cn else 0,       # Using charged_weight instead of weight
+                "amount": float(cn.grand_total if cn else 0),   # Using grand_total instead of amount
+            })
+        
+        return JsonResponse(data)
+    
+    except LoadingSheetSummary.DoesNotExist:
+        return JsonResponse({"error": "Loading sheet not found"}, status=404)
+    except Exception as e:
+        print(f"Error in loading_sheet_details: {str(e)}")
+        return JsonResponse({"error": str(e)}, status=500)
+
+
