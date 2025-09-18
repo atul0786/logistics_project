@@ -1,178 +1,357 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Loading Sheet</title>
+    <title>Loading Sheet - Good Way Express</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
     <style>
-        :root {
-            --primary-color: #00a2e8;
-            --secondary-color: #0073aa;
-            --background-color: #f2f2f2;
-            --surface-color: #ffffff;
-            --text-color: #333333;
-            --border-color: #dddddd;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--background-color);
-            color: var(--text-color);
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.4;
+            background-color: #f5f9fc;
+            color: #2c3e50;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .header {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 10px 20px;
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 8px;
+            height: calc(100vh - 50px);
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+        }
+
+        /* Header Styles */
+        .header-container {
+            display: flex;
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             align-items: center;
         }
 
-        .header img {
-            height: 50px;
-        }
-
-        .header-controls {
+        .logo-section {
             display: flex;
-            gap: 10px;
+            align-items: center;
+            flex: 0 0 200px;
         }
 
-        .nav {
-            background-color: var(--secondary-color);
-            padding: 10px 20px;
+        .logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
         }
 
-        .nav a {
+        .logo i {
+            color: #3498db;
+            font-size: 24px;
+        }
+
+        .user-info {
+            flex: 1;
+            text-align: left;
+            padding: 0 15px;
+        }
+
+        .user-info p {
+            margin: 2px 0;
+            font-size: 0.9em;
+        }
+
+        .header-search-section {
+            flex: 0 0 300px;
+            display: flex;
+            align-items: center;
+        }
+
+        .header-search-bar {
+            display: flex;
+            align-items: center;
+            background-color: white;
+            border-radius: 20px;
+            padding: 5px 10px;
+            width: 100%;
+        }
+
+        .header-search-bar input {
+            border: none;
+            outline: none;
+            padding: 5px;
+            width: 100%;
+            font-size: 0.9em;
+        }
+
+        .header-search-bar button {
+            background-color: #2980b9;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 5px 12px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+
+        .logout-section {
+            flex: 0 0 100px;
+            text-align: right;
+        }
+
+        .logout-button button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 6px 15px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        /* Navigation Styles */
+        .nav-container {
+            display: flex;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 0;
+        }
+
+        nav ul {
+            list-style-type: none;
+            display: flex;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+        }
+
+        nav ul li {
+            position: relative;
+        }
+
+        nav ul li a {
             color: white;
             text-decoration: none;
-            padding: 5px 10px;
-            margin-right: 10px;
-            border-radius: 4px;
-            transition: background-color 0.3s;
+            padding: 10px 15px;
+            display: block;
+            transition: background-color 0.3s ease;
+            font-size: 0.9em;
         }
 
-        .nav a:hover {
-            background-color: rgba(255, 255, 255, 0.1);
+        nav ul li a:hover {
+            background-color: #3498db;
+        }
+
+        nav ul li ul {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: #2c3e50;
+            min-width: 200px;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 0 0 4px 4px;
+        }
+
+        nav ul li:hover > ul {
+            display: block;
+        }
+
+        nav ul li ul li {
+            width: 100%;
+        }
+
+        nav ul li ul li a {
+            padding: 10px 15px;
+            background-color: #2c3e50;
+        }
+
+        nav ul li ul li a:hover {
+            background-color: #3498db;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            height: 100%;
+            overflow: hidden;
         }
 
         .content {
-            padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
+            background-color: white;
+            padding: 12px;
+            border-radius: 6px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.08);
+            overflow-y: auto;
         }
 
         .search-section {
-            background-color: var(--surface-color);
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+            background-color: white;
+            padding: 12px;
+            border-radius: 6px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 8px;
         }
 
-        .search-controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
+        h2 {
             margin-bottom: 10px;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+            font-size: 1.1em;
         }
 
-        .search-controls select, .search-controls input[type="text"] {
-            padding: 8px;
-            border: 1px solid var(--border-color);
+        /* Form Elements - FIXED SIZE AND LAYOUT */
+        .form-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 2px;
+            font-weight: bold;
+            font-size: 0.8em;
+            color: #34495e;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ddd;
             border-radius: 4px;
-            flex-grow: 1;
+            font-size: 0.85em;
+            background-color: #f9f9f9;
+            height: 32px;
+            box-sizing: border-box;
         }
 
-        .search-controls button {
-            padding: 8px 16px;
-            background-color: var(--secondary-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
+        /* Date filter row - FIXED TO BE COMPACT AND IN ONE ROW */
+        .date-filter {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: flex-end;
+            flex-wrap: wrap;
         }
 
-        .search-controls button:hover {
-            background-color: #005a87;
+        .date-filter .form-group {
+            flex: 1;
+            min-width: 150px;
         }
 
+        .date-filter-button {
+            flex: 0 0 auto;
+            margin-bottom: 2px;
+        }
+
+        /* Table Styles */
         .table-container {
             overflow-x: auto;
-            background-color: var(--surface-color);
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 8px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 0.8em;
         }
 
         th, td {
-            padding: 12px;
+            padding: 8px;
             text-align: left;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid #ddd;
         }
 
         th {
-            background-color: var(--secondary-color);
+            background-color: #3498db;
             color: white;
+            position: sticky;
+            top: 0;
         }
 
-        tr:nth-child(even) {
-            background-color: #f8f8f8;
+        tfoot td {
+            font-weight: bold;
+            background-color: #f0f0f0;
+        }
+
+        /* Buttons */
+        button {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: background 0.2s;
+            height: 32px;
+            box-sizing: border-box;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #2980b9, #1c6ea4);
         }
 
         .footer {
             display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
+            gap: 8px;
+            margin-top: 8px;
         }
 
-        .footer button {
-            padding: 10px 20px;
-            background-color: var(--secondary-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
+        .btn-check {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
         }
 
-        .footer button:hover {
-            background-color: #005a87;
+        .btn-check:hover {
+            background: linear-gradient(135deg, #27ae60, #219653);
         }
 
+        /* Popup Styles */
         .popup {
             display: none;
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: var(--surface-color);
+            background-color: white;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             padding: 20px;
             z-index: 1000;
             width: 90%;
             max-width: 1000px;
             max-height: 80vh;
             overflow-y: auto;
-        }
-
-        .popup .close {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 24px;
-            cursor: pointer;
-            color: var(--text-color);
         }
 
         .overlay {
@@ -186,282 +365,40 @@
             z-index: 999;
         }
 
-        .message-popup {
-            display: none;
-            background-color: #f44336;
-            color: white;
-            padding: 5px 8px;
-            border-radius: 4px;
-            margin-top: 5px;
-            position: absolute;
-            width: calc(100% - 16px);
-            z-index: 10;
-            font-size: 14px;
-            line-height: 1.2;
-            box-sizing: border-box;
-        }
-
-        .cnote-input-container {
-            position: relative;
-            flex-grow: 1;
-        }
-
-        .search-controls-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        @media (max-width: 768px) {
-            .search-controls-row {
-                flex-direction: column;
-            }
-
-            .search-controls select, .search-controls input[type="text"], .cnote-input-container {
-                width: 100%;
-            }
-        }
-
-        .sms-popup {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: var(--surface-color);
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            z-index: 1001;
-            width: 300px;
-            text-align: center;
-        }
-
-        .sms-popup button {
-            margin-top: 10px;
-            padding: 5px 10px;
-            background-color: var(--secondary-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        
-        header {
-            background-color: #87ceeb;
-            color: #333;
-            padding: 10px 0;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .logo {
-            width: 80px;
-            height: auto;
-        }
-
-        .top-bar {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            padding: 0 20px;
-        }
-
-        .user-info {
-            text-align: center;
-            flex-grow: 1;
-        }
-
-        .search-bar input {
-            width: 200px;
-            padding: 8px;
-            border: none;
-            outline: none;
-            font-size: 14px;
-        }
-
-        .search-bar button {
-            padding: 8px 15px;
-            background-color: #4682b4;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .search-bar button:hover {
-            background-color: #36648b;
-        }
-        
-        .search-logout-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-        }
-
-        .search-bar {
-            display: flex;
-            align-items: center;
-            background-color: #ffffff;
-            border-radius: 20px;
-            padding: 5px 10px;
-            margin-right: 80px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        } 
-        
-        .logout-button {  
-            position: absolute;  
-            right: 15px;  
-            top: 39px;  
-        }
-
-        .logout-button button {
-            background-color: #ff4500;
-            color: white;
-            padding: 9px 18px;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .logout-button button:hover {
-            background-color: #e63900;
-        }
-
-        .popup#assign-transporter-popup {
-            background-color: #f9f9f9;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            padding: 30px;
-            max-width: 400px;
-        }
-
-        .popup#assign-transporter-popup h2 {
-            color: #333;
-            font-size: 24px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .popup#assign-transporter-popup select {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            appearance: none;
-            background-image: url('data:image/svg+xml;utf8,<svg fill="%23333" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
-            background-repeat: no-repeat;
-            background-position: right 10px center;
-        }
-
-        .popup#assign-transporter-popup button {
-            width: 100%;
-            padding: 12px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .popup#assign-transporter-popup button:hover {
-            background-color: #45a049;
-        }
-
-        .popup#assign-transporter-popup .close {
+        .close {
             position: absolute;
             top: 10px;
             right: 15px;
-            font-size: 28px;
+            font-size: 24px;
             font-weight: bold;
             color: #aaa;
             cursor: pointer;
             transition: color 0.3s;
         }
 
-        .popup#assign-transporter-popup .close:hover {
+        .close:hover {
             color: #333;
         }
-        
-        nav {
-            background-color: #4682b4;
-            padding: 1px 0;
-        }
 
-        nav ul {
-            list-style-type: none;
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-        }
-
-        nav ul li {
-            position: relative;
-        }
-
-        nav ul li a {
-            color: white;
-            text-decoration: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            transition: background-color 0.3s;
-        }
-
-        nav ul li a:hover {
-            background-color: #3a6d8c;
-        }
-
-        nav ul li ul {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            background-color: #4682b4;
-            padding: 10px;
-            border-radius: 0 0 4px 4px;
-            z-index: 1000;
-        }
-
-        nav ul li:hover > ul {
-            display: block;
-        }
-
-        nav ul li ul li {
-            width: 200px;
-            padding: 5px 0;
-        }
-
-        nav ul li ul li a {
-            display: block;
-            padding: 5px 10px;
-        }
-
-        /* New styles for filter inputs */
+        /* Filter row in popup - FIXED SIZE AND LAYOUT */
         .filter-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 8px;
+            margin-bottom: 8px;
         }
 
         .filter-row input {
-            padding: 8px;
-            border: 1px solid var(--border-color);
+            padding: 6px;
+            border: 1px solid #ddd;
             border-radius: 4px;
-            flex-grow: 1;
+            font-size: 0.85em;
+            height: 32px;
+            box-sizing: border-box;
+            width: 100%;
         }
 
-        @media (max-width: 768px) {
-            .filter-row {
-                flex-direction: column;
-            }
-        }
+        /* Success Popup */
         .success-popup {
             display: none;
             position: fixed;
@@ -473,187 +410,245 @@
             border-radius: 5px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             z-index: 1000;
+            text-align: center;
         }
 
         .success-popup h2 {
             margin-top: 0;
+            color: #27ae60;
         }
 
         .success-popup-buttons {
             margin-top: 20px;
-            text-align: right;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
         }
 
-        .success-popup-buttons button {
-            margin-left: 10px;
+        /* Status message */
+        .status-message {
+            padding: 8px;
+            margin: 8px 0;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.9em;
         }
 
-        .overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 999;
+        .status-error {
+            background-color: #ffebee;
+            color: #c62828;
         }
-        /* Add this to your existing styles */
-    .btn-check {
-        background-color: #4CAF50;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s;
-    }
 
-    .btn-check:hover {
-        background-color: #45a049;
-    }
+        .status-success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 1400px) {
+            .form-row {
+                flex-wrap: wrap;
+            }
+            
+            .form-group {
+                flex: 1 1 calc(50% - 4px);
+            }
+            
+            .header-container {
+                flex-wrap: wrap;
+            }
+            
+            .logo-section, .user-info, .header-search-section, .logout-section {
+                flex: 1 1 100%;
+                margin-bottom: 5px;
+            }
+            
+            .filter-row {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 992px) {
+            .filter-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .filter-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .date-filter {
+                flex-direction: column;
+            }
+            
+            .footer {
+                flex-direction: column;
+            }
+            
+            .form-group {
+                flex: 1 1 100%;
+            }
+        }
     </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <div class="top-bar">
-                <div class="logo" style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden;">  
-                    {% if dealer.photo %}  
-                        <img src="{{ dealer.photo.url }}" alt="Dealer Photo" style="width: 100%; height: 100%; object-fit: cover">  
-                    {% else %}  
-                        
-                    {% endif %}  
-                </div> 
-                <div class="user-info"> 
-                    <p>Welcome {{ dealer.name }} ({{ dealer.city}} - {{ dealer.state}})</p>
-                    <p id="currentDateTime"></p>  
-                </div>  
-                <div class="search-bar">
+    <div class="container">
+        <!-- Header -->
+        <div class="header-container">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="{% static 'images/logo.jpg' %}" alt="Company Logo" style="width: 100%; height: 100%; object-fit: cover">                
+                </div>
+                <div>
+                    <p style="font-weight: bold;">Good Way</p>
+                    <p style="font-weight: bold;">Express</p>
+                </div>
+            </div>
+            
+            <div class="user-info">
+                <p>Welcome {{ dealer.name }} ({{ dealer.city }} - {{ dealer.state }})</p>
+                <p id="currentDateTime" style="margin-top: 2px; font-size: 0.8em;"></p>  
+            </div>
+            
+            <div class="header-search-section">
+                <div class="header-search-bar">
                     <input type="text" id="searchCNote" placeholder="Search CNote Number" />
                     <button id="searchButton">Search</button>
                 </div>
+            </div>
+            
+            <div class="logout-section">
                 <form action="{% url 'logout' %}" method="post" class="logout-button">
                     {% csrf_token %}
                     <button type="submit" id="logoutBtn">Logout</button>
                 </form>
             </div>
         </div>
-    </header>
 
-    <nav>
-       <!-- <ul>
-            <li>
-                <a href="#"><i class="fas fa-home"></i> Home</a>
-            </li>
-            <li>
-                <a href="#"><i class="fas fa-cogs"></i> Operations</a>
+        <!-- Navigation -->
+        <div class="nav-container">
+            <nav>
                 <ul>
                     <li>
-                        <a href="{% url 'dealer:create_cnotes' %}"> Booking</a>
+                        <a href="{% url 'dealer:create_cnotes' %}"><i class="fas fa-home"></i> Home</a>
                     </li>
                     <li>
-                        <a href="{% url 'dealer:loading_sheet' %}"> Loading Sheet</a>
+                        <a href="#"><i class="fas fa-cogs"></i> Operations</a>
+                        <ul>
+                            <li>
+                                <a href="{% url 'dealer:create_cnotes' %}"> Booking</a>
+                            </li>
+                            <li>
+                                <a href="{% url 'dealer:import_cnotes' %}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Bulk Booking</a>
+                            </li>
+                            <li>
+                                <a href="{% url 'dealer:loading_sheet' %}"target="_blank" rel="noopener noreferrer"> Loading Sheet</a>
+                            </li>
+                        </ul>
                     </li>
-                    <li>
-                        <a href="#">Operation 3</a>
-                    </li>
-                </ul>
-            </li>
-            <li>
-                <a href="{% url 'dealer:search' %}"><i class="fas fa-search"></i> Search</a>
-            </li>
-            <li>
-                <a href="{% url 'dealer:booking_register' %}"><i class="fas fa-chart-bar"></i> Report</a>
-                <ul>
-                    <li><a href="{% url 'dealer:booking_register' %}">Booking Register</a></li>
-                    <li><a href="#">Report 2</a></li>
-                    <li><a href="#">Report 3</a></li>
-                </ul>
-            </li>
-            <li>
-                <a href="#"><i class="fas fa-user"></i> Profile</a>
-                <ul>
-                    <li><a href="#">Edit Profile</a></li>
-                    <li><a href="#">Change Password</a></li>
-                    <li><a href="#">Logout</a></li>
-                </ul>
-            </li>
-            <li>
-                <a href="#"><i class="fas fa-tasks"></i> Masters</a>
-                <ul>
-                    <li><a href="#">Master 1</a></li>
-                    <li><a href="#">Master 2</a></li>
-                    <li><a href="#">Master 3</a></li>
-                </ul>
-            </li>
-            <li>
-                <a href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                <ul>
-                    <li><a href="#">Overview</a></li>
-                    <li><a href="#">Analytics</a></li>
-                    <li><a href="#">Reports</a></li>
-                </ul>
-            </li>
-        </ul>-->
-    </nav>
 
-    <div class="content">
-        <div class="search-section">
-            <div class="search-controls">
-                <div class="search-controls-row">
-                    <select id="select-destination">
-                        <option value="">Select Destination</option>
-                    </select>
-                </div>
-                <div class="search-controls-row">
-                    <div class="cnote-input-container">
-                        <input id="cnote-number" placeholder="CNote Number" type="text"/>
-                        <div id="message-popup" class="message-popup"></div>
+                    <li>
+                        <a href="#"><i class="fas fa-tools"></i> Master</a>
+                            <ul>
+                                <li>
+                                    <a href="{% url 'dealer:select_qr_printer' %}" target="_blank">QR Printer Setting</a>
+                                </li>
+                            </ul>
+                    </li>
+
+                    
+                    <li>
+                        <a href="{% url 'dealer:booking_register' %}"target="_blank" rel="noopener noreferrer"><i class="fas fa-chart-bar"></i> Report</a>
+                        <ul>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content">
+                <h2>Loading Sheet</h2>
+                
+                <div class="search-section">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="select-destination">Destination</label>
+                            <select id="select-destination">
+                                <option value="">Select Destination</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="cnote-number">CNote Number</label>
+                            <input id="cnote-number" placeholder="Enter CNote Number and press Enter" type="text"/>
+                        </div>
                     </div>
-                    <button onclick="searchData()">Search</button>
+                    
+                    <div class="date-filter">
+                        <div class="form-group">
+                            <label for="from-date">From Date</label>
+                            <input type="date" id="from-date">
+                        </div>
+                        <div class="form-group">
+                            <label for="to-date">To Date</label>
+                            <input type="date" id="to-date">
+                        </div>
+                        <div class="form-group date-filter-button">
+                            <button onclick="searchData()">Search</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="statusMessage" class="status-message" style="display: none;"></div>
+
+                <h2>Pending CNotes For Dispatch</h2>
+                <div class="table-container">
+                    <table id="main-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="select-all" onclick="toggleSelectAll(this)"></th>
+                                <th>SR</th>
+                                <th>Bkg/Unloading Date</th>
+                                <th>CNote Number</th>
+                                <th>Destination</th> 
+                                <th>Consignor</th>
+                                <th>Consignee</th>
+                                <th>Total Art</th>
+                                <th>Weight</th>
+                                <th>CNote Type</th>
+                                <th>Grand Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data will be populated here -->
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="7"><strong>Totals:</strong></td>
+                                <td id="total-art">0</td>
+                                <td id="total-weight">0</td>
+                                <td></td>
+                                <td id="total-amount">0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <div class="footer">
+                    <button id="check-loading-sheet-btn" onclick="checkLoadingSheet()">Check Loading Sheet</button>
+                    <button onclick="cancel()">Cancel</button>
+                    <button onclick="assignTransporters()">Assign Transporters</button>
                 </div>
             </div>
         </div>
-        <h2>Pending CNotes For Dispatch</h2>
-        <div class="table-container">
-            <table id="main-table">
-                <thead>
-                    <tr>
-                        <th><input type="checkbox" id="select-all" onclick="toggleSelectAll(this)"></th>
-                        <th>SR</th>
-                        <th>Bkg/Unloading Date</th>
-                        <th>CNote Number</th>
-                        <th>Destination</th> 
-                        <th>Consignor</th>
-                        <th>Consignee</th>
-                        <th>Total Art</th>
-                        <th>Weight</th>
-                        <th>CNote Type</th>
-                        <th>Grand Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Data will be populated here -->
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="7"><strong>Totals:</strong></td>
-                        <td id="total-art">0</td>
-                        <td id="total-weight">0</td>
-                        <td></td>
-                        <td id="total-amount">0</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-        <div class="footer">
-            <button id="check-loading-sheet-btn" onclick="checkLoadingSheet()">Check Loading Sheet</button>
-            <button onclick="cancel()">Cancel</button>
-            <button onclick="assignTransporters()">Assign Transporters</button>
-        </div>
     </div>
+
+    <!-- Popups -->
     <div class="overlay" id="overlay"></div>
+    
     <div class="popup" id="search-popup">
         <span class="close" onclick="closePopup('search-popup')">&times;</span>
         <h2>Search Results</h2>
@@ -695,27 +690,28 @@
             <button onclick="addSelectedData()">Add Selected</button>
         </div>
     </div>
+    
     <div class="popup" id="assign-transporter-popup">
         <span class="close" onclick="closePopup('assign-transporter-popup')">&times;</span>
         <h2>Assign Transporter</h2>
         <form id="pickup-request-form" method="POST" action="{% url 'dealer:send_pickup_request' %}">
             {% csrf_token %}
-            <select id="select-transporter" name="transporter_name" required>
-                <option value="">Select Transporter</option>
-                {% for transporter in transporters %}
-                    <option value="{{ transporter.name }}">{{ transporter.name }}</option>
-                {% endfor %}                
-            </select>
+            <div class="form-group">
+                <label for="select-transporter">Select Transporter</label>
+                <select id="select-transporter" name="transporter_name" required>
+                    <option value="">Select Transporter</option>
+                    {% for transporter in transporters %}
+                        <option value="{{ transporter.name }}">{{ transporter.name }}</option>
+                    {% endfor %}                
+                </select>
+            </div>
             <input type="hidden" name="cnote_ids" id="selected-cnote-ids">
-            <button type="submit">Send Pickup Request</button>
+            <div class="footer">
+                <button type="submit">Send Pickup Request</button>
+            </div>
         </form>
     </div>
-    <div class="sms-popup" id="sms-popup">
-        <p>Please select at least one CNote to assign a transporter.</p>
-        <button onclick="closeSmsPopup()">OK</button>
-    </div>
-
-    <div class="overlay" id="overlay"></div>
+    
     <div class="success-popup" id="success-popup">
         <h2>लोडिंग शीट सफलतापूर्वक जनरेट हो गई है</h2>
         <p>आपकी लोडिंग शीट नंबर <span id="loading-sheet-number"></span> चुने गए CNotes के साथ जनरेट हो गई है।</p>
@@ -733,17 +729,37 @@
             console.log("DOM fully loaded");
             fetchPendingCNotes();
             fetchTransporters();
-            // ✅ Ensure filter works when user types
+            
+            // Set default date range (last 7 days)
+            const today = new Date();
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(today.getDate() - 7);
+            
+            document.getElementById('from-date').valueAsDate = oneWeekAgo;
+            document.getElementById('to-date').valueAsDate = today;
+            
+            // Ensure filter works when user types
             document.querySelectorAll('.filter-row input').forEach(input => {
                 input.addEventListener('input', function() {
                     console.log("Filtering:", input.id, input.value);
                     filterPopupTable();
                 });
             });
+
+            // Add event listener for Enter key in CNote number field
+            document.getElementById('cnote-number').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addCNoteByNumber();
+                }
+            });
         });
 
         function fetchPendingCNotes() {
-            fetch('/dealer/api/fetch_pending_cnotes/')
+            const fromDate = document.getElementById('from-date').value;
+            const toDate = document.getElementById('to-date').value;
+            
+            fetch(`/dealer/api/fetch_pending_cnotes/?from_date=${fromDate}&to_date=${toDate}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
@@ -757,7 +773,7 @@
                 })
                 .catch(error => {
                     console.error('Error fetching CNotes:', error);
-                    showMessage('Error fetching data. Please try again.');
+                    showMessage('Error fetching data. Please try again.', 'error');
                 });
         }
 
@@ -787,7 +803,7 @@
                     <td>${item.delivery_destination__destination_name || ''}</td>
                     <td>${item.consignor_name}</td>
                     <td>${item.consignee_name}</td>
-                    <td>${item.total_articles}</td>  <!-- ✅ Corrected: Now using total_articles -->
+                    <td>${item.total_articles}</td>
                     <td>${item.actual_weight}</td>
                     <td>${item.payment_type}</td>
                     <td>${item.grand_total}</td>
@@ -802,11 +818,17 @@
         function searchData() {
             const destination = document.getElementById('select-destination').value;
             const cnoteNumber = document.getElementById('cnote-number').value;
+            const fromDate = document.getElementById('from-date').value;
+            const toDate = document.getElementById('to-date').value;
             
-
             const filteredData = data.filter(item => {
+                const itemDate = new Date(item.created_at).toISOString().split('T')[0];
+                const dateInRange = (!fromDate || itemDate >= fromDate) && 
+                                   (!toDate || itemDate <= toDate);
+                
                 return (!destination || item.delivery_destination__destination_name === destination) &&
                     (!cnoteNumber || item.cnote_number.includes(cnoteNumber)) &&
+                    dateInRange &&
                     !addedCNoteNumbers.has(item.cnote_number);
             });
 
@@ -843,11 +865,9 @@
                 );
             });
             
-
             renderTable('popup-table', filteredData);
             console.log("Filters applied:", filters);
             console.log("Filtered Data:", filteredData);
-
         }
 
         function showPopup(popupId) {
@@ -876,6 +896,56 @@
 
             renderTable('main-table', [...currentMainTableData, ...selectedItems]);
             closePopup('search-popup');
+        }
+
+        function addCNoteByNumber() {
+            const cnoteNumber = document.getElementById('cnote-number').value.trim();
+            
+            if (!cnoteNumber) {
+                showMessage('Please enter a CNote number', 'error');
+                return;
+            }
+            
+            // Find the CNote in the data
+            const cnote = data.find(item => 
+                item.cnote_number === cnoteNumber && 
+                !addedCNoteNumbers.has(item.cnote_number)
+            );
+            
+            if (cnote) {
+                // Add to the main table
+                addedCNoteNumbers.add(cnote.cnote_number);
+                
+                const currentMainTableData = Array.from(document.getElementById('main-table').getElementsByTagName('tbody')[0].rows)
+                    .map(row => data.find(item => item.cnote_number === row.cells[3].innerText));
+                
+                renderTable('main-table', [...currentMainTableData, cnote]);
+                
+                // Clear the input and show success message
+                document.getElementById('cnote-number').value = '';
+                showMessage('CNote successfully added to dispatch list', 'success');
+            } else {
+                // If not found, show error or open search popup
+                if (data.some(item => item.cnote_number === cnoteNumber)) {
+                    showMessage('This CNote is already added to the dispatch list', 'error');
+                } else {
+                    showMessage('CNote not found in pending list', 'error');
+                    // Optionally open the search popup
+                    searchData();
+                }
+            }
+        }
+
+        function showMessage(message, type) {
+            const statusElement = document.getElementById('statusMessage');
+            statusElement.textContent = message;
+            statusElement.className = `status-message status-${type}`;
+            statusElement.style.display = 'block';
+            
+            // Auto hide after 3 seconds
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 3000);
         }
 
         function updateTotals() {
@@ -911,7 +981,7 @@
         function assignTransporters() {
             const selectedCNotes = Array.from(document.querySelectorAll('#main-table input[type="checkbox"]:checked'));
             if (selectedCNotes.length === 0) {
-                showSmsPopup();
+                showMessage("Please select at least one CNote to assign a transporter.", 'error');
                 return;
             }
             const cnoteIds = selectedCNotes.map(checkbox => checkbox.getAttribute('data-sr')).filter(id => id); 
@@ -950,7 +1020,7 @@
             })
             .catch(error => {
                 console.error('Error generating PDF:', error);
-                showMessage('Failed to generate PDF. Please try again.');
+                showMessage('Failed to generate PDF. Please try again.', 'error');
             });
             closeSuccessPopup();
         }
@@ -1013,17 +1083,6 @@
         
         document.addEventListener('DOMContentLoaded', fetchTransporters);
         
-        function showSmsPopup() {
-            const smsPopup = document.getElementById('sms-popup');
-            smsPopup.style.display = 'block';
-            document.getElementById('overlay').style.display = 'block';
-        }
-
-        function closeSmsPopup() {
-            document.getElementById('sms-popup').style.display = 'none';
-            document.getElementById('overlay').style.display = 'none';
-        }
-
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('pickup-request-form');
             form.addEventListener('submit', function(event) {
@@ -1053,12 +1112,12 @@
                 });
 
             if (selectedCNotes.length === 0) {
-                alert('Please select at least one CNote.');
+                showMessage('Please select at least one CNote.', 'error');
                 return;
             }
 
             if (!transporterName) {
-                alert('Please select a transporter.');
+                showMessage('Please select a transporter.', 'error');
                 return;
             }
 
@@ -1079,7 +1138,6 @@
             })
             .then(response => {
                 if (response.redirected) {
-                    // First update the UI
                     closePopup('assign-transporter-popup');
                     
                     // Remove selected rows
@@ -1093,7 +1151,7 @@
                     updateTotals();
                     fetchPendingCNotes();
 
-                    // Then open the new window
+                    // Open the new window
                     window.open(response.url, '_blank');
                     return { success: true };
                 }
@@ -1112,7 +1170,7 @@
                     
                     closePopup('assign-transporter-popup');
                     
-                    // Only try to remove rows if they exist
+                    // Remove rows
                     selectedCNotes.forEach(cnote => {
                         const row = document.querySelector(`#main-table tr td input[data-sr="${cnote.id}"]`);
                         if (row && row.closest('tr')) {
@@ -1131,7 +1189,7 @@
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while sending the pickup request: ' + error.message);
+                showMessage('An error occurred while sending the pickup request: ' + error.message, 'error');
             });
         }
 
@@ -1159,15 +1217,7 @@
             addedCNoteNumbers.clear();
             document.getElementById('select-destination').value = '';
             document.getElementById('cnote-number').value = '';
-        }
-
-        function showMessage(message) {
-            const messagePopup = document.getElementById('message-popup');
-            messagePopup.textContent = message;
-            messagePopup.style.display = 'block';
-            setTimeout(() => {
-                messagePopup.style.display = 'none';
-            }, 3000);
+            showMessage('Selection cleared', 'success');
         }
 
         function updateDateTime() {
@@ -1187,85 +1237,6 @@
         setInterval(updateDateTime, 1000);
         updateDateTime();
 
-        function cancelLoadingSheet() {
-            const loadingSheetId = getCurrentLoadingSheetId(); 
-            if (confirm('Are you sure you want to cancel this loading sheet? This action cannot be undone.')) {
-                fetch(`/dealer/api/cancel_loading_sheet/${loadingSheetId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken'),
-                        'Content-Type': 'application/json',
-                    },
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Loading sheet cancelled successfully. CNotes have been reverted to their previous state.');
-                        location.reload(); 
-                    } else {
-                        alert('Error cancelling loading sheet: ' + data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while cancelling the loading sheet.');
-                });
-            }
-        }
-
-        function getCurrentLoadingSheetId() {
-            return document.getElementById('current-loading-sheet-id').value;
-        }
-
-        document.getElementById('contactSupport').addEventListener('click', function(e) {
-            e.preventDefault();
-            alert('Please contact support at support@example.com or call 1-800-SUPPORT');
-        });
-
-        document.getElementById('searchButton').addEventListener('click', function() {
-            const searchTerm = document.getElementById('searchCNote').value;
-            console.log('Searching for:', searchTerm);
-        });
-
-        window.addEventListener('message', function(event) {
-            if (event.data === 'reloadLoadingSheet') {
-                location.reload();
-            }
-        });
-        
-        document.addEventListener("DOMContentLoaded", function () {
-            let checkButton = document.getElementById("check-loading-sheet-btn");
-        
-            if (!checkButton) {
-                console.error("❌ Button not found! Check if the ID 'check-loading-sheet-btn' exists in the HTML.");
-                return;
-            }
-        
-            checkButton.addEventListener("click", function () {
-                console.log("✅ Button clicked!");
-        
-                // Get all checked checkboxes from the main table
-                const selectedCheckboxes = document.querySelectorAll('#main-table tbody input[type="checkbox"]:checked');
-                
-                if (selectedCheckboxes.length === 0) {
-                    alert("❌ Please select at least one CNote!");
-                    return;
-                }
-                
-                // Extract the CNote IDs from the data-sr attribute
-                const selectedCNoteIds = Array.from(selectedCheckboxes).map(checkbox => checkbox.getAttribute('data-sr'));
-                console.log("🔍 Selected CNotes:", selectedCNoteIds);
-                
-                // Generate the query string
-                const queryString = selectedCNoteIds.map(id => `selected_cnotes=${id}`).join("&");
-                const url = `/dealer/check-loading-sheet/?${queryString}`;
-                
-                console.log("🔍 Redirecting to URL:", url);
-                
-                // Open in a new tab or redirect to the URL
-                window.open(url, '_blank');
-            });
-        });     
         function checkLoadingSheet() {
             console.log("✅ Check Loading Sheet button clicked!");
             
@@ -1273,7 +1244,7 @@
             const selectedCheckboxes = document.querySelectorAll('#main-table tbody input[type="checkbox"]:checked');
             
             if (selectedCheckboxes.length === 0) {
-                alert("❌ Please select at least one CNote!");
+                showMessage("❌ Please select at least one CNote!", 'error');
                 return;
             }
             
@@ -1289,12 +1260,15 @@
             
             // Open in a new tab
             window.open(url, '_blank');
-        }   
-                
-        
-        
+        }
+
+        // Search functionality for header search bar
+        document.getElementById('searchButton').addEventListener('click', function() {
+            const searchTerm = document.getElementById('searchCNote').value;
+            if (searchTerm) {
+                window.location.href = `/dealer/view-cnote/${encodeURIComponent(searchTerm)}/`;
+            }
+        });
     </script>
-    <input type="hidden" id="current-loading-sheet-id" value="123">
 </body>
 </html>
-
