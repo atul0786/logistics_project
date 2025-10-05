@@ -373,6 +373,7 @@
         .status-dispatched { background-color: #3498db; color: #fff; }
         .status-received { background-color: #2ecc71; color: #fff; }
         .status-cancelled { background-color: #e74c3c; color: #fff; }
+        .status-booking { background-color: #f39c12; color: #fff; }
 
         /* Pagination */
         .pagination {
@@ -482,6 +483,14 @@
             font-weight: bold;
         }
 
+        /* Success message */
+        .success-message {
+            color: #2ecc71;
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+        }
+
         /* Modal Styles */
         .modal {
             display: none;
@@ -567,6 +576,21 @@
             color: white;
         }
 
+        .btn-edit {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .btn-cancel {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
         .detail-table {
             width: 100%;
             border-collapse: collapse;
@@ -593,6 +617,145 @@
             margin-bottom: 10px;
             padding-bottom: 5px;
             border-bottom: 2px solid #3498db;
+        }
+
+        /* Action buttons */
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .action-btn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75em;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .view-btn { background: #3498db; color: white; }
+        .edit-btn { background: #f39c12; color: white; }
+        .cancel-btn { background: #e74c3c; color: white; }
+
+        /* Edit Modal Styles */
+        .cn-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        .cn-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cn-item:last-child {
+            border-bottom: none;
+        }
+
+        .cn-info {
+            flex: 1;
+        }
+
+        .cn-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .remove-cn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        .add-cn-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .add-cn-form {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group select {
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        .add-cn-btn {
+            background: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        /* Confirmation Modal */
+        .confirmation-modal {
+            max-width: 500px;
+        }
+
+        .confirmation-text {
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            text-align: center;
+        }
+
+        .confirmation-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .btn-confirm {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        .btn-cancel-confirm {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
         }
     </style>
 </head>
@@ -708,6 +871,7 @@
                         <option value="dispatched">Dispatched</option>
                         <option value="received">Received</option>
                         <option value="cancelled">Cancelled</option>
+                        <option value="booking">Booking</option>
                     </select>
                 </div>
                 <div class="filter-item">
@@ -805,6 +969,52 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal for Edit Loading Sheet -->
+        <div id="editLoadingSheetModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                
+                <div class="modal-header">
+                    <h2 class="modal-title">Edit Loading Sheet</h2>
+                </div>
+                
+                <div class="modal-body" id="editModalBody">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="modal-btn btn-save" id="saveEditBtn">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                    <button class="modal-btn btn-cancel" id="cancelEditBtn">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal for Cancel Confirmation -->
+        <div id="cancelConfirmationModal" class="modal">
+            <div class="modal-content confirmation-modal">
+                <div class="modal-header">
+                    <h2 class="modal-title">Cancel Loading Sheet</h2>
+                </div>
+                
+                <div class="modal-body">
+                    <p class="confirmation-text">Are you sure you want to cancel this loading sheet? All consignment notes will be moved back to booking status.</p>
+                </div>
+                
+                <div class="modal-footer confirmation-buttons">
+                    <button class="btn-confirm" id="confirmCancelBtn">
+                        <i class="fas fa-check"></i> Yes, Cancel
+                    </button>
+                    <button class="btn-cancel-confirm" id="cancelConfirmBtn">
+                        <i class="fas fa-times"></i> No, Keep It
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -814,6 +1024,8 @@
         let filteredData = [];
         let allData = [];
         let currentLoadingSheetId = null;
+        let currentLoadingSheetData = null;
+        let availableCNs = [];
 
         document.addEventListener("DOMContentLoaded", function() {
             // Update current date and time
@@ -877,8 +1089,12 @@
             });
             
             // Modal events
-            document.querySelector('.close-modal').addEventListener('click', function() {
-                document.getElementById('loadingSheetModal').style.display = 'none';
+            document.querySelectorAll('.close-modal').forEach(closeBtn => {
+                closeBtn.addEventListener('click', function() {
+                    document.getElementById('loadingSheetModal').style.display = 'none';
+                    document.getElementById('editLoadingSheetModal').style.display = 'none';
+                    document.getElementById('cancelConfirmationModal').style.display = 'none';
+                });
             });
             
             document.getElementById('modalPrintBtn').addEventListener('click', function() {
@@ -893,12 +1109,26 @@
                 }
             });
             
+            // Edit modal events
+            document.getElementById('saveEditBtn').addEventListener('click', saveLoadingSheetChanges);
+            document.getElementById('cancelEditBtn').addEventListener('click', function() {
+                document.getElementById('editLoadingSheetModal').style.display = 'none';
+            });
+            
+            // Cancel confirmation events
+            document.getElementById('confirmCancelBtn').addEventListener('click', confirmCancelLoadingSheet);
+            document.getElementById('cancelConfirmBtn').addEventListener('click', function() {
+                document.getElementById('cancelConfirmationModal').style.display = 'none';
+            });
+            
             // Close modal when clicking outside
             window.addEventListener('click', function(event) {
-                const modal = document.getElementById('loadingSheetModal');
-                if (event.target === modal) {
-                    modal.style.display = 'none';
-                }
+                const modals = document.querySelectorAll('.modal');
+                modals.forEach(modal => {
+                    if (event.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
             });
         });
 
@@ -1047,6 +1277,10 @@
                     const item = filteredData[i];
                     const row = document.createElement('tr');
                     
+                    // Determine if edit and cancel buttons should be enabled
+                    const canEdit = item.status === 'dispatched' || item.status === 'booking';
+                    const canCancel = item.status === 'dispatched' || item.status === 'booking';
+                    
                     row.innerHTML = `
                         <td>${item.ls_number || '-'}</td>
                         <td>${formatDate(item.created_at)}</td>
@@ -1060,9 +1294,17 @@
                         <td>₹${(item.total_foc_amount || 0).toFixed(2)}</td>
                         <td><span class="status-indicator status-${item.status}">${capitalizeFirstLetter(item.status)}</span></td>
                         <td>
-                            <button class="view-btn" data-id="${item.ls_number}" style="padding: 4px 8px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                                <i class="fas fa-eye"></i> View
-                            </button>
+                            <div class="action-buttons">
+                                <button class="action-btn view-btn" data-id="${item.ls_number}" title="View Details">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                <button class="action-btn edit-btn" data-id="${item.ls_number}" ${!canEdit ? 'disabled' : ''} title="Edit Loading Sheet">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="action-btn cancel-btn" data-id="${item.ls_number}" ${!canCancel ? 'disabled' : ''} title="Cancel Loading Sheet">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            </div>
                         </td>
                     `;
                     
@@ -1073,12 +1315,30 @@
             // Update pagination controls
             updatePagination();
             
-            // Add event listeners to view buttons
+            // Add event listeners to action buttons
             document.querySelectorAll('.view-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const id = this.getAttribute('data-id');
                     viewLoadingSheet(id);
                 });
+            });
+            
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                if (!btn.disabled) {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        editLoadingSheet(id);
+                    });
+                }
+            });
+            
+            document.querySelectorAll('.cancel-btn').forEach(btn => {
+                if (!btn.disabled) {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        showCancelConfirmation(id);
+                    });
+                }
             });
         }
 
@@ -1305,6 +1565,353 @@
             }
             
             modalBody.innerHTML = html;
+        }
+
+        // Function to edit loading sheet
+        function editLoadingSheet(id) {
+            currentLoadingSheetId = id;
+            
+            // Show loading in modal
+            document.getElementById('editModalBody').innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                </div>
+            `;
+            
+            // Show the modal
+            document.getElementById('editLoadingSheetModal').style.display = 'block';
+            
+            // Fetch loading sheet details and available CNs
+            Promise.all([
+                fetch(`/transporter/api/loading-sheet-details/${id}/`).then(res => res.json()),
+                fetch(`/transporter/api/available-cns/?dealer_id=${getDealerIdFromLS(id)}`).then(res => res.json())
+            ])
+            .then(([lsData, cnData]) => {
+                if (lsData.error) {
+                    throw new Error(lsData.error);
+                }
+                
+                currentLoadingSheetData = lsData;
+                availableCNs = cnData.available_cns || [];
+                
+                // Populate edit modal
+                populateEditModal(lsData, cnData.available_cns || []);
+            })
+            .catch(error => {
+                console.error('Error fetching data for edit:', error);
+                document.getElementById('editModalBody').innerHTML = `
+                    <div class="error-message">
+                        Error loading data: ${error.message}
+                    </div>
+                `;
+            });
+        }
+        
+        // Helper function to get dealer ID from loading sheet
+        function getDealerIdFromLS(lsId) {
+            const ls = allData.find(item => item.ls_number == lsId);
+            return ls ? ls.dealer_id : '';
+        }
+        
+        // Function to populate edit modal
+        function populateEditModal(lsData, availableCNs) {
+            const editModalBody = document.getElementById('editModalBody');
+            
+            let html = `
+                <div class="detail-section">
+                    <h3>Loading Sheet Information</h3>
+                    <table class="detail-table">
+                        <tr>
+                            <th>Loading Sheet Number</th>
+                            <td>${lsData.ls_number || currentLoadingSheetId || '-'}</td>
+                            <th>Date</th>
+                            <td>${formatDate(lsData.created_at) || '-'}</td>
+                        </tr>
+                        <tr>
+                            <th>Dealer</th>
+                            <td>${lsData.dealer_name || '-'}</td>
+                            <th>Transporter</th>
+                            <td>${lsData.transporter_name || '-'}</td>
+                        </tr>
+                        <tr>
+                            <th>Status</th>
+                            <td colspan="3"><span class="status-indicator status-${lsData.status}">${capitalizeFirstLetter(lsData.status)}</span></td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="detail-section">
+                    <h3>Consignment Notes in Loading Sheet</h3>
+                    <div class="cn-list" id="currentCNList">
+            `;
+            
+            if (lsData.consignment_notes && lsData.consignment_notes.length > 0) {
+                lsData.consignment_notes.forEach(cn => {
+                    html += `
+                        <div class="cn-item" data-cn-id="${cn.cn_number}">
+                            <div class="cn-info">
+                                <strong>${cn.cn_number}</strong> - ${cn.destination || 'N/A'} - ${cn.consignee || 'N/A'} 
+                                (Pieces: ${cn.pieces || 0}, Weight: ${cn.weight || 0}, Amount: ₹${(cn.amount || 0).toFixed(2)})
+                            </div>
+                            <div class="cn-actions">
+                                <button class="remove-cn" data-cn-id="${cn.cn_number}">
+                                    <i class="fas fa-trash"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += `<p>No consignment notes in this loading sheet.</p>`;
+            }
+            
+            html += `
+                    </div>
+                </div>
+                
+                <div class="add-cn-section">
+                    <h3>Add Consignment Notes</h3>
+                    <div class="add-cn-form">
+                        <div class="form-group">
+                            <label for="availableCNs">Available CNs</label>
+                            <select id="availableCNs">
+                                <option value="">Select a CN to add</option>
+            `;
+            
+            if (availableCNs.length > 0) {
+                availableCNs.forEach(cn => {
+                    html += `<option value="${cn.cn_number}">${cn.cn_number} - ${cn.destination} - ${cn.consignee}</option>`;
+                });
+            }
+            
+            html += `
+                            </select>
+                        </div>
+                        <button class="add-cn-btn" id="addCNBtn">
+                            <i class="fas fa-plus"></i> Add CN
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            editModalBody.innerHTML = html;
+            
+            // Add event listeners for remove buttons
+            document.querySelectorAll('.remove-cn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const cnId = this.getAttribute('data-cn-id');
+                    removeCNFromLS(cnId);
+                });
+            });
+            
+            // Add event listener for add button
+            document.getElementById('addCNBtn').addEventListener('click', function() {
+                const cnSelect = document.getElementById('availableCNs');
+                const selectedCN = cnSelect.value;
+                
+                if (selectedCN) {
+                    addCNToLS(selectedCN);
+                    cnSelect.value = '';
+                }
+            });
+        }
+        
+        // Function to remove CN from loading sheet
+        function removeCNFromLS(cnId) {
+            // Find the CN in current loading sheet data
+            const cnIndex = currentLoadingSheetData.consignment_notes.findIndex(cn => cn.cn_number == cnId);
+            
+            if (cnIndex !== -1) {
+                // Remove from current data
+                const removedCN = currentLoadingSheetData.consignment_notes.splice(cnIndex, 1)[0];
+                
+                // Add to available CNs
+                availableCNs.push(removedCN);
+                
+                // Update the UI
+                populateEditModal(currentLoadingSheetData, availableCNs);
+                
+                // Show success message
+                showTempMessage('CN removed successfully. Changes will be saved when you click "Save Changes".', 'success');
+            }
+        }
+        
+        // Function to add CN to loading sheet
+        function addCNToLS(cnId) {
+            // Find the CN in available CNs
+            const cnIndex = availableCNs.findIndex(cn => cn.cn_number == cnId);
+            
+            if (cnIndex !== -1) {
+                // Remove from available CNs
+                const addedCN = availableCNs.splice(cnIndex, 1)[0];
+                
+                // Add to current loading sheet data
+                if (!currentLoadingSheetData.consignment_notes) {
+                    currentLoadingSheetData.consignment_notes = [];
+                }
+                currentLoadingSheetData.consignment_notes.push(addedCN);
+                
+                // Update the UI
+                populateEditModal(currentLoadingSheetData, availableCNs);
+                
+                // Show success message
+                showTempMessage('CN added successfully. Changes will be saved when you click "Save Changes".', 'success');
+            }
+        }
+        
+        // Function to save loading sheet changes
+        function saveLoadingSheetChanges() {
+            // Show loading
+            document.getElementById('editModalBody').innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Saving changes...</p>
+                </div>
+            `;
+            
+            // Prepare data for API
+            const cnNumbers = currentLoadingSheetData.consignment_notes.map(cn => cn.cn_number);
+            
+            // Send update request to backend
+            fetch(`/transporter/api/loading-sheet-details/${currentLoadingSheetId}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({
+                    cn_numbers: cnNumbers
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || `Server error: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Show success message
+                document.getElementById('editModalBody').innerHTML = `
+                    <div class="success-message">
+                        <i class="fas fa-check-circle"></i> Loading sheet updated successfully!
+                    </div>
+                `;
+                
+                // Refresh the table after a short delay
+                setTimeout(() => {
+                    document.getElementById('editLoadingSheetModal').style.display = 'none';
+                    fetchLoadingSheets();
+                }, 1500);
+            })
+            .catch(error => {
+                console.error('Error updating loading sheet:', error);
+                document.getElementById('editModalBody').innerHTML = `
+                    <div class="error-message">
+                        Error updating loading sheet: ${error.message}
+                    </div>
+                `;
+            });
+        }
+        
+        // Function to show cancel confirmation
+        function showCancelConfirmation(id) {
+            currentLoadingSheetId = id;
+            document.getElementById('cancelConfirmationModal').style.display = 'block';
+        }
+        
+        // Function to confirm cancellation
+        function confirmCancelLoadingSheet() {
+            // Show loading in confirmation modal
+            document.getElementById('cancelConfirmationModal').querySelector('.confirmation-text').innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Cancelling loading sheet...</p>
+                </div>
+            `;
+            
+            // Send cancel request to backend
+            fetch(`/transporter/api/loading-sheet-details/${currentLoadingSheetId}/cancel/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || `Server error: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Show success message
+                document.getElementById('cancelConfirmationModal').querySelector('.confirmation-text').innerHTML = `
+                    <div class="success-message">
+                        <i class="fas fa-check-circle"></i> Loading sheet cancelled successfully!
+                    </div>
+                `;
+                
+                // Close modal and refresh table after a short delay
+                setTimeout(() => {
+                    document.getElementById('cancelConfirmationModal').style.display = 'none';
+                    fetchLoadingSheets();
+                }, 1500);
+            })
+            .catch(error => {
+                console.error('Error cancelling loading sheet:', error);
+                document.getElementById('cancelConfirmationModal').querySelector('.confirmation-text').innerHTML = `
+                    <div class="error-message">
+                        Error cancelling loading sheet: ${error.message}
+                    </div>
+                `;
+            });
+        }
+        
+        // Helper function to get CSRF token
+        function getCSRFToken() {
+            const name = 'csrftoken';
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Helper function to show temporary message
+        function showTempMessage(message, type) {
+            const messageEl = document.createElement('div');
+            messageEl.className = type === 'success' ? 'success-message' : 'error-message';
+            messageEl.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}`;
+            messageEl.style.marginTop = '10px';
+            
+            const editModalBody = document.getElementById('editModalBody');
+            editModalBody.appendChild(messageEl);
+            
+            // Remove message after 3 seconds
+            setTimeout(() => {
+                if (messageEl.parentNode) {
+                    messageEl.parentNode.removeChild(messageEl);
+                }
+            }, 3000);
         }
 
         // Function to export data
