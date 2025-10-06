@@ -1,7 +1,8 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    {% load static %}
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loading Sheet - Good Way Express</title>
@@ -223,55 +224,164 @@
             font-size: 1.1em;
         }
 
-        /* Form Elements - FIXED SIZE AND LAYOUT */
+        /* Compact form controls */
         .form-row {
             display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
-            flex-wrap: wrap;
+            gap: 8px;   
+            margin-bottom: 0;
+            align-items: flex-end;
+            flex-wrap: nowrap;
         }
 
         .form-group {
-            flex: 1;
-            min-width: 180px;
+            flex: 0 0 180px;
+            min-width: 140px;
         }
 
         label {
             display: block;
-            margin-bottom: 2px;
-            font-weight: bold;
-            font-size: 0.8em;
+            margin-bottom: 4px;
+            font-weight: 600;
+            font-size: 0.74em;
             color: #34495e;
         }
 
         input, select {
             width: 100%;
-            padding: 6px;
+            padding: 6px 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            font-size: 0.85em;
-            background-color: #f9f9f9;
-            height: 32px;
+            font-size: 0.82em;
+            height: 34px;
             box-sizing: border-box;
         }
 
-        /* Date filter row - FIXED TO BE COMPACT AND IN ONE ROW */
+        /* Date filter row */
         .date-filter {
             display: flex;
             gap: 8px;
-            margin-bottom: 8px;
+            margin-bottom: 0;
             align-items: flex-end;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
         }
 
         .date-filter .form-group {
-            flex: 1;
-            min-width: 150px;
+            flex: 0 0 150px;
+            min-width: 120px;
         }
 
         .date-filter-button {
             flex: 0 0 auto;
-            margin-bottom: 2px;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .date-filter-button button, .header-search-bar button, button {
+            height: 34px;
+            padding: 6px 10px;
+            font-size: 0.82em;
+        }
+
+        /* Updated search section layout */
+        .search-section {
+            background-color: white;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 8px;
+
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-wrap: nowrap;
+            overflow: hidden;
+        }
+
+        /* Destination checkbox styles */
+        .destination-checkbox-group {
+            flex: 0 0 250px;
+            min-width: 200px;
+        }
+
+        .destination-checkboxes {
+            max-height: 120px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 6px;
+            background-color: #f9f9f9;
+            font-size: 0.8em;
+        }
+
+        .destination-checkbox {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .destination-checkbox input {
+            width: auto;
+            height: auto;
+            margin-right: 6px;
+        }
+
+        .destination-checkbox label {
+            margin-bottom: 0;
+            font-weight: normal;
+            cursor: pointer;
+        }
+
+        /* CNote number group */
+        .cnote-group {
+            flex: 0 0 250px;
+            min-width: 200px;
+        }
+
+        /* Date and search group */
+        .date-search-group {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            flex: 1;
+        }
+
+        .date-search-group .form-group {
+            flex: 0 0 150px;
+        }
+
+        .search-button-group {
+            flex: 0 0 auto;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1400px) {
+            .search-section {
+                flex-wrap: wrap;
+            }
+            
+            .destination-checkbox-group, .cnote-group, .date-search-group {
+                flex: 1 1 100%;
+                margin-bottom: 8px;
+            }
+            
+            .date-search-group {
+                flex-wrap: wrap;
+            }
+            
+            .date-search-group .form-group {
+                flex: 1 1 calc(50% - 8px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .date-search-group {
+                flex-direction: column;
+            }
+            
+            .date-search-group .form-group {
+                flex: 1 1 100%;
+            }
         }
 
         /* Table Styles */
@@ -380,7 +490,7 @@
             color: #333;
         }
 
-        /* Filter row in popup - FIXED SIZE AND LAYOUT */
+        /* Filter row in popup */
         .filter-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -492,14 +602,23 @@
             }
         }
     </style>
-</head>
+
+            <link rel="manifest" href="/static/manifest.json">
+            <script>
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register("/service-worker.js")
+                    .then(() => console.log("Service Worker Registered!"))
+                    .catch(err => console.log("Service Worker Failed", err));
+                }
+            </script>
+            </head>
 <body>
     <div class="container">
         <!-- Header -->
         <div class="header-container">
             <div class="logo-section">
                 <div class="logo">
-                    <img src="{% static 'images/logo.jpg' %}" alt="Company Logo" style="width: 100%; height: 100%; object-fit: cover">                
+                    <img src="/static/images/logo.jpg" alt="Company Logo" style="width: 100%; height: 100%; object-fit: cover">                
                 </div>
                 <div>
                     <p style="font-weight: bold;">Good Way</p>
@@ -508,7 +627,7 @@
             </div>
             
             <div class="user-info">
-                <p>Welcome {{ dealer.name }} ({{ dealer.city }} - {{ dealer.state }})</p>
+                <p>Welcome AMIT (MUMBAI - MAHARASHTRA)</p>
                 <p id="currentDateTime" style="margin-top: 2px; font-size: 0.8em;"></p>  
             </div>
             
@@ -520,8 +639,8 @@
             </div>
             
             <div class="logout-section">
-                <form action="{% url 'logout' %}" method="post" class="logout-button">
-                    {% csrf_token %}
+                <form action="/logout/" method="post" class="logout-button">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="6EUceRUw7jk0KsRyMPyzsEEumQqcdX9Ev5AQfp3J1a6GG8QtNuNzeQuHaXwaNAUo">
                     <button type="submit" id="logoutBtn">Logout</button>
                 </form>
             </div>
@@ -532,19 +651,19 @@
             <nav>
                 <ul>
                     <li>
-                        <a href="{% url 'dealer:create_cnotes' %}"><i class="fas fa-home"></i> Home</a>
+                        <a href="/dealer/create_cnotes/"><i class="fas fa-home"></i> Home</a>
                     </li>
                     <li>
                         <a href="#"><i class="fas fa-cogs"></i> Operations</a>
                         <ul>
                             <li>
-                                <a href="{% url 'dealer:create_cnotes' %}"> Booking</a>
+                                <a href="/dealer/create_cnotes/"> Booking</a>
                             </li>
                             <li>
-                                <a href="{% url 'dealer:import_cnotes' %}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Bulk Booking</a>
+                                <a href="/dealer/import-cnotes/" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Bulk Booking</a>
                             </li>
                             <li>
-                                <a href="{% url 'dealer:loading_sheet' %}"target="_blank" rel="noopener noreferrer"> Loading Sheet</a>
+                                <a href="/dealer/loading_sheet/"target="_blank" rel="noopener noreferrer"> Loading Sheet</a>
                             </li>
                         </ul>
                     </li>
@@ -553,14 +672,14 @@
                         <a href="#"><i class="fas fa-tools"></i> Master</a>
                             <ul>
                                 <li>
-                                    <a href="{% url 'dealer:select_qr_printer' %}" target="_blank">QR Printer Setting</a>
+                                    <a href="/dealer/qr-printer-setting/" target="_blank">QR Printer Setting</a>
                                 </li>
                             </ul>
                     </li>
 
                     
                     <li>
-                        <a href="{% url 'dealer:booking_register' %}"target="_blank" rel="noopener noreferrer"><i class="fas fa-chart-bar"></i> Report</a>
+                        <a href="/dealer/booking_register/"target="_blank" rel="noopener noreferrer"><i class="fas fa-chart-bar"></i> Report</a>
                         <ul>
                         </ul>
                     </li>
@@ -574,20 +693,19 @@
                 <h2>Loading Sheet</h2>
                 
                 <div class="search-section">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="select-destination">Destination</label>
-                            <select id="select-destination">
-                                <option value="">Select Destination</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="cnote-number">CNote Number</label>
-                            <input id="cnote-number" placeholder="Enter CNote Number and press Enter" type="text"/>
+                    <div class="destination-checkbox-group">
+                        <label>Select Destination</label>
+                        <div class="destination-checkboxes" id="destination-checkboxes">
+                            <!-- Destination checkboxes will be populated here -->
                         </div>
                     </div>
                     
-                    <div class="date-filter">
+                    <div class="cnote-group">
+                        <label for="cnote-number">CNote Number</label>
+                        <input id="cnote-number" placeholder="Enter CNote Number and press Enter" type="text"/>
+                    </div>
+                    
+                    <div class="date-search-group">
                         <div class="form-group">
                             <label for="from-date">From Date</label>
                             <input type="date" id="from-date">
@@ -596,7 +714,7 @@
                             <label for="to-date">To Date</label>
                             <input type="date" id="to-date">
                         </div>
-                        <div class="form-group date-filter-button">
+                        <div class="form-group search-button-group">
                             <button onclick="searchData()">Search</button>
                         </div>
                     </div>
@@ -694,15 +812,17 @@
     <div class="popup" id="assign-transporter-popup">
         <span class="close" onclick="closePopup('assign-transporter-popup')">&times;</span>
         <h2>Assign Transporter</h2>
-        <form id="pickup-request-form" method="POST" action="{% url 'dealer:send_pickup_request' %}">
-            {% csrf_token %}
+        <form id="pickup-request-form" method="POST" action="/dealer/send-pickup-request/">
+            <input type="hidden" name="csrfmiddlewaretoken" value="6EUceRUw7jk0KsRyMPyzsEEumQqcdX9Ev5AQfp3J1a6GG8QtNuNzeQuHaXwaNAUo">
             <div class="form-group">
                 <label for="select-transporter">Select Transporter</label>
                 <select id="select-transporter" name="transporter_name" required>
                     <option value="">Select Transporter</option>
-                    {% for transporter in transporters %}
-                        <option value="{{ transporter.name }}">{{ transporter.name }}</option>
-                    {% endfor %}                
+                    
+                        <option value="ATUL">ATUL</option>
+                    
+                        <option value="GOOD WAY EXPRESS">GOOD WAY EXPRESS</option>
+                                    
                 </select>
             </div>
             <input type="hidden" name="cnote_ids" id="selected-cnote-ids">
@@ -769,7 +889,7 @@
                 .then(cnotes => {
                     console.log('Fetched data:', cnotes);
                     data = cnotes;
-                    populateDestinationOptions();
+                    populateDestinationCheckboxes();
                 })
                 .catch(error => {
                     console.error('Error fetching CNotes:', error);
@@ -777,17 +897,35 @@
                 });
         }
 
-        function populateDestinationOptions() {
-            const selectDestination = document.getElementById('select-destination');
+        function populateDestinationCheckboxes() {
+            const container = document.getElementById('destination-checkboxes');
             const destinations = [...new Set(data.map(item => item.delivery_destination__destination_name))].filter(Boolean);
-            selectDestination.innerHTML = `<option value="">Select Destination</option>`;
+            container.innerHTML = '';
+            
             destinations.forEach(destination => {
-                const option = document.createElement('option');
-                option.value = destination;
-                option.textContent = destination;
-                selectDestination.appendChild(option);
+                const checkboxDiv = document.createElement('div');
+                checkboxDiv.className = 'destination-checkbox';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `dest-${destination}`;
+                checkbox.value = destination;
+                
+                const label = document.createElement('label');
+                label.htmlFor = `dest-${destination}`;
+                label.textContent = destination;
+                
+                checkboxDiv.appendChild(checkbox);
+                checkboxDiv.appendChild(label);
+                container.appendChild(checkboxDiv);
             });
-            console.log('Populated destinations:', destinations);
+            
+            console.log('Populated destination checkboxes:', destinations);
+        }
+
+        function getSelectedDestinations() {
+            const checkboxes = document.querySelectorAll('#destination-checkboxes input[type="checkbox"]:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
         }
 
         function renderTable(tableId, cnotes) {
@@ -816,7 +954,7 @@
         }
 
         function searchData() {
-            const destination = document.getElementById('select-destination').value;
+            const selectedDestinations = getSelectedDestinations();
             const cnoteNumber = document.getElementById('cnote-number').value;
             const fromDate = document.getElementById('from-date').value;
             const toDate = document.getElementById('to-date').value;
@@ -826,7 +964,10 @@
                 const dateInRange = (!fromDate || itemDate >= fromDate) && 
                                    (!toDate || itemDate <= toDate);
                 
-                return (!destination || item.delivery_destination__destination_name === destination) &&
+                const destinationMatch = selectedDestinations.length === 0 || 
+                                       selectedDestinations.includes(item.delivery_destination__destination_name);
+                
+                return destinationMatch &&
                     (!cnoteNumber || item.cnote_number.includes(cnoteNumber)) &&
                     dateInRange &&
                     !addedCNoteNumbers.has(item.cnote_number);
@@ -1215,7 +1356,12 @@
             document.getElementById('total-weight').innerText = '0';
             document.getElementById('total-amount').innerText = '0';
             addedCNoteNumbers.clear();
-            document.getElementById('select-destination').value = '';
+            
+            // Clear destination checkboxes
+            document.querySelectorAll('#destination-checkboxes input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+            
             document.getElementById('cnote-number').value = '';
             showMessage('Selection cleared', 'success');
         }
