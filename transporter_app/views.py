@@ -1894,7 +1894,7 @@ def booking_register_data(request):
                     c.status,
                     c.status_updated_at,
                     c.created_at,
-                    COALESCE(SUM(a.art), 0) as total_art,
+                    c.total_art,
                     COALESCE(d.name, 'Direct') as dealer_name,
                     COALESCE(dd.destination_name, 'N/A') as delivery_destination,
                     CASE 
@@ -2024,7 +2024,6 @@ def booking_register_data(request):
                     c.status_updated_at,
                     c.created_at,
                     c.total_art,
-                    SUM(a.art),
                     d.name,
                     dd.destination_name,
                     ls.ls_number,
@@ -2216,7 +2215,7 @@ def download_excel(request):
                     c.status,
                     c.status_updated_at,
                     c.created_at,
-                    COALESCE(SUM(a.art), 0) as total_art,
+                    c.total_art,
                     COALESCE(d.name, 'Direct') as dealer_name,
                     COALESCE(dd.destination_name, 'N/A') as delivery_destination,
                     CASE 
@@ -2312,7 +2311,7 @@ def download_excel(request):
                     c.transhipment_charge, c.insurance, c.fuel_surcharge, c.commission,
                     c.other_charge, c.carrier_risk, c.grand_total, c.status,
                     c.status_updated_at, c.created_at, c.total_art, d.name,
-                    dd.destination_name, ls.ls_number, ddm.ddm_no, SUM(a.art)
+                    dd.destination_name, ls.ls_number, ddm.ddm_no
                 ORDER BY c.created_at DESC
             """
             
