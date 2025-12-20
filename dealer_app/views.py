@@ -926,7 +926,7 @@ def download_excel(request):
     for cnote in dealer_cnotes:
         articles = Article.objects.filter(cnote=cnote)
         article_data[cnote.id] = {
-            "total_art": len(articles),
+            'total_sum': articles.aggregate(total_sum=Sum('art'))['total_sum'] or 0,  # ✅ CHANGE HERE
             "art_types": "/".join([article.art_type.art_type_name for article in articles if article.art_type]),
             "said_to_contain": "/".join([article.said_to_contain for article in articles if article.said_to_contain]),
             "art_amounts": "/".join([str(article.art_amount) for article in articles if article.art_amount]),
@@ -945,7 +945,7 @@ def download_excel(request):
         'Invoice Number', 'Declared Value', 'Risk Type', 'POD Required', 'Freight', 'Docket Charge',
         'Door Delivery Charge', 'Handling Charge', 'Pickup Charge', 'Transhipment Charge',
         'Insurance', 'Fuel Surcharge', 'Commission', 'Other Charge', 'Carrier Risk',
-        'Delivery Type', 'Delivery Method', 'Status', 'Total Article', 'Art Types',
+        'Delivery Type', 'Delivery Method', 'Status', 'Total Article (Sum)', 'Art Types',
         'Said to Contain', 'Art Amounts', 'Consignor GST', 'Consignee GST', 'LS Number'
     ]
 
@@ -955,7 +955,7 @@ def download_excel(request):
     # ✅ **Table Data को Excel में लिखें**
     for row, cnote in enumerate(dealer_cnotes, start=1):
         article_info = article_data.get(cnote.id, {"total_art": 0, "art_types": "N/A", "said_to_contain": "N/A", "art_amounts": "0"})
-
+        
         # ✅ "Created At" ka Date aur Time alag-alag nikalna
         created_date = cnote.created_at.strftime('%d-%m-%Y') if cnote.created_at else 'N/A'  # ✅ dd-mm-yyyy format
         created_time = cnote.created_at.strftime('%H:%M:%S') if cnote.created_at else 'N/A'  # ✅ Same time format
@@ -974,7 +974,7 @@ def download_excel(request):
             cnote.transhipment_charge, cnote.insurance, cnote.fuel_surcharge, cnote.commission,
             cnote.other_charge, cnote.carrier_risk, cnote.delivery_type, cnote.delivery_method,
             cnote.status,
-            article_info["total_art"],  # ✅ Total Articles
+            article_info["total_sum"],  # ✅ Total Articles
             article_info["art_types"],  # ✅ Art Types
             article_info["said_to_contain"],  # ✅ Said to Contain
             article_info["art_amounts"],  # ✅ Art Amounts
