@@ -1849,7 +1849,7 @@ def booking_register_data(request):
         with connection.cursor() as cursor:
             logger.info("Executing SQL query")
             
-            # Main query for booking data - FIXED
+            # Main query for booking data
             query = """
                 SELECT DISTINCT
                     c.id,
@@ -1894,7 +1894,7 @@ def booking_register_data(request):
                     c.status,
                     c.status_updated_at,
                     c.created_at,
-                    COALESCE((SELECT SUM(art) FROM dealer_app_article WHERE cnote_id = c.id), 0) as total_art,  -- ✅ FIXED: SUM of articles
+                    c.total_art,
                     COALESCE(d.name, 'Direct') as dealer_name,
                     COALESCE(dd.destination_name, 'N/A') as delivery_destination,
                     CASE 
@@ -2023,6 +2023,7 @@ def booking_register_data(request):
                     c.status,
                     c.status_updated_at,
                     c.created_at,
+                    c.total_art,
                     d.name,
                     dd.destination_name,
                     ls.ls_number,
@@ -2035,10 +2036,6 @@ def booking_register_data(request):
             cursor.execute(query, params)
             cnotes = cursor.fetchall()
             logger.info(f"Fetched {len(cnotes)} records from the database")
-            
-            # Get column names
-            column_names = [col[0] for col in cursor.description]
-            logger.info(f"Column names: {column_names}")
 
             # अब same cursor के अंदर dealers query भी execute करें
             dealers_query = """
@@ -2055,38 +2052,38 @@ def booking_register_data(request):
 
         # Process the results
         cnotes_data = []
+        column_names = [col[0] for col in cursor.description if col[0] != 'dealer_name']  # Remove dealer_name from column names as it's processed separately
+        
+        # Get column names from the main query
+        main_column_names = [
+            'id', 'cnote_number', 'booking_type', 'delivery_type', 'delivery_method',
+            'eway_bill_number', 'manual_date', 'manual_cnote_number', 'manual_cnote_type',
+            'payment_type', 'consignor_name', 'consignor_address', 'consignor_mobile',
+            'consignor_gst', 'consignee_name', 'consignee_address', 'consignee_mobile',
+            'consignee_gst', 'actual_weight', 'charged_weight', 'weight_rate',
+            'weight_amount', 'fix_amount', 'invoice_number', 'declared_value',
+            'risk_type', 'pod_required', 'freight', 'docket_charge',
+            'door_delivery_charge', 'handling_charge', 'pickup_charge',
+            'transhipment_charge', 'insurance', 'fuel_surcharge', 'commission',
+            'other_charge', 'carrier_risk', 'grand_total', 'status',
+            'status_updated_at', 'created_at', 'total_art', 'dealer_name',
+            'delivery_destination', 'user_type', 'loading_sheet_number',
+            'ddm_number', 'art_types', 'said_to_contain', 'art_amounts'
+        ]
         
         for cnote in cnotes:
             try:
-                cnote_dict = dict(zip(column_names, cnote))
-                
-                # ✅ BACKUP CALCULATION: If SQL sum doesn't work, calculate from art_amounts
-                art_amounts_str = cnote_dict.get('art_amounts', '')
-                if art_amounts_str and art_amounts_str != 'N/A':
-                    # Split और sum calculate करें
-                    try:
-                        amounts = []
-                        for amt in art_amounts_str.split(' / '):
-                            if amt and amt != 'N/A' and amt != '0':
-                                try:
-                                    amounts.append(float(amt))
-                                except ValueError:
-                                    continue
-                        # Override total_art with calculated sum
-                        cnote_dict['total_art'] = sum(amounts) if amounts else 0
-                    except Exception as calc_e:
-                        logger.error(f"Error calculating total_art: {str(calc_e)}")
-                        cnote_dict['total_art'] = 0
-                else:
-                    cnote_dict['total_art'] = 0
+                cnote_dict = dict(zip(main_column_names, cnote))
                 
                 # Process aggregated fields safely
                 art_types = cnote_dict.get('art_types', '') or ''
                 said_to_contain = cnote_dict.get('said_to_contain', '') or ''
+                art_amounts = cnote_dict.get('art_amounts', '') or ''
                 
                 # Convert to arrays, handling None and empty strings
                 cnote_dict['art_types'] = [x.strip() for x in art_types.split(' / ') if x.strip() and x.strip() != 'N/A'] if art_types else []
                 cnote_dict['said_to_contain'] = [x.strip() for x in said_to_contain.split(' / ') if x.strip() and x.strip() != 'N/A'] if said_to_contain else []
+                cnote_dict['art_amounts'] = [float(x.strip()) for x in art_amounts.split(' / ') if x.strip() and x.strip() != 'N/A' and x.strip() != '0'] if art_amounts else []
                 
                 # Set user and user_type
                 cnote_dict['user'] = cnote_dict.get('dealer_name') or 'Direct'
@@ -2173,7 +2170,7 @@ def download_excel(request):
         ddm_number = request.GET.get('ddm_number', '').strip().lower()
         
         with connection.cursor() as cursor:
-            # Use the same query as the main function but without LIMIT - FIXED
+            # Use the same query as the main function but without LIMIT
             query = """
                 SELECT DISTINCT
                     c.id,
@@ -2218,7 +2215,7 @@ def download_excel(request):
                     c.status,
                     c.status_updated_at,
                     c.created_at,
-                    COALESCE((SELECT SUM(art) FROM dealer_app_article WHERE cnote_id = c.id), 0) as total_art,  -- ✅ FIXED: SUM of articles
+                    c.total_art,
                     COALESCE(d.name, 'Direct') as dealer_name,
                     COALESCE(dd.destination_name, 'N/A') as delivery_destination,
                     CASE 
@@ -2303,52 +2300,18 @@ def download_excel(request):
 
             query += """
                 GROUP BY 
-                    c.id,
-                    c.cnote_number,
-                    c.booking_type,
-                    c.delivery_type,
-                    c.delivery_method,
-                    c.eway_bill_number,
-                    c.manual_date,
-                    c.manual_cnote_number,
-                    c.manual_cnote_type,
-                    c.payment_type,
-                    c.consignor_name,
-                    c.consignor_address,
-                    c.consignor_mobile,
-                    c.consignor_gst,
-                    c.consignee_name,
-                    c.consignee_address,
-                    c.consignee_mobile,
-                    c.consignee_gst,
-                    c.actual_weight,
-                    c.charged_weight,
-                    c.weight_rate,
-                    c.weight_amount,
-                    c.fix_amount,
-                    c.invoice_number,
-                    c.declared_value,
-                    c.risk_type,
-                    c.pod_required,
-                    c.freight,
-                    c.docket_charge,
-                    c.door_delivery_charge,
-                    c.handling_charge,
-                    c.pickup_charge,
-                    c.transhipment_charge,
-                    c.insurance,
-                    c.fuel_surcharge,
-                    c.commission,
-                    c.other_charge,
-                    c.carrier_risk,
-                    c.grand_total,
-                    c.status,
-                    c.status_updated_at,
-                    c.created_at,
-                    d.name,
-                    dd.destination_name,
-                    ls.ls_number,
-                    ddm.ddm_no
+                    c.id, c.cnote_number, c.booking_type, c.delivery_type, c.delivery_method,
+                    c.eway_bill_number, c.manual_date, c.manual_cnote_number, c.manual_cnote_type,
+                    c.payment_type, c.consignor_name, c.consignor_address, c.consignor_mobile,
+                    c.consignor_gst, c.consignee_name, c.consignee_address, c.consignee_mobile,
+                    c.consignee_gst, c.actual_weight, c.charged_weight, c.weight_rate,
+                    c.weight_amount, c.fix_amount, c.invoice_number, c.declared_value,
+                    c.risk_type, c.pod_required, c.freight, c.docket_charge,
+                    c.door_delivery_charge, c.handling_charge, c.pickup_charge,
+                    c.transhipment_charge, c.insurance, c.fuel_surcharge, c.commission,
+                    c.other_charge, c.carrier_risk, c.grand_total, c.status,
+                    c.status_updated_at, c.created_at, c.total_art, d.name,
+                    dd.destination_name, ls.ls_number, ddm.ddm_no
                 ORDER BY c.created_at DESC
             """
             
@@ -2371,31 +2334,14 @@ def download_excel(request):
                     elif value is None:
                         booking[key] = ''
                 
-                # ✅ BACKUP CALCULATION for Excel too
-                art_amounts_str = booking.get('art_amounts', '')
-                if art_amounts_str and art_amounts_str != 'N/A':
-                    try:
-                        amounts = []
-                        for amt in art_amounts_str.split(' / '):
-                            if amt and amt != 'N/A' and amt != '0':
-                                try:
-                                    amounts.append(float(amt))
-                                except ValueError:
-                                    continue
-                        # Override total_art with calculated sum
-                        booking['total_art'] = sum(amounts) if amounts else 0
-                    except Exception as calc_e:
-                        logger.error(f"Error calculating total_art for Excel: {str(calc_e)}")
-                        booking['total_art'] = 0
-                else:
-                    booking['total_art'] = 0
-                
                 # Process aggregated fields
                 art_types = booking.get('art_types', '') or ''
                 said_to_contain = booking.get('said_to_contain', '') or ''
+                art_amounts = booking.get('art_amounts', '') or ''
                 
                 booking['art_types'] = art_types.replace(' / ', ', ') if art_types != 'N/A' else ''
                 booking['said_to_contain'] = said_to_contain.replace(' / ', ', ') if said_to_contain != 'N/A' else ''
+                booking['art_amounts'] = art_amounts.replace(' / ', ', ') if art_amounts != 'N/A' else ''
                 
                 processed_bookings.append(booking)
                 
@@ -2446,6 +2392,8 @@ def download_excel(request):
     except Exception as e:
         logger.error(f"Error in download_excel: {str(e)}", exc_info=True)
         return HttpResponse(f"Error generating Excel: {e}", status=500)
+
+
 from django.db import IntegrityError
 
 
