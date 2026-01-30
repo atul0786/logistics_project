@@ -15,6 +15,7 @@ print("Loading transporter_app URLs...")
 
 urlpatterns = [
     # Home and basic views
+    path('', views.home, name='home'),
     path('home/', views.home, name='home'),
     path('manage-location/', views.manage_location, name='manage_location'),
     path("logout/", auth_views.LogoutView.as_view(next_page='/login/'), name="logout"),
