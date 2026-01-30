@@ -80,23 +80,36 @@ User = get_user_model()
 @login_required
 def home(request):
     try:
+        # Check if Transporter exists for this user
         transporter = Transporter.objects.get(user=request.user)
         pickup_requests = Pickup.objects.filter(transporter=transporter, status='pending')
+        
         return render(request, 'transporter/home.html', 
                       {
                           'transporter': transporter,
                           'transporter_name': transporter.user.username.title(),
-                          'transporter_image': transporter.profile_image.url if transporter.profile_image else 'default_image_url',
+                          'transporter_image': transporter.profile_image.url if transporter.profile_image else '/static/default-profile.png',
                           'pickup_requests': pickup_requests
                       })
     except Transporter.DoesNotExist:
-        messages.error(request, "You do not have access to this dashboard. Please contact support.")
-        return render(request, 'transporter/home.html')
+        # If Transporter doesn't exist, show basic dashboard
+        return render(request, 'transporter/home.html', 
+                      {
+                          'transporter_name': request.user.username,
+                          'transporter_image': '/static/default-profile.png',
+                          'pickup_requests': [],
+                          'error_message': 'Transporter profile not found. Contact admin.'
+                      })
     except Exception as e:
-        messages.error(request, "An unexpected error occurred. Please try again later.")
-        logger.error(f"Error in home view: {e}")
-        return render(request, 'transporter/home.html')
-
+        # Log the error and show user-friendly message
+        logger.error(f"Error in home view: {str(e)}", exc_info=True)
+        return render(request, 'transporter/home.html', 
+                      {
+                          'transporter_name': request.user.username,
+                          'transporter_image': '/static/default-profile.png',
+                          'pickup_requests': [],
+                          'error_message': 'An unexpected error occurred.'
+                      })
 @login_required
 def manage_location(request):
     states = State.objects.all()
