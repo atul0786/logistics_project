@@ -125,5 +125,9 @@ urlpatterns = [
     path('loading_sheet_report/', views.loading_sheet_report, name='loading_sheet_report'),
     path('api/loading-sheet-reports/', views.loading_sheet_reports, name='loading_sheet_reports'),
     path('api/loading-sheet-details/<int:ls_number>/', views.loading_sheet_details, name='loading_sheet_details'),
+
+    # rate card master
+    path('rate_card_master/', views.rate_card_master, name='rate_card_master'),
+    
     
 ]
