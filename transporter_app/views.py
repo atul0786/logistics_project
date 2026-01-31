@@ -3719,4 +3719,10 @@ def loading_sheet_details(request, ls_number):
         print(f"Error in loading_sheet_details: {str(e)}")
         return JsonResponse({"error": str(e)}, status=500)
 
+@login_required
+def rate_card_master(request):
+    """
+    """
+    return render(request, 'transporter/rate_card_master.html')  # Corrected template path
+
 
