@@ -302,7 +302,7 @@ JAZZMIN_SETTINGS = {
     "site_title": "Good Way Express",
     "site_header": "Good Way Express",
     "site_brand": "GWE Logistics",
-    "site_logo": "images/logo.jpg",
+    "site_logo": None,
     "login_logo": None,
     "welcome_sign": "Welcome to Good Way Express Admin",
     "copyright": "Good Way Express Logistics",
