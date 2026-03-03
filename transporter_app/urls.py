@@ -8,6 +8,8 @@ from .views import receive_cnotes
 from django.urls import path
 from . import views
 from django.views.generic import TemplateView
+from .views_dashboard import transporter_dashboard_stats
+
 
 app_name = 'transporter'
 
@@ -15,6 +17,7 @@ print("Loading transporter_app URLs...")
 
 urlpatterns = [
     # Home and basic views
+    path('api/dashboard_stats/', transporter_dashboard_stats, name='dashboard_stats'),
     path('', views.home, name='home'),
     path('home/', views.home, name='home'),
     path('manage-location/', views.manage_location, name='manage_location'),
