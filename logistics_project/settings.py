@@ -324,12 +324,9 @@ JAZZMIN_SETTINGS = {
     "default_icon_parents": "fas fa-folder",
     "default_icon_children": "fas fa-dot-circle",
 }
-```
 
----
+
 
 ### File 2: `requirements.txt`
 
-**End mein yeh line add karo:**
-```
 django-jazzmin==3.0.3
