@@ -1,0 +1,233 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Dashboard — Good Way Express{% endblock %}
+
+{% block content %}
+<style>
+  .stat-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+  }
+  .stat-icon {
+    font-size: 2rem;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .stat-label { font-size: 0.85rem; color: #888; margin-bottom: 4px; }
+  .stat-value { font-size: 1.6rem; font-weight: 700; color: #222; }
+  .chart-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 24px;
+  }
+  .chart-card h3 {
+    margin: 0 0 16px 0;
+    font-size: 1rem;
+    color: #444;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+  }
+  .status-bar {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;
+  }
+  .status-pill {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+</style>
+
+<h1 style="margin-bottom:24px; color:#333;">
+  <i class="fas fa-tachometer-alt"></i> Dashboard
+</h1>
+
+<!-- ── Stats Cards ── -->
+<div class="row">
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#e8f4fd;">
+        <i class="fas fa-file-invoice" style="color:#3498db;"></i>
+      </div>
+      <div>
+        <div class="stat-label">Total CNotes</div>
+        <div class="stat-value">{{ total_cnotes }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#eafaf1;">
+        <i class="fas fa-rupee-sign" style="color:#27ae60;"></i>
+      </div>
+      <div>
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-value">₹{{ total_revenue|floatformat:0 }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fef9e7;">
+        <i class="fas fa-store" style="color:#f39c12;"></i>
+      </div>
+      <div>
+        <div class="stat-label">Total Dealers</div>
+        <div class="stat-value">{{ total_dealers }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#f9ebea;">
+        <i class="fas fa-check-circle" style="color:#e74c3c;"></i>
+      </div>
+      <div>
+        <div class="stat-label">Delivered</div>
+        <div class="stat-value">{{ delivered }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Status Pills ── -->
+<div class="status-bar">
+  <span class="status-pill" style="background:#ebf5fb;color:#2980b9;">
+    <i class="fas fa-clock"></i> Booked: {{ booked }}
+  </span>
+  <span class="status-pill" style="background:#fef5e7;color:#d35400;">
+    <i class="fas fa-truck"></i> Dispatched: {{ dispatched }}
+  </span>
+  <span class="status-pill" style="background:#eafaf1;color:#1e8449;">
+    <i class="fas fa-check"></i> Delivered: {{ delivered }}
+  </span>
+  <span class="status-pill" style="background:#fdedec;color:#c0392b;">
+    <i class="fas fa-times"></i> Cancelled: {{ cancelled }}
+  </span>
+  <span class="status-pill" style="background:#f4ecf7;color:#7d3c98;">
+    <i class="fas fa-inbox"></i> Received: {{ received }}
+  </span>
+</div>
+
+<!-- ── Charts Row ── -->
+<div class="row">
+  <!-- Monthly Revenue Line Chart -->
+  <div class="col-md-8">
+    <div class="chart-card">
+      <h3><i class="fas fa-chart-line" style="color:#3498db;"></i> Monthly Revenue (Last 6 Months)</h3>
+      <canvas id="revenueChart" height="100"></canvas>
+    </div>
+  </div>
+  <!-- Payment Type Pie Chart -->
+  <div class="col-md-4">
+    <div class="chart-card">
+      <h3><i class="fas fa-chart-pie" style="color:#e67e22;"></i> Payment Type</h3>
+      <canvas id="paymentChart" height="180"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <!-- Monthly CNotes Bar Chart -->
+  <div class="col-md-6">
+    <div class="chart-card">
+      <h3><i class="fas fa-chart-bar" style="color:#27ae60;"></i> Monthly CNotes Count</h3>
+      <canvas id="cnotesChart" height="120"></canvas>
+    </div>
+  </div>
+  <!-- Top Dealers Bar Chart -->
+  <div class="col-md-6">
+    <div class="chart-card">
+      <h3><i class="fas fa-trophy" style="color:#f39c12;"></i> Top 5 Dealers</h3>
+      <canvas id="dealerChart" height="120"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+  const months  = {{ months_labels|safe }};
+  const revenue = {{ months_revenue|safe }};
+  const counts  = {{ months_count|safe }};
+  const dNames  = {{ dealer_names|safe }};
+  const dCounts = {{ dealer_counts|safe }};
+  const pLabels = {{ payment_labels|safe }};
+  const pCounts = {{ payment_counts|safe }};
+
+  // 1. Revenue Line Chart
+  new Chart(document.getElementById('revenueChart'), {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [{
+        label: 'Revenue (₹)',
+        data: revenue,
+        borderColor: '#3498db',
+        backgroundColor: 'rgba(52,152,219,0.1)',
+        tension: 0.4, fill: true, pointRadius: 5,
+      }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
+
+  // 2. Payment Type Pie Chart
+  new Chart(document.getElementById('paymentChart'), {
+    type: 'doughnut',
+    data: {
+      labels: pLabels,
+      datasets: [{
+        data: pCounts,
+        backgroundColor: ['#3498db','#27ae60','#e74c3c','#f39c12','#9b59b6','#1abc9c'],
+      }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } } }
+  });
+
+  // 3. Monthly CNotes Bar Chart
+  new Chart(document.getElementById('cnotesChart'), {
+    type: 'bar',
+    data: {
+      labels: months,
+      datasets: [{
+        label: 'CNotes',
+        data: counts,
+        backgroundColor: 'rgba(39,174,96,0.7)',
+        borderRadius: 6,
+      }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
+
+  // 4. Top Dealers Bar Chart
+  new Chart(document.getElementById('dealerChart'), {
+    type: 'bar',
+    data: {
+      labels: dNames,
+      datasets: [{
+        label: 'CNotes',
+        data: dCounts,
+        backgroundColor: 'rgba(243,156,18,0.8)',
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true } }
+    }
+  });
+</script>
+{% endblock %}
