@@ -308,12 +308,30 @@ JAZZMIN_SETTINGS = {
     "copyright": "Good Way Express Logistics",
     "show_sidebar": True,
     "navigation_expanded": True,
+
+    # ── Top Menu Links (header mein dikhenge) ──
+    "topmenu_links": [
+        {"name": "📊 Dashboard", "url": "/admin/dashboard/", "new_window": False},
+        {"name": "🌐 Site", "url": "https://goodwayexpress.online", "new_window": True},
+    ],
+
+    # ── Sidebar mein Custom Links ──
+    "custom_links": {
+        "dealer_app": [{
+            "name": "📊 Dashboard",
+            "url": "/admin/dashboard/",
+            "icon": "fas fa-chart-line",
+        }]
+    },
+
+    # ── Model Icons ──
     "icons": {
         "auth":                           "fas fa-users-cog",
         "auth.user":                      "fas fa-user",
         "dealer_app.CustomUser":          "fas fa-user-circle",
         "dealer_app.Dealer":              "fas fa-store",
         "dealer_app.CNote":               "fas fa-file-invoice",
+        "dealer_app.CNotes":              "fas fa-file-invoice-dollar",
         "dealer_app.LoadingSheetSummary": "fas fa-truck-loading",
         "dealer_app.LoadingSheetDetail":  "fas fa-list-alt",
         "dealer_app.Article":             "fas fa-boxes",
