@@ -1,898 +1,727 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Transport Dashboard</title>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <style>
-        :root {
-            --primary: #4f46e5;
-            --primary-dark: #4338ca;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-300: #d1d5db;
-            --gray-400: #9ca3af;
-            --gray-500: #6b7280;
-            --gray-600: #4b5563;
-            --gray-700: #374151;
-            --gray-900: #111827;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Good Way Express — Transport Panel</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --primary:      #4f46e5;
+      --primary-dark: #4338ca;
+      --success:      #10b981;
+      --warning:      #f59e0b;
+      --danger:       #ef4444;
+      --sidebar-bg:   #0f172a;
+      --sidebar-hover:#1e293b;
+      --gray-50:  #f8fafc;
+      --gray-100: #f1f5f9;
+      --gray-200: #e2e8f0;
+      --gray-400: #94a3b8;
+      --gray-500: #64748b;
+      --gray-700: #334155;
+      --gray-900: #0f172a;
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--gray-100);
+      min-height: 100vh;
+      display: flex;
+    }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        }
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 260px;
+      background: var(--sidebar-bg);
+      color: white;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      z-index: 1000;
+      transition: transform .3s;
+    }
+    .sidebar-header {
+      padding: 1.5rem 1.25rem 1.25rem;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+    .sidebar-header .logo-icon {
+      background: var(--primary);
+      border-radius: .5rem;
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .sidebar-header h1 { font-size: 1rem; font-weight: 700; line-height: 1.2; }
+    .sidebar-header small { color: var(--gray-400); font-size: .7rem; }
 
-        body {
-            background: var(--gray-100);
-            min-height: 100vh;
-            display: flex;
-        }
+    .nav-section-label {
+      font-size: .65rem;
+      font-weight: 700;
+      color: var(--gray-500);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 1.2rem 1.25rem .4rem;
+    }
+    nav { flex: 1; padding-bottom: 1rem; }
+    .nav-link {
+      display: flex; align-items: center; gap: .75rem;
+      padding: .6rem 1.25rem;
+      color: var(--gray-400);
+      text-decoration: none;
+      border-radius: 0;
+      font-size: .875rem;
+      cursor: pointer;
+      transition: all .2s;
+      border-left: 3px solid transparent;
+    }
+    .nav-link:hover, .nav-link.active {
+      color: white;
+      background: var(--sidebar-hover);
+      border-left-color: var(--primary);
+    }
+    .nav-link svg { flex-shrink: 0; width: 16px; height: 16px; }
+    .nav-link .arrow {
+      margin-left: auto;
+      transition: transform .2s;
+      width: 14px; height: 14px;
+    }
+    .nav-link.open .arrow { transform: rotate(90deg); }
 
-        .container {
-            display: flex;
-            flex: 1;
-        }
+    .submenu {
+      display: none;
+      flex-direction: column;
+      background: #0a1120;
+    }
+    .submenu.open { display: flex; }
+    .submenu a {
+      display: block;
+      padding: .5rem 1.25rem .5rem 3rem;
+      font-size: .8rem;
+      color: var(--gray-400);
+      text-decoration: none;
+      transition: all .2s;
+    }
+    .submenu a:hover { color: white; background: var(--sidebar-hover); }
 
-        .sidebar {
-            width: 280px;
-            background: var(--gray-900);
-            padding: 1.5rem;
-            color: white;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-            transition: transform 0.3s ease-in-out;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-        }
+    .logout-btn {
+      margin: auto 1rem 1.5rem;
+      padding: .65rem 1rem;
+      display: flex; align-items: center; gap: .75rem;
+      color: var(--gray-400);
+      background: none;
+      border: 1px solid #1e293b;
+      border-radius: .5rem;
+      cursor: pointer;
+      font-size: .875rem;
+      width: calc(100% - 2rem);
+      transition: all .2s;
+    }
+    .logout-btn:hover { background: var(--danger); color: white; border-color: var(--danger); }
 
-        .sidebar-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid var(--gray-700);
-            margin-bottom: 1.5rem;
-        }
+    /* ── Main ── */
+    .main { margin-left: 260px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
 
-        .sidebar-header h1 {
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
+    /* Topbar */
+    .topbar {
+      background: white;
+      padding: .875rem 1.5rem;
+      display: flex; align-items: center; gap: 1rem;
+      border-bottom: 1px solid var(--gray-200);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .topbar-left { display: flex; align-items: center; gap: .75rem; flex: 1; }
+    .search-bar {
+      display: flex; align-items: center; gap: .5rem;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      padding: .45rem .875rem;
+      border-radius: .5rem;
+      width: 280px;
+    }
+    .search-bar input { border: none; outline: none; background: transparent; font-size: .85rem; width: 100%; }
+    .search-bar svg { color: var(--gray-400); width: 15px; height: 15px; flex-shrink: 0; }
 
-        .nav-links {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            flex: 1;
-        }
-        
-        .logout-button {
-            margin-top: auto;
-            padding: 0.75rem 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            color: var(--gray-300);
-            background: none;
-            border: none;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            width: 100%;
-            font-size: 1rem;
-            transition: all 0.2s;
-        }
+    .btn { display: inline-flex; align-items: center; gap: .5rem; padding: .5rem 1rem; border-radius: .5rem; border: none; cursor: pointer; font-size: .85rem; font-weight: 600; transition: all .2s; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { filter: brightness(.9); }
+    .btn svg { width: 15px; height: 15px; }
 
-        .logout-button:hover {
-            background: var(--danger);
-            color: white;
-        }
+    .welcome-chip {
+      margin-left: auto;
+      display: flex; align-items: center; gap: .5rem;
+      background: var(--gray-100);
+      border: 1px solid var(--gray-200);
+      padding: .35rem .875rem;
+      border-radius: 2rem;
+      font-size: .8rem;
+      color: var(--gray-700);
+      font-weight: 600;
+    }
+    .welcome-chip svg { width: 14px; color: var(--primary); }
 
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            color: var(--gray-300);
-            text-decoration: none;
-            border-radius: 0.5rem;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
+    /* Page content */
+    .page { padding: 1.5rem; }
+    .page-title { font-size: 1.25rem; font-weight: 700; color: var(--gray-900); margin-bottom: 1.25rem; display: flex; align-items: center; gap: .5rem; }
+    .page-title svg { color: var(--primary); }
 
-        .nav-link:hover, .nav-link.active {
-            background: var(--primary);
-            color: white;
-        }
+    /* Live badge */
+    .live-badge {
+      display: inline-flex; align-items: center; gap: .35rem;
+      background: #dcfce7; color: #166534;
+      font-size: .7rem; font-weight: 700;
+      padding: .2rem .6rem; border-radius: 2rem;
+      margin-left: .5rem;
+    }
+    .live-dot { width: 6px; height: 6px; background: #16a34a; border-radius: 50%; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
 
-        .submenu {
-            display: none;
-            flex-direction: column;
-            margin-left: 2.5rem;
-            margin-top: 0.5rem;
-        }
+    /* Stats grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: white;
+      border-radius: .75rem;
+      padding: 1.25rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      display: flex; align-items: center; gap: 1rem;
+      border: 1px solid var(--gray-200);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+    .stat-icon {
+      width: 48px; height: 48px; border-radius: .75rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .stat-icon svg { width: 22px; height: 22px; }
+    .stat-label { font-size: .75rem; color: var(--gray-500); font-weight: 500; margin-bottom: .2rem; }
+    .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--gray-900); line-height: 1; }
+    .stat-sub { font-size: .72rem; color: var(--gray-400); margin-top: .3rem; display: flex; align-items: center; gap: .25rem; }
+    .stat-sub svg { width: 12px; }
+    .up { color: var(--success); } .down { color: var(--danger); }
 
-        .submenu a {
-            color: var(--gray-400);
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            transition: all 0.2s;
-        }
+    /* Charts row */
+    .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    .card {
+      background: white;
+      border-radius: .75rem;
+      padding: 1.25rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      border: 1px solid var(--gray-200);
+    }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .card-title { font-size: .95rem; font-weight: 700; color: var(--gray-900); display: flex; align-items: center; gap: .5rem; }
+    .card-title svg { width: 16px; color: var(--primary); }
 
-        .submenu a:hover {
-            background: var(--primary);
-            color: white;
-        }
+    /* Bottom row */
+    .bottom-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1rem; }
 
-        .submenu a.active {
-            background: var(--primary);
-            color: white;
-        }
+    /* Request list */
+    .request-list { display: flex; flex-direction: column; gap: .75rem; max-height: 360px; overflow-y: auto; }
+    .request-card {
+      padding: .875rem 1rem;
+      border: 1px solid var(--gray-200);
+      border-radius: .625rem;
+      display: flex; align-items: center; gap: .875rem;
+      transition: box-shadow .2s, border-color .2s;
+      cursor: pointer;
+    }
+    .request-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.08); border-color: var(--primary); }
+    .req-icon { width: 38px; height: 38px; background: #ede9fe; border-radius: .5rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .req-icon svg { width: 18px; color: var(--primary); }
+    .req-info { flex: 1; min-width: 0; }
+    .req-id { font-size: .8rem; font-weight: 700; color: var(--gray-900); }
+    .req-loc { font-size: .75rem; color: var(--gray-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .req-right { text-align: right; flex-shrink: 0; }
+    .req-time { font-size: .7rem; color: var(--gray-400); }
 
-        .main-content {
-            flex: 1;
-            margin-left: 280px;
-            padding: 2rem;
-            transition: margin-left 0.3s ease-in-out;
-        }
+    .badge {
+      display: inline-block;
+      padding: .2rem .6rem;
+      border-radius: 2rem;
+      font-size: .68rem;
+      font-weight: 700;
+    }
+    .badge-pending    { background:#fef3c7; color:#92400e; }
+    .badge-completed  { background:#d1fae5; color:#065f46; }
+    .badge-inprogress { background:#dbeafe; color:#1e40af; }
+    .badge-cancelled  { background:#fee2e2; color:#991b1b; }
 
-        .header {
-            background: white;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    /* Quick stats */
+    .quick-list { display: flex; flex-direction: column; gap: .625rem; }
+    .quick-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: .75rem 1rem;
+      background: var(--gray-50);
+      border-radius: .5rem;
+      font-size: .85rem;
+      border: 1px solid var(--gray-200);
+    }
+    .quick-item .label { color: var(--gray-500); font-weight: 500; display: flex; align-items: center; gap: .5rem; }
+    .quick-item .label svg { width: 14px; }
+    .quick-item .val { font-weight: 800; color: var(--gray-900); }
 
-        .search-bar {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: var(--gray-100);
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            width: 300px;
-        }
+    /* Popup */
+    .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:2000; align-items:center; justify-content:center; }
+    .overlay.show { display:flex; }
+    .popup {
+      background: white;
+      border-radius: .875rem;
+      padding: 1.75rem;
+      width: 90%; max-width: 480px;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,.3);
+    }
+    .popup h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; }
+    .popup-close { position:absolute; top:1rem; right:1rem; background:none; border:none; cursor:pointer; color:var(--gray-400); padding:.25rem; }
+    .popup-close:hover { color: var(--gray-900); }
+    .popup p { font-size: .875rem; color: var(--gray-700); margin-bottom: .5rem; }
+    .popup p strong { color: var(--gray-900); }
+    .form-group { margin-top: .75rem; }
+    .form-group input {
+      width: 100%; padding: .625rem .875rem;
+      border: 1px solid var(--gray-200); border-radius: .5rem;
+      font-size: .875rem; margin-bottom: .625rem; outline: none;
+    }
+    .form-group input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
 
-        .search-bar input {
-            border: none;
-            outline: none;
-            background: transparent;
-            width: 100%;
-            font-size: 0.875rem;
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .user-profile img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .stat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-
-        .stat-title {
-            color: var(--gray-500);
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            margin: 0.5rem 0;
-            color: var(--gray-900);
-        }
-
-        .stat-trend {
-            font-size: 0.875rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        .trend-up {
-            color: var(--success);
-        }
-
-        .trend-down {
-            color: var(--danger);
-        }
-
-        .content-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2rem;
-        }
-
-        .section {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .section-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--gray-900);
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 500;
-            transition: background-color 0.2s ease;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-        }
-
-        .request-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .request-card {
-            padding: 1rem;
-            border: 1px solid var(--gray-200);
-            border-radius: 0.5rem;
-            transition: box-shadow 0.3s ease;
-        }
-
-        .request-card:hover {
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .request-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .status-pending {
-            background: #FEF3C7;
-            color: #92400E;
-        }
-
-        .status-completed {
-            background: #D1FAE5;
-            color: #065F46;
-        }
-
-        .status-inprogress {
-            background: #DBEAFE;
-            color: #1E40AF;
-        }
-
-        .quick-stats {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .stat-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            background: var(--gray-50);
-            border-radius: 0.5rem;
-            transition: background-color 0.2s ease;
-        }
-
-        .stat-item:hover {
-            background: var(--gray-100);
-        }
-
-        #menu-toggle {
-            display: none;
-        }
-
-        @media (max-width: 1024px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .main-content {
-                margin-left: 0;
-            }
-
-            .content-grid {
-                grid-template-columns: 1fr;
-            }
-
-            #menu-toggle {
-                display: block;
-                position: fixed;
-                top: 1rem;
-                left: 1rem;
-                z-index: 1001;
-                background: var(--primary);
-                color: white;
-                border: none;
-                border-radius: 50%;
-                width: 40px;
-                height: 40px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-            }
-
-            .sidebar.active {
-                transform: translateX(0);
-            }
-
-            .main-content.sidebar-active {
-                margin-left: 280px;
-            }
-        }
-
-        #request-details-popup {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 2rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            max-width: 90%;
-            width: 500px;
-        }
-
-        #request-details-popup h2 {
-            margin-bottom: 1rem;
-        }
-
-        #request-details-content {
-            margin-bottom: 1.5rem;
-        }
-
-        #vehicle-form input {
-            width: 100%;
-            padding: 0.5rem;
-            margin-bottom: 1rem;
-            border: 1px solid var(--gray-300);
-            border-radius: 0.375rem;
-        }
-
-        #vehicle-form button {
-            width: 100%;
-            padding: 0.75rem;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 0.375rem;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        #vehicle-form button:hover {
-            background: var(--primary-dark);
-        }
-
-        .close-popup {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--gray-500);
-        }
-
-        .close-popup:hover {
-            color: var(--gray-700);
-        }
-        .btn-search-cnotes {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            color: white;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            border: none;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-search-cnotes i {
-            font-size: 1.25rem;
-        }
-        
-        .btn-search-cnotes:hover {
-            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
-            transform: translateY(-2px);
-        }
-        
-        .btn-search-cnotes:active {
-            transform: translateY(0);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        
-    </style>
+    /* Mobile */
+    #menu-toggle { display: none; }
+    @media (max-width: 1024px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.active { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .charts-row, .bottom-row { grid-template-columns: 1fr; }
+      #menu-toggle {
+        display: flex; align-items: center; justify-content: center;
+        position: fixed; top: .875rem; left: .875rem; z-index: 1001;
+        background: var(--primary); color: white;
+        border: none; border-radius: 50%;
+        width: 38px; height: 38px; cursor: pointer;
+      }
+    }
+  </style>
 </head>
 <body>
-    <button id="menu-toggle">
-        <i data-lucide="menu"></i>
+
+<button id="menu-toggle"><i data-lucide="menu"></i></button>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-icon"><i data-lucide="truck" style="width:18px;color:white;"></i></div>
+    <div>
+      <h1>Good Way Express</h1>
+      <small>Transport Panel</small>
+    </div>
+  </div>
+
+  <nav>
+    <div class="nav-section-label">Main</div>
+
+    <a href="#" class="nav-link active">
+      <i data-lucide="layout-dashboard"></i> Dashboard
+    </a>
+
+    <a href="{% url 'transporter:receive' %}" class="nav-link" target="_blank">
+      <i data-lucide="clock"></i> Pending Requests
+    </a>
+
+    <a href="#" class="nav-link has-submenu">
+      <i data-lucide="clipboard-list"></i> Delivery Management
+      <i data-lucide="chevron-right" class="arrow"></i>
+    </a>
+    <div class="submenu">
+      <a href="{% url 'transporter:delivery_cnotes' %}" target="_blank">Single Delivery</a>
+      <a href="{% url 'transporter:ddm_settlement' %}" target="_blank">DDM Settlements</a>
+    </div>
+
+    <a href="#" class="nav-link">
+      <i data-lucide="check-circle"></i> Completed
+    </a>
+
+    <div class="nav-section-label">Reports & Masters</div>
+
+    <a href="#" class="nav-link has-submenu">
+      <i data-lucide="bar-chart-2"></i> Reports
+      <i data-lucide="chevron-right" class="arrow"></i>
+    </a>
+    <div class="submenu">
+      <a href="{% url 'transporter:all_booking_register' %}" target="_blank">Booking Register</a>
+      <a href="{% url 'transporter:loading_sheet_report' %}" target="_blank">Loading Sheet Report</a>
+    </div>
+
+    <a href="#" class="nav-link has-submenu">
+      <i data-lucide="settings"></i> Master
+      <i data-lucide="chevron-right" class="arrow"></i>
+    </a>
+    <div class="submenu">
+      <a href="{% url 'transporter:rate_card_master' %}" target="_blank">Rate Card Master</a>
+      <a href="{% url 'transporter:billing' %}" target="_blank">Billing Dealer</a>
+      <a href="{% url 'transporter:bill_manage' %}" target="_blank">Bill Management</a>
+      <a href="{% url 'transporter:manage_location' %}" target="_blank">Manage Location</a>
+      <a href="{% url 'transporter:party_master' %}" target="_blank">Party Master</a>
+      <a href="{% url 'transporter:add_user' %}" target="_blank">Add User</a>
+      <a href="{% url 'transporter:view_users' %}" target="_blank">View Users</a>
+    </div>
+  </nav>
+
+  <form method="post" action="{% url 'logout' %}">
+    {% csrf_token %}
+    <button type="submit" class="logout-btn">
+      <i data-lucide="log-out" style="width:16px;"></i> Logout
     </button>
-    <div class="container">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <i data-lucide="truck" class="w-6 h-6"></i>
-                <h1>Transport Panel</h1>
-            </div>
-            <nav class="nav-links">
-                <a href="#" class="nav-link active">
-                    <i data-lucide="layout-dashboard"></i>
-                    Dashboard
-                </a>
-                <a href="{% url 'transporter:receive' %}" class="nav-link" id="pending-requests-link" target="_blank" rel="noopener noreferrer">
-                    <i data-lucide="clock"></i>
-                    Pending Requests
-                </a>
-                <a href="#" class="nav-link has-submenu">
-                    <i data-lucide="clipboard-list"></i>
-                    Delivery Management
-                </a>
-                <div class="submenu">
-                    <a href="{% url 'transporter:delivery_cnotes' %}" target="_blank" rel="noopener noreferrer">Single Delivery</a>
-                    <a href="{% url 'transporter:ddm_settlement' %}" target="_blank" rel="noopener noreferrer">DDM Settlements</a>                </div>
-                <a href="#"  class="nav-link">
-                    <i data-lucide="check-circle"></i>
-                    Completed
-                </a>
-                <a href="#" class="nav-link has-submenu">
-                    <i data-lucide="bar-chart"></i>
-                    Reports
-                </a>
-                <div class="submenu">
-                    <a href="{% url 'transporter:all_booking_register' %}" target="_blank" rel="noopener noreferrer">Booking Register</a>
-                    <a href="{% url 'transporter:loading_sheet_report' %}" target="_blank" rel="noopener noreferrer">Loading Sheet Report</a>
-                    
-                    <!-- <a href="#">Weekly Reports</a>
-                    <a href="#">Monthly Reports</a> -->
-                </div>
-                <a href="#" class="nav-link has-submenu">
-                    <i data-lucide="settings"></i>
-                    Master
-                </a>
-                <div class="submenu">
-                    
-                    <a href="{% url 'transporter:rate_card_master' %}" target="_blank" rel="noopener noreferrer">Rate Card Master </a>
-                    <a href="{% url 'transporter:billing' %}" target="_blank" rel="noopener noreferrer">Billing Dealer </a>   
-                    <a href="{% url 'transporter:bill_manage' %}" target="_blank" rel="noopener noreferrer">Bill Management </a>
-                    <a href="{% url 'transporter:manage_location' %}" target="_blank" rel="noopener noreferrer">Manage Location </a>
-                    <a href="{% url 'transporter:party_master' %}" target="_blank" rel="noopener noreferrer">Party Master</a>
-                    <a href="{% url 'transporter:add_user' %}" target="_blank" rel="noopener noreferrer">Add User</a>
-                    <a href="{% url 'transporter:view_users' %}" target="_blank" rel="noopener noreferrer">View Users</a>
-                    
-                    
-                </div>
-            </nav>
-            <form method="post" action="{% url 'logout' %}" style="margin-top: auto;">
-                {% csrf_token %}
-                <button type="submit" class="logout-button">
-                    <i data-lucide="log-out"></i>
-                    Logout
-                </button>
-            </form>
+  </form>
+</aside>
 
-        </aside>
+<div class="main">
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="search-bar">
+        <i data-lucide="search"></i>
+        <input type="text" placeholder="Search requests, vehicles...">
+      </div>
+      <button class="btn btn-primary" onclick="window.open('{% url 'transporter:cnotes_search' %}','_blank')">
+        <i data-lucide="search"></i> Search CNotes
+      </button>
+      <button class="btn btn-success" onclick="window.open('/transporter/ddm/','_blank')">
+        <i data-lucide="plus"></i> Create DRS
+      </button>
+    </div>
+    <div class="welcome-chip">
+      <i data-lucide="user"></i>
+      Welcome, {{ transporter_name }}
+    </div>
+  </header>
 
-        <main class="main-content">
-            <header class="header">
-                <div class="search-bar">
-                    <i data-lucide="search"></i>
-                    <input type="text" placeholder="Search requests, drivers, or vehicles...">
-                </div>
-
-                <section class="section">
-                    <button class="btn-search-cnotes" onclick="window.open('{% url 'transporter:cnotes_search' %}', '_blank')">
-                        <i data-lucide="search"></i> Search CNotes
-                    </button>
-                </section>
-                                    
-                
-
-                <span>Welcome {{ transporter_name }}</span>
-            </header>
-
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div>
-                            <div class="stat-title">Total Requests</div>
-                            <div class="stat-value">1,284</div>
-                            <div class="stat-trend trend-up">
-                                <i data-lucide="trending-up"></i>
-                                +12% from yesterday
-                            </div>
-                        </div>
-                        <i data-lucide="package" class="w-6 h-6 text-gray-400"></i>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div>
-                            <div class="stat-title">Completed</div>
-                            <div class="stat-value">876</div>
-                            <div class="stat-trend trend-up">
-                                <i data-lucide="trending-up"></i>
-                                +8% from yesterday
-                            </div>
-                        </div>
-                        <i data-lucide="check-circle" class="w-6 h-6 text-gray-400"></i>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div>
-                            <div class="stat-title">Pending</div>
-                            <div class="stat-value">234</div>
-                            <div class="stat-trend trend-down">
-                                <i data-lucide="trending-down"></i>
-                                -5% from yesterday
-                            </div>
-                        </div>
-                        <i data-lucide="clock" class="w-6 h-6 text-gray-400"></i>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div>
-                            <div class="stat-title">In Progress</div>
-                            <div class="stat-value">174</div>
-                            <div class="stat-trend trend-up">
-                                <i data-lucide="trending-up"></i>
-                                +15% from yesterday
-                            </div>
-                        </div>
-                        <i data-lucide="activity" class="w-6 h-6 text-gray-400"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="content-grid">
-                <section class="section">
-                    <div class="section-header">
-                        <h2 class="section-title">Recent Requests</h2>
-                        <button class="btn-primary" onclick="window.open('/transporter/ddm/', '_blank')">
-                            <i data-lucide="plus"></i>
-                            Create DRS
-                        </button>
-                    </div>
-                    <div class="request-list" id="requestList"></div>
-                </section>
-
-                <section class="section">
-                    <div class="section-header">
-                        <h2 class="section-title">Quick Stats</h2>
-                    </div>
-                    <div class="quick-stats">
-                        <div class="stat-item">
-                            <div>Today's Requests</div>
-                            <span>48</span>
-                        </div>
-                        <div class="stat-item">
-                            <div>Urgent Deliveries</div>
-                            <span>7</span>
-                        </div>
-                        <div class="stat-item">
-                            <div>Success Rate</div>
-                            <span>94%</span>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </main>
+  <!-- Page -->
+  <div class="page">
+    <div class="page-title">
+      <i data-lucide="layout-dashboard"></i>
+      Dashboard
+      <span class="live-badge"><span class="live-dot"></span> LIVE</span>
     </div>
 
-    <div id="request-details-popup">
-        <button class="close-popup" onclick="closeRequestDetails()">&times;</button>
-        <h2>Request Details</h2>
-        <div id="request-details-content"></div>
-        <form id="vehicle-form">
-            <input type="text" id="vehicle-number" placeholder="Vehicle Number" required>
-            <input type="text" id="driver-name" placeholder="Driver Name" required>
-            <button type="submit">Accept Request</button>
-        </form>
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#ede9fe;">
+          <i data-lucide="package" style="color:#7c3aed;"></i>
+        </div>
+        <div>
+          <div class="stat-label">Total Requests</div>
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-sub up"><i data-lucide="trending-up"></i> Live data</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#d1fae5;">
+          <i data-lucide="check-circle" style="color:#059669;"></i>
+        </div>
+        <div>
+          <div class="stat-label">Completed</div>
+          <div class="stat-value" id="stat-completed">—</div>
+          <div class="stat-sub up"><i data-lucide="trending-up"></i> Updated live</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fef3c7;">
+          <i data-lucide="clock" style="color:#d97706;"></i>
+        </div>
+        <div>
+          <div class="stat-label">Pending</div>
+          <div class="stat-value" id="stat-pending">—</div>
+          <div class="stat-sub down"><i data-lucide="trending-down"></i> Needs attention</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#dbeafe;">
+          <i data-lucide="activity" style="color:#2563eb;"></i>
+        </div>
+        <div>
+          <div class="stat-label">In Progress</div>
+          <div class="stat-value" id="stat-inprogress">—</div>
+          <div class="stat-sub up"><i data-lucide="trending-up"></i> Active now</div>
+        </div>
+      </div>
     </div>
 
-    <script>
-        // Initialize Lucide icons
-        lucide.createIcons();
-    
-        // Create request cards
-        function createRequestCard(request) {
-            return `
-                <div class="request-card">
-                    <div class="request-header">
-                        <div>
-                            <strong>#${request.id}</strong>
-                            <div>${request.location}</div>
-                        </div>
-                        <div>
-                            <span class="status-badge status-${request.status}">
-                                ${request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                            </span>
-                            <div>${request.time}</div>
-                        </div>
-                    </div>
-                    <button onclick="showRequestDetails(${JSON.stringify(request)})">View Details</button>
-                </div>
-            `;
-        }
-    
-        // Populate requests
-        async function populateRequests() {
-            try {
-                const response = await axios.get('/transporter/api/get_pickup_requests/');
-                const requests = response.data;
-                document.getElementById('requestList').innerHTML = requests.map(createRequestCard).join('');
-            } catch (error) {
-                console.error('Error fetching requests:', error);
-                document.getElementById('requestList').innerHTML = '<p>Error loading requests. Please try again later.</p>';
-            }
-        }
-    
-        // Show request details
-        function showRequestDetails(request) {
-            const popup = document.getElementById('request-details-popup');
-            const content = document.getElementById('request-details-content');
-            content.innerHTML = `
-                <p><strong>Request ID:</strong> ${request.id}</p>
-                <p><strong>Location:</strong> ${request.location}</p>
-                <p><strong>Status:</strong> ${request.status}</p>
-                <p><strong>Time:</strong> ${request.time}</p>
-                <p><strong>Total CNotes:</strong> ${request.total_cnotes || 'N/A'}</p>
-                <p><strong>CNotes:</strong> ${request.cnotes ? request.cnotes.join(', ') : 'N/A'}</p>
-            `;
-            popup.style.display = 'block';
+    <!-- Charts Row -->
+    <div class="charts-row">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i data-lucide="bar-chart-2"></i> Request Status Overview</div>
+          <span id="last-updated" style="font-size:.7rem;color:var(--gray-400);">Updating...</span>
+        </div>
+        <canvas id="statusChart" height="90"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i data-lucide="pie-chart"></i> Distribution</div>
+        </div>
+        <canvas id="pieChart" height="190"></canvas>
+      </div>
+    </div>
 
-            const form = document.getElementById('vehicle-form');
-            form.onsubmit = (e) => {
-                e.preventDefault();
-                acceptRequest(request.id);
-            };
-        }
-    
-        // Close request details popup
-        function closeRequestDetails() {
-            document.getElementById('request-details-popup').style.display = 'none';
-        }
-    
-        // Accept request
-        async function acceptRequest(requestId) {
-            const vehicleNumber = document.getElementById('vehicle-number').value;
-            const driverName = document.getElementById('driver-name').value;
+    <!-- Bottom Row -->
+    <div class="bottom-row">
+      <!-- Recent Requests -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i data-lucide="list"></i> Recent Pickup Requests</div>
+          <button class="btn btn-primary" style="font-size:.75rem;padding:.4rem .75rem;" onclick="loadRequests()">
+            <i data-lucide="refresh-cw"></i> Refresh
+          </button>
+        </div>
+        <div class="request-list" id="requestList">
+          <p style="color:var(--gray-400);font-size:.85rem;text-align:center;padding:2rem;">Loading...</p>
+        </div>
+      </div>
 
-            try {
-                const response = await axios.post('/transporter/api/accept_pickup_request/', {
-                    request_id: requestId,
-                    vehicle_number: vehicleNumber,
-                    driver_name: driverName
-                });
-                alert(response.data.message);
-                closeRequestDetails();
-                populateRequests(); // Refresh the request list
-            } catch (error) {
-                console.error('Error accepting request:', error);
-                alert('Error accepting request. Please try again.');
-            }
-        }
-    
-        // Add click handlers for navigation and submenus
-        document.querySelectorAll('.nav-link, .submenu a').forEach(link => {
-            link.addEventListener('click', (e) => {
-                // Check if the link is a direct URL (not "#")
-                if (link.getAttribute('href') !== '#') {
-                    // Do not prevent default action for these links
-                    return;
-                }
+      <!-- Quick Stats -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i data-lucide="zap"></i> Quick Stats</div>
+        </div>
+        <div class="quick-list">
+          <div class="quick-item">
+            <span class="label"><i data-lucide="calendar"></i> Today's Requests</span>
+            <span class="val" id="qs-today">—</span>
+          </div>
+          <div class="quick-item">
+            <span class="label"><i data-lucide="alert-triangle"></i> Urgent Deliveries</span>
+            <span class="val" id="qs-urgent" style="color:var(--danger);">—</span>
+          </div>
+          <div class="quick-item">
+            <span class="label"><i data-lucide="percent"></i> Success Rate</span>
+            <span class="val" id="qs-rate" style="color:var(--success);">—</span>
+          </div>
+          <div class="quick-item">
+            <span class="label"><i data-lucide="truck"></i> In Transit</span>
+            <span class="val" id="qs-transit" style="color:var(--primary);">—</span>
+          </div>
+          <div class="quick-item">
+            <span class="label"><i data-lucide="x-circle"></i> Cancelled</span>
+            <span class="val" id="qs-cancelled" style="color:var(--danger);">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /page -->
+</div><!-- /main -->
 
-                // For other links, prevent default action and handle navigation
-                e.preventDefault();
-                document.querySelectorAll('.nav-link, .submenu a').forEach(l => l.classList.remove('active'));
-                link.classList.add('active');
+<!-- Request Detail Popup -->
+<div class="overlay" id="overlay">
+  <div class="popup">
+    <button class="popup-close" onclick="closePopup()"><i data-lucide="x"></i></button>
+    <h2>Request Details</h2>
+    <div id="popup-content"></div>
+    <form id="vehicle-form" class="form-group">
+      <input type="text" id="vehicle-number" placeholder="Vehicle Number" required>
+      <input type="text" id="driver-name" placeholder="Driver Name" required>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:.5rem;">
+        <i data-lucide="check"></i> Accept Request
+      </button>
+    </form>
+  </div>
+</div>
 
-                if (link.classList.contains('has-submenu')) {
-                    const submenu = link.nextElementSibling;
-                    submenu.style.display = submenu.style.display === 'flex' ? 'none' : 'flex';
-                    document.querySelectorAll('.submenu').forEach(menu => {
-                        if (menu !== submenu) {
-                            menu.style.display = 'none';
-                        }
-                    });
-                } else if (!link.closest('.submenu')) {
-                    document.querySelectorAll('.submenu').forEach(menu => {
-                        menu.style.display = 'none';
-                    });
-                }
-            });
-        });
-    
-        // Hide submenus when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.nav-link') && !e.target.closest('.submenu')) {
-                document.querySelectorAll('.submenu').forEach(menu => {
-                    menu.style.display = 'none';
-                });
-            }
-        });
-    
-        // Toggle sidebar on mobile
-        const menuToggle = document.getElementById('menu-toggle');
-        const sidebar = document.querySelector('.sidebar');
-        const mainContent = document.querySelector('.main-content');
-    
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-            mainContent.classList.toggle('sidebar-active');
-        });
-    
-        // Simulate real-time updates
-        function updateRandomStat() {
-            const stats = document.querySelectorAll('.stat-value');
-            const randomStat = stats[Math.floor(Math.random() * stats.length)];
-            const currentValue = parseInt(randomStat.textContent.replace(',', ''));
-            const newValue = currentValue + Math.floor(Math.random() * 10) - 5;
-            randomStat.textContent = newValue.toLocaleString();
-    
-            const trend = randomStat.nextElementSibling;
-            if (newValue > currentValue) {
-                trend.classList.remove('trend-down');
-                trend.classList.add('trend-up');
-                trend.innerHTML = `<i data-lucide="trending-up"></i> +${((newValue - currentValue) / currentValue * 100).toFixed(2)}% from last update`;
-            } else if (newValue < currentValue) {
-                trend.classList.remove('trend-up');
-                trend.classList.add('trend-down');
-                trend.innerHTML = `<i data-lucide="trending-down"></i> ${((newValue - currentValue) / currentValue * 100).toFixed(2)}% from last update`;
-            }
-            lucide.createIcons();
-        }
-    
-        setInterval(updateRandomStat, 5000);
-    
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            populateRequests();
-            // ... (other initialization code)
-        });
+<script>
+  lucide.createIcons();
 
-        async function handleLogout() {
-            try {
-                const response = await axios.post('/logout/', {}, {
-                    headers: {
-                        'X-CSRFToken': getCookie('csrftoken')
-                    }
-                });
-                if (response.status === 200) {
-                    // Broadcast logout event to other tabs
-                    localStorage.setItem('logout-event', Date.now());
-                    
-                    // Redirect to login page
-                    window.location.href = '/login/';
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Logout failed. Please try again.');
-            }
-        }
-        
-        // Listen for logout events from other tabs
-        window.addEventListener('storage', (event) => {
-            if (event.key === 'logout-event') {
-                window.location.href = '/login/';
-            }
-        });
-        // Example AJAX call to fetch data when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            fetch('/api/get_ddm_data/')  // Adjust the URL as needed
-                .then(response => response.json())
-                .then(data => {
-                    // Process the data
-                })
-                .catch(error => console.error('Error fetching DDM data:', error));
-        });
+  // ── Chart instances ──
+  let statusChart, pieChart;
 
-        
+  function initCharts(data) {
+    const labels  = ['Completed','Pending','In Progress','Cancelled'];
+    const counts  = [data.completed, data.pending, data.inprogress, data.cancelled];
+    const colors  = ['#10b981','#f59e0b','#3b82f6','#ef4444'];
 
-        // Get CSRF token
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-    </script>
+    // Bar chart
+    if (statusChart) statusChart.destroy();
+    statusChart = new Chart(document.getElementById('statusChart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          data: counts,
+          backgroundColor: colors.map(c => c + '33'),
+          borderColor: colors,
+          borderWidth: 2,
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } },
+        animation: { duration: 600 }
+      }
+    });
+
+    // Pie chart
+    if (pieChart) pieChart.destroy();
+    pieChart = new Chart(document.getElementById('pieChart'), {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data: counts, backgroundColor: colors, hoverOffset: 6 }] },
+      options: { plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }, animation: { duration: 600 } }
+    });
+  }
+
+  // ── Fetch & process requests ──
+  async function loadRequests() {
+    try {
+      const res  = await axios.get('/transporter/api/get_pickup_requests/');
+      const reqs = res.data;
+
+      // Count statuses
+      let completed=0, pending=0, inprogress=0, cancelled=0, total=reqs.length;
+      reqs.forEach(r => {
+        const s = (r.status||'').toLowerCase();
+        if (s==='completed') completed++;
+        else if (s==='pending') pending++;
+        else if (s==='inprogress'||s==='in progress') inprogress++;
+        else if (s==='cancelled') cancelled++;
+      });
+
+      // Update stat cards
+      document.getElementById('stat-total').textContent     = total.toLocaleString();
+      document.getElementById('stat-completed').textContent  = completed.toLocaleString();
+      document.getElementById('stat-pending').textContent    = pending.toLocaleString();
+      document.getElementById('stat-inprogress').textContent = inprogress.toLocaleString();
+
+      // Quick stats
+      const today = reqs.filter(r => {
+        if (!r.time) return false;
+        const d = new Date(r.time);
+        const n = new Date();
+        return d.toDateString() === n.toDateString();
+      }).length;
+      const rate = total ? Math.round((completed/total)*100) : 0;
+
+      document.getElementById('qs-today').textContent     = today || total;
+      document.getElementById('qs-urgent').textContent    = pending;
+      document.getElementById('qs-rate').textContent      = rate + '%';
+      document.getElementById('qs-transit').textContent   = inprogress;
+      document.getElementById('qs-cancelled').textContent = cancelled;
+
+      // Charts
+      initCharts({ completed, pending, inprogress, cancelled });
+
+      // Request list
+      const list = document.getElementById('requestList');
+      if (!reqs.length) {
+        list.innerHTML = '<p style="color:var(--gray-400);font-size:.85rem;text-align:center;padding:2rem;">No requests found.</p>';
+        return;
+      }
+      list.innerHTML = reqs.slice(0,20).map(r => {
+        const s = (r.status||'pending').toLowerCase().replace(' ','');
+        const statusMap = { completed:'completed', pending:'pending', inprogress:'inprogress', cancelled:'cancelled' };
+        const cls = statusMap[s] || 'pending';
+        return `
+          <div class="request-card" onclick='showPopup(${JSON.stringify(r)})'>
+            <div class="req-icon"><i data-lucide="package"></i></div>
+            <div class="req-info">
+              <div class="req-id">#${r.id}</div>
+              <div class="req-loc">${r.location||'—'}</div>
+            </div>
+            <div class="req-right">
+              <div class="badge badge-${cls}">${r.status||'Pending'}</div>
+              <div class="req-time">${r.time||''}</div>
+            </div>
+          </div>`;
+      }).join('');
+
+      // Update timestamp
+      document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+      lucide.createIcons();
+
+    } catch (err) {
+      console.error('Request fetch error:', err);
+      document.getElementById('requestList').innerHTML =
+        '<p style="color:var(--danger);font-size:.85rem;text-align:center;padding:2rem;">Failed to load. <a href="#" onclick="loadRequests()">Retry</a></p>';
+    }
+  }
+
+  // ── Popup ──
+  function showPopup(r) {
+    document.getElementById('popup-content').innerHTML = `
+      <p><strong>Request ID:</strong> #${r.id}</p>
+      <p><strong>Location:</strong> ${r.location||'—'}</p>
+      <p><strong>Status:</strong> ${r.status||'—'}</p>
+      <p><strong>Time:</strong> ${r.time||'—'}</p>
+      <p><strong>Total CNotes:</strong> ${r.total_cnotes||'N/A'}</p>
+      <p><strong>CNotes:</strong> ${r.cnotes ? r.cnotes.join(', ') : 'N/A'}</p>
+    `;
+    document.getElementById('overlay').classList.add('show');
+    document.getElementById('vehicle-form').onsubmit = e => {
+      e.preventDefault();
+      acceptRequest(r.id);
+    };
+    lucide.createIcons();
+  }
+
+  function closePopup() {
+    document.getElementById('overlay').classList.remove('show');
+  }
+
+  async function acceptRequest(id) {
+    try {
+      const res = await axios.post('/transporter/api/accept_pickup_request/', {
+        request_id: id,
+        vehicle_number: document.getElementById('vehicle-number').value,
+        driver_name:    document.getElementById('driver-name').value,
+      }, { headers: { 'X-CSRFToken': getCookie('csrftoken') } });
+      alert(res.data.message);
+      closePopup();
+      loadRequests();
+    } catch (err) {
+      alert('Error accepting request. Please try again.');
+    }
+  }
+
+  // ── Sidebar submenu ──
+  document.querySelectorAll('.nav-link.has-submenu').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      link.classList.toggle('open');
+      const sub = link.nextElementSibling;
+      if (sub) sub.classList.toggle('open');
+    });
+  });
+
+  // ── Mobile toggle ──
+  document.getElementById('menu-toggle').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('active');
+  });
+
+  // ── Close overlay on bg click ──
+  document.getElementById('overlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closePopup();
+  });
+
+  // ── CSRF ──
+  function getCookie(name) {
+    const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return v ? v.pop() : '';
+  }
+
+  // ── Auto-refresh every 30s ──
+  loadRequests();
+  setInterval(loadRequests, 30000);
+</script>
 </body>
 </html>
-
