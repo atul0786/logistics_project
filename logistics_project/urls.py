@@ -6,6 +6,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
 from django.http import HttpResponse
+from dealer_app.views_admin import admin_dashboard
+
 
 # 🔥 Add this test view
 def trigger_error(request):
@@ -13,6 +15,7 @@ def trigger_error(request):
     return HttpResponse("This should never return.")  # Not actually needed
 
 urlpatterns = [
+    path('admin/dashboard/', admin_dashboard, name='admin_dashboard'),  # ← ADD
     path('admin/', admin.site.urls),
     path('', RedirectView.as_view(url='login/'), name='redirect_to_login'),  
     path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
