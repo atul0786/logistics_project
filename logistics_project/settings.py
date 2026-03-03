@@ -54,6 +54,7 @@ USE_X_FORWARDED_PORT = True
 
 # Application definition
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -292,3 +293,43 @@ print(f"✅ Settings loaded for {DOMAIN_NAME}")
 print(f"📁 Static files: {STATIC_ROOT}")
 print(f"📁 Media files: {MEDIA_ROOT}")
 print(f"🔐 Debug mode: {DEBUG}")
+
+
+# ============================================
+# JAZZMIN SETTINGS - Good Way Express Admin
+# ============================================
+JAZZMIN_SETTINGS = {
+    "site_title": "Good Way Express",
+    "site_header": "Good Way Express",
+    "site_brand": "GWE Logistics",
+    "site_logo": "images/logo.jpg",
+    "login_logo": "images/logo.jpg",
+    "welcome_sign": "Welcome to Good Way Express Admin",
+    "copyright": "Good Way Express Logistics",
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "icons": {
+        "auth":                           "fas fa-users-cog",
+        "auth.user":                      "fas fa-user",
+        "dealer_app.CustomUser":          "fas fa-user-circle",
+        "dealer_app.Dealer":              "fas fa-store",
+        "dealer_app.CNote":               "fas fa-file-invoice",
+        "dealer_app.LoadingSheetSummary": "fas fa-truck-loading",
+        "dealer_app.LoadingSheetDetail":  "fas fa-list-alt",
+        "dealer_app.Article":             "fas fa-boxes",
+        "dealer_app.DeliveryDestination": "fas fa-map-marker-alt",
+        "transporter_app.Transporter":    "fas fa-truck",
+        "transporter_app.Pickup":         "fas fa-hand-paper",
+    },
+    "default_icon_parents": "fas fa-folder",
+    "default_icon_children": "fas fa-dot-circle",
+}
+```
+
+---
+
+### File 2: `requirements.txt`
+
+**End mein yeh line add karo:**
+```
+django-jazzmin==3.0.3
