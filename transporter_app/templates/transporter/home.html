@@ -9,310 +9,125 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     :root {
-      --primary:      #4f46e5;
-      --primary-dark: #4338ca;
-      --success:      #10b981;
-      --warning:      #f59e0b;
-      --danger:       #ef4444;
-      --sidebar-bg:   #0f172a;
-      --sidebar-hover:#1e293b;
-      --gray-50:  #f8fafc;
-      --gray-100: #f1f5f9;
-      --gray-200: #e2e8f0;
-      --gray-400: #94a3b8;
-      --gray-500: #64748b;
-      --gray-700: #334155;
-      --gray-900: #0f172a;
+      --primary:#4f46e5; --primary-dark:#4338ca;
+      --success:#10b981; --warning:#f59e0b; --danger:#ef4444;
+      --sidebar-bg:#0f172a; --sidebar-hover:#1e293b;
+      --gray-50:#f8fafc; --gray-100:#f1f5f9; --gray-200:#e2e8f0;
+      --gray-400:#94a3b8; --gray-500:#64748b; --gray-700:#334155; --gray-900:#0f172a;
     }
-    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--gray-100);
-      min-height: 100vh;
-      display: flex;
-    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--gray-100);min-height:100vh;display:flex;}
 
-    /* ── Sidebar ── */
-    .sidebar {
-      width: 260px;
-      background: var(--sidebar-bg);
-      color: white;
-      position: fixed;
-      height: 100vh;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      z-index: 1000;
-      transition: transform .3s;
-    }
-    .sidebar-header {
-      padding: 1.5rem 1.25rem 1.25rem;
-      border-bottom: 1px solid #1e293b;
-      display: flex;
-      align-items: center;
-      gap: .75rem;
-    }
-    .sidebar-header .logo-icon {
-      background: var(--primary);
-      border-radius: .5rem;
-      width: 36px; height: 36px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .sidebar-header h1 { font-size: 1rem; font-weight: 700; line-height: 1.2; }
-    .sidebar-header small { color: var(--gray-400); font-size: .7rem; }
+    /* Sidebar */
+    .sidebar{width:260px;background:var(--sidebar-bg);color:white;position:fixed;height:100vh;overflow-y:auto;display:flex;flex-direction:column;z-index:1000;transition:transform .3s;}
+    .sidebar-header{padding:1.5rem 1.25rem 1.25rem;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:.75rem;}
+    .logo-icon{background:var(--primary);border-radius:.5rem;width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .sidebar-header h1{font-size:1rem;font-weight:700;}
+    .sidebar-header small{color:var(--gray-400);font-size:.7rem;}
+    .nav-section-label{font-size:.65rem;font-weight:700;color:var(--gray-500);letter-spacing:.08em;text-transform:uppercase;padding:1.2rem 1.25rem .4rem;}
+    nav{flex:1;padding-bottom:1rem;}
+    .nav-link{display:flex;align-items:center;gap:.75rem;padding:.6rem 1.25rem;color:var(--gray-400);text-decoration:none;font-size:.875rem;cursor:pointer;transition:all .2s;border-left:3px solid transparent;}
+    .nav-link:hover,.nav-link.active{color:white;background:var(--sidebar-hover);border-left-color:var(--primary);}
+    .nav-link svg{flex-shrink:0;width:16px;height:16px;}
+    .nav-link .arrow{margin-left:auto;transition:transform .2s;width:14px;height:14px;}
+    .nav-link.open .arrow{transform:rotate(90deg);}
+    .submenu{display:none;flex-direction:column;background:#0a1120;}
+    .submenu.open{display:flex;}
+    .submenu a{display:block;padding:.5rem 1.25rem .5rem 3rem;font-size:.8rem;color:var(--gray-400);text-decoration:none;transition:all .2s;}
+    .submenu a:hover{color:white;background:var(--sidebar-hover);}
+    .logout-btn{margin:auto 1rem 1.5rem;padding:.65rem 1rem;display:flex;align-items:center;gap:.75rem;color:var(--gray-400);background:none;border:1px solid #1e293b;border-radius:.5rem;cursor:pointer;font-size:.875rem;width:calc(100% - 2rem);transition:all .2s;}
+    .logout-btn:hover{background:var(--danger);color:white;border-color:var(--danger);}
 
-    .nav-section-label {
-      font-size: .65rem;
-      font-weight: 700;
-      color: var(--gray-500);
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      padding: 1.2rem 1.25rem .4rem;
-    }
-    nav { flex: 1; padding-bottom: 1rem; }
-    .nav-link {
-      display: flex; align-items: center; gap: .75rem;
-      padding: .6rem 1.25rem;
-      color: var(--gray-400);
-      text-decoration: none;
-      border-radius: 0;
-      font-size: .875rem;
-      cursor: pointer;
-      transition: all .2s;
-      border-left: 3px solid transparent;
-    }
-    .nav-link:hover, .nav-link.active {
-      color: white;
-      background: var(--sidebar-hover);
-      border-left-color: var(--primary);
-    }
-    .nav-link svg { flex-shrink: 0; width: 16px; height: 16px; }
-    .nav-link .arrow {
-      margin-left: auto;
-      transition: transform .2s;
-      width: 14px; height: 14px;
-    }
-    .nav-link.open .arrow { transform: rotate(90deg); }
+    /* Main */
+    .main{margin-left:260px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
+    .topbar{background:white;padding:.875rem 1.5rem;display:flex;align-items:center;gap:1rem;border-bottom:1px solid var(--gray-200);position:sticky;top:0;z-index:100;}
+    .topbar-left{display:flex;align-items:center;gap:.75rem;flex:1;}
+    .search-bar{display:flex;align-items:center;gap:.5rem;background:var(--gray-100);border:1px solid var(--gray-200);padding:.45rem .875rem;border-radius:.5rem;width:280px;}
+    .search-bar input{border:none;outline:none;background:transparent;font-size:.85rem;width:100%;}
+    .search-bar svg{color:var(--gray-400);width:15px;height:15px;flex-shrink:0;}
+    .btn{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border-radius:.5rem;border:none;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s;}
+    .btn-primary{background:var(--primary);color:white;} .btn-primary:hover{background:var(--primary-dark);}
+    .btn-success{background:var(--success);color:white;} .btn-success:hover{filter:brightness(.9);}
+    .btn svg{width:15px;height:15px;}
+    .welcome-chip{margin-left:auto;display:flex;align-items:center;gap:.5rem;background:var(--gray-100);border:1px solid var(--gray-200);padding:.35rem .875rem;border-radius:2rem;font-size:.8rem;color:var(--gray-700);font-weight:600;white-space:nowrap;}
+    .welcome-chip svg{width:14px;color:var(--primary);}
 
-    .submenu {
-      display: none;
-      flex-direction: column;
-      background: #0a1120;
-    }
-    .submenu.open { display: flex; }
-    .submenu a {
-      display: block;
-      padding: .5rem 1.25rem .5rem 3rem;
-      font-size: .8rem;
-      color: var(--gray-400);
-      text-decoration: none;
-      transition: all .2s;
-    }
-    .submenu a:hover { color: white; background: var(--sidebar-hover); }
-
-    .logout-btn {
-      margin: auto 1rem 1.5rem;
-      padding: .65rem 1rem;
-      display: flex; align-items: center; gap: .75rem;
-      color: var(--gray-400);
-      background: none;
-      border: 1px solid #1e293b;
-      border-radius: .5rem;
-      cursor: pointer;
-      font-size: .875rem;
-      width: calc(100% - 2rem);
-      transition: all .2s;
-    }
-    .logout-btn:hover { background: var(--danger); color: white; border-color: var(--danger); }
-
-    /* ── Main ── */
-    .main { margin-left: 260px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
-
-    /* Topbar */
-    .topbar {
-      background: white;
-      padding: .875rem 1.5rem;
-      display: flex; align-items: center; gap: 1rem;
-      border-bottom: 1px solid var(--gray-200);
-      position: sticky; top: 0; z-index: 100;
-    }
-    .topbar-left { display: flex; align-items: center; gap: .75rem; flex: 1; }
-    .search-bar {
-      display: flex; align-items: center; gap: .5rem;
-      background: var(--gray-100);
-      border: 1px solid var(--gray-200);
-      padding: .45rem .875rem;
-      border-radius: .5rem;
-      width: 280px;
-    }
-    .search-bar input { border: none; outline: none; background: transparent; font-size: .85rem; width: 100%; }
-    .search-bar svg { color: var(--gray-400); width: 15px; height: 15px; flex-shrink: 0; }
-
-    .btn { display: inline-flex; align-items: center; gap: .5rem; padding: .5rem 1rem; border-radius: .5rem; border: none; cursor: pointer; font-size: .85rem; font-weight: 600; transition: all .2s; }
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-primary:hover { background: var(--primary-dark); }
-    .btn-success { background: var(--success); color: white; }
-    .btn-success:hover { filter: brightness(.9); }
-    .btn svg { width: 15px; height: 15px; }
-
-    .welcome-chip {
-      margin-left: auto;
-      display: flex; align-items: center; gap: .5rem;
-      background: var(--gray-100);
-      border: 1px solid var(--gray-200);
-      padding: .35rem .875rem;
-      border-radius: 2rem;
-      font-size: .8rem;
-      color: var(--gray-700);
-      font-weight: 600;
-    }
-    .welcome-chip svg { width: 14px; color: var(--primary); }
-
-    /* Page content */
-    .page { padding: 1.5rem; }
-    .page-title { font-size: 1.25rem; font-weight: 700; color: var(--gray-900); margin-bottom: 1.25rem; display: flex; align-items: center; gap: .5rem; }
-    .page-title svg { color: var(--primary); }
-
-    /* Live badge */
-    .live-badge {
-      display: inline-flex; align-items: center; gap: .35rem;
-      background: #dcfce7; color: #166534;
-      font-size: .7rem; font-weight: 700;
-      padding: .2rem .6rem; border-radius: 2rem;
-      margin-left: .5rem;
-    }
-    .live-dot { width: 6px; height: 6px; background: #16a34a; border-radius: 50%; animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+    .page{padding:1.5rem;}
+    .page-title{font-size:1.25rem;font-weight:700;color:var(--gray-900);margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem;}
+    .page-title svg{color:var(--primary);}
+    .live-badge{display:inline-flex;align-items:center;gap:.35rem;background:#dcfce7;color:#166534;font-size:.7rem;font-weight:700;padding:.2rem .6rem;border-radius:2rem;margin-left:.5rem;}
+    .live-dot{width:6px;height:6px;background:#16a34a;border-radius:50%;animation:pulse 1.5s infinite;}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
     /* Stats grid */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-    .stat-card {
-      background: white;
-      border-radius: .75rem;
-      padding: 1.25rem;
-      box-shadow: 0 1px 4px rgba(0,0,0,.06);
-      display: flex; align-items: center; gap: 1rem;
-      border: 1px solid var(--gray-200);
-      transition: transform .2s, box-shadow .2s;
-    }
-    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
-    .stat-icon {
-      width: 48px; height: 48px; border-radius: .75rem;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .stat-icon svg { width: 22px; height: 22px; }
-    .stat-label { font-size: .75rem; color: var(--gray-500); font-weight: 500; margin-bottom: .2rem; }
-    .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--gray-900); line-height: 1; }
-    .stat-sub { font-size: .72rem; color: var(--gray-400); margin-top: .3rem; display: flex; align-items: center; gap: .25rem; }
-    .stat-sub svg { width: 12px; }
-    .up { color: var(--success); } .down { color: var(--danger); }
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1rem;}
+    .stat-card{background:white;border-radius:.75rem;padding:1.25rem;box-shadow:0 1px 4px rgba(0,0,0,.06);display:flex;align-items:center;gap:1rem;border:1px solid var(--gray-200);transition:transform .2s,box-shadow .2s;}
+    .stat-card:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.1);}
+    .stat-icon{width:48px;height:48px;border-radius:.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .stat-icon svg{width:22px;height:22px;}
+    .stat-label{font-size:.75rem;color:var(--gray-500);font-weight:500;margin-bottom:.2rem;}
+    .stat-value{font-size:1.6rem;font-weight:800;color:var(--gray-900);line-height:1;}
+    .stat-sub{font-size:.72rem;color:var(--gray-400);margin-top:.3rem;}
 
-    /* Charts row */
-    .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
-    .card {
-      background: white;
-      border-radius: .75rem;
-      padding: 1.25rem;
-      box-shadow: 0 1px 4px rgba(0,0,0,.06);
-      border: 1px solid var(--gray-200);
-    }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-    .card-title { font-size: .95rem; font-weight: 700; color: var(--gray-900); display: flex; align-items: center; gap: .5rem; }
-    .card-title svg { width: 16px; color: var(--primary); }
+    /* Status pills */
+    .status-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.25rem;}
+    .pill{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .875rem;border-radius:2rem;font-size:.78rem;font-weight:700;}
 
-    /* Bottom row */
-    .bottom-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1rem; }
+    /* Charts */
+    .charts-row{display:grid;grid-template-columns:2fr 1fr;gap:1rem;margin-bottom:1.25rem;}
+    .bottom-row{display:grid;grid-template-columns:1.5fr 1fr;gap:1rem;margin-bottom:1.25rem;}
+    .card{background:white;border-radius:.75rem;padding:1.25rem;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid var(--gray-200);}
+    .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;}
+    .card-title{font-size:.95rem;font-weight:700;color:var(--gray-900);display:flex;align-items:center;gap:.5rem;}
+    .card-title svg{width:16px;color:var(--primary);}
+    .updated-text{font-size:.7rem;color:var(--gray-400);}
 
-    /* Request list */
-    .request-list { display: flex; flex-direction: column; gap: .75rem; max-height: 360px; overflow-y: auto; }
-    .request-card {
-      padding: .875rem 1rem;
-      border: 1px solid var(--gray-200);
-      border-radius: .625rem;
-      display: flex; align-items: center; gap: .875rem;
-      transition: box-shadow .2s, border-color .2s;
-      cursor: pointer;
-    }
-    .request-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.08); border-color: var(--primary); }
-    .req-icon { width: 38px; height: 38px; background: #ede9fe; border-radius: .5rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .req-icon svg { width: 18px; color: var(--primary); }
-    .req-info { flex: 1; min-width: 0; }
-    .req-id { font-size: .8rem; font-weight: 700; color: var(--gray-900); }
-    .req-loc { font-size: .75rem; color: var(--gray-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .req-right { text-align: right; flex-shrink: 0; }
-    .req-time { font-size: .7rem; color: var(--gray-400); }
-
-    .badge {
-      display: inline-block;
-      padding: .2rem .6rem;
-      border-radius: 2rem;
-      font-size: .68rem;
-      font-weight: 700;
-    }
-    .badge-pending    { background:#fef3c7; color:#92400e; }
-    .badge-completed  { background:#d1fae5; color:#065f46; }
-    .badge-inprogress { background:#dbeafe; color:#1e40af; }
-    .badge-cancelled  { background:#fee2e2; color:#991b1b; }
+    /* Requests section */
+    .requests-row{display:grid;grid-template-columns:1.5fr 1fr;gap:1rem;}
+    .request-list{display:flex;flex-direction:column;gap:.75rem;max-height:320px;overflow-y:auto;}
+    .request-card{padding:.875rem 1rem;border:1px solid var(--gray-200);border-radius:.625rem;display:flex;align-items:center;gap:.875rem;transition:box-shadow .2s,border-color .2s;cursor:pointer;}
+    .request-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08);border-color:var(--primary);}
+    .req-icon{width:38px;height:38px;background:#ede9fe;border-radius:.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .req-icon svg{width:18px;color:var(--primary);}
+    .req-info{flex:1;min-width:0;}
+    .req-id{font-size:.8rem;font-weight:700;color:var(--gray-900);}
+    .req-loc{font-size:.75rem;color:var(--gray-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .req-right{text-align:right;flex-shrink:0;}
+    .req-time{font-size:.7rem;color:var(--gray-400);}
+    .badge{display:inline-block;padding:.2rem .6rem;border-radius:2rem;font-size:.68rem;font-weight:700;}
+    .badge-pending{background:#fef3c7;color:#92400e;}
+    .badge-completed{background:#d1fae5;color:#065f46;}
+    .badge-inprogress{background:#dbeafe;color:#1e40af;}
+    .badge-cancelled{background:#fee2e2;color:#991b1b;}
 
     /* Quick stats */
-    .quick-list { display: flex; flex-direction: column; gap: .625rem; }
-    .quick-item {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: .75rem 1rem;
-      background: var(--gray-50);
-      border-radius: .5rem;
-      font-size: .85rem;
-      border: 1px solid var(--gray-200);
-    }
-    .quick-item .label { color: var(--gray-500); font-weight: 500; display: flex; align-items: center; gap: .5rem; }
-    .quick-item .label svg { width: 14px; }
-    .quick-item .val { font-weight: 800; color: var(--gray-900); }
+    .quick-list{display:flex;flex-direction:column;gap:.625rem;}
+    .quick-item{display:flex;justify-content:space-between;align-items:center;padding:.75rem 1rem;background:var(--gray-50);border-radius:.5rem;font-size:.85rem;border:1px solid var(--gray-200);}
+    .quick-item .label{color:var(--gray-500);font-weight:500;display:flex;align-items:center;gap:.5rem;}
+    .quick-item .label svg{width:14px;}
+    .quick-item .val{font-weight:800;color:var(--gray-900);}
 
     /* Popup */
-    .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:2000; align-items:center; justify-content:center; }
-    .overlay.show { display:flex; }
-    .popup {
-      background: white;
-      border-radius: .875rem;
-      padding: 1.75rem;
-      width: 90%; max-width: 480px;
-      position: relative;
-      box-shadow: 0 20px 60px rgba(0,0,0,.3);
-    }
-    .popup h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; }
-    .popup-close { position:absolute; top:1rem; right:1rem; background:none; border:none; cursor:pointer; color:var(--gray-400); padding:.25rem; }
-    .popup-close:hover { color: var(--gray-900); }
-    .popup p { font-size: .875rem; color: var(--gray-700); margin-bottom: .5rem; }
-    .popup p strong { color: var(--gray-900); }
-    .form-group { margin-top: .75rem; }
-    .form-group input {
-      width: 100%; padding: .625rem .875rem;
-      border: 1px solid var(--gray-200); border-radius: .5rem;
-      font-size: .875rem; margin-bottom: .625rem; outline: none;
-    }
-    .form-group input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;}
+    .overlay.show{display:flex;}
+    .popup{background:white;border-radius:.875rem;padding:1.75rem;width:90%;max-width:480px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+    .popup h2{font-size:1.1rem;font-weight:700;margin-bottom:1rem;}
+    .popup-close{position:absolute;top:1rem;right:1rem;background:none;border:none;cursor:pointer;color:var(--gray-400);padding:.25rem;}
+    .popup p{font-size:.875rem;color:var(--gray-700);margin-bottom:.5rem;}
+    .form-group{margin-top:.75rem;}
+    .form-group input{width:100%;padding:.625rem .875rem;border:1px solid var(--gray-200);border-radius:.5rem;font-size:.875rem;margin-bottom:.625rem;outline:none;}
+    .form-group input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,70,229,.1);}
 
-    /* Mobile */
-    #menu-toggle { display: none; }
-    @media (max-width: 1024px) {
-      .sidebar { transform: translateX(-100%); }
-      .sidebar.active { transform: translateX(0); }
-      .main { margin-left: 0; }
-      .charts-row, .bottom-row { grid-template-columns: 1fr; }
-      #menu-toggle {
-        display: flex; align-items: center; justify-content: center;
-        position: fixed; top: .875rem; left: .875rem; z-index: 1001;
-        background: var(--primary); color: white;
-        border: none; border-radius: 50%;
-        width: 38px; height: 38px; cursor: pointer;
-      }
+    /* Skeleton loader */
+    .skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:.5rem;height:1.6rem;}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+    #menu-toggle{display:none;}
+    @media(max-width:1024px){
+      .sidebar{transform:translateX(-100%);} .sidebar.active{transform:translateX(0);}
+      .main{margin-left:0;}
+      .charts-row,.bottom-row,.requests-row{grid-template-columns:1fr;}
+      #menu-toggle{display:flex;align-items:center;justify-content:center;position:fixed;top:.875rem;left:.875rem;z-index:1001;background:var(--primary);color:white;border:none;border-radius:50%;width:38px;height:38px;cursor:pointer;}
     }
   </style>
 </head>
@@ -323,23 +138,12 @@
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <div class="logo-icon"><i data-lucide="truck" style="width:18px;color:white;"></i></div>
-    <div>
-      <h1>Good Way Express</h1>
-      <small>Transport Panel</small>
-    </div>
+    <div><h1>Good Way Express</h1><small>Transport Panel</small></div>
   </div>
-
   <nav>
     <div class="nav-section-label">Main</div>
-
-    <a href="#" class="nav-link active">
-      <i data-lucide="layout-dashboard"></i> Dashboard
-    </a>
-
-    <a href="{% url 'transporter:receive' %}" class="nav-link" target="_blank">
-      <i data-lucide="clock"></i> Pending Requests
-    </a>
-
+    <a href="#" class="nav-link active"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+    <a href="{% url 'transporter:receive' %}" class="nav-link" target="_blank"><i data-lucide="clock"></i> Pending Requests</a>
     <a href="#" class="nav-link has-submenu">
       <i data-lucide="clipboard-list"></i> Delivery Management
       <i data-lucide="chevron-right" class="arrow"></i>
@@ -348,13 +152,8 @@
       <a href="{% url 'transporter:delivery_cnotes' %}" target="_blank">Single Delivery</a>
       <a href="{% url 'transporter:ddm_settlement' %}" target="_blank">DDM Settlements</a>
     </div>
-
-    <a href="#" class="nav-link">
-      <i data-lucide="check-circle"></i> Completed
-    </a>
-
+    <a href="#" class="nav-link"><i data-lucide="check-circle"></i> Completed</a>
     <div class="nav-section-label">Reports & Masters</div>
-
     <a href="#" class="nav-link has-submenu">
       <i data-lucide="bar-chart-2"></i> Reports
       <i data-lucide="chevron-right" class="arrow"></i>
@@ -363,7 +162,6 @@
       <a href="{% url 'transporter:all_booking_register' %}" target="_blank">Booking Register</a>
       <a href="{% url 'transporter:loading_sheet_report' %}" target="_blank">Loading Sheet Report</a>
     </div>
-
     <a href="#" class="nav-link has-submenu">
       <i data-lucide="settings"></i> Master
       <i data-lucide="chevron-right" class="arrow"></i>
@@ -378,17 +176,13 @@
       <a href="{% url 'transporter:view_users' %}" target="_blank">View Users</a>
     </div>
   </nav>
-
   <form method="post" action="{% url 'logout' %}">
     {% csrf_token %}
-    <button type="submit" class="logout-btn">
-      <i data-lucide="log-out" style="width:16px;"></i> Logout
-    </button>
+    <button type="submit" class="logout-btn"><i data-lucide="log-out" style="width:16px;"></i> Logout</button>
   </form>
 </aside>
 
 <div class="main">
-  <!-- Topbar -->
   <header class="topbar">
     <div class="topbar-left">
       <div class="search-bar">
@@ -402,84 +196,95 @@
         <i data-lucide="plus"></i> Create DRS
       </button>
     </div>
-    <div class="welcome-chip">
-      <i data-lucide="user"></i>
-      Welcome, {{ transporter_name }}
-    </div>
+    <div class="welcome-chip"><i data-lucide="user"></i> Welcome, {{ transporter_name }}</div>
   </header>
 
-  <!-- Page -->
   <div class="page">
     <div class="page-title">
-      <i data-lucide="layout-dashboard"></i>
-      Dashboard
+      <i data-lucide="layout-dashboard"></i> Dashboard
       <span class="live-badge"><span class="live-dot"></span> LIVE</span>
     </div>
 
-    <!-- Stats Cards -->
+    <!-- Stat Cards -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon" style="background:#ede9fe;">
-          <i data-lucide="package" style="color:#7c3aed;"></i>
-        </div>
+        <div class="stat-icon" style="background:#ede9fe;"><i data-lucide="file-text" style="color:#7c3aed;"></i></div>
         <div>
-          <div class="stat-label">Total Requests</div>
-          <div class="stat-value" id="stat-total">—</div>
-          <div class="stat-sub up"><i data-lucide="trending-up"></i> Live data</div>
+          <div class="stat-label">Total CNotes</div>
+          <div class="stat-value" id="s-total">—</div>
+          <div class="stat-sub">All time</div>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon" style="background:#d1fae5;">
-          <i data-lucide="check-circle" style="color:#059669;"></i>
-        </div>
+        <div class="stat-icon" style="background:#d1fae5;"><i data-lucide="indian-rupee" style="color:#059669;"></i></div>
         <div>
-          <div class="stat-label">Completed</div>
-          <div class="stat-value" id="stat-completed">—</div>
-          <div class="stat-sub up"><i data-lucide="trending-up"></i> Updated live</div>
+          <div class="stat-label">Total Revenue</div>
+          <div class="stat-value" id="s-revenue">—</div>
+          <div class="stat-sub">Grand total sum</div>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon" style="background:#fef3c7;">
-          <i data-lucide="clock" style="color:#d97706;"></i>
-        </div>
+        <div class="stat-icon" style="background:#fef3c7;"><i data-lucide="store" style="color:#d97706;"></i></div>
         <div>
-          <div class="stat-label">Pending</div>
-          <div class="stat-value" id="stat-pending">—</div>
-          <div class="stat-sub down"><i data-lucide="trending-down"></i> Needs attention</div>
+          <div class="stat-label">Active Dealers</div>
+          <div class="stat-value" id="s-dealers">—</div>
+          <div class="stat-sub">With CNotes</div>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon" style="background:#dbeafe;">
-          <i data-lucide="activity" style="color:#2563eb;"></i>
-        </div>
+        <div class="stat-icon" style="background:#dbeafe;"><i data-lucide="check-circle" style="color:#2563eb;"></i></div>
         <div>
-          <div class="stat-label">In Progress</div>
-          <div class="stat-value" id="stat-inprogress">—</div>
-          <div class="stat-sub up"><i data-lucide="trending-up"></i> Active now</div>
+          <div class="stat-label">Delivered</div>
+          <div class="stat-value" id="s-delivered">—</div>
+          <div class="stat-sub">Successfully delivered</div>
         </div>
       </div>
     </div>
 
-    <!-- Charts Row -->
+    <!-- Status Pills -->
+    <div class="status-row" id="status-pills">
+      <span class="pill" style="background:#ebf5fb;color:#2980b9;"><i data-lucide="clock" style="width:12px;"></i> Booked: <span id="p-booked">—</span></span>
+      <span class="pill" style="background:#fef5e7;color:#d35400;"><i data-lucide="truck" style="width:12px;"></i> Dispatched: <span id="p-dispatched">—</span></span>
+      <span class="pill" style="background:#eafaf1;color:#1e8449;"><i data-lucide="check" style="width:12px;"></i> Delivered: <span id="p-delivered">—</span></span>
+      <span class="pill" style="background:#fdedec;color:#c0392b;"><i data-lucide="x" style="width:12px;"></i> Cancelled: <span id="p-cancelled">—</span></span>
+      <span class="pill" style="background:#f4ecf7;color:#7d3c98;"><i data-lucide="inbox" style="width:12px;"></i> Received: <span id="p-received">—</span></span>
+    </div>
+
+    <!-- Charts Row 1 -->
     <div class="charts-row">
       <div class="card">
         <div class="card-header">
-          <div class="card-title"><i data-lucide="bar-chart-2"></i> Request Status Overview</div>
-          <span id="last-updated" style="font-size:.7rem;color:var(--gray-400);">Updating...</span>
+          <div class="card-title"><i data-lucide="trending-up"></i> Monthly Revenue (Last 6 Months)</div>
+          <span class="updated-text" id="last-updated">Loading...</span>
         </div>
-        <canvas id="statusChart" height="90"></canvas>
+        <canvas id="revenueChart" height="100"></canvas>
       </div>
       <div class="card">
         <div class="card-header">
-          <div class="card-title"><i data-lucide="pie-chart"></i> Distribution</div>
+          <div class="card-title"><i data-lucide="pie-chart"></i> Payment Type</div>
         </div>
-        <canvas id="pieChart" height="190"></canvas>
+        <canvas id="paymentChart" height="200"></canvas>
       </div>
     </div>
 
-    <!-- Bottom Row -->
+    <!-- Charts Row 2 -->
     <div class="bottom-row">
-      <!-- Recent Requests -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i data-lucide="bar-chart-2"></i> Monthly CNotes Count</div>
+        </div>
+        <canvas id="cnotesChart" height="110"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i data-lucide="trophy"></i> Top 5 Dealers</div>
+        </div>
+        <canvas id="dealerChart" height="180"></canvas>
+      </div>
+    </div>
+
+    <!-- Requests + Quick Stats -->
+    <div class="requests-row">
       <div class="card">
         <div class="card-header">
           <div class="card-title"><i data-lucide="list"></i> Recent Pickup Requests</div>
@@ -491,28 +296,24 @@
           <p style="color:var(--gray-400);font-size:.85rem;text-align:center;padding:2rem;">Loading...</p>
         </div>
       </div>
-
-      <!-- Quick Stats -->
       <div class="card">
-        <div class="card-header">
-          <div class="card-title"><i data-lucide="zap"></i> Quick Stats</div>
-        </div>
+        <div class="card-header"><div class="card-title"><i data-lucide="zap"></i> Quick Stats</div></div>
         <div class="quick-list">
           <div class="quick-item">
-            <span class="label"><i data-lucide="calendar"></i> Today's Requests</span>
+            <span class="label"><i data-lucide="calendar"></i> Today's CNotes</span>
             <span class="val" id="qs-today">—</span>
           </div>
           <div class="quick-item">
-            <span class="label"><i data-lucide="alert-triangle"></i> Urgent Deliveries</span>
-            <span class="val" id="qs-urgent" style="color:var(--danger);">—</span>
+            <span class="label"><i data-lucide="clock"></i> Pending</span>
+            <span class="val" id="qs-pending" style="color:var(--warning);">—</span>
           </div>
           <div class="quick-item">
-            <span class="label"><i data-lucide="percent"></i> Success Rate</span>
+            <span class="label"><i data-lucide="truck"></i> Dispatched</span>
+            <span class="val" id="qs-dispatched" style="color:var(--primary);">—</span>
+          </div>
+          <div class="quick-item">
+            <span class="label"><i data-lucide="percent"></i> Delivery Rate</span>
             <span class="val" id="qs-rate" style="color:var(--success);">—</span>
-          </div>
-          <div class="quick-item">
-            <span class="label"><i data-lucide="truck"></i> In Transit</span>
-            <span class="val" id="qs-transit" style="color:var(--primary);">—</span>
           </div>
           <div class="quick-item">
             <span class="label"><i data-lucide="x-circle"></i> Cancelled</span>
@@ -521,10 +322,10 @@
         </div>
       </div>
     </div>
-  </div><!-- /page -->
-</div><!-- /main -->
+  </div>
+</div>
 
-<!-- Request Detail Popup -->
+<!-- Popup -->
 <div class="overlay" id="overlay">
   <div class="popup">
     <button class="popup-close" onclick="closePopup()"><i data-lucide="x"></i></button>
@@ -543,140 +344,158 @@
 <script>
   lucide.createIcons();
 
-  // ── Chart instances ──
-  let statusChart, pieChart;
+  let revenueChart, paymentChart, cnotesChart, dealerChart;
 
-  function initCharts(data) {
-    const labels  = ['Completed','Pending','In Progress','Cancelled'];
-    const counts  = [data.completed, data.pending, data.inprogress, data.cancelled];
-    const colors  = ['#10b981','#f59e0b','#3b82f6','#ef4444'];
+  // ── Load CNotes Dashboard Stats ──────────────────────
+  async function loadDashboardStats() {
+    try {
+      const res = await axios.get('/transporter/api/dashboard_stats/');
+      const d   = res.data;
+      if (!d.success) return;
 
-    // Bar chart
-    if (statusChart) statusChart.destroy();
-    statusChart = new Chart(document.getElementById('statusChart'), {
-      type: 'bar',
+      // Stat cards
+      document.getElementById('s-total').textContent    = d.total_cnotes.toLocaleString();
+      document.getElementById('s-revenue').textContent  = '₹' + Math.round(d.total_revenue).toLocaleString();
+      document.getElementById('s-dealers').textContent  = d.total_dealers.toLocaleString();
+      document.getElementById('s-delivered').textContent= d.delivered.toLocaleString();
+
+      // Pills
+      document.getElementById('p-booked').textContent     = d.booked;
+      document.getElementById('p-dispatched').textContent = d.dispatched;
+      document.getElementById('p-delivered').textContent  = d.delivered;
+      document.getElementById('p-cancelled').textContent  = d.cancelled;
+      document.getElementById('p-received').textContent   = d.received;
+
+      // Quick stats
+      document.getElementById('qs-today').textContent      = d.today_count;
+      document.getElementById('qs-pending').textContent    = d.booked;
+      document.getElementById('qs-dispatched').textContent = d.dispatched;
+      document.getElementById('qs-cancelled').textContent  = d.cancelled;
+      const rate = d.total_cnotes ? Math.round((d.delivered / d.total_cnotes) * 100) : 0;
+      document.getElementById('qs-rate').textContent = rate + '%';
+
+      // Charts
+      buildCharts(d);
+      document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+
+    } catch (err) {
+      console.error('Dashboard stats error:', err);
+      document.getElementById('last-updated').textContent = 'Error loading data';
+    }
+  }
+
+  function buildCharts(d) {
+    // 1. Revenue Line Chart
+    if (revenueChart) revenueChart.destroy();
+    revenueChart = new Chart(document.getElementById('revenueChart'), {
+      type: 'line',
       data: {
-        labels,
+        labels: d.months_labels,
         datasets: [{
-          data: counts,
-          backgroundColor: colors.map(c => c + '33'),
-          borderColor: colors,
-          borderWidth: 2,
-          borderRadius: 6,
+          label: 'Revenue (₹)',
+          data: d.months_revenue,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59,130,246,0.1)',
+          tension: 0.4, fill: true, pointRadius: 5, pointBackgroundColor: '#3b82f6',
         }]
       },
       options: {
         plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } },
-        animation: { duration: 600 }
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { callback: v => '₹' + v.toLocaleString() } },
+          x: { grid: { display: false } }
+        }
       }
     });
 
-    // Pie chart
-    if (pieChart) pieChart.destroy();
-    pieChart = new Chart(document.getElementById('pieChart'), {
+    // 2. Payment Type Donut
+    if (paymentChart) paymentChart.destroy();
+    paymentChart = new Chart(document.getElementById('paymentChart'), {
       type: 'doughnut',
-      data: { labels, datasets: [{ data: counts, backgroundColor: colors, hoverOffset: 6 }] },
-      options: { plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }, animation: { duration: 600 } }
+      data: {
+        labels: d.payment_labels,
+        datasets: [{ data: d.payment_counts, backgroundColor: ['#3b82f6','#10b981','#ef4444','#f59e0b','#8b5cf6','#14b8a6','#64748b'], hoverOffset: 6 }]
+      },
+      options: { plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 8 } } } }
+    });
+
+    // 3. Monthly CNotes Bar
+    if (cnotesChart) cnotesChart.destroy();
+    cnotesChart = new Chart(document.getElementById('cnotesChart'), {
+      type: 'bar',
+      data: {
+        labels: d.months_labels,
+        datasets: [{ label: 'CNotes', data: d.months_count, backgroundColor: 'rgba(16,185,129,0.75)', borderRadius: 6 }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } }
+      }
+    });
+
+    // 4. Top Dealers Horizontal Bar
+    if (dealerChart) dealerChart.destroy();
+    dealerChart = new Chart(document.getElementById('dealerChart'), {
+      type: 'bar',
+      data: {
+        labels: d.dealer_names,
+        datasets: [{ label: 'CNotes', data: d.dealer_counts, backgroundColor: 'rgba(245,158,11,0.8)', borderRadius: 6 }]
+      },
+      options: {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true, grid: { color: '#f1f5f9' } }, y: { grid: { display: false } } }
+      }
     });
   }
 
-  // ── Fetch & process requests ──
+  // ── Load Pickup Requests ──────────────────────────────
   async function loadRequests() {
     try {
       const res  = await axios.get('/transporter/api/get_pickup_requests/');
       const reqs = res.data;
-
-      // Count statuses
-      let completed=0, pending=0, inprogress=0, cancelled=0, total=reqs.length;
-      reqs.forEach(r => {
-        const s = (r.status||'').toLowerCase();
-        if (s==='completed') completed++;
-        else if (s==='pending') pending++;
-        else if (s==='inprogress'||s==='in progress') inprogress++;
-        else if (s==='cancelled') cancelled++;
-      });
-
-      // Update stat cards
-      document.getElementById('stat-total').textContent     = total.toLocaleString();
-      document.getElementById('stat-completed').textContent  = completed.toLocaleString();
-      document.getElementById('stat-pending').textContent    = pending.toLocaleString();
-      document.getElementById('stat-inprogress').textContent = inprogress.toLocaleString();
-
-      // Quick stats
-      const today = reqs.filter(r => {
-        if (!r.time) return false;
-        const d = new Date(r.time);
-        const n = new Date();
-        return d.toDateString() === n.toDateString();
-      }).length;
-      const rate = total ? Math.round((completed/total)*100) : 0;
-
-      document.getElementById('qs-today').textContent     = today || total;
-      document.getElementById('qs-urgent').textContent    = pending;
-      document.getElementById('qs-rate').textContent      = rate + '%';
-      document.getElementById('qs-transit').textContent   = inprogress;
-      document.getElementById('qs-cancelled').textContent = cancelled;
-
-      // Charts
-      initCharts({ completed, pending, inprogress, cancelled });
-
-      // Request list
       const list = document.getElementById('requestList');
       if (!reqs.length) {
-        list.innerHTML = '<p style="color:var(--gray-400);font-size:.85rem;text-align:center;padding:2rem;">No requests found.</p>';
+        list.innerHTML = '<p style="color:var(--gray-400);font-size:.85rem;text-align:center;padding:2rem;">No pickup requests found.</p>';
         return;
       }
-      list.innerHTML = reqs.slice(0,20).map(r => {
-        const s = (r.status||'pending').toLowerCase().replace(' ','');
-        const statusMap = { completed:'completed', pending:'pending', inprogress:'inprogress', cancelled:'cancelled' };
-        const cls = statusMap[s] || 'pending';
+      list.innerHTML = reqs.slice(0, 20).map(r => {
+        const s   = (r.status || 'pending').toLowerCase().replace(' ', '');
+        const cls = ['completed','pending','inprogress','cancelled'].includes(s) ? s : 'pending';
         return `
           <div class="request-card" onclick='showPopup(${JSON.stringify(r)})'>
             <div class="req-icon"><i data-lucide="package"></i></div>
             <div class="req-info">
               <div class="req-id">#${r.id}</div>
-              <div class="req-loc">${r.location||'—'}</div>
+              <div class="req-loc">${r.location || '—'}</div>
             </div>
             <div class="req-right">
-              <div class="badge badge-${cls}">${r.status||'Pending'}</div>
-              <div class="req-time">${r.time||''}</div>
+              <div class="badge badge-${cls}">${r.status || 'Pending'}</div>
+              <div class="req-time">${r.time || ''}</div>
             </div>
           </div>`;
       }).join('');
-
-      // Update timestamp
-      document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
       lucide.createIcons();
-
     } catch (err) {
-      console.error('Request fetch error:', err);
       document.getElementById('requestList').innerHTML =
-        '<p style="color:var(--danger);font-size:.85rem;text-align:center;padding:2rem;">Failed to load. <a href="#" onclick="loadRequests()">Retry</a></p>';
+        '<p style="color:var(--danger);font-size:.85rem;text-align:center;padding:2rem;">Failed to load requests.</p>';
     }
   }
 
-  // ── Popup ──
+  // ── Popup ─────────────────────────────────────────────
   function showPopup(r) {
     document.getElementById('popup-content').innerHTML = `
       <p><strong>Request ID:</strong> #${r.id}</p>
-      <p><strong>Location:</strong> ${r.location||'—'}</p>
-      <p><strong>Status:</strong> ${r.status||'—'}</p>
-      <p><strong>Time:</strong> ${r.time||'—'}</p>
-      <p><strong>Total CNotes:</strong> ${r.total_cnotes||'N/A'}</p>
-      <p><strong>CNotes:</strong> ${r.cnotes ? r.cnotes.join(', ') : 'N/A'}</p>
-    `;
+      <p><strong>Location:</strong> ${r.location || '—'}</p>
+      <p><strong>Status:</strong> ${r.status || '—'}</p>
+      <p><strong>Time:</strong> ${r.time || '—'}</p>
+      <p><strong>Total CNotes:</strong> ${r.total_cnotes || 'N/A'}</p>
+      <p><strong>CNotes:</strong> ${r.cnotes ? r.cnotes.join(', ') : 'N/A'}</p>`;
     document.getElementById('overlay').classList.add('show');
-    document.getElementById('vehicle-form').onsubmit = e => {
-      e.preventDefault();
-      acceptRequest(r.id);
-    };
+    document.getElementById('vehicle-form').onsubmit = e => { e.preventDefault(); acceptRequest(r.id); };
     lucide.createIcons();
   }
-
-  function closePopup() {
-    document.getElementById('overlay').classList.remove('show');
-  }
+  function closePopup() { document.getElementById('overlay').classList.remove('show'); }
 
   async function acceptRequest(id) {
     try {
@@ -688,12 +507,10 @@
       alert(res.data.message);
       closePopup();
       loadRequests();
-    } catch (err) {
-      alert('Error accepting request. Please try again.');
-    }
+    } catch { alert('Error accepting request. Please try again.'); }
   }
 
-  // ── Sidebar submenu ──
+  // ── Sidebar submenus ──────────────────────────────────
   document.querySelectorAll('.nav-link.has-submenu').forEach(link => {
     link.addEventListener('click', e => {
       e.preventDefault();
@@ -703,24 +520,23 @@
     });
   });
 
-  // ── Mobile toggle ──
+  // ── Mobile ────────────────────────────────────────────
   document.getElementById('menu-toggle').addEventListener('click', () => {
     document.getElementById('sidebar').classList.toggle('active');
   });
-
-  // ── Close overlay on bg click ──
   document.getElementById('overlay').addEventListener('click', e => {
     if (e.target === e.currentTarget) closePopup();
   });
 
-  // ── CSRF ──
   function getCookie(name) {
     const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
     return v ? v.pop() : '';
   }
 
-  // ── Auto-refresh every 30s ──
+  // ── Init + Auto-refresh every 60s ────────────────────
+  loadDashboardStats();
   loadRequests();
+  setInterval(loadDashboardStats, 60000);
   setInterval(loadRequests, 30000);
 </script>
 </body>
