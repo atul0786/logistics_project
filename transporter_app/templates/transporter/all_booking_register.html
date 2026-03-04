@@ -1,1547 +1,814 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>All Booking Register Report - Fixed</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #3498db;
-            --secondary-color: #2ecc71;
-            --accent-color: #e74c3c;
-            --warning-color: #f39c12;
-            --background-color: #ecf0f1;
-            --text-color: #34495e;
-            --border-color: #bdc3c7;
-            --header-height: 70px;
-            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            line-height: 1.6;
-        }
-
-        header {
-            background: linear-gradient(135deg, #87CEEB 0%, #4682B4 100%);
-            color: #333;
-            padding: 1rem;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            box-shadow: var(--shadow);
-        }
-
-        .container {
-            width: 95%;
-            margin: 0 auto;
-            padding: 0 15px;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .transporter-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .transporter-details {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .transporter-name {
-            font-size: 1.3em;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-
-        .transporter-city {
-            font-size: 0.9em;
-            color: #7f8c8d;
-        }
-
-        .search-container {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        #lr-search {
-            padding: 0.6rem;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            width: 250px;
-            font-size: 14px;
-            transition: border-color 0.3s ease;
-        }
-
-        #lr-search:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-
-        .btn {
-            padding: 0.6rem 1.2rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #2980b9;
-        }
-
-        .btn-success {
-            background-color: var(--secondary-color);
-            color: white;
-        }
-
-        .btn-success:hover {
-            background-color: #27ae60;
-        }
-
-        .btn-danger {
-            background-color: var(--accent-color);
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background-color: #c0392b;
-        }
-
-        .btn-warning {
-            background-color: var(--warning-color);
-            color: white;
-        }
-
-        .btn-warning:hover {
-            background-color: #e67e22;
-        }
-
-        main {
-            margin-top: calc(var(--header-height) + 20px);
-            padding: 20px;
-        }
-        
-        .filter-section {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            margin-bottom: 25px;
-        }
-
-        .filter-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #eee;
-        }
-
-        .filter-title {
-            font-size: 1.4em;
-            font-weight: bold;
-            color: var(--text-color);
-        }
-
-        .filter-toggle {
-            background: none;
-            border: none;
-            font-size: 1.2em;
-            cursor: pointer;
-            color: var(--primary-color);
-        }
-
-        .filter-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 25px;
-        }
-
-        .filter-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .filter-item label {
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--text-color);
-        }
-
-        .filter-item select,
-        .filter-item input {
-            padding: 10px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: border-color 0.3s ease;
-        }
-
-        .filter-item select:focus,
-        .filter-item input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-
-        .button-group {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .search-results-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            overflow: hidden;
-        }
-
-        .table-header {
-            background: #f8f9fa;
-            padding: 15px 20px;
-            border-bottom: 2px solid #dee2e6;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .table-title {
-            font-size: 1.2em;
-            font-weight: bold;
-        }
-
-        .table-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .table-wrapper {
-            overflow-x: auto;
-            max-height: 600px;
-        }
-
-        #booking-table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: white;
-        }
-
-        #booking-table th,
-        #booking-table td {
-            padding: 12px 8px;
-            text-align: left;
-            border-bottom: 1px solid #dee2e6;
-            font-size: 13px;
-        }
-
-        #booking-table th {
-            background-color: #f8f9fa;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            cursor: pointer;
-            user-select: none;
-            white-space: nowrap;
-        }
-
-        #booking-table th:hover {
-            background-color: #e9ecef;
-        }
-
-        #booking-table tbody tr:hover {
-            background-color: #f1f3f5;
-        }
-
-        #booking-table tbody tr:nth-child(even) {
-            background-color: #fafafa;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 20px 0;
-            gap: 10px;
-        }
-
-        .pagination button {
-            padding: 8px 12px;
-            background-color: white;
-            color: var(--primary-color);
-            border: 2px solid var(--primary-color);
-            cursor: pointer;
-            border-radius: 6px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .pagination button:hover:not(:disabled) {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .pagination button:disabled {
-            background-color: #f8f9fa;
-            color: #6c757d;
-            border-color: #dee2e6;
-            cursor: not-allowed;
-        }
-
-        .pagination button.active {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(255, 255, 255, 0.9);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        }
-
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 6px solid #f3f3f3;
-            border-top: 6px solid var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        .loading-text {
-            margin-top: 20px;
-            font-size: 1.1em;
-            color: var(--text-color);
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .summary-table {
-            width: 100%;
-            margin-top: 25px;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-        }
-
-        .summary-table th,
-        .summary-table td {
-            padding: 15px;
-            border: 1px solid #dee2e6;
-            text-align: right;
-        }
-
-        .summary-table th {
-            background-color: #f8f9fa;
-            font-weight: 600;
-        }
-
-        .summary-row {
-            font-weight: bold;
-            background-color: #e9ecef;
-        }
-
-        .alert {
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 6px;
-            border-left: 4px solid;
-        }
-
-        .alert-info {
-            background-color: #d1ecf1;
-            border-color: #bee5eb;
-            color: #0c5460;
-        }
-
-        .alert-warning {
-            background-color: #fff3cd;
-            border-color: #ffeaa7;
-            color: #856404;
-        }
-
-        .alert-error {
-            background-color: #f8d7da;
-            border-color: #f5c6cb;
-            color: #721c24;
-        }
-
-        /* Sort indicators */
-        th[data-sort]::after {
-            content: '\f0dc';
-            font-family: 'Font Awesome 6 Free';
-            margin-left: 8px;
-            opacity: 0.5;
-            font-weight: 900;
-        }
-
-        th[data-sort].sort-asc::after {
-            content: '\f0de';
-            opacity: 1;
-        }
-
-        th[data-sort].sort-desc::after {
-            content: '\f0dd';
-            opacity: 1;
-        }
-
-        /* Links in table */
-        #booking-table td a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        #booking-table td a:hover {
-            text-decoration: underline;
-        }
-
-        /* Badge styles */
-        .badge {
-            display: inline-block;
-            padding: 0.25em 0.6em;
-            font-size: 0.75em;
-            font-weight: 700;
-            line-height: 1;
-            text-align: center;
-            white-space: nowrap;
-            vertical-align: baseline;
-            border-radius: 0.375rem;
-        }
-        
-        .badge-primary { background-color: #007bff; color: white; }
-        .badge-secondary { background-color: #6c757d; color: white; }
-        .badge-success { background-color: #28a745; color: white; }
-        .badge-danger { background-color: #dc3545; color: white; }
-        .badge-warning { background-color: #ffc107; color: #212529; }
-        .badge-info { background-color: #17a2b8; color: white; }
-
-        /* Responsive design */
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .filter-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .button-group {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .table-header {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            #booking-table th,
-            #booking-table td {
-                padding: 8px 4px;
-                font-size: 12px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Booking Register — Good Way Express</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary:#4f46e5; --primary-dark:#4338ca;
+      --success:#10b981; --warning:#f59e0b; --danger:#ef4444;
+      --sidebar-bg:#0f172a; --sidebar-hover:#1e293b;
+      --gray-50:#f8fafc; --gray-100:#f1f5f9; --gray-200:#e2e8f0;
+      --gray-400:#94a3b8; --gray-500:#64748b; --gray-700:#334155; --gray-900:#0f172a;
+      --sidebar-w: 240px;
+      --sidebar-collapsed-w: 56px;
+      --topbar-h: 56px;
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--gray-100);min-height:100vh;display:flex;overflow-x:hidden;}
+
+    /* ── Sidebar ── */
+    .sidebar{
+      width:var(--sidebar-w);
+      background:var(--sidebar-bg);
+      color:white;
+      position:fixed; left:0; top:0;
+      height:100vh;
+      overflow:hidden;
+      display:flex; flex-direction:column;
+      z-index:200;
+      transition:width .25s ease;
+      flex-shrink:0;
+    }
+    .sidebar.collapsed{ width:var(--sidebar-collapsed-w); }
+
+    .sidebar-header{
+      height:var(--topbar-h);
+      padding:0 .875rem;
+      border-bottom:1px solid #1e293b;
+      display:flex; align-items:center; gap:.625rem;
+      flex-shrink:0; overflow:hidden;
+    }
+    .logo-icon{
+      background:var(--primary); border-radius:.5rem;
+      min-width:32px; height:32px;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0;
+    }
+    .logo-icon svg{width:16px;color:white;}
+    .sidebar-title{ white-space:nowrap; overflow:hidden; }
+    .sidebar-title h1{font-size:.875rem;font-weight:700;line-height:1.2;}
+    .sidebar-title small{color:var(--gray-400);font-size:.65rem;}
+
+    .nav-section-label{
+      font-size:.6rem; font-weight:700; color:var(--gray-500);
+      letter-spacing:.08em; text-transform:uppercase;
+      padding:.875rem .875rem .3rem;
+      white-space:nowrap; overflow:hidden;
+    }
+    .sidebar.collapsed .nav-section-label{ opacity:0; height:0; padding:0; }
+
+    nav{ flex:1; overflow-y:auto; overflow-x:hidden; padding-bottom:.5rem; }
+    nav::-webkit-scrollbar{width:3px;} nav::-webkit-scrollbar-thumb{background:#334155;}
+
+    .nav-link{
+      display:flex; align-items:center; gap:.75rem;
+      padding:.575rem .875rem;
+      color:var(--gray-400); text-decoration:none;
+      font-size:.8rem; cursor:pointer;
+      transition:all .2s;
+      border-left:3px solid transparent;
+      white-space:nowrap; overflow:hidden;
+    }
+    .nav-link:hover,.nav-link.active{color:white;background:var(--sidebar-hover);border-left-color:var(--primary);}
+    .nav-link svg{flex-shrink:0;width:16px;height:16px;}
+    .nav-link-text{ overflow:hidden; }
+    .nav-link .arrow{margin-left:auto;transition:transform .2s;width:13px;height:13px;flex-shrink:0;}
+    .nav-link.open .arrow{transform:rotate(90deg);}
+    .sidebar.collapsed .nav-link-text,.sidebar.collapsed .arrow{ display:none; }
+    .sidebar.collapsed .nav-link{ justify-content:center; border-left:3px solid transparent; }
+    .sidebar.collapsed .nav-link:hover{ border-left-color:var(--primary); }
+
+    .submenu{display:none;flex-direction:column;background:#0a1120;}
+    .submenu.open{display:flex;}
+    .sidebar.collapsed .submenu{display:none !important;}
+    .submenu a{display:block;padding:.45rem 1rem .45rem 2.75rem;font-size:.775rem;color:var(--gray-400);text-decoration:none;transition:all .2s;white-space:nowrap;}
+    .submenu a:hover,.submenu a.active{color:white;background:var(--sidebar-hover);}
+
+    .logout-btn{
+      margin:.5rem .625rem 1rem;
+      padding:.575rem .75rem;
+      display:flex; align-items:center; gap:.625rem;
+      color:var(--gray-400); background:none;
+      border:1px solid #1e293b; border-radius:.5rem;
+      cursor:pointer; font-size:.8rem;
+      transition:all .2s; overflow:hidden; white-space:nowrap;
+    }
+    .logout-btn:hover{background:var(--danger);color:white;border-color:var(--danger);}
+    .logout-btn svg{flex-shrink:0;width:15px;height:15px;}
+    .sidebar.collapsed .logout-btn span{display:none;}
+    .sidebar.collapsed .logout-btn{justify-content:center;padding:.575rem;}
+
+    /* ── Main ── */
+    .main{
+      margin-left:var(--sidebar-w);
+      flex:1; display:flex; flex-direction:column;
+      min-height:100vh;
+      transition:margin-left .25s ease;
+      min-width:0;
+    }
+    .main.expanded{ margin-left:var(--sidebar-collapsed-w); }
+
+    /* ── Topbar ── */
+    .topbar{
+      background:white;
+      height:var(--topbar-h);
+      padding:0 1.25rem;
+      display:flex; align-items:center; gap:.75rem;
+      border-bottom:1px solid var(--gray-200);
+      position:sticky; top:0; z-index:100;
+      flex-shrink:0;
+    }
+    .sidebar-toggle{
+      background:none; border:1px solid var(--gray-200);
+      border-radius:.5rem; width:32px; height:32px;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; flex-shrink:0; transition:all .2s;
+      color:var(--gray-500);
+    }
+    .sidebar-toggle:hover{background:var(--gray-100);color:var(--gray-900);}
+    .sidebar-toggle svg{width:16px;height:16px;}
+
+    .search-bar{display:flex;align-items:center;gap:.5rem;background:var(--gray-100);border:1px solid var(--gray-200);padding:.4rem .75rem;border-radius:.5rem;width:260px;flex-shrink:0;}
+    .search-bar input{border:none;outline:none;background:transparent;font-size:.82rem;width:100%;}
+    .search-bar svg{color:var(--gray-400);width:14px;height:14px;flex-shrink:0;}
+
+    .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .875rem;border-radius:.5rem;border:none;cursor:pointer;font-size:.8rem;font-weight:600;transition:all .2s;flex-shrink:0;}
+    .btn-primary{background:var(--primary);color:white;} .btn-primary:hover{background:var(--primary-dark);}
+    .btn-success{background:var(--success);color:white;} .btn-success:hover{filter:brightness(.9);}
+    .btn-warning{background:var(--warning);color:white;} .btn-warning:hover{filter:brightness(.9);}
+    .btn-danger{background:var(--danger);color:white;} .btn-danger:hover{filter:brightness(.9);}
+    .btn svg{width:14px;height:14px;}
+
+    .welcome-chip{margin-left:auto;display:flex;align-items:center;gap:.4rem;background:var(--gray-100);border:1px solid var(--gray-200);padding:.3rem .75rem;border-radius:2rem;font-size:.78rem;color:var(--gray-700);font-weight:600;white-space:nowrap;flex-shrink:0;}
+    .welcome-chip svg{width:13px;color:var(--primary);}
+
+    /* ── Page ── */
+    .page{padding:1.25rem;min-width:0;}
+    .page-title{font-size:1.1rem;font-weight:700;color:var(--gray-900);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;}
+    .page-title svg{color:var(--primary);width:18px;height:18px;}
+
+    /* ── Cards ── */
+    .card{background:white;border-radius:.625rem;padding:1rem;box-shadow:0 1px 3px rgba(0,0,0,.06);border:1px solid var(--gray-200);margin-bottom:1rem;}
+    .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.875rem;}
+    .card-title{font-size:.875rem;font-weight:700;color:var(--gray-900);display:flex;align-items:center;gap:.4rem;}
+    .card-title svg{width:15px;color:var(--primary);}
+
+    .filter-toggle-btn{background:none;border:1px solid var(--gray-200);border-radius:.375rem;padding:.25rem .5rem;cursor:pointer;color:var(--gray-500);display:flex;align-items:center;gap:.3rem;font-size:.75rem;transition:all .2s;}
+    .filter-toggle-btn:hover{background:var(--gray-100);}
+    .filter-toggle-btn svg{width:13px;height:13px;}
+
+    /* ── FILTER GRID — 5 columns, compact ── */
+    .filter-grid{
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:.625rem;
+      margin-bottom:.875rem;
+    }
+    .filter-item{display:flex;flex-direction:column;gap:.25rem;}
+    .filter-item label{font-size:.72rem;font-weight:600;color:var(--gray-700);display:flex;align-items:center;gap:.25rem;}
+    .filter-item label i{color:var(--gray-400);font-size:.68rem;}
+    .filter-item select,.filter-item input{
+      padding:.375rem .5rem;
+      border:1px solid var(--gray-200);
+      border-radius:.375rem;
+      font-size:.78rem; outline:none;
+      transition:border-color .2s; background:white;
+      width:100%;
+    }
+    .filter-item select:focus,.filter-item input:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(79,70,229,.1);}
+
+    .btn-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;padding-top:.25rem;border-top:1px solid var(--gray-100);}
+
+    /* ── Table ── */
+    .table-card{background:white;border-radius:.625rem;box-shadow:0 1px 3px rgba(0,0,0,.06);border:1px solid var(--gray-200);overflow:hidden;margin-bottom:1rem;}
+    .table-toolbar{padding:.75rem 1rem;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;}
+    .table-toolbar-left{display:flex;align-items:center;gap:.625rem;}
+    .record-badge{background:var(--primary);color:white;padding:.15rem .55rem;border-radius:2rem;font-size:.68rem;font-weight:700;}
+    .page-size-select{padding:.3rem .5rem;border:1px solid var(--gray-200);border-radius:.375rem;font-size:.78rem;outline:none;}
+
+    .table-wrapper{overflow-x:auto;max-height:520px;}
+    .table-wrapper::-webkit-scrollbar{height:5px;width:5px;}
+    .table-wrapper::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:3px;}
+    table{width:100%;border-collapse:collapse;}
+    thead th{background:var(--gray-50);padding:.6rem .5rem;text-align:left;font-size:.7rem;font-weight:700;color:var(--gray-700);position:sticky;top:0;z-index:10;cursor:pointer;user-select:none;white-space:nowrap;border-bottom:2px solid var(--gray-200);}
+    thead th:hover{background:var(--gray-100);}
+    tbody td{padding:.55rem .5rem;font-size:.75rem;color:var(--gray-700);border-bottom:1px solid var(--gray-100);white-space:nowrap;}
+    tbody tr:hover{background:var(--gray-50);}
+    tbody tr:nth-child(even){background:#fafafa;}
+
+    th[data-sort]::after{content:'\f0dc';font-family:'Font Awesome 6 Free';margin-left:4px;opacity:.35;font-weight:900;font-size:.6rem;}
+    th[data-sort].sort-asc::after{content:'\f0de';opacity:1;}
+    th[data-sort].sort-desc::after{content:'\f0dd';opacity:1;}
+
+    .badge{display:inline-block;padding:.15em .5em;font-size:.68em;font-weight:700;border-radius:.3rem;white-space:nowrap;}
+    .badge-primary{background:#ede9fe;color:#5b21b6;}
+    .badge-success{background:#d1fae5;color:#065f46;}
+    .badge-danger{background:#fee2e2;color:#991b1b;}
+    .badge-warning{background:#fef3c7;color:#92400e;}
+    .badge-info{background:#dbeafe;color:#1e40af;}
+    .badge-secondary{background:var(--gray-100);color:var(--gray-500);}
+
+    tbody td a{color:var(--primary);text-decoration:none;font-weight:600;}
+    tbody td a:hover{text-decoration:underline;}
+
+    /* Pagination */
+    .pagination{display:flex;justify-content:center;align-items:center;gap:.375rem;padding:.875rem;}
+    .pagination button{padding:.35rem .65rem;background:white;color:var(--primary);border:1px solid var(--gray-200);cursor:pointer;border-radius:.375rem;font-size:.78rem;font-weight:600;transition:all .2s;}
+    .pagination button:hover:not(:disabled){background:var(--primary);color:white;border-color:var(--primary);}
+    .pagination button:disabled{color:var(--gray-400);cursor:not-allowed;}
+    .pagination button.active{background:var(--primary);color:white;border-color:var(--primary);}
+    .pagination-ellipsis{padding:.35rem .375rem;color:var(--gray-400);font-size:.78rem;}
+
+    /* Summary */
+    .summary-table{width:100%;border-collapse:collapse;}
+    .summary-table th{background:var(--gray-50);padding:.6rem .875rem;text-align:right;font-size:.75rem;font-weight:700;color:var(--gray-700);border-bottom:2px solid var(--gray-200);}
+    .summary-table th:first-child{text-align:left;}
+    .summary-table td{padding:.6rem .875rem;font-size:.78rem;text-align:right;border-bottom:1px solid var(--gray-100);}
+    .summary-table td:first-child{text-align:left;font-weight:600;}
+    .summary-row td{background:var(--gray-50);font-weight:700!important;color:var(--gray-900);}
+
+    /* Alert */
+    .alert{padding:.625rem .875rem;margin-bottom:.75rem;border-radius:.5rem;border-left:3px solid;font-size:.8rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem;}
+    .alert-info{background:#eff6ff;border-color:#3b82f6;color:#1e40af;}
+    .alert-warning{background:#fffbeb;border-color:var(--warning);color:#92400e;}
+    .alert-error{background:#fef2f2;border-color:var(--danger);color:#991b1b;}
+    .alert-success{background:#f0fdf4;border-color:var(--success);color:#065f46;}
+    .alert-close{background:none;border:none;cursor:pointer;font-size:1rem;opacity:.6;}
+
+    /* Loading */
+    .loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.8);display:none;flex-direction:column;justify-content:center;align-items:center;z-index:2000;backdrop-filter:blur(2px);}
+    .loading-overlay.show{display:flex;}
+    .spinner{width:38px;height:38px;border:3px solid var(--gray-200);border-top:3px solid var(--primary);border-radius:50%;animation:spin 1s linear infinite;}
+    .loading-text{margin-top:.75rem;font-size:.85rem;color:var(--gray-500);font-weight:600;}
+    @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+
+    .empty-state{text-align:center;padding:2.5rem;color:var(--gray-400);}
+    .empty-state svg{width:32px;height:32px;margin-bottom:.5rem;opacity:.35;}
+    .empty-state p{font-size:.85rem;}
+
+    /* Responsive */
+    @media(max-width:1200px){ .filter-grid{grid-template-columns:repeat(4,1fr);} }
+    @media(max-width:960px){  .filter-grid{grid-template-columns:repeat(3,1fr);} }
+    @media(max-width:720px){  .filter-grid{grid-template-columns:repeat(2,1fr);} }
+    @media(max-width:480px){  .filter-grid{grid-template-columns:1fr 1fr;} }
+  </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <div class="header-content">
-                <div class="transporter-info">
-                    <div class="transporter-details">
-                        <span class="transporter-name" id="transporter-name">Loading...</span>
-                        <span class="transporter-city" id="transporter-city">Loading...</span>
-                    </div>
-                </div>
-                <h1><i class="fas fa-chart-line"></i> All Booking Register Report</h1>
-                <div class="search-container">
-                    <input type="text" id="lr-search" placeholder="Quick search CNotes...">
-                    <button class="btn btn-primary" id="searchButton">
-                        <i class="fas fa-search"></i> Search
-                    </button>
-                </div>
-            </div>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-icon"><i data-lucide="truck"></i></div>
+    <div class="sidebar-title">
+      <h1>Good Way Express</h1>
+      <small>Transport Panel</small>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-section-label">Main</div>
+    <a href="{% url 'transporter:home' %}" class="nav-link">
+      <i data-lucide="layout-dashboard"></i><span class="nav-link-text">Dashboard</span>
+    </a>
+    <a href="{% url 'transporter:receive' %}" class="nav-link" target="_blank">
+      <i data-lucide="clock"></i><span class="nav-link-text">Pending Requests</span>
+    </a>
+    <a href="#" class="nav-link has-submenu">
+      <i data-lucide="clipboard-list"></i><span class="nav-link-text">Delivery Management</span>
+      <i data-lucide="chevron-right" class="arrow"></i>
+    </a>
+    <div class="submenu">
+      <a href="{% url 'transporter:delivery_cnotes' %}" target="_blank">Single Delivery</a>
+      <a href="{% url 'transporter:ddm_settlement' %}" target="_blank">DDM Settlements</a>
+    </div>
+    <a href="#" class="nav-link"><i data-lucide="check-circle"></i><span class="nav-link-text">Completed</span></a>
+
+    <div class="nav-section-label">Reports & Masters</div>
+    <a href="#" class="nav-link has-submenu open">
+      <i data-lucide="bar-chart-2"></i><span class="nav-link-text">Reports</span>
+      <i data-lucide="chevron-right" class="arrow"></i>
+    </a>
+    <div class="submenu open">
+      <a href="{% url 'transporter:all_booking_register' %}" class="active">Booking Register</a>
+      <a href="{% url 'transporter:loading_sheet_report' %}" target="_blank">Loading Sheet Report</a>
+    </div>
+    <a href="#" class="nav-link has-submenu">
+      <i data-lucide="settings"></i><span class="nav-link-text">Master</span>
+      <i data-lucide="chevron-right" class="arrow"></i>
+    </a>
+    <div class="submenu">
+      <a href="{% url 'transporter:rate_card_master' %}" target="_blank">Rate Card Master</a>
+      <a href="{% url 'transporter:billing' %}" target="_blank">Billing Dealer</a>
+      <a href="{% url 'transporter:bill_manage' %}" target="_blank">Bill Management</a>
+      <a href="{% url 'transporter:manage_location' %}" target="_blank">Manage Location</a>
+      <a href="{% url 'transporter:party_master' %}" target="_blank">Party Master</a>
+      <a href="{% url 'transporter:add_user' %}" target="_blank">Add User</a>
+      <a href="{% url 'transporter:view_users' %}" target="_blank">View Users</a>
+    </div>
+  </nav>
+  <form method="post" action="{% url 'logout' %}">
+    {% csrf_token %}
+    <button type="submit" class="logout-btn">
+      <i data-lucide="log-out"></i><span>Logout</span>
+    </button>
+  </form>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main" id="main">
+  <!-- Topbar -->
+  <header class="topbar">
+    <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle Sidebar">
+      <i data-lucide="panel-left-close" id="toggle-icon"></i>
+    </button>
+    <div class="search-bar">
+      <i data-lucide="search"></i>
+      <input type="text" id="lr-search" placeholder="Quick search CNotes, consignor...">
+    </div>
+    <button class="btn btn-primary" id="searchButton"><i data-lucide="search"></i> Search</button>
+    <div class="welcome-chip"><i data-lucide="user"></i><span id="transporter-name">Loading...</span></div>
+  </header>
+
+  <!-- Page -->
+  <div class="page">
+    <div class="page-title"><i data-lucide="book-open"></i> All Booking Register</div>
+    <div id="alerts-container"></div>
+
+    <!-- Filter Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i data-lucide="filter"></i> Advanced Filters</div>
+        <button class="filter-toggle-btn" id="filter-toggle">
+          <i data-lucide="chevron-up" id="filter-icon"></i> <span id="filter-label">Collapse</span>
+        </button>
+      </div>
+      <div id="filter-content">
+        <div class="filter-grid">
+          <div class="filter-item">
+            <label><i class="fas fa-calendar"></i> From Date</label>
+            <input type="date" id="date-from"/>
+          </div>
+          <div class="filter-item">
+            <label><i class="fas fa-calendar"></i> To Date</label>
+            <input type="date" id="date-to"/>
+          </div>
+          <div class="filter-item">
+            <label><i class="fas fa-user-tie"></i> Dealer</label>
+            <select id="dealer"><option value="">All Dealers</option></select>
+          </div>
+          <div class="filter-item">
+            <label><i class="fas fa-map-marker-alt"></i> From City</label>
+            <select id="from-city"><option value="">All Cities</option></select>
+          </div>
+          <div class="filter-item">
+            <label><i class="fas fa-map-marker-alt"></i> To City</label>
+            <select id="to-city"><option value="">All Cities</option></select>
+          </div>
+          <div class="filter-item">
+            <label><i class="fas fa-rupee-sign"></i> Min Amount</label>
+            <input type="number" id="amount-min" min="0" placeholder="0"/>
+          </div>
+          <div class="filter-item">
+            <label><i class="fas fa-rupee-sign"></i> Max Amount</label>
+            <input type="number" id="amount-max" min="0" placeholder="Any"/>
+          </div>
+          <div class="filter-item">
+            <label><i class="fas fa-receipt"></i> CNote Number</label>
+            <input type="text" id="cnote-number" placeholder="CNote no..."/>
+          </div>
+          <div class="filter-item">
+            <label><i class="fas fa-list"></i> LS Number</label>
+            <input type="text" id="ls-number" placeholder="LS number..."/>
+          </div>
+          <div class="filter-item">
+            <label><i class="fas fa-truck"></i> DDM Number</label>
+            <input type="text" id="ddm-number" placeholder="DDM number..."/>
+          </div>
         </div>
-    </header>
-
-    <main class="container">
-        <!-- Filter Section -->
-        <div class="filter-section" id="filter-section">
-            <div class="filter-header">
-                <h2 class="filter-title"><i class="fas fa-filter"></i> Advanced Filters</h2>
-                <button class="filter-toggle" id="filter-toggle">
-                    <i class="fas fa-chevron-up"></i>
-                </button>
-            </div>
-            <div class="filter-content" id="filter-content">
-                <div class="filter-grid">
-                    <div class="filter-item">
-                        <label for="date-from"><i class="fas fa-calendar"></i> From Date</label>
-                        <input type="date" id="date-from" />
-                    </div>
-                    <div class="filter-item">
-                        <label for="date-to"><i class="fas fa-calendar"></i> To Date</label>
-                        <input type="date" id="date-to" />
-                    </div>
-                    <div class="filter-item">
-                        <label for="dealer"><i class="fas fa-user-tie"></i> Dealer</label>
-                        <select id="dealer">
-                            <option value="">All Dealers</option>
-                        </select>
-                    </div>
-                    <div class="filter-item">
-                        <label for="from-city"><i class="fas fa-map-marker-alt"></i> From City</label>
-                        <select id="from-city">
-                            <option value="">All Cities</option>
-                        </select>
-                    </div>
-                    <div class="filter-item">
-                        <label for="to-city"><i class="fas fa-map-marker-alt"></i> To City</label>
-                        <select id="to-city">
-                            <option value="">All Cities</option>
-                        </select>
-                    </div>               
-                    <div class="filter-item">
-                        <label for="amount-min"><i class="fas fa-rupee-sign"></i> Min Amount</label>
-                        <input type="number" id="amount-min" min="0" step="0.01" />
-                    </div>
-                    <div class="filter-item">
-                        <label for="amount-max"><i class="fas fa-rupee-sign"></i> Max Amount</label>
-                        <input type="number" id="amount-max" min="0" step="0.01" />
-                    </div>
-                    <div class="filter-item">
-                        <label for="cnote-number"><i class="fas fa-receipt"></i> CNotes Number</label>
-                        <input type="text" id="cnote-number" placeholder="Enter CNotes number..." />
-                    </div>
-                    <div class="filter-item">
-                        <label for="ls-number"><i class="fas fa-list"></i> LS Number</label>
-                        <input type="text" id="ls-number" placeholder="Enter LS number..." />
-                    </div>
-                    <div class="filter-item">
-                        <label for="ddm-number"><i class="fas fa-truck"></i> DDM Number</label>
-                        <input type="text" id="ddm-number" placeholder="Enter DDM number..." />
-                    </div>
-                </div>
-                <div class="button-group">
-                    <div>
-                        <button class="btn btn-primary" id="search-btn">
-                            <i class="fas fa-search"></i> Apply Filters
-                        </button>
-                        <button class="btn btn-success" id="download-btn">
-                            <i class="fas fa-download"></i> Download Excel
-                        </button>
-                    </div>
-                    <div>
-                        <button class="btn btn-warning" id="reset-btn">
-                            <i class="fas fa-undo"></i> Reset Filters
-                        </button>
-                        <button class="btn btn-danger" id="clear-btn">
-                            <i class="fas fa-times"></i> Clear All
-                        </button>
-                    </div>
-                </div>
-            </div>
+        <div class="btn-row">
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <button class="btn btn-primary" id="search-btn"><i data-lucide="search"></i> Apply Filters</button>
+            <button class="btn btn-success" id="download-btn"><i data-lucide="download"></i> Download Excel</button>
+          </div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <button class="btn btn-warning" id="reset-btn"><i data-lucide="rotate-ccw"></i> Reset</button>
+            <button class="btn btn-danger" id="clear-btn"><i data-lucide="x"></i> Clear All</button>
+          </div>
         </div>
-
-        <!-- Results Section -->
-        <div class="search-results-container">
-            <div class="table-header">
-                <div class="table-title">
-                    <i class="fas fa-table"></i> Booking Register Data
-                    <span id="record-count" class="badge"></span>
-                </div>
-                <div class="table-controls">
-                    <select id="page-size">
-                        <option value="20">20 per page</option>
-                        <option value="50">50 per page</option>
-                        <option value="100">100 per page</option>
-                    </select>
-                </div>
-            </div>
-            <div class="table-wrapper">
-                <table id="booking-table">
-                    <thead>
-                        <tr>
-                            <th data-sort="id">Sr. No</th>
-                            <th data-sort="cnote_number">CNotes Number</th>
-                            <th data-sort="booking_type">Booking Type</th>
-                            <th data-sort="delivery_destination">Delivery Destination</th>
-                            <th data-sort="consignor_name">Consignor Name</th>
-                            <th data-sort="consignee_name">Consignee Name</th>
-                            <th data-sort="payment_type">Payment Type</th>
-                            <th data-sort="grand_total">Grand Total</th>
-                            <th data-sort="created_at">Created At</th>
-                            <th data-sort="eway_bill_number">Eway Bill Number</th>
-                            <th data-sort="actual_weight">Actual Weight</th>
-                            <th data-sort="charged_weight">Charged Weight</th>
-                            <th data-sort="weight_rate">Weight Rate</th>
-                            <th data-sort="weight_amount">Weight Amount</th>
-                            <th data-sort="fix_amount">Fix Amount</th>
-                            <th data-sort="invoice_number">Invoice Number</th>
-                            <th data-sort="declared_value">Declared Value</th>
-                            <th data-sort="risk_type">Risk Type</th>
-                            <th data-sort="pod_required">POD Required</th>
-                            <th data-sort="freight">Freight</th>
-                            <th data-sort="docket_charge">Docket Charge</th>
-                            <th data-sort="door_delivery_charge">Door Delivery Charge</th>
-                            <th data-sort="handling_charge">Handling Charge</th>
-                            <th data-sort="pickup_charge">Pickup Charge</th>
-                            <th data-sort="transhipment_charge">Transhipment Charge</th>
-                            <th data-sort="insurance">Insurance</th>
-                            <th data-sort="fuel_surcharge">Fuel Surcharge</th>
-                            <th data-sort="commission">Commission</th>
-                            <th data-sort="other_charge">Other Charge</th>
-                            <th data-sort="carrier_risk">Carrier Risk</th>
-                            <th data-sort="delivery_type">Delivery Type</th>
-                            <th data-sort="delivery_method">Delivery Method</th>
-                            <th data-sort="status">Status</th>
-                            <th data-sort="total_art">Total Article</th>
-                            <th data-sort="art_types">Art Types</th>
-                            <th data-sort="said_to_contain">Said to Contain</th>
-                            <th data-sort="art_amounts">Art Amounts</th>
-                            <th data-sort="consignor_gst">Consignor GST</th>
-                            <th data-sort="consignee_gst">Consignee GST</th>
-                            <th data-sort="user">User</th>
-                            <th data-sort="user_type">User Type</th>
-                            <th data-sort="loading_sheet_number">LS Number</th>
-                            <th data-sort="ddm_number">DDM Number</th>
-                        </tr>
-                    </thead>
-                    <tbody id="booking-data">
-                        <tr>
-                            <td colspan="43" style="text-align: center; padding: 40px;">
-                                <i class="fas fa-search fa-2x" style="color: #ccc; margin-bottom: 10px;"></i>
-                                <br>Click "Apply Filters" to load booking data
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="pagination" id="pagination"></div>
-
-        <!-- Summary Table -->
-        <table class="summary-table">
-            <thead>
-                <tr>
-                    <th>Type</th>
-                    <th>Paid</th>
-                    <th>To Pay</th>
-                    <th>Billing</th>
-                    <th>Total Amount</th>
-                    <th>GST (18%)</th>
-                    <th>Grand Total</th>
-                </tr>
-            </thead>
-            <tbody id="summary-data">
-                <tr>
-                    <td colspan="7" style="text-align: center; color: #6c757d;">
-                        Summary will be calculated after loading data
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </main>
-
-    <div id="loading" class="loading" style="display: none">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Loading booking data...</div>
+      </div>
     </div>
 
-    <script>
-        // Enhanced JavaScript with better error handling and performance
-        class BookingRegister {
-            constructor() {
-                this.allBookingData = [];
-                this.filteredData = [];
-                this.currentPage = 1;
-                this.itemsPerPage = 20;
-                this.currentSortColumn = '';
-                this.currentSortOrder = 'asc';
-                this.isLoading = false;
-                
-                this.init();
-            }
+    <!-- Table Card -->
+    <div class="table-card">
+      <div class="table-toolbar">
+        <div class="table-toolbar-left">
+          <span style="font-size:.85rem;font-weight:700;color:var(--gray-900);display:flex;align-items:center;gap:.4rem;">
+            <i data-lucide="table" style="width:15px;color:var(--primary);"></i> Booking Register Data
+          </span>
+          <span class="record-badge" id="record-count">0 records</span>
+        </div>
+        <select class="page-size-select" id="page-size">
+          <option value="20">20 / page</option>
+          <option value="50">50 / page</option>
+          <option value="100">100 / page</option>
+        </select>
+      </div>
+      <div class="table-wrapper">
+        <table id="booking-table">
+          <thead>
+            <tr>
+              <th data-sort="id">Sr.</th>
+              <th data-sort="cnote_number">CNote No.</th>
+              <th data-sort="booking_type">Booking</th>
+              <th data-sort="delivery_destination">Destination</th>
+              <th data-sort="consignor_name">Consignor</th>
+              <th data-sort="consignee_name">Consignee</th>
+              <th data-sort="payment_type">Payment</th>
+              <th data-sort="grand_total">Grand Total</th>
+              <th data-sort="created_at">Date</th>
+              <th data-sort="status">Status</th>
+              <th data-sort="eway_bill_number">Eway Bill</th>
+              <th data-sort="actual_weight">Act.Wt</th>
+              <th data-sort="charged_weight">Chg.Wt</th>
+              <th data-sort="weight_rate">Wt Rate</th>
+              <th data-sort="weight_amount">Wt Amt</th>
+              <th data-sort="fix_amount">Fix Amt</th>
+              <th data-sort="invoice_number">Invoice</th>
+              <th data-sort="declared_value">Dec.Val</th>
+              <th data-sort="risk_type">Risk</th>
+              <th data-sort="pod_required">POD</th>
+              <th data-sort="freight">Freight</th>
+              <th data-sort="docket_charge">Docket</th>
+              <th data-sort="door_delivery_charge">Door Del.</th>
+              <th data-sort="handling_charge">Handling</th>
+              <th data-sort="pickup_charge">Pickup</th>
+              <th data-sort="transhipment_charge">Tranship.</th>
+              <th data-sort="insurance">Insurance</th>
+              <th data-sort="fuel_surcharge">Fuel Sur.</th>
+              <th data-sort="commission">Commission</th>
+              <th data-sort="other_charge">Other</th>
+              <th data-sort="carrier_risk">Carrier Risk</th>
+              <th data-sort="delivery_type">Del.Type</th>
+              <th data-sort="delivery_method">Del.Method</th>
+              <th data-sort="total_art">Arts</th>
+              <th data-sort="art_types">Art Types</th>
+              <th data-sort="said_to_contain">Contents</th>
+              <th data-sort="art_amounts">Art Amts</th>
+              <th data-sort="consignor_gst">C/or GST</th>
+              <th data-sort="consignee_gst">C/ee GST</th>
+              <th data-sort="user">User</th>
+              <th data-sort="user_type">User Type</th>
+              <th data-sort="loading_sheet_number">LS No.</th>
+              <th data-sort="ddm_number">DDM No.</th>
+            </tr>
+          </thead>
+          <tbody id="booking-data">
+            <tr><td colspan="43">
+              <div class="empty-state">
+                <i data-lucide="search"></i>
+                <p>Click "Apply Filters" to load booking data</p>
+              </div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
 
-            init() {
-                this.setupEventListeners();
-                this.loadInitialData();
-            }
+    <!-- Summary -->
+    <div class="table-card">
+      <div class="table-toolbar">
+        <div class="card-title" style="font-size:.85rem;">
+          <i data-lucide="calculator" style="width:15px;color:var(--primary);"></i> Payment Summary
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>Type</th><th>Paid</th><th>To Pay</th>
+              <th>Billing (10%)</th><th>Total Amount</th><th>GST (18%)</th><th>Grand Total</th>
+            </tr>
+          </thead>
+          <tbody id="summary-data">
+            <tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:1.25rem;font-size:.82rem;">
+              Summary will appear after loading data
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 
-            setupEventListeners() {
-                // Filter toggle
-                document.getElementById('filter-toggle').addEventListener('click', this.toggleFilters.bind(this));
-                
-                // Search buttons
-                document.getElementById('search-btn').addEventListener('click', this.applyFilters.bind(this));
-                document.getElementById('searchButton').addEventListener('click', this.quickSearch.bind(this));
-                
-                // Clear buttons
-                document.getElementById('clear-btn').addEventListener('click', this.clearAllFilters.bind(this));
-                document.getElementById('reset-btn').addEventListener('click', this.resetFilters.bind(this));
-                
-                // Download button
-                document.getElementById('download-btn').addEventListener('click', this.downloadExcel.bind(this));
-                
-                // Page size change
-                document.getElementById('page-size').addEventListener('change', this.changePageSize.bind(this));
-                
-                // Sort headers
-                document.querySelectorAll('th[data-sort]').forEach(th => {
-                    th.addEventListener('click', () => this.sortTable(th.dataset.sort));
-                });
-                
-                // Filter inputs with debounce
-                const filterInputs = [
-                    'date-from', 'date-to', 'dealer', 'from-city', 'to-city',
-                    'amount-min', 'amount-max', 'cnote-number', 'ls-number', 'ddm-number'
-                ];
-                
-                filterInputs.forEach(id => {
-                    const element = document.getElementById(id);
-                    if (element) {
-                        element.addEventListener('input', this.debounce(this.applyFilters.bind(this), 500));
-                    }
-                });
-                
-                // Quick search with debounce
-                document.getElementById('lr-search').addEventListener('input', 
-                    this.debounce(this.quickSearch.bind(this), 300));
-            }
+<!-- Loading -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Loading data...</div>
+</div>
 
-            debounce(func, wait) {
-                let timeout;
-                return function executedFunction(...args) {
-                    const later = () => {
-                        clearTimeout(timeout);
-                        func(...args);
-                    };
-                    clearTimeout(timeout);
-                    timeout = setTimeout(later, wait);
-                };
-            }
+<script>
+  lucide.createIcons();
 
-            toggleFilters() {
-                const content = document.getElementById('filter-content');
-                const toggle = document.getElementById('filter-toggle');
-                const icon = toggle.querySelector('i');
-                
-                if (content.style.display === 'none') {
-                    content.style.display = 'block';
-                    icon.className = 'fas fa-chevron-up';
-                } else {
-                    content.style.display = 'none';
-                    icon.className = 'fas fa-chevron-down';
-                }
-            }
+  // ── Sidebar Toggle ──────────────────────────────────
+  const sidebar      = document.getElementById('sidebar');
+  const mainEl       = document.getElementById('main');
+  const toggleBtn    = document.getElementById('sidebar-toggle');
+  const toggleIcon   = document.getElementById('toggle-icon');
+  let sidebarOpen    = true;
 
-            showLoading(message = 'Loading booking data...') {
-                if (this.isLoading) return;
-                this.isLoading = true;
-                
-                const loading = document.getElementById('loading');
-                const loadingText = loading.querySelector('.loading-text');
-                loadingText.textContent = message;
-                loading.style.display = 'flex';
-            }
+  toggleBtn.addEventListener('click', () => {
+    sidebarOpen = !sidebarOpen;
+    sidebar.classList.toggle('collapsed', !sidebarOpen);
+    mainEl.classList.toggle('expanded', !sidebarOpen);
+    toggleIcon.setAttribute('data-lucide', sidebarOpen ? 'panel-left-close' : 'panel-left-open');
+    lucide.createIcons();
+  });
 
-            hideLoading() {
-                this.isLoading = false;
-                document.getElementById('loading').style.display = 'none';
-            }
+  // ── Submenu toggle ──────────────────────────────────
+  document.querySelectorAll('.nav-link.has-submenu').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      if (!sidebarOpen) return;
+      link.classList.toggle('open');
+      link.nextElementSibling?.classList.toggle('open');
+    });
+  });
 
-            showAlert(message, type = 'info') {
-                const alertDiv = document.createElement('div');
-                alertDiv.className = `alert alert-${type}`;
-                alertDiv.innerHTML = `
-                    <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
-                    ${message}
-                    <button onclick="this.parentElement.remove()" style="float: right; background: none; border: none; font-size: 1.2em;">&times;</button>
-                `;
-                
-                const main = document.querySelector('main');
-                main.insertBefore(alertDiv, main.firstChild);
-                
-                // Auto remove after 5 seconds
-                setTimeout(() => {
-                    if (alertDiv.parentElement) {
-                        alertDiv.remove();
-                    }
-                }, 5000);
-            }
+  // ── Filter collapse ─────────────────────────────────
+  document.getElementById('filter-toggle').addEventListener('click', () => {
+    const c = document.getElementById('filter-content');
+    const hidden = c.style.display === 'none';
+    c.style.display = hidden ? '' : 'none';
+    document.getElementById('filter-icon').setAttribute('data-lucide', hidden ? 'chevron-up' : 'chevron-down');
+    document.getElementById('filter-label').textContent = hidden ? 'Collapse' : 'Expand';
+    lucide.createIcons();
+  });
 
-            async loadInitialData() {
-                this.populateDefaultFilters();
-                // Auto-load data with default filters
-                await this.fetchBookingData();
-            }
+  // ── BookingRegister class ───────────────────────────
+  class BookingRegister {
+    constructor() {
+      this.allData=[]; this.filtered=[];
+      this.page=1; this.perPage=20;
+      this.sortCol=''; this.sortDir='asc';
+      this.init();
+    }
+    init() { this.bindEvents(); this.setDefaultDates(); this.fetchData(); }
 
-            populateDefaultFilters() {
-                // Set default date range (last 30 days)
-                const today = new Date();
-                const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
-                
-                document.getElementById('date-from').value = thirtyDaysAgo.toISOString().split('T')[0];
-                document.getElementById('date-to').value = today.toISOString().split('T')[0];
-            }
+    bindEvents() {
+      document.getElementById('search-btn').addEventListener('click', () => this.fetchData());
+      document.getElementById('searchButton').addEventListener('click', () => this.applyFilters());
+      document.getElementById('clear-btn').addEventListener('click', () => this.clearAll());
+      document.getElementById('reset-btn').addEventListener('click', () => { this.setDefaultDates(); this.fetchData(); });
+      document.getElementById('download-btn').addEventListener('click', () => this.downloadExcel());
+      document.getElementById('page-size').addEventListener('change', () => {
+        this.perPage = parseInt(document.getElementById('page-size').value);
+        this.page = 1; this.render();
+      });
+      document.querySelectorAll('th[data-sort]').forEach(th => th.addEventListener('click', () => this.sort(th.dataset.sort)));
+      const db = (fn,ms) => { let t; return (...a) => { clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; };
+      document.getElementById('lr-search').addEventListener('input', db(() => this.applyFilters(), 300));
+      ['date-from','date-to','dealer','from-city','to-city','amount-min','amount-max','cnote-number','ls-number','ddm-number']
+        .forEach(id => { const el=document.getElementById(id); if(el) el.addEventListener('change', db(()=>this.applyFilters(),400)); });
+    }
 
-            async fetchBookingData() {
-                try {
-                    this.showLoading('Fetching booking data...');
-                    
-                    const params = new URLSearchParams();
-                    
-                    // Add all filter parameters
-                    const filters = {
-                        search: document.getElementById('lr-search').value,
-                        date_from: document.getElementById('date-from').value,
-                        date_to: document.getElementById('date-to').value,
-                        dealer: document.getElementById('dealer').value,
-                        from_city: document.getElementById('from-city').value,
-                        to_city: document.getElementById('to-city').value,
-                        amount_min: document.getElementById('amount-min').value,
-                        amount_max: document.getElementById('amount-max').value,
-                        cnote_number: document.getElementById('cnote-number').value,
-                        ls_number: document.getElementById('ls-number').value,
-                        ddm_number: document.getElementById('ddm-number').value
-                    };
-                    
-                    Object.entries(filters).forEach(([key, value]) => {
-                        if (value) params.append(key, value);
-                    });
-                    
-                    // Try multiple possible endpoints
-                    const endpoints = [
-                        '/transporter/booking_register_data/',
-                        '/transporter/booking-register-data/',
-                        '/booking_register_data/',
-                        '/booking-register-data/'
-                    ];
-                    
-                    let response = null;
-                    let lastError = null;
-                    
-                    for (const endpoint of endpoints) {
-                        try {
-                            console.log(`Trying endpoint: ${endpoint}?${params}`);
-                            response = await fetch(`${endpoint}?${params}`);
-                            if (response.ok) {
-                                console.log(`Success with endpoint: ${endpoint}`);
-                                break;
-                            }
-                        } catch (error) {
-                            console.log(`Failed with endpoint ${endpoint}:`, error);
-                            lastError = error;
-                        }
-                    }
-                    
-                    if (!response || !response.ok) {
-                        throw new Error(`All endpoints failed. Last error: ${lastError?.message || 'Unknown error'}`);
-                    }
-                    
-                    const data = await response.json();
-                    console.log('Received data:', data);
-                    
-                    if (data.error) {
-                        throw new Error(data.message || data.error);
-                    }
-                    
-                    if (!data.bookings || !Array.isArray(data.bookings)) {
-                        throw new Error('Invalid data format received from server');
-                    }
-                    
-                    this.allBookingData = data.bookings;
-                    
-                    // Update transporter info
-                    document.getElementById('transporter-name').textContent = data.transporter_name || 'GoodWayExpress';
-                    document.getElementById('transporter-city').textContent = data.transporter_city || 'Yavatmal';
-                    
-                    // Populate dealer dropdown with all dealers from server
-                    if (data.dealers && Array.isArray(data.dealers)) {
-                        const dealerSelect = document.getElementById('dealer');
-                        this.populateSelect(dealerSelect, data.dealers);
-                    } else {
-                        // Fallback: populate from booking data
-                        this.populateFilterOptions(this.allBookingData);
-                    }
-                    
-                    this.filteredData = [...this.allBookingData];
-                    this.currentPage = 1;
-                    
-                    this.displayBookingData();
-                    this.updateSummary();
-                    
-                    this.showAlert(`Successfully loaded ${this.allBookingData.length} booking records`, 'info');
-                    
-                } catch (error) {
-                    console.error('Error fetching booking data:', error);
-                    this.showAlert(`Error loading data: ${error.message}`, 'error');
-                    
-                    document.getElementById('booking-data').innerHTML = `
-                        <tr>
-                            <td colspan="43" style="text-align: center; padding: 40px;">
-                                <i class="fas fa-exclamation-triangle fa-2x" style="margin-bottom: 10px;"></i>
-                                <br>Error loading data: ${error.message}
-                                <br><button class="btn btn-primary" onclick="bookingRegister.fetchBookingData()" style="margin-top: 10px;">
-                                    <i class="fas fa-redo"></i> Retry
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                } finally {
-                    this.hideLoading();
-                }
-            }
+    setDefaultDates() {
+      const now=new Date(), ago=new Date(now-30*864e5);
+      document.getElementById('date-from').value = ago.toISOString().split('T')[0];
+      document.getElementById('date-to').value   = now.toISOString().split('T')[0];
+    }
 
-            populateFilterOptions(data) {
-                if (!data || data.length === 0) return;
-                
-                const dealerSelect = document.getElementById('dealer');
-                const fromCitySelect = document.getElementById('from-city');
-                const toCitySelect = document.getElementById('to-city');
-                
-                // Get unique values from data
-                const dealers = [...new Set(data.map(item => item.user).filter(Boolean))];
-                const destinations = data.map(item => item.delivery_destination).filter(Boolean);
-                const fromCities = [...new Set(destinations.map(dest => {
-                    if (typeof dest === 'string' && dest.includes(' - ')) {
-                        return dest.split(' - ')[0];
-                    }
-                    return dest;
-                }).filter(Boolean))];
-                const toCities = [...new Set(destinations.map(dest => {
-                    if (typeof dest === 'string' && dest.includes(' - ')) {
-                        return dest.split(' - ')[1];
-                    }
-                    return dest;
-                }).filter(Boolean))];
-                
-                // Populate selects
-                this.populateSelect(dealerSelect, dealers.sort());
-                this.populateSelect(fromCitySelect, fromCities.sort());
-                this.populateSelect(toCitySelect, toCities.sort());
-            }
+    showLoading(msg='Loading...') { document.getElementById('loading-text').textContent=msg; document.getElementById('loading-overlay').classList.add('show'); }
+    hideLoading() { document.getElementById('loading-overlay').classList.remove('show'); }
 
-            populateSelect(select, options) {
-                const currentValue = select.value;
-                const defaultOption = select.querySelector('option[value=""]');
-                
-                select.innerHTML = '';
-                if (defaultOption) {
-                    select.appendChild(defaultOption);
-                }
-                
-                options.forEach(option => {
-                    const optionElement = document.createElement('option');
-                    optionElement.value = option;
-                    optionElement.textContent = option;
-                    select.appendChild(optionElement);
-                });
-                
-                // Restore previous selection if it still exists
-                if (currentValue && options.includes(currentValue)) {
-                    select.value = currentValue;
-                }
-            }
+    showAlert(msg,type='info') {
+      const el=document.createElement('div');
+      el.className=`alert alert-${type}`;
+      el.innerHTML=`<span>${msg}</span><button class="alert-close" onclick="this.parentElement.remove()">&times;</button>`;
+      document.getElementById('alerts-container').prepend(el);
+      setTimeout(()=>el.remove&&el.remove(),5000);
+    }
 
-            applyFilters() {
-                if (this.allBookingData.length === 0) {
-                    this.fetchBookingData();
-                    return;
-                }
-                
-                this.showLoading('Applying filters...');
-                
-                setTimeout(() => {
-                    try {
-                        const filters = this.getFilterValues();
-                        
-                        this.filteredData = this.allBookingData.filter(row => {
-                            return this.matchesFilters(row, filters);
-                        });
-                        
-                        this.currentPage = 1;
-                        this.displayBookingData();
-                        this.updateSummary();
-                        
-                        this.showAlert(`Filtered to ${this.filteredData.length} records`, 'info');
-                        
-                    } catch (error) {
-                        console.error('Error applying filters:', error);
-                        this.showAlert('Error applying filters', 'error');
-                    } finally {
-                        this.hideLoading();
-                    }
-                }, 100);
-            }
-
-            getFilterValues() {
-                return {
-                    dateFrom: document.getElementById('date-from').value,
-                    dateTo: document.getElementById('date-to').value,
-                    dealer: document.getElementById('dealer').value.toLowerCase(),
-                    fromCity: document.getElementById('from-city').value.toLowerCase(),
-                    toCity: document.getElementById('to-city').value.toLowerCase(),
-                    amountMin: parseFloat(document.getElementById('amount-min').value) || 0,
-                    amountMax: parseFloat(document.getElementById('amount-max').value) || Infinity,
-                    searchTerm: document.getElementById('lr-search').value.toLowerCase(),
-                    cnoteNumber: document.getElementById('cnote-number').value.toLowerCase(),
-                    lsNumber: document.getElementById('ls-number').value.toLowerCase(),
-                    ddmNumber: document.getElementById('ddm-number').value.toLowerCase()
-                };
-            }
-
-            matchesFilters(row, filters) {
-                try {
-                    // Date range check
-                    if (filters.dateFrom || filters.dateTo) {
-                        const rowDate = new Date(row.created_at);
-                        if (filters.dateFrom && rowDate < new Date(filters.dateFrom)) return false;
-                        if (filters.dateTo && rowDate > new Date(filters.dateTo + 'T23:59:59')) return false;
-                    }
-                    
-                    // Dealer check - improved logic
-                    if (filters.dealer && filters.dealer.toLowerCase() !== 'all') {
-                        const dealerName = (row.user || '').toLowerCase();
-                        if (!dealerName.includes(filters.dealer)) return false;
-                    }
-                    
-                    // City checks
-                    if (filters.fromCity || filters.toCity) {
-                        const destination = row.delivery_destination || '';
-                        if (typeof destination === 'string' && destination.includes(' - ')) {
-                            const [fromCity, toCity] = destination.split(' - ');
-                            
-                            if (filters.fromCity && (!fromCity || !fromCity.toLowerCase().includes(filters.fromCity))) return false;
-                            if (filters.toCity && (!toCity || !toCity.toLowerCase().includes(filters.toCity))) return false;
-                        } else {
-                            // If destination doesn't have the expected format, check against the whole string
-                            if (filters.fromCity && !destination.toLowerCase().includes(filters.fromCity)) return false;
-                            if (filters.toCity && !destination.toLowerCase().includes(filters.toCity)) return false;
-                        }
-                    }
-                    
-                    // Amount range check
-                    const amount = parseFloat(row.grand_total) || 0;
-                    if (amount < filters.amountMin || amount > filters.amountMax) return false;
-                    
-                    // Search term check
-                    if (filters.searchTerm) {
-                        const searchFields = [
-                            row.cnote_number, row.consignor_name, row.consignee_name, 
-                            row.user, row.user_type
-                        ].map(field => (field || '').toLowerCase());
-                        
-                        if (!searchFields.some(field => field.includes(filters.searchTerm))) return false;
-                    }
-                    
-                    // Specific number checks
-                    if (filters.cnoteNumber && (!row.cnote_number || !row.cnote_number.toLowerCase().includes(filters.cnoteNumber))) return false;
-                    if (filters.lsNumber && (!row.loading_sheet_number || !row.loading_sheet_number.toString().toLowerCase().includes(filters.lsNumber))) return false;
-                    if (filters.ddmNumber && (!row.ddm_number || !row.ddm_number.toString().toLowerCase().includes(filters.ddmNumber))) return false;
-                    
-                    return true;
-                } catch (error) {
-                    console.error('Error in matchesFilters:', error, row);
-                    return false;
-                }
-            }
-
-            quickSearch() {
-                this.applyFilters();
-            }
-
-            displayBookingData() {
-                const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-                const endIndex = startIndex + this.itemsPerPage;
-                const pageData = this.filteredData.slice(startIndex, endIndex);
-                
-                const bookingData = document.getElementById('booking-data');
-                
-                if (pageData.length === 0) {
-                    bookingData.innerHTML = `
-                        <tr>
-                            <td colspan="43" style="text-align: center; padding: 40px;">
-                                <i class="fas fa-search fa-2x" style="color: #ccc; margin-bottom: 10px;"></i>
-                                <br>No booking records found matching your criteria
-                                <br><small style="color: #6c757d;">Try adjusting your filters</small>
-                            </td>
-                        </tr>
-                    `;
-                    this.updatePagination();
-                    this.updateRecordCount();
-                    return;
-                }
-                
-                bookingData.innerHTML = '';
-                
-                pageData.forEach((row, index) => {
-                    try {
-                        const tr = document.createElement('tr');
-                        
-                        // Safe value extraction with fallbacks
-                        const safeValue = (value, fallback = 'N/A') => {
-                            if (value === null || value === undefined || value === '') return fallback;
-                            return value;
-                        };
-                        
-                        const safeNumber = (value, decimals = 2) => {
-                            const num = parseFloat(value);
-                            return isNaN(num) ? 0 : num.toFixed(decimals);
-                        };
-                        
-                        const safeDate = (dateStr) => {
-                            if (!dateStr) return 'N/A';
-                            try {
-                                return new Date(dateStr).toLocaleString();
-                            } catch {
-                                return dateStr;
-                            }
-                        };
-                        
-                        const safeArray = (arr, joinStr = ' / ') => {
-                            if (!Array.isArray(arr)) return 'N/A';
-                            return arr.length > 0 ? arr.join(joinStr) : 'N/A';
-                        };
-                        
-                        tr.innerHTML = `
-                            <td>${startIndex + index + 1}</td>
-                            <td><a href="/dealer/view-cnote/${safeValue(row.cnote_number)}/" target="_blank">${safeValue(row.cnote_number)}</a></td>
-                            <td>${safeValue(row.booking_type)}</td>
-                            <td>${safeValue(row.delivery_destination)}</td>
-                            <td>${safeValue(row.consignor_name)}</td>
-                            <td>${safeValue(row.consignee_name)}</td>
-                            <td><span class="badge badge-${this.getPaymentTypeBadge(row.payment_type)}">${safeValue(row.payment_type)}</span></td>
-                            <td>₹${safeNumber(row.grand_total)}</td>
-                            <td>${safeDate(row.created_at)}</td>
-                            <td>${safeValue(row.eway_bill_number)}</td>
-                            <td>${safeNumber(row.actual_weight)} kg</td>
-                            <td>${safeNumber(row.charged_weight)} kg</td>
-                            <td>₹${safeNumber(row.weight_rate)}</td>
-                            <td>₹${safeNumber(row.weight_amount)}</td>
-                            <td>₹${safeNumber(row.fix_amount)}</td>
-                            <td>${safeValue(row.invoice_number)}</td>
-                            <td>₹${safeNumber(row.declared_value)}</td>
-                            <td>${safeValue(row.risk_type)}</td>
-                            <td>${row.pod_required ? 'Yes' : 'No'}</td>
-                            <td>₹${safeNumber(row.freight)}</td>
-                            <td>₹${safeNumber(row.docket_charge)}</td>
-                            <td>₹${safeNumber(row.door_delivery_charge)}</td>
-                            <td>₹${safeNumber(row.handling_charge)}</td>
-                            <td>₹${safeNumber(row.pickup_charge)}</td>
-                            <td>₹${safeNumber(row.transhipment_charge)}</td>
-                            <td>₹${safeNumber(row.insurance)}</td>
-                            <td>₹${safeNumber(row.fuel_surcharge)}</td>
-                            <td>₹${safeNumber(row.commission)}</td>
-                            <td>₹${safeNumber(row.other_charge)}</td>
-                            <td>${safeValue(row.carrier_risk)}</td>
-                            <td>${safeValue(row.delivery_type)}</td>
-                            <td>${safeValue(row.delivery_method)}</td>
-                            <td><span class="badge badge-${this.getStatusBadge(row.status)}">${safeValue(row.status)}</span></td>
-                            <td>${safeValue(row.total_art, 0)}</td>
-                            <td>${safeArray(row.art_types)}</td>
-                            <td>${safeArray(row.said_to_contain)}</td>
-                            <td>₹${safeArray(row.art_amounts ? row.art_amounts.map(amt => safeNumber(amt)) : [])}</td>
-                            <td>${safeValue(row.consignor_gst)}</td>
-                            <td>${safeValue(row.consignee_gst)}</td>
-                            <td>${safeValue(row.user)}</td>
-                            <td><span class="badge badge-info">${safeValue(row.user_type)}</span></td>
-                            <td>${row.loading_sheet_number && row.loading_sheet_number !== 'N/A' && row.loading_sheet_number !== '0' ? 
-                                `<a href="/dealer/mf_print/${row.loading_sheet_number}/" target="_blank">${row.loading_sheet_number}</a>` : 
-                                'N/A'}</td>
-                            <td>${row.ddm_number && row.ddm_number !== 'N/A' && row.ddm_number !== '0' ? 
-                                `<a href="/transporter/ddm-details/" target="_blank" onclick="searchDDM('${row.ddm_number}')">${row.ddm_number}</a>` : 
-                                'N/A'}</td>
-                        `;
-                        bookingData.appendChild(tr);
-                    } catch (error) {
-                        console.error('Error rendering row:', error, row);
-                        // Add a simple error row
-                        const errorTr = document.createElement('tr');
-                        errorTr.innerHTML = `<td colspan="43" style="color: red;">Error rendering row ${index + 1}</td>`;
-                        bookingData.appendChild(errorTr);
-                    }
-                });
-                
-                this.updatePagination();
-                this.updateRecordCount();
-            }
-
-            getPaymentTypeBadge(paymentType) {
-                switch ((paymentType || '').toUpperCase()) {
-                    case 'PAID': return 'success';
-                    case 'TO PAY': return 'warning';
-                    case 'TBB': return 'info';
-                    default: return 'secondary';
-                }
-            }
-
-            getStatusBadge(status) {
-                switch ((status || '').toLowerCase()) {
-                    case 'delivered': return 'success';
-                    case 'in transit': return 'info';
-                    case 'pending': return 'warning';
-                    case 'cancelled': return 'danger';
-                    case 'received': return 'primary';
-                    default: return 'secondary';
-                }
-            }
-
-            updateRecordCount() {
-                const recordCount = document.getElementById('record-count');
-                recordCount.textContent = `(${this.filteredData.length} records)`;
-                recordCount.style.background = '#007bff';
-                recordCount.style.color = 'white';
-                recordCount.style.padding = '2px 8px';
-                recordCount.style.borderRadius = '12px';
-                recordCount.style.fontSize = '0.8em';
-                recordCount.style.marginLeft = '10px';
-            }
-
-            updatePagination() {
-                const totalPages = Math.ceil(this.filteredData.length / this.itemsPerPage);
-                const pagination = document.getElementById('pagination');
-                pagination.innerHTML = '';
-
-                if (totalPages <= 1) return;
-
-                // Previous button
-                const prevButton = this.createPaginationButton('Previous', this.currentPage > 1, () => {
-                    if (this.currentPage > 1) {
-                        this.currentPage--;
-                        this.displayBookingData();
-                    }
-                });
-                pagination.appendChild(prevButton);
-
-                // Page numbers
-                const startPage = Math.max(1, this.currentPage - 2);
-                const endPage = Math.min(totalPages, startPage + 4);
-
-                if (startPage > 1) {
-                    pagination.appendChild(this.createPaginationButton('1', true, () => {
-                        this.currentPage = 1;
-                        this.displayBookingData();
-                    }));
-                    
-                    if (startPage > 2) {
-                        const ellipsis = document.createElement('span');
-                        ellipsis.textContent = '...';
-                        ellipsis.style.padding = '8px 12px';
-                        pagination.appendChild(ellipsis);
-                    }
-                }
-
-                for (let i = startPage; i <= endPage; i++) {
-                    const pageButton = this.createPaginationButton(i.toString(), true, () => {
-                        this.currentPage = i;
-                        this.displayBookingData();
-                    });
-                    
-                    if (i === this.currentPage) {
-                        pageButton.classList.add('active');
-                    }
-                    
-                    pagination.appendChild(pageButton);
-                }
-
-                if (endPage < totalPages) {
-                    if (endPage < totalPages - 1) {
-                        const ellipsis = document.createElement('span');
-                        ellipsis.textContent = '...';
-                        ellipsis.style.padding = '8px 12px';
-                        pagination.appendChild(ellipsis);
-                    }
-                    
-                    pagination.appendChild(this.createPaginationButton(totalPages.toString(), true, () => {
-                        this.currentPage = totalPages;
-                        this.displayBookingData();
-                    }));
-                }
-
-                // Next button
-                const nextButton = this.createPaginationButton('Next', this.currentPage < totalPages, () => {
-                    if (this.currentPage < totalPages) {
-                        this.currentPage++;
-                        this.displayBookingData();
-                    }
-                });
-                pagination.appendChild(nextButton);
-            }
-
-            createPaginationButton(text, enabled, onClick) {
-                const button = document.createElement('button');
-                button.textContent = text;
-                button.disabled = !enabled;
-                if (enabled) {
-                    button.addEventListener('click', onClick);
-                }
-                return button;
-            }
-
-            changePageSize() {
-                this.itemsPerPage = parseInt(document.getElementById('page-size').value);
-                this.currentPage = 1;
-                this.displayBookingData();
-            }
-
-            updateSummary() {
-                try {
-                    const paid = this.filteredData.reduce((sum, row) => 
-                        sum + (row.payment_type === 'PAID' ? (parseFloat(row.grand_total) || 0) : 0), 0);
-                    const toPay = this.filteredData.reduce((sum, row) => 
-                        sum + (row.payment_type === 'TO PAY' ? (parseFloat(row.grand_total) || 0) : 0), 0);
-                    const tbb = this.filteredData.reduce((sum, row) => 
-                        sum + (row.payment_type === 'TBB' ? (parseFloat(row.grand_total) || 0) : 0), 0);
-                    
-                    const totalAmount = paid + toPay + tbb;
-                    const billing = totalAmount * 0.1; // 10% billing
-                    const gst = totalAmount * 0.18; // 18% GST
-                    const grandTotal = totalAmount + gst;
-
-                    const summaryData = document.getElementById('summary-data');
-                    summaryData.innerHTML = `
-                        <tr>
-                            <td><strong>Current Filter</strong></td>
-                            <td>₹${paid.toFixed(2)}</td>
-                            <td>₹${toPay.toFixed(2)}</td>
-                            <td>₹${billing.toFixed(2)}</td>
-                            <td>₹${totalAmount.toFixed(2)}</td>
-                            <td>₹${gst.toFixed(2)}</td>
-                            <td>₹${grandTotal.toFixed(2)}</td>
-                        </tr>
-                        <tr class="summary-row">
-                            <td><strong>Total (${this.filteredData.length} records)</strong></td>
-                            <td><strong>₹${paid.toFixed(2)}</strong></td>
-                            <td><strong>₹${toPay.toFixed(2)}</strong></td>
-                            <td><strong>₹${billing.toFixed(2)}</strong></td>
-                            <td><strong>₹${totalAmount.toFixed(2)}</strong></td>
-                            <td><strong>₹${gst.toFixed(2)}</strong></td>
-                            <td><strong>₹${grandTotal.toFixed(2)}</strong></td>
-                        </tr>
-                    `;
-                } catch (error) {
-                    console.error('Error updating summary:', error);
-                }
-            }
-
-            sortTable(column) {
-                try {
-                    if (this.currentSortColumn === column) {
-                        this.currentSortOrder = this.currentSortOrder === 'asc' ? 'desc' : 'asc';
-                    } else {
-                        this.currentSortOrder = 'asc';
-                    }
-
-                    // Update sort indicators
-                    document.querySelectorAll('th[data-sort]').forEach(el => {
-                        el.classList.remove('sort-asc', 'sort-desc');
-                    });
-
-                    const th = document.querySelector(`th[data-sort="${column}"]`);
-                    if (th) {
-                        th.classList.add(`sort-${this.currentSortOrder}`);
-                    }
-
-                    // Sort data
-                    this.filteredData.sort((a, b) => {
-                        let valueA = a[column];
-                        let valueB = b[column];
-
-                        // Handle null/undefined values
-                        if (valueA == null) valueA = '';
-                        if (valueB == null) valueB = '';
-
-                        // Handle different data types
-                        if (typeof valueA === 'string') {
-                            valueA = valueA.toLowerCase();
-                            valueB = valueB.toLowerCase();
-                        } else if (typeof valueA === 'number') {
-                            valueA = parseFloat(valueA) || 0;
-                            valueB = parseFloat(valueB) || 0;
-                        }
-
-                        if (valueA < valueB) return this.currentSortOrder === 'asc' ? -1 : 1;
-                        if (valueA > valueB) return this.currentSortOrder === 'asc' ? 1 : -1;
-                        return 0;
-                    });
-
-                    this.currentSortColumn = column;
-                    this.currentPage = 1;
-                    this.displayBookingData();
-                } catch (error) {
-                    console.error('Error sorting table:', error);
-                }
-            }
-
-            clearAllFilters() {
-                document.querySelectorAll('.filter-item input, .filter-item select').forEach(el => {
-                    el.value = '';
-                });
-                document.getElementById('lr-search').value = '';
-                
-                this.allBookingData = [];
-                this.filteredData = [];
-                this.currentPage = 1;
-                
-                document.getElementById('booking-data').innerHTML = `
-                    <tr>
-                        <td colspan="43" style="text-align: center; padding: 40px;">
-                            <i class="fas fa-search fa-2x" style="color: #ccc; margin-bottom: 10px;"></i>
-                            <br>Click "Apply Filters" to load booking data
-                        </td>
-                    </tr>
-                `;
-                
-                document.getElementById('summary-data').innerHTML = `
-                    <tr>
-                        <td colspan="7" style="text-align: center; color: #6c757d;">
-                            Summary will be calculated after loading data
-                        </td>
-                    </tr>
-                `;
-                
-                document.getElementById('stats-container').style.display = 'none';
-                
-                this.showAlert('All filters cleared', 'info');
-            }
-
-            resetFilters() {
-                this.populateDefaultFilters();
-                this.applyFilters();
-            }
-
-            downloadExcel() {
-                this.showLoading('Preparing Excel download...');
-                
-                const params = new URLSearchParams();
-                const filters = this.getFilterValues();
-                
-                Object.entries(filters).forEach(([key, value]) => {
-                    if (value && value !== 0 && value !== Infinity) {
-                        params.append(key.replace(/([A-Z])/g, '_$1').toLowerCase(), value);
-                    }
-                });
-                
-                // Try multiple possible endpoints for Excel download
-                const endpoints = [
-                    '/transporter/download_excel/',
-                    '/transporter/download-excel/',
-                    '/download_excel/',
-                    '/download-excel/'
-                ];
-                
-                let downloadUrl = null;
-                for (const endpoint of endpoints) {
-                    try {
-                        downloadUrl = `${endpoint}?${params}`;
-                        break;
-                    } catch (error) {
-                        console.log(`Failed with endpoint ${endpoint}:`, error);
-                    }
-                }
-                
-                if (downloadUrl) {
-                    // Create a temporary link and click it
-                    const link = document.createElement('a');
-                    link.href = downloadUrl;
-                    link.download = `booking_register_${new Date().toISOString().split('T')[0]}.xlsx`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                    setTimeout(() => {
-                        this.hideLoading();
-                        this.showAlert('Excel download started', 'success');
-                    }, 1000);
-                } else {
-                    this.hideLoading();
-                    this.showAlert('Excel download failed - endpoint not found', 'error');
-                }
-            }
+    async fetchData() {
+      this.showLoading('Fetching booking data...');
+      try {
+        const p=new URLSearchParams();
+        Object.entries(this.getFilters()).forEach(([k,v])=>{ if(v) p.append(k,v); });
+        let res=null;
+        for (const ep of ['/transporter/booking_register_data/','/transporter/booking-register-data/']) {
+          try { res=await fetch(`${ep}?${p}`); if(res.ok) break; } catch(e){}
         }
+        if(!res||!res.ok) throw new Error('Could not reach server');
+        const data=await res.json();
+        if(data.error) throw new Error(data.message||data.error);
+        if(!Array.isArray(data.bookings)) throw new Error('Invalid response format');
 
-        // DDM search function
-        function searchDDM(ddmNumber) {
-            // DDM details page पर redirect करें और search parameter के साथ
-            const url = `/transporter/ddm-details/?search=${encodeURIComponent(ddmNumber)}`;
-            window.open(url, '_blank');
-        }
+        this.allData=data.bookings;
+        if(data.transporter_name) document.getElementById('transporter-name').textContent=data.transporter_name;
+        if(data.dealers?.length) this.populateSelect('dealer',data.dealers);
+        else this.populateFiltersFromData();
 
-        // Initialize the application
-        let bookingRegister;
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            bookingRegister = new BookingRegister();
-        });
-    </script>
+        this.filtered=[...this.allData];
+        this.page=1;
+        this.render(); this.renderSummary();
+        this.showAlert(`Loaded ${this.allData.length} records`,'info');
+      } catch(err) {
+        this.showAlert('Error: '+err.message,'error');
+        document.getElementById('booking-data').innerHTML=
+          `<tr><td colspan="43"><div class="empty-state"><i data-lucide="alert-triangle"></i>
+          <p>${err.message}</p>
+          <button class="btn btn-primary" onclick="bookingRegister.fetchData()" style="margin-top:.5rem;font-size:.78rem;">
+            <i data-lucide="refresh-cw"></i> Retry</button>
+          </div></td></tr>`;
+        lucide.createIcons();
+      } finally { this.hideLoading(); }
+    }
+
+    populateFiltersFromData() {
+      const dealers=[...new Set(this.allData.map(r=>r.user).filter(Boolean))].sort();
+      const dests=this.allData.map(r=>r.delivery_destination||'').filter(Boolean);
+      const froms=[...new Set(dests.map(d=>d.includes(' - ')?d.split(' - ')[0]:d))].sort();
+      const tos=[...new Set(dests.map(d=>d.includes(' - ')?d.split(' - ')[1]:d))].sort();
+      this.populateSelect('dealer',dealers);
+      this.populateSelect('from-city',froms);
+      this.populateSelect('to-city',tos);
+    }
+
+    populateSelect(id,opts) {
+      const sel=document.getElementById(id), cur=sel.value;
+      sel.innerHTML='<option value="">All</option>';
+      opts.forEach(o=>{ const op=document.createElement('option'); op.value=op.textContent=o; sel.appendChild(op); });
+      if(cur&&opts.includes(cur)) sel.value=cur;
+    }
+
+    getFilters() {
+      return {
+        search:       document.getElementById('lr-search').value,
+        date_from:    document.getElementById('date-from').value,
+        date_to:      document.getElementById('date-to').value,
+        dealer:       document.getElementById('dealer').value,
+        from_city:    document.getElementById('from-city').value,
+        to_city:      document.getElementById('to-city').value,
+        amount_min:   document.getElementById('amount-min').value,
+        amount_max:   document.getElementById('amount-max').value,
+        cnote_number: document.getElementById('cnote-number').value,
+        ls_number:    document.getElementById('ls-number').value,
+        ddm_number:   document.getElementById('ddm-number').value,
+      };
+    }
+
+    applyFilters() {
+      if(!this.allData.length){ this.fetchData(); return; }
+      const f=this.getFilters();
+      this.filtered=this.allData.filter(r=>{
+        if(f.date_from&&new Date(r.created_at)<new Date(f.date_from)) return false;
+        if(f.date_to  &&new Date(r.created_at)>new Date(f.date_to+'T23:59:59')) return false;
+        if(f.dealer   &&!(r.user||'').toLowerCase().includes(f.dealer.toLowerCase())) return false;
+        const dest=(r.delivery_destination||'');
+        if(f.from_city){const fc=dest.includes(' - ')?dest.split(' - ')[0]:dest; if(!fc.toLowerCase().includes(f.from_city.toLowerCase())) return false;}
+        if(f.to_city)  {const tc=dest.includes(' - ')?dest.split(' - ')[1]:dest; if(!tc?.toLowerCase().includes(f.to_city.toLowerCase())) return false;}
+        const amt=parseFloat(r.grand_total)||0;
+        if(f.amount_min&&amt<parseFloat(f.amount_min)) return false;
+        if(f.amount_max&&amt>parseFloat(f.amount_max)) return false;
+        if(f.search){const q=f.search.toLowerCase(); if(!['cnote_number','consignor_name','consignee_name','user'].some(k=>(r[k]||'').toLowerCase().includes(q))) return false;}
+        if(f.cnote_number&&!(r.cnote_number||'').toLowerCase().includes(f.cnote_number.toLowerCase())) return false;
+        if(f.ls_number   &&!(r.loading_sheet_number||'').toString().toLowerCase().includes(f.ls_number.toLowerCase())) return false;
+        if(f.ddm_number  &&!(r.ddm_number||'').toString().toLowerCase().includes(f.ddm_number.toLowerCase())) return false;
+        return true;
+      });
+      this.page=1; this.render(); this.renderSummary();
+    }
+
+    sort(col) {
+      this.sortDir=(this.sortCol===col)?(this.sortDir==='asc'?'desc':'asc'):'asc';
+      this.sortCol=col;
+      document.querySelectorAll('th[data-sort]').forEach(t=>t.classList.remove('sort-asc','sort-desc'));
+      document.querySelector(`th[data-sort="${col}"]`)?.classList.add(`sort-${this.sortDir}`);
+      this.filtered.sort((a,b)=>{
+        let va=a[col]??'',vb=b[col]??'';
+        if(typeof va==='string'){va=va.toLowerCase();vb=(vb+'').toLowerCase();}
+        else{va=parseFloat(va)||0;vb=parseFloat(vb)||0;}
+        return va<vb?(this.sortDir==='asc'?-1:1):va>vb?(this.sortDir==='asc'?1:-1):0;
+      });
+      this.page=1; this.render();
+    }
+
+    render() {
+      const start=( this.page-1)*this.perPage;
+      const pageData=this.filtered.slice(start,start+this.perPage);
+      const tbody=document.getElementById('booking-data');
+      if(!pageData.length){
+        tbody.innerHTML=`<tr><td colspan="43"><div class="empty-state"><i data-lucide="search"></i><p>No records found</p></div></td></tr>`;
+        lucide.createIcons(); this.renderPagination(); this.updateCount(); return;
+      }
+      const sv=(v,fb='N/A')=>(v==null||v==='')?fb:v;
+      const sn=(v,d=2)=>{const n=parseFloat(v);return isNaN(n)?'0.00':n.toFixed(d);};
+      const sd=v=>{if(!v)return'N/A';try{return new Date(v).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch{return v;}};
+      const sa=(arr,sep=' / ')=>Array.isArray(arr)&&arr.length?arr.join(sep):'N/A';
+      const pb=t=>({PAID:'success','TO PAY':'warning',TBB:'info'}[(t||'').toUpperCase()]||'secondary');
+      const sb=s=>({delivered:'success',dispatched:'info',booked:'warning',cancelled:'danger',received:'primary'}[(s||'').toLowerCase()]||'secondary');
+
+      tbody.innerHTML=pageData.map((r,i)=>`<tr>
+        <td>${start+i+1}</td>
+        <td><a href="/dealer/view-cnote/${sv(r.cnote_number)}/" target="_blank">${sv(r.cnote_number)}</a></td>
+        <td>${sv(r.booking_type)}</td>
+        <td>${sv(r.delivery_destination)}</td>
+        <td>${sv(r.consignor_name)}</td>
+        <td>${sv(r.consignee_name)}</td>
+        <td><span class="badge badge-${pb(r.payment_type)}">${sv(r.payment_type)}</span></td>
+        <td>₹${sn(r.grand_total)}</td>
+        <td>${sd(r.created_at)}</td>
+        <td><span class="badge badge-${sb(r.status)}">${sv(r.status)}</span></td>
+        <td>${sv(r.eway_bill_number)}</td>
+        <td>${sn(r.actual_weight)}kg</td><td>${sn(r.charged_weight)}kg</td>
+        <td>₹${sn(r.weight_rate)}</td><td>₹${sn(r.weight_amount)}</td><td>₹${sn(r.fix_amount)}</td>
+        <td>${sv(r.invoice_number)}</td><td>₹${sn(r.declared_value)}</td>
+        <td>${sv(r.risk_type)}</td><td>${r.pod_required?'Yes':'No'}</td>
+        <td>₹${sn(r.freight)}</td><td>₹${sn(r.docket_charge)}</td><td>₹${sn(r.door_delivery_charge)}</td>
+        <td>₹${sn(r.handling_charge)}</td><td>₹${sn(r.pickup_charge)}</td><td>₹${sn(r.transhipment_charge)}</td>
+        <td>₹${sn(r.insurance)}</td><td>₹${sn(r.fuel_surcharge)}</td><td>₹${sn(r.commission)}</td>
+        <td>₹${sn(r.other_charge)}</td><td>${sv(r.carrier_risk)}</td>
+        <td>${sv(r.delivery_type)}</td><td>${sv(r.delivery_method)}</td>
+        <td>${sv(r.total_art,0)}</td><td>${sa(r.art_types)}</td><td>${sa(r.said_to_contain)}</td>
+        <td>${sa(r.art_amounts?.map(a=>sn(a)))}</td>
+        <td>${sv(r.consignor_gst)}</td><td>${sv(r.consignee_gst)}</td>
+        <td>${sv(r.user)}</td><td><span class="badge badge-info">${sv(r.user_type)}</span></td>
+        <td>${r.loading_sheet_number&&r.loading_sheet_number!=='N/A'&&r.loading_sheet_number!=='0'
+          ?`<a href="/dealer/mf_print/${r.loading_sheet_number}/" target="_blank">${r.loading_sheet_number}</a>`:'N/A'}</td>
+        <td>${r.ddm_number&&r.ddm_number!=='N/A'&&r.ddm_number!=='0'
+          ?`<a href="/transporter/ddm-details/?search=${encodeURIComponent(r.ddm_number)}" target="_blank">${r.ddm_number}</a>`:'N/A'}</td>
+      </tr>`).join('');
+      this.renderPagination(); this.updateCount();
+    }
+
+    updateCount() { document.getElementById('record-count').textContent=`${this.filtered.length} records`; }
+
+    renderPagination() {
+      const total=Math.ceil(this.filtered.length/this.perPage);
+      const pag=document.getElementById('pagination');
+      pag.innerHTML='';
+      if(total<=1) return;
+      const btn=(label,enabled,onClick,active=false)=>{
+        const b=document.createElement('button');
+        b.textContent=label; b.disabled=!enabled;
+        if(active) b.classList.add('active');
+        if(enabled) b.addEventListener('click',onClick);
+        return b;
+      };
+      pag.appendChild(btn('←',this.page>1,()=>{this.page--;this.render();}));
+      const sp=Math.max(1,this.page-2),ep=Math.min(total,sp+4);
+      if(sp>1){pag.appendChild(btn('1',true,()=>{this.page=1;this.render();}));if(sp>2){const e=document.createElement('span');e.className='pagination-ellipsis';e.textContent='...';pag.appendChild(e);}}
+      for(let i=sp;i<=ep;i++) pag.appendChild(btn(i,true,()=>{this.page=i;this.render();},i===this.page));
+      if(ep<total){if(ep<total-1){const e=document.createElement('span');e.className='pagination-ellipsis';e.textContent='...';pag.appendChild(e);}pag.appendChild(btn(total,true,()=>{this.page=total;this.render();}));}
+      pag.appendChild(btn('→',this.page<total,()=>{this.page++;this.render();}));
+    }
+
+    renderSummary() {
+      const paid =this.filtered.filter(r=>r.payment_type==='PAID').reduce((s,r)=>s+(parseFloat(r.grand_total)||0),0);
+      const topay=this.filtered.filter(r=>r.payment_type==='TO PAY').reduce((s,r)=>s+(parseFloat(r.grand_total)||0),0);
+      const total=this.filtered.reduce((s,r)=>s+(parseFloat(r.grand_total)||0),0);
+      const billing=total*.10,gst=total*.18,grand=total+gst;
+      const fmt=v=>'₹'+v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+      document.getElementById('summary-data').innerHTML=`
+        <tr>
+          <td>Current Filter</td><td>${fmt(paid)}</td><td>${fmt(topay)}</td>
+          <td>${fmt(billing)}</td><td>${fmt(total)}</td><td>${fmt(gst)}</td><td>${fmt(grand)}</td>
+        </tr>
+        <tr class="summary-row">
+          <td>Total (${this.filtered.length} records)</td><td>${fmt(paid)}</td><td>${fmt(topay)}</td>
+          <td>${fmt(billing)}</td><td>${fmt(total)}</td><td>${fmt(gst)}</td><td>${fmt(grand)}</td>
+        </tr>`;
+    }
+
+    clearAll() {
+      document.querySelectorAll('.filter-item input,.filter-item select').forEach(el=>el.value='');
+      document.getElementById('lr-search').value='';
+      this.allData=[]; this.filtered=[]; this.page=1;
+      document.getElementById('booking-data').innerHTML=
+        `<tr><td colspan="43"><div class="empty-state"><i data-lucide="search"></i><p>Click "Apply Filters" to load data</p></div></td></tr>`;
+      document.getElementById('summary-data').innerHTML=
+        `<tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:1.25rem;font-size:.82rem;">Summary will appear after loading data</td></tr>`;
+      document.getElementById('record-count').textContent='0 records';
+      document.getElementById('pagination').innerHTML='';
+      lucide.createIcons();
+    }
+
+    downloadExcel() {
+      this.showLoading('Preparing Excel...');
+      const p=new URLSearchParams();
+      Object.entries(this.getFilters()).forEach(([k,v])=>{if(v) p.append(k,v);});
+      const link=document.createElement('a');
+      link.href=`/transporter/download_excel/?${p}`;
+      link.download=`booking_register_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+      setTimeout(()=>{this.hideLoading();this.showAlert('Excel download started','success');},1000);
+    }
+  }
+
+  const bookingRegister = new BookingRegister();
+</script>
 </body>
 </html>
