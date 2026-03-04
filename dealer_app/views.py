@@ -131,6 +131,7 @@ import threading
 from django.conf import settings
 from django.http import HttpResponse
 import platform
+from .models import ArtType
 
 
 # Set up logging   
@@ -1670,6 +1671,8 @@ def create_cnotes(request):
         'destinations': DeliveryDestination.objects.all(),
         'cities': City.objects.all(),
         'last_cnote': last_cnote,  # Pass the last CNote to the template
+        'art_types': ArtType.objects.all().order_by('art_type_name'),  # ← ADD
+
     }
     return render(request, 'dealer/create_cnotes.html', context)
 
