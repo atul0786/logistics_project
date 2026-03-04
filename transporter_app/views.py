@@ -2168,22 +2168,21 @@ def booking_register_view(request):
 def download_excel(request):
     try:
         logger.info("Starting download_excel function")
-        
+
         # Get the same filters as the main data function
-        search_term = request.GET.get('search', '').strip().lower()
-        date_from = request.GET.get('date_from', '').strip()
-        date_to = request.GET.get('date_to', '').strip()
-        dealer = request.GET.get('dealer', '').strip().lower()
-        from_city = request.GET.get('from_city', '').strip().lower()
-        to_city = request.GET.get('to_city', '').strip().lower()
-        amount_min = request.GET.get('amount_min', '').strip()
-        amount_max = request.GET.get('amount_max', '').strip()
+        search_term  = request.GET.get('search', '').strip().lower()
+        date_from    = request.GET.get('date_from', '').strip()
+        date_to      = request.GET.get('date_to', '').strip()
+        dealer       = request.GET.get('dealer', '').strip().lower()
+        from_city    = request.GET.get('from_city', '').strip().lower()
+        to_city      = request.GET.get('to_city', '').strip().lower()
+        amount_min   = request.GET.get('amount_min', '').strip()
+        amount_max   = request.GET.get('amount_max', '').strip()
         cnote_number = request.GET.get('cnote_number', '').strip().lower()
-        ls_number = request.GET.get('ls_number', '').strip().lower()
-        ddm_number = request.GET.get('ddm_number', '').strip().lower()
-        
+        ls_number    = request.GET.get('ls_number', '').strip().lower()
+        ddm_number   = request.GET.get('ddm_number', '').strip().lower()
+
         with connection.cursor() as cursor:
-            # Use the same query as the main function but without LIMIT
             query = """
                 SELECT DISTINCT
                     c.id,
@@ -2231,7 +2230,7 @@ def download_excel(request):
                     c.total_art,
                     COALESCE(d.name, 'Direct') as dealer_name,
                     COALESCE(dd.destination_name, 'N/A') as delivery_destination,
-                    CASE 
+                    CASE
                         WHEN d.name IS NOT NULL THEN 'Dealer'
                         ELSE 'Direct'
                     END as user_type,
@@ -2251,10 +2250,9 @@ def download_excel(request):
                 LEFT JOIN dealer_app_arttype at ON a.art_type_id = at.id
                 WHERE 1=1
             """
-            
+
             params = []
-            
-            # Apply the same filters
+
             if search_term:
                 query += """ AND (
                     LOWER(c.cnote_number) LIKE %s OR
@@ -2262,8 +2260,7 @@ def download_excel(request):
                     LOWER(c.consignee_name) LIKE %s OR
                     LOWER(COALESCE(d.name, '')) LIKE %s
                 )"""
-                search_param = f'%{search_term}%'
-                params.extend([search_param] * 4)
+                params.extend([f'%{search_term}%'] * 4)
 
             if date_from:
                 query += " AND c.created_at >= %s"
@@ -2312,7 +2309,7 @@ def download_excel(request):
                 params.append(f'%{ddm_number}%')
 
             query += """
-                GROUP BY 
+                GROUP BY
                     c.id, c.cnote_number, c.booking_type, c.delivery_type, c.delivery_method,
                     c.eway_bill_number, c.manual_date, c.manual_cnote_number, c.manual_cnote_type,
                     c.payment_type, c.consignor_name, c.consignor_address, c.consignor_mobile,
@@ -2327,68 +2324,141 @@ def download_excel(request):
                     dd.destination_name, ls.ls_number, ddm.ddm_no
                 ORDER BY c.created_at DESC
             """
-            
+
             cursor.execute(query, params)
-            columns = [col[0] for col in cursor.description]
+            columns  = [col[0] for col in cursor.description]
             bookings = [dict(zip(columns, row)) for row in cursor.fetchall()]
 
         logger.info(f"Fetched {len(bookings)} records for Excel download")
 
-        # Process the data for Excel
+        # ── Process data ──────────────────────────────────────
         processed_bookings = []
         for booking in bookings:
             try:
-                # Convert Decimal objects to float
-                for key, value in booking.items():
+                for key, value in list(booking.items()):
                     if isinstance(value, Decimal):
                         booking[key] = float(value)
+
                     elif isinstance(value, datetime):
-                        booking[key] = value.strftime('%Y-%m-%d %H:%M:%S')
+                        if key == 'created_at':
+                            # ✅ Date aur Time alag columns mein
+                            booking['booking_date'] = value.strftime('%d-%m-%Y')  # 04-03-2026
+                            booking['booking_time'] = value.strftime('%I:%M %p')  # 10:30 AM
+                            booking[key] = None   # baad mein drop hoga
+                        else:
+                            booking[key] = value.strftime('%d-%m-%Y %H:%M')
+
                     elif value is None:
                         booking[key] = ''
-                
-                # Process aggregated fields
-                art_types = booking.get('art_types', '') or ''
-                said_to_contain = booking.get('said_to_contain', '') or ''
-                art_amounts = booking.get('art_amounts', '') or ''
-                
-                booking['art_types'] = art_types.replace(' / ', ', ') if art_types != 'N/A' else ''
-                booking['said_to_contain'] = said_to_contain.replace(' / ', ', ') if said_to_contain != 'N/A' else ''
-                booking['art_amounts'] = art_amounts.replace(' / ', ', ') if art_amounts != 'N/A' else ''
-                
+
+                # Aggregated fields
+                for field in ('art_types', 'said_to_contain', 'art_amounts'):
+                    val = booking.get(field, '') or ''
+                    booking[field] = val.replace(' / ', ', ') if val != 'N/A' else ''
+
                 processed_bookings.append(booking)
-                
+
             except Exception as e:
                 logger.error(f"Error processing booking for Excel: {str(e)}")
                 continue
 
-        # Convert to DataFrame
+        # ── Build DataFrame ───────────────────────────────────
         df = pd.DataFrame(processed_bookings)
-        
+
         if df.empty:
-            # Return empty Excel file
-            response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            response = HttpResponse(
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
             response['Content-Disposition'] = 'attachment; filename="booking_register_empty.xlsx"'
-            
             empty_df = pd.DataFrame({'Message': ['No data found for the selected filters']})
             with pd.ExcelWriter(response, engine='openpyxl') as writer:
                 empty_df.to_excel(writer, index=False, sheet_name='No Data')
-            
             return response
 
-        # Create an HTTP response with the Excel file
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        # ── created_at drop karo ──────────────────────────────
+        if 'created_at' in df.columns:
+            df.drop(columns=['created_at'], inplace=True)
+
+        # ── Date & Time columns ko cnote_number ke baad laao ──
+        if 'booking_date' in df.columns and 'booking_time' in df.columns:
+            other_cols = [c for c in df.columns if c not in ('booking_date', 'booking_time')]
+            if 'cnote_number' in other_cols:
+                idx     = other_cols.index('cnote_number') + 1
+                ordered = other_cols[:idx] + ['booking_date', 'booking_time'] + other_cols[idx:]
+            else:
+                ordered = ['booking_date', 'booking_time'] + other_cols
+            df = df[ordered]
+
+        # ── Readable column headers ───────────────────────────
+        rename_map = {
+            'booking_date':         'Date',
+            'booking_time':         'Time',
+            'cnote_number':         'CNote Number',
+            'booking_type':         'Booking Type',
+            'delivery_type':        'Delivery Type',
+            'delivery_method':      'Delivery Method',
+            'eway_bill_number':     'Eway Bill Number',
+            'manual_date':          'Manual Date',
+            'manual_cnote_number':  'Manual CNote No.',
+            'manual_cnote_type':    'Manual CNote Type',
+            'payment_type':         'Payment Type',
+            'consignor_name':       'Consignor Name',
+            'consignor_address':    'Consignor Address',
+            'consignor_mobile':     'Consignor Mobile',
+            'consignor_gst':        'Consignor GST',
+            'consignee_name':       'Consignee Name',
+            'consignee_address':    'Consignee Address',
+            'consignee_mobile':     'Consignee Mobile',
+            'consignee_gst':        'Consignee GST',
+            'actual_weight':        'Actual Weight',
+            'charged_weight':       'Charged Weight',
+            'weight_rate':          'Weight Rate',
+            'weight_amount':        'Weight Amount',
+            'fix_amount':           'Fix Amount',
+            'invoice_number':       'Invoice Number',
+            'declared_value':       'Declared Value',
+            'risk_type':            'Risk Type',
+            'pod_required':         'POD Required',
+            'freight':              'Freight',
+            'docket_charge':        'Docket Charge',
+            'door_delivery_charge': 'Door Delivery',
+            'handling_charge':      'Handling Charge',
+            'pickup_charge':        'Pickup Charge',
+            'transhipment_charge':  'Transhipment',
+            'insurance':            'Insurance',
+            'fuel_surcharge':       'Fuel Surcharge',
+            'commission':           'Commission',
+            'other_charge':         'Other Charge',
+            'carrier_risk':         'Carrier Risk',
+            'grand_total':          'Grand Total',
+            'status':               'Status',
+            'status_updated_at':    'Status Updated At',
+            'total_art':            'Total Articles',
+            'dealer_name':          'Dealer Name',
+            'delivery_destination': 'Destination',
+            'user_type':            'User Type',
+            'loading_sheet_number': 'LS Number',
+            'ddm_number':           'DDM Number',
+            'art_types':            'Art Types',
+            'said_to_contain':      'Said To Contain',
+            'art_amounts':          'Art Amounts',
+        }
+        df.rename(columns=rename_map, inplace=True)
+
+        # ── Generate Excel response ───────────────────────────
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
         filename = f"booking_register_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
-        # Use Pandas to write the DataFrame to the response
         with pd.ExcelWriter(response, engine='openpyxl') as writer:
             df.to_excel(writer, index=False, sheet_name='Booking Register')
-            
+
             # Auto-adjust column widths
             worksheet = writer.sheets['Booking Register']
             for column in worksheet.columns:
-                max_length = 0
+                max_length    = 0
                 column_letter = column[0].column_letter
                 for cell in column:
                     try:
@@ -2396,16 +2466,14 @@ def download_excel(request):
                             max_length = len(str(cell.value))
                     except:
                         pass
-                adjusted_width = min(max_length + 2, 50)
-                worksheet.column_dimensions[column_letter].width = adjusted_width
+                worksheet.column_dimensions[column_letter].width = min(max_length + 2, 50)
 
         logger.info("Excel file generated successfully")
         return response
-        
+
     except Exception as e:
         logger.error(f"Error in download_excel: {str(e)}", exc_info=True)
         return HttpResponse(f"Error generating Excel: {e}", status=500)
-
 
 from django.db import IntegrityError
 
