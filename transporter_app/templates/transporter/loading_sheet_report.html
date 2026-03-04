@@ -510,89 +510,48 @@
             <img src="{% static 'images/logo.jpg' %}" alt="logo">
             <span>Good Way Express</span>
         </div>
-        <nav class="sidebar-nav">
-            <div class="nav-section-title">Navigation</div>
+        <nav>
+    <div class="nav-section-label">Main</div>
+    <a href="{% url 'transporter:home' %}" class="nav-link">
+      <i data-lucide="layout-dashboard"></i><span class="nav-link-text">Dashboard</span>
+    </a>
+    <a href="{% url 'transporter:receive' %}" class="nav-link" target="_blank">
+      <i data-lucide="clock"></i><span class="nav-link-text">Pending Requests</span>
+    </a>
+    <a href="#" class="nav-link has-submenu">
+      <i data-lucide="clipboard-list"></i><span class="nav-link-text">Delivery Management</span>
+      <i data-lucide="chevron-right" class="arrow"></i>
+    </a>
+    <div class="submenu">
+      <a href="{% url 'transporter:delivery_cnotes' %}" target="_blank">Single Delivery</a>
+      <a href="{% url 'transporter:ddm_settlement' %}" target="_blank">DDM Settlements</a>
+    </div>
+    <a href="#" class="nav-link"><i data-lucide="check-circle"></i><span class="nav-link-text">Completed</span></a>
 
-            <a href="{% url 'home' %}" class="nav-item">
-                <i class="fas fa-tachometer-alt"></i>
-                <span class="nav-label">Dashboard</span>
-            </a>
-
-            <div class="nav-group">
-                <div class="nav-item" onclick="toggleGroup(this)">
-                    <i class="fas fa-route"></i>
-                    <span class="nav-label">Operations</span>
-                </div>
-                <div class="nav-sub">
-                    <a href="{% url 'receive' %}" class="nav-item">
-                        <i class="fas fa-clock"></i><span class="nav-label">Pending Requests</span>
-                    </a>
-                    <a href="{% url 'delivery_cnotes' %}" class="nav-item">
-                        <i class="fas fa-shipping-fast"></i><span class="nav-label">Single Delivery</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-item" onclick="toggleGroup(this)">
-                    <i class="fas fa-chart-bar"></i>
-                    <span class="nav-label">Reports</span>
-                </div>
-                <div class="nav-sub">
-                    <a href="{% url 'all_booking_register' %}" class="nav-item">
-                        <i class="fas fa-book"></i><span class="nav-label">Booking Register</span>
-                    </a>
-                    <a href="{% url 'loading_sheet_report' %}" class="nav-item active">
-                        <i class="fas fa-file-alt"></i><span class="nav-label">Loading Sheet Report</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-item" onclick="toggleGroup(this)">
-                    <i class="fas fa-tools"></i>
-                    <span class="nav-label">Manage</span>
-                </div>
-                <div class="nav-sub">
-                    <a href="{% url 'manage_location' %}" class="nav-item">
-                        <i class="fas fa-map-marker-alt"></i><span class="nav-label">Manage Location</span>
-                    </a>
-                    <a href="{% url 'party_master' %}" class="nav-item">
-                        <i class="fas fa-users"></i><span class="nav-label">Party Master</span>
-                    </a>
-                    <a href="{% url 'rate_card_master' %}" class="nav-item">
-                        <i class="fas fa-tags"></i><span class="nav-label">Rate Card</span>
-                    </a>
-                    <a href="{% url 'billing' %}" class="nav-item">
-                        <i class="fas fa-file-invoice-dollar"></i><span class="nav-label">Billing</span>
-                    </a>
-                    <a href="{% url 'bill_manage' %}" class="nav-item">
-                        <i class="fas fa-receipt"></i><span class="nav-label">Bill Management</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-item" onclick="toggleGroup(this)">
-                    <i class="fas fa-user-cog"></i>
-                    <span class="nav-label">Users</span>
-                </div>
-                <div class="nav-sub">
-                    <a href="{% url 'add_user' %}" class="nav-item">
-                        <i class="fas fa-user-plus"></i><span class="nav-label">Add User</span>
-                    </a>
-                    <a href="{% url 'view_users' %}" class="nav-item">
-                        <i class="fas fa-users"></i><span class="nav-label">View Users</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="nav-section-title">DDM</div>
-            <a href="{% url 'ddm_settlement' %}" class="nav-item">
-                <i class="fas fa-handshake"></i>
-                <span class="nav-label">DDM Settlements</span>
-            </a>
-        </nav>
+    <div class="nav-section-label">Reports & Masters</div>
+    <a href="#" class="nav-link has-submenu open">
+      <i data-lucide="bar-chart-2"></i><span class="nav-link-text">Reports</span>
+      <i data-lucide="chevron-right" class="arrow"></i>
+    </a>
+    <div class="submenu open">
+      <a href="{% url 'transporter:all_booking_register' %}" class="active">Booking Register</a>
+      <a href="{% url 'transporter:loading_sheet_report' %}" target="_blank">Loading Sheet Report</a>
+    </div>
+    <a href="#" class="nav-link has-submenu">
+      <i data-lucide="settings"></i><span class="nav-link-text">Master</span>
+      <i data-lucide="chevron-right" class="arrow"></i>
+    </a>
+    <div class="submenu">
+      <a href="{% url 'transporter:rate_card_master' %}" target="_blank">Rate Card Master</a>
+      <a href="{% url 'transporter:billing' %}" target="_blank">Billing Dealer</a>
+      <a href="{% url 'transporter:bill_manage' %}" target="_blank">Bill Management</a>
+      <a href="{% url 'transporter:manage_location' %}" target="_blank">Manage Location</a>
+      <a href="{% url 'transporter:party_master' %}" target="_blank">Party Master</a>
+      <a href="{% url 'transporter:add_user' %}" target="_blank">Add User</a>
+      <a href="{% url 'transporter:view_users' %}" target="_blank">View Users</a>
+    </div>
+  </nav>
+  
     </aside>
 
     <!-- ═══════════════════════════════════════ MAIN -->
@@ -1267,4 +1226,5 @@
     </script>
 </body>
 </html>
+
 
