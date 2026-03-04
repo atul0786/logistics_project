@@ -961,8 +961,9 @@
                                     <td>
                                         <select name="artType" required>
                                             <option value="">Select</option>
-                                            <option value="type1">SMALL BOX</option>
-                                            <option value="type2">BIG BOX</option>
+                                            {% for art in art_types %}
+                                            <option value="{{ art.art_type_name }}">{{ art.art_type_name }}</option>
+                                            {% endfor %}
                                         </select>
                                     </td>
                                     <td><input type="text" name="saidToContain" required /></td>
@@ -1603,10 +1604,11 @@
                     <td>
                         <select name="artType" required>
                             <option value="">Select</option>
-                            <option value="type1">SMALL BOX</option>
-                            <option value="type2">BIG BOX</option>
+                            {% for art in art_types %}
+                            <option value="{{ art.art_type_name }}">{{ art.art_type_name }}</option>
+                            {% endfor %}
                         </select>
-                    </td>
+                    </td>    
                     <td><input type="text" name="saidToContain" required></td>
                     <td><input type="number" name="perPktAmt" class="per-pkt-amt" step="0.01" required></td>
                     <td><input type="number" name="totalAmt" class="total-amt" step="0.01" required></td>
