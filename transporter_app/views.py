@@ -1917,7 +1917,7 @@ def booking_register_data(request):
                     COALESCE(ls.ls_number::text, 'N/A') as loading_sheet_number,
                     COALESCE(ddm.ddm_no, 'N/A') as ddm_number,
                     STRING_AGG(COALESCE(a.art::text, '0') || ' x ' || COALESCE(at.art_type_name, 'N/A'), ' / ') as art_types,
-                    STRING_AGG(COALESCE(a.said_to_contain, 'N/A'), ' / ') as said_to_contain,
+                    STRING_AGG(COALESCE(a.said_to_contain, 'N/A') || '-' || COALESCE(a.art::text, '0'), ' / ') as said_to_contain,
                     STRING_AGG(COALESCE(a.art_amount::text, '0'), ' / ') as art_amounts
                 FROM dealer_app_cnotes c
                 LEFT JOIN dealer_app_dealer d ON c.dealer_id = d.dealer_id
@@ -2237,7 +2237,7 @@ def download_excel(request):
                     COALESCE(ls.ls_number::text, 'N/A') as loading_sheet_number,
                     COALESCE(ddm.ddm_no, 'N/A') as ddm_number,
                     STRING_AGG(COALESCE(a.art::text, '0') || ' x ' || COALESCE(at.art_type_name, 'N/A'), ' / ') as art_types,
-                    STRING_AGG(COALESCE(a.said_to_contain, 'N/A'), ' / ') as said_to_contain,
+                    STRING_AGG(COALESCE(a.said_to_contain, 'N/A') || '-' || COALESCE(a.art::text, '0'), ' / ') as said_to_contain,
                     STRING_AGG(COALESCE(a.art_amount::text, '0'), ' / ') as art_amounts
                 FROM dealer_app_cnotes c
                 LEFT JOIN dealer_app_dealer d ON c.dealer_id = d.dealer_id
