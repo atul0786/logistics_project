@@ -1907,7 +1907,7 @@ def booking_register_data(request):
                     c.status,
                     c.status_updated_at,
                     c.created_at,
-                    c.total_art,
+                    COALESCE(SUM(a.art), c.total_art, 0) as total_art,
                     COALESCE(d.name, 'Direct') as dealer_name,
                     COALESCE(dd.destination_name, 'N/A') as delivery_destination,
                     CASE 
@@ -1916,9 +1916,9 @@ def booking_register_data(request):
                     END as user_type,
                     COALESCE(ls.ls_number::text, 'N/A') as loading_sheet_number,
                     COALESCE(ddm.ddm_no, 'N/A') as ddm_number,
-                    STRING_AGG(DISTINCT COALESCE(at.art_type_name, 'N/A'), ' / ') as art_types,
-                    STRING_AGG(DISTINCT COALESCE(a.said_to_contain, 'N/A'), ' / ') as said_to_contain,
-                    STRING_AGG(DISTINCT COALESCE(a.art_amount::text, '0'), ' / ') as art_amounts
+                    STRING_AGG(COALESCE(a.art::text, '0') || ' x ' || COALESCE(at.art_type_name, 'N/A'), ' / ') as art_types,
+                    STRING_AGG(COALESCE(a.said_to_contain, 'N/A'), ' / ') as said_to_contain,
+                    STRING_AGG(COALESCE(a.art_amount::text, '0'), ' / ') as art_amounts
                 FROM dealer_app_cnotes c
                 LEFT JOIN dealer_app_dealer d ON c.dealer_id = d.dealer_id
                 LEFT JOIN dealer_app_deliverydestination dd ON c.delivery_destination_id = dd.id
@@ -2227,7 +2227,7 @@ def download_excel(request):
                     c.status,
                     c.status_updated_at,
                     c.created_at,
-                    c.total_art,
+                    COALESCE(SUM(a.art), c.total_art, 0) as total_art,
                     COALESCE(d.name, 'Direct') as dealer_name,
                     COALESCE(dd.destination_name, 'N/A') as delivery_destination,
                     CASE
@@ -2236,9 +2236,9 @@ def download_excel(request):
                     END as user_type,
                     COALESCE(ls.ls_number::text, 'N/A') as loading_sheet_number,
                     COALESCE(ddm.ddm_no, 'N/A') as ddm_number,
-                    STRING_AGG(DISTINCT COALESCE(at.art_type_name, 'N/A'), ' / ') as art_types,
-                    STRING_AGG(DISTINCT COALESCE(a.said_to_contain, 'N/A'), ' / ') as said_to_contain,
-                    STRING_AGG(DISTINCT COALESCE(a.art_amount::text, '0'), ' / ') as art_amounts
+                    STRING_AGG(COALESCE(a.art::text, '0') || ' x ' || COALESCE(at.art_type_name, 'N/A'), ' / ') as art_types,
+                    STRING_AGG(COALESCE(a.said_to_contain, 'N/A'), ' / ') as said_to_contain,
+                    STRING_AGG(COALESCE(a.art_amount::text, '0'), ' / ') as art_amounts
                 FROM dealer_app_cnotes c
                 LEFT JOIN dealer_app_dealer d ON c.dealer_id = d.dealer_id
                 LEFT JOIN dealer_app_deliverydestination dd ON c.delivery_destination_id = dd.id
