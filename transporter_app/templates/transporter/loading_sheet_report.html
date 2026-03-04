@@ -513,7 +513,7 @@
         <nav class="sidebar-nav">
             <div class="nav-section-title">Navigation</div>
 
-            <a href="{% url 'transporter:home' %}" class="nav-item">
+            <a href="{% url 'home' %}" class="nav-item">
                 <i class="fas fa-tachometer-alt"></i>
                 <span class="nav-label">Dashboard</span>
             </a>
@@ -524,10 +524,10 @@
                     <span class="nav-label">Operations</span>
                 </div>
                 <div class="nav-sub">
-                    <a href="{% url 'transporter:pending_requests' %}" class="nav-item">
+                    <a href="{% url 'receive' %}" class="nav-item">
                         <i class="fas fa-clock"></i><span class="nav-label">Pending Requests</span>
                     </a>
-                    <a href="{% url 'transporter:single_delivery' %}" class="nav-item">
+                    <a href="{% url 'delivery_cnotes' %}" class="nav-item">
                         <i class="fas fa-shipping-fast"></i><span class="nav-label">Single Delivery</span>
                     </a>
                 </div>
@@ -539,10 +539,10 @@
                     <span class="nav-label">Reports</span>
                 </div>
                 <div class="nav-sub">
-                    <a href="{% url 'transporter:all_booking_register' %}" class="nav-item">
+                    <a href="{% url 'all_booking_register' %}" class="nav-item">
                         <i class="fas fa-book"></i><span class="nav-label">Booking Register</span>
                     </a>
-                    <a href="{% url 'transporter:loading_sheet_report' %}" class="nav-item active">
+                    <a href="{% url 'loading_sheet_report' %}" class="nav-item active">
                         <i class="fas fa-file-alt"></i><span class="nav-label">Loading Sheet Report</span>
                     </a>
                 </div>
@@ -554,19 +554,19 @@
                     <span class="nav-label">Manage</span>
                 </div>
                 <div class="nav-sub">
-                    <a href="{% url 'transporter:manage_location' %}" class="nav-item">
+                    <a href="{% url 'manage_location' %}" class="nav-item">
                         <i class="fas fa-map-marker-alt"></i><span class="nav-label">Manage Location</span>
                     </a>
-                    <a href="{% url 'transporter:party_master' %}" class="nav-item">
+                    <a href="{% url 'party_master' %}" class="nav-item">
                         <i class="fas fa-users"></i><span class="nav-label">Party Master</span>
                     </a>
-                    <a href="{% url 'transporter:rate_card' %}" class="nav-item">
+                    <a href="{% url 'rate_card_master' %}" class="nav-item">
                         <i class="fas fa-tags"></i><span class="nav-label">Rate Card</span>
                     </a>
-                    <a href="{% url 'transporter:billing' %}" class="nav-item">
+                    <a href="{% url 'billing' %}" class="nav-item">
                         <i class="fas fa-file-invoice-dollar"></i><span class="nav-label">Billing</span>
                     </a>
-                    <a href="{% url 'transporter:bill_management' %}" class="nav-item">
+                    <a href="{% url 'bill_manage' %}" class="nav-item">
                         <i class="fas fa-receipt"></i><span class="nav-label">Bill Management</span>
                     </a>
                 </div>
@@ -578,17 +578,17 @@
                     <span class="nav-label">Users</span>
                 </div>
                 <div class="nav-sub">
-                    <a href="{% url 'transporter:add_user' %}" class="nav-item">
+                    <a href="{% url 'add_user' %}" class="nav-item">
                         <i class="fas fa-user-plus"></i><span class="nav-label">Add User</span>
                     </a>
-                    <a href="{% url 'transporter:view_users' %}" class="nav-item">
+                    <a href="{% url 'view_users' %}" class="nav-item">
                         <i class="fas fa-users"></i><span class="nav-label">View Users</span>
                     </a>
                 </div>
             </div>
 
             <div class="nav-section-title">DDM</div>
-            <a href="{% url 'transporter:ddm_settlements' %}" class="nav-item">
+            <a href="{% url 'ddm_settlement' %}" class="nav-item">
                 <i class="fas fa-handshake"></i>
                 <span class="nav-label">DDM Settlements</span>
             </a>
@@ -1267,3 +1267,4 @@
     </script>
 </body>
 </html>
+
