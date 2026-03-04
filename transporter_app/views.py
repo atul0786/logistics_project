@@ -2342,8 +2342,10 @@ def download_excel(request):
                     elif isinstance(value, datetime):
                         if key == 'created_at':
                             # ✅ Date aur Time alag columns mein
-                            booking['booking_date'] = value.strftime('%d-%m-%Y')  # 04-03-2026
-                            booking['booking_time'] = value.strftime('%I:%M %p')  # 10:30 AM
+                            from datetime import timedelta
+                            ist_time = value + timedelta(hours=5, minutes=30)
+                            booking['booking_date'] = ist_time.strftime('%d-%m-%Y')   # 04-03-2026
+                            booking['booking_time'] = ist_time.strftime('%I:%M %p')   # 07:50 AM
                             booking[key] = None   # baad mein drop hoga
                         else:
                             booking[key] = value.strftime('%d-%m-%Y %H:%M')
