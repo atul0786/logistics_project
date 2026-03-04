@@ -429,6 +429,7 @@
               <th data-sort="payment_type">Payment</th>
               <th data-sort="grand_total">Grand Total</th>
               <th data-sort="created_at">Date</th>
+              <th>Time</th>
               <th data-sort="status">Status</th>
               <th data-sort="eway_bill_number">Eway Bill</th>
               <th data-sort="actual_weight">Act.Wt</th>
@@ -471,7 +472,7 @@
                 <i data-lucide="search"></i>
                 <p>Click "Apply Filters" to load booking data</p>
               </div>
-            </td></tr>
+            </td></tr><!-- colspan=44 (Date+Time split) -->
           </tbody>
         </table>
       </div>
@@ -701,12 +702,13 @@
       const pageData=this.filtered.slice(start,start+this.perPage);
       const tbody=document.getElementById('booking-data');
       if(!pageData.length){
-        tbody.innerHTML=`<tr><td colspan="43"><div class="empty-state"><i data-lucide="search"></i><p>No records found</p></div></td></tr>`;
+        tbody.innerHTML=`<tr><td colspan="44"><div class="empty-state"><i data-lucide="search"></i><p>No records found</p></div></td></tr>`;
         lucide.createIcons(); this.renderPagination(); this.updateCount(); return;
       }
       const sv=(v,fb='N/A')=>(v==null||v==='')?fb:v;
       const sn=(v,d=2)=>{const n=parseFloat(v);return isNaN(n)?'0.00':n.toFixed(d);};
-      const sd=v=>{if(!v)return'N/A';try{return new Date(v).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch{return v;}};
+      const sdDate=v=>{if(!v)return'N/A';try{const d=new Date(v);const dd=String(d.getDate()).padStart(2,'0');const mm=String(d.getMonth()+1).padStart(2,'0');const yyyy=d.getFullYear();return`${dd}-${mm}-${yyyy}`;}catch{return v;}};
+      const sdTime=v=>{if(!v)return'N/A';try{return new Date(v).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});}catch{return v;}};
       const sa=(arr,sep=' / ')=>Array.isArray(arr)&&arr.length?arr.join(sep):'N/A';
       const pb=t=>({PAID:'success','TO PAY':'warning',TBB:'info'}[(t||'').toUpperCase()]||'secondary');
       const sb=s=>({delivered:'success',dispatched:'info',booked:'warning',cancelled:'danger',received:'primary'}[(s||'').toLowerCase()]||'secondary');
@@ -720,7 +722,8 @@
         <td>${sv(r.consignee_name)}</td>
         <td><span class="badge badge-${pb(r.payment_type)}">${sv(r.payment_type)}</span></td>
         <td>₹${sn(r.grand_total)}</td>
-        <td>${sd(r.created_at)}</td>
+        <td>${sdDate(r.created_at)}</td>
+        <td>${sdTime(r.created_at)}</td>
         <td><span class="badge badge-${sb(r.status)}">${sv(r.status)}</span></td>
         <td>${sv(r.eway_bill_number)}</td>
         <td>${sn(r.actual_weight)}kg</td><td>${sn(r.charged_weight)}kg</td>
