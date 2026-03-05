@@ -524,10 +524,10 @@
                     <span class="nav-label">Operations</span>
                 </div>
                 <div class="nav-sub">
-                    <a href="{% url 'transporter:pending_requests' %}" class="nav-item">
+                    <a href="{% url 'transporter:receive' %}" class="nav-item">
                         <i class="fas fa-clock"></i><span class="nav-label">Pending Requests</span>
                     </a>
-                    <a href="{% url 'transporter:single_delivery' %}" class="nav-item">
+                    <a href="{% url 'transporter:delivery_cnotes' %}" class="nav-item">
                         <i class="fas fa-shipping-fast"></i><span class="nav-label">Single Delivery</span>
                     </a>
                 </div>
@@ -560,13 +560,13 @@
                     <a href="{% url 'transporter:party_master' %}" class="nav-item">
                         <i class="fas fa-users"></i><span class="nav-label">Party Master</span>
                     </a>
-                    <a href="{% url 'transporter:rate_card' %}" class="nav-item">
+                    <a href="{% url 'transporter:rate_card_master' %}" class="nav-item">
                         <i class="fas fa-tags"></i><span class="nav-label">Rate Card</span>
                     </a>
                     <a href="{% url 'transporter:billing' %}" class="nav-item">
                         <i class="fas fa-file-invoice-dollar"></i><span class="nav-label">Billing</span>
                     </a>
-                    <a href="{% url 'transporter:bill_management' %}" class="nav-item">
+                    <a href="{% url 'transporter:bill_manage' %}" class="nav-item">
                         <i class="fas fa-receipt"></i><span class="nav-label">Bill Management</span>
                     </a>
                 </div>
@@ -588,7 +588,7 @@
             </div>
 
             <div class="nav-section-title">DDM</div>
-            <a href="{% url 'transporter:ddm_settlements' %}" class="nav-item">
+            <a href="{% url 'transporter:ddm_settlement' %}" class="nav-item">
                 <i class="fas fa-handshake"></i>
                 <span class="nav-label">DDM Settlements</span>
             </a>
