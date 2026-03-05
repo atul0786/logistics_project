@@ -3632,11 +3632,13 @@ def loading_sheet_report(request):
 
     # Get the logged-in user's transporter, if it exists
     transporter = None
-    transporter_name = "-"
-    if hasattr(request.user, "transporter"):
-        transporter = request.user.transporter
-        transporter_name = transporter.user.username.title()  # ya transporter.user.username
-
+    transporter_name = request.user.username.title()  # fallback
+    try:
+        transporter = Transporter.objects.get(user=request.user)
+        transporter_name = transporter.user.username.title()
+    except Exception:
+        pass
+        
     context = {
         'dealers': dealers,
         'transporter': transporter,
