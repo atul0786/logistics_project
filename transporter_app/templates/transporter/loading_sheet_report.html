@@ -508,90 +508,95 @@
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
             <img src="{% static 'images/logo.jpg' %}" alt="logo">
-            <span>Good Way Express</span>
+            <div>
+                <span>Good Way Express</span>
+                <div style="font-size:.7rem;color:#64748b;white-space:nowrap;overflow:hidden;">Transport Panel</div>
+            </div>
         </div>
         <nav class="sidebar-nav">
-            <div class="nav-section-title">Navigation</div>
+
+            <div class="nav-section-title">MAIN</div>
 
             <a href="{% url 'transporter:home' %}" class="nav-item">
-                <i class="fas fa-tachometer-alt"></i>
+                <i class="fas fa-th-large"></i>
                 <span class="nav-label">Dashboard</span>
+            </a>
+
+            <a href="{% url 'transporter:receive' %}" class="nav-item">
+                <i class="fas fa-clock"></i>
+                <span class="nav-label">Pending Requests</span>
             </a>
 
             <div class="nav-group">
                 <div class="nav-item" onclick="toggleGroup(this)">
-                    <i class="fas fa-route"></i>
-                    <span class="nav-label">Operations</span>
+                    <i class="fas fa-truck"></i>
+                    <span class="nav-label">Delivery Management</span>
                 </div>
                 <div class="nav-sub">
-                    <a href="{% url 'transporter:receive' %}" class="nav-item">
-                        <i class="fas fa-clock"></i><span class="nav-label">Pending Requests</span>
-                    </a>
                     <a href="{% url 'transporter:delivery_cnotes' %}" class="nav-item">
                         <i class="fas fa-shipping-fast"></i><span class="nav-label">Single Delivery</span>
+                    </a>
+                    <a href="{% url 'transporter:ddm' %}" class="nav-item">
+                        <i class="fas fa-file-alt"></i><span class="nav-label">DDM</span>
                     </a>
                 </div>
             </div>
 
-            <div class="nav-group">
+            <a href="{% url 'transporter:received_cnote' %}" class="nav-item">
+                <i class="fas fa-check-circle"></i>
+                <span class="nav-label">Completed</span>
+            </a>
+
+            <div class="nav-section-title">REPORTS &amp; MASTERS</div>
+
+            <div class="nav-group open">
                 <div class="nav-item" onclick="toggleGroup(this)">
                     <i class="fas fa-chart-bar"></i>
                     <span class="nav-label">Reports</span>
                 </div>
                 <div class="nav-sub">
                     <a href="{% url 'transporter:all_booking_register' %}" class="nav-item">
-                        <i class="fas fa-book"></i><span class="nav-label">Booking Register</span>
+                        <span class="nav-label">Booking Register</span>
                     </a>
                     <a href="{% url 'transporter:loading_sheet_report' %}" class="nav-item active">
-                        <i class="fas fa-file-alt"></i><span class="nav-label">Loading Sheet Report</span>
+                        <span class="nav-label">Loading Sheet Report</span>
                     </a>
                 </div>
             </div>
 
             <div class="nav-group">
                 <div class="nav-item" onclick="toggleGroup(this)">
-                    <i class="fas fa-tools"></i>
-                    <span class="nav-label">Manage</span>
+                    <i class="fas fa-cog"></i>
+                    <span class="nav-label">Master</span>
                 </div>
                 <div class="nav-sub">
                     <a href="{% url 'transporter:manage_location' %}" class="nav-item">
-                        <i class="fas fa-map-marker-alt"></i><span class="nav-label">Manage Location</span>
+                        <span class="nav-label">Manage Location</span>
                     </a>
                     <a href="{% url 'transporter:party_master' %}" class="nav-item">
-                        <i class="fas fa-users"></i><span class="nav-label">Party Master</span>
+                        <span class="nav-label">Party Master</span>
                     </a>
                     <a href="{% url 'transporter:rate_card_master' %}" class="nav-item">
-                        <i class="fas fa-tags"></i><span class="nav-label">Rate Card</span>
+                        <span class="nav-label">Rate Card</span>
                     </a>
                     <a href="{% url 'transporter:billing' %}" class="nav-item">
-                        <i class="fas fa-file-invoice-dollar"></i><span class="nav-label">Billing</span>
+                        <span class="nav-label">Billing</span>
                     </a>
                     <a href="{% url 'transporter:bill_manage' %}" class="nav-item">
-                        <i class="fas fa-receipt"></i><span class="nav-label">Bill Management</span>
+                        <span class="nav-label">Bill Management</span>
                     </a>
-                </div>
-            </div>
-
-            <div class="nav-group">
-                <div class="nav-item" onclick="toggleGroup(this)">
-                    <i class="fas fa-user-cog"></i>
-                    <span class="nav-label">Users</span>
-                </div>
-                <div class="nav-sub">
                     <a href="{% url 'transporter:add_user' %}" class="nav-item">
-                        <i class="fas fa-user-plus"></i><span class="nav-label">Add User</span>
+                        <span class="nav-label">Add User</span>
                     </a>
                     <a href="{% url 'transporter:view_users' %}" class="nav-item">
-                        <i class="fas fa-users"></i><span class="nav-label">View Users</span>
+                        <span class="nav-label">View Users</span>
+                    </a>
+                    <a href="{% url 'transporter:ddm_settlement' %}" class="nav-item">
+                        <span class="nav-label">DDM Settlements</span>
                     </a>
                 </div>
             </div>
 
-            <div class="nav-section-title">DDM</div>
-            <a href="{% url 'transporter:ddm_settlement' %}" class="nav-item">
-                <i class="fas fa-handshake"></i>
-                <span class="nav-label">DDM Settlements</span>
-            </a>
         </nav>
     </aside>
 
