@@ -3635,7 +3635,7 @@ def loading_sheet_report(request):
     transporter_name = "-"
     if hasattr(request.user, "transporter"):
         transporter = request.user.transporter
-        transporter_name = transporter.company_name  # ya transporter.user.username
+        transporter_name = transporter.user.username.title()  # ya transporter.user.username
 
     context = {
         'dealers': dealers,
