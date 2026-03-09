@@ -1,644 +1,785 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transporter Dashboard - Receive Dispatched LR</title>
-    <!-- Add Axios CDN before your custom scripts -->
+    <title>Pending Requests — Good Way Express</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/axios@1.6.2/dist/axios.min.js"></script>
     <style>
         :root {
-            --primary-color: #3498db;
-            --secondary-color: #2ecc71;
-            --accent-color: #e74c3c;
-            --background-color: #ecf0f1;
-            --text-color: #34495e;
-            --border-color: #bdc3c7;
+            --primary:       #1a252f;
+            --primary-light: #3498db;
+            --secondary:     #e74c3c;
+            --success:       #27ae60;
+            --warning:       #f39c12;
+            --info:          #8e44ad;
+            --light:         #f8f9fa;
+            --dark:          #2c3e50;
+            --border:        #e0e6ed;
+            --sidebar:       #1a252f;
+            --text:          #34495e;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',system-ui,sans-serif; }
+
+        body { background:#f5f7fa; color:var(--text); display:flex; min-height:100vh; }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width:240px; background:var(--sidebar); color:white;
+            height:100vh; position:fixed; left:0; top:0;
+            display:flex; flex-direction:column; z-index:1000;
+            box-shadow:2px 0 15px rgba(0,0,0,.15); transition:width .3s;
+            overflow-y:auto;
+        }
+        .logo-section {
+            padding:18px 16px; border-bottom:1px solid rgba(255,255,255,.08);
+        }
+        .logo { display:flex; align-items:center; gap:10px; }
+        .logo-icon {
+            width:36px; height:36px; background:var(--primary-light);
+            border-radius:8px; display:flex; align-items:center; justify-content:center;
+            font-size:16px; flex-shrink:0;
+        }
+        .logo-text { font-size:14px; font-weight:700; line-height:1.2; }
+        .logo-sub  { font-size:10px; color:rgba(255,255,255,.45); }
+
+        .nav-section { padding:12px 0; flex:1; }
+        .nav-title {
+            padding:6px 16px 4px; font-size:10px; color:rgba(255,255,255,.4);
+            text-transform:uppercase; letter-spacing:1px; font-weight:600;
+        }
+        .nav-menu { list-style:none; }
+        .nav-item { margin:1px 0; }
+        .nav-link {
+            display:flex; align-items:center; gap:10px; padding:.55rem 1rem;
+            color:rgba(255,255,255,.65); text-decoration:none; font-size:.82rem;
+            transition:all .2s; border-radius:0; position:relative;
+        }
+        .nav-link:hover { color:white; background:rgba(255,255,255,.07); }
+        .nav-link.active {
+            color:white; background:rgba(52,152,219,.2);
+            border-left:3px solid var(--primary-light); padding-left:calc(1rem - 3px);
+        }
+        .nav-link i { width:16px; text-align:center; font-size:.85rem; }
+        .sub-menu { list-style:none; background:rgba(0,0,0,.15); }
+        .sub-menu a {
+            display:block; padding:.4rem 1rem .4rem 2.6rem; font-size:.78rem;
+            color:rgba(255,255,255,.55); text-decoration:none; transition:color .2s;
+        }
+        .sub-menu a:hover { color:white; }
+        .sidebar-footer {
+            padding:12px 16px; border-top:1px solid rgba(255,255,255,.08);
+        }
+        .logout-btn {
+            width:100%; background:none; border:1px solid rgba(255,255,255,.2);
+            color:rgba(255,255,255,.6); padding:.45rem; border-radius:6px;
+            cursor:pointer; font-size:.78rem; transition:all .2s;
+        }
+        .logout-btn:hover { background:rgba(231,76,60,.2); color:#e74c3c; border-color:#e74c3c; }
+
+        /* ── MAIN ── */
+        .main-content { margin-left:240px; flex:1; display:flex; flex-direction:column; min-height:100vh; }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            background:white; padding:0 24px; height:58px;
+            display:flex; align-items:center; justify-content:space-between;
+            box-shadow:0 1px 8px rgba(0,0,0,.06); position:sticky; top:0; z-index:100;
+        }
+        .topbar-left { display:flex; align-items:center; gap:14px; }
+        .menu-toggle {
+            background:none; border:none; font-size:18px; color:var(--dark);
+            cursor:pointer; display:none; padding:4px;
+        }
+        .page-title { font-size:1.1rem; font-weight:700; color:var(--dark); display:flex; align-items:center; gap:8px; }
+        .page-title i { color:var(--primary-light); }
+        .topbar-right { display:flex; align-items:center; gap:16px; }
+        .user-avatar {
+            width:34px; height:34px; background:linear-gradient(135deg,#3498db,#2980b9);
+            border-radius:50%; display:flex; align-items:center; justify-content:center;
+            color:white; font-weight:700; font-size:.9rem;
+        }
+        .user-info .uname { font-size:.82rem; font-weight:600; color:var(--dark); }
+        .user-info .urole { font-size:.72rem; color:#95a5a6; }
+
+        /* ── PAGE BODY ── */
+        .page-body { padding:20px 24px; flex:1; }
+
+        /* ── ALERT BANNER ── */
+        .alert-banner {
+            display:flex; align-items:center; gap:10px;
+            background:linear-gradient(135deg,#fff3cd,#ffeaa7);
+            border:1px solid #f39c12; border-left:4px solid #f39c12;
+            border-radius:8px; padding:12px 16px; margin-bottom:18px;
+            font-size:.85rem; color:#856404; font-weight:500;
+        }
+        .alert-banner i { color:#f39c12; font-size:1rem; }
+
+        /* ── STATS ROW ── */
+        .stats-row {
+            display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:18px;
+        }
+        .stat-box {
+            background:white; border-radius:10px; padding:14px 16px;
+            border:1px solid var(--border); text-align:center;
+            box-shadow:0 1px 4px rgba(0,0,0,.04); transition:transform .2s;
+        }
+        .stat-box:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.08); }
+        .stat-val { font-size:1.5rem; font-weight:700; color:var(--dark); line-height:1; }
+        .stat-lbl { font-size:.7rem; color:#95a5a6; margin-top:4px; text-transform:uppercase; letter-spacing:.5px; }
+        .stat-box.s-paid  .stat-val { color:#27ae60; }
+        .stat-box.s-topay .stat-val { color:#e74c3c; }
+        .stat-box.s-tbb   .stat-val { color:#8e44ad; }
+        .stat-box.s-lr    .stat-val { color:#3498db; }
+        .stat-box.s-qty   .stat-val { color:#f39c12; }
+        .stat-box.s-wt    .stat-val { color:#1abc9c; }
+
+        /* ── CARD ── */
+        .card {
+            background:white; border-radius:12px; border:1px solid var(--border);
+            box-shadow:0 1px 6px rgba(0,0,0,.05); margin-bottom:18px; overflow:hidden;
+        }
+        .card-header {
+            padding:14px 20px; border-bottom:1px solid var(--border);
+            display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
+        }
+        .card-title { font-size:.95rem; font-weight:700; color:var(--dark); display:flex; align-items:center; gap:8px; }
+        .card-title i { color:var(--primary-light); }
+        .card-body { padding:18px 20px; }
+
+        /* ── SEARCH FORM ── */
+        .search-row {
+            display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;
+        }
+        .fg { display:flex; flex-direction:column; gap:5px; }
+        .fg label { font-size:.78rem; font-weight:600; color:var(--dark); }
+        .fg select, .fg input {
+            padding:.5rem .75rem; border:1.5px solid var(--border); border-radius:7px;
+            font-size:.85rem; color:var(--dark); background:white; transition:border-color .2s;
+            min-width:160px;
+        }
+        .fg select:focus, .fg input:focus { outline:none; border-color:var(--primary-light); }
+        .date-pair { display:flex; gap:8px; }
+        .date-pair input { min-width:130px; }
+        .btn-find {
+            background:linear-gradient(135deg,#3498db,#2980b9);
+            color:white; border:none; padding:.55rem 1.2rem; border-radius:7px;
+            font-size:.85rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;
+            transition:all .2s; white-space:nowrap;
+        }
+        .btn-find:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(52,152,219,.4); }
+        .btn-clear {
+            background:var(--light); color:var(--dark); border:1.5px solid var(--border);
+            padding:.55rem 1rem; border-radius:7px; font-size:.85rem; cursor:pointer; transition:all .2s;
+        }
+        .btn-clear:hover { border-color:#aaa; }
+
+        /* ── BADGES ── */
+        .badge {
+            display:inline-flex; align-items:center; gap:4px; padding:3px 10px;
+            border-radius:20px; font-size:.72rem; font-weight:600;
+        }
+        .badge-pending  { background:#fef3cd; color:#856404; }
+        .badge-done     { background:#d1fae5; color:#065f46; }
+        .badge-partial  { background:#dbeafe; color:#1e40af; }
+        .badge-info     { background:#ede9fe; color:#5b21b6; }
+
+        /* ── TABLE ── */
+        .tbl-wrap { overflow-x:auto; }
+        .data-table { width:100%; border-collapse:collapse; font-size:.83rem; }
+        .data-table thead th {
+            background:#f8fafc; padding:10px 12px; text-align:left;
+            font-size:.73rem; text-transform:uppercase; letter-spacing:.5px;
+            color:#64748b; border-bottom:2px solid var(--border); white-space:nowrap;
+        }
+        .data-table tbody td {
+            padding:10px 12px; border-bottom:1px solid #f1f5f9;
+            color:var(--dark); vertical-align:middle;
+        }
+        .data-table tbody tr:hover { background:#f8fafc; }
+        .data-table tbody tr:last-child td { border-bottom:none; }
+        .ls-no {
+            font-weight:700; color:var(--primary-light); font-family:monospace; font-size:.85rem;
+        }
+        .dealer-name { font-weight:600; }
+        .num-badge {
+            display:inline-block; min-width:26px; text-align:center;
+            padding:2px 8px; border-radius:12px; font-weight:700; font-size:.8rem;
+        }
+        .num-total  { background:#e0f2fe; color:#0369a1; }
+        .num-pending{ background:#fef3cd; color:#92400e; }
+        .num-zero   { background:#f0fdf4; color:#166534; }
+
+        /* ── ACTION BUTTONS ── */
+        .act-receive {
+            background:linear-gradient(135deg,#27ae60,#229954);
+            color:white; border:none; padding:.38rem .9rem; border-radius:6px;
+            font-size:.78rem; font-weight:600; cursor:pointer;
+            display:inline-flex; align-items:center; gap:5px; transition:all .2s;
+        }
+        .act-receive:hover { transform:translateY(-1px); box-shadow:0 3px 8px rgba(39,174,96,.4); }
+        .act-receive:disabled { background:#ccc; cursor:not-allowed; transform:none; box-shadow:none; }
+        .act-print {
+            background:white; color:var(--dark); border:1.5px solid var(--border);
+            padding:.38rem .9rem; border-radius:6px; font-size:.78rem; font-weight:600;
+            cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all .2s;
+        }
+        .act-print:hover { border-color:#3498db; color:#3498db; background:#f0f8ff; }
+        .action-wrap { display:flex; gap:6px; }
+
+        /* ── EMPTY STATE ── */
+        .empty-state {
+            text-align:center; padding:48px 20px; color:#94a3b8;
+        }
+        .empty-state i { font-size:3rem; margin-bottom:12px; display:block; }
+        .empty-state p { font-size:.9rem; }
+
+        /* ── LOADING ── */
+        .loading-row td {
+            text-align:center; padding:40px;
+            color:#94a3b8; font-size:.85rem;
+        }
+        .spin { animation:spin 1s linear infinite; display:inline-block; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+
+        /* ── PAGINATION ── */
+        .pagination { display:flex; justify-content:center; align-items:center; gap:6px; padding:14px 0 4px; }
+        .pg-btn {
+            min-width:32px; height:32px; border:1.5px solid var(--border); border-radius:7px;
+            background:white; color:var(--dark); font-size:.82rem; cursor:pointer; transition:all .2s;
+            display:flex; align-items:center; justify-content:center; font-weight:600;
+        }
+        .pg-btn:hover { border-color:var(--primary-light); color:var(--primary-light); }
+        .pg-btn.active { background:var(--primary-light); color:white; border-color:var(--primary-light); }
+        .pg-btn:disabled { opacity:.4; cursor:not-allowed; }
+        .pg-info { font-size:.78rem; color:#94a3b8; padding:0 8px; }
+
+        /* ── TOAST ── */
+        #toastBox {
+            position:fixed; bottom:20px; right:20px; z-index:9999;
+            display:flex; flex-direction:column; gap:8px;
+        }
+        .toast {
+            display:flex; align-items:center; gap:10px;
+            padding:12px 18px; border-radius:8px; color:white;
+            font-size:.84rem; font-weight:500; min-width:260px;
+            box-shadow:0 4px 16px rgba(0,0,0,.15);
+            animation:slideIn .25s ease;
+        }
+        @keyframes slideIn { from { transform:translateX(100px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+        .toast-success { background:#27ae60; }
+        .toast-error   { background:#e74c3c; }
+        .toast-info    { background:#3498db; }
+        .toast-warning { background:#f39c12; }
+
+        /* ── ERROR BOX ── */
+        .err-box {
+            display:none; background:#fef2f2; border:1px solid #fecaca;
+            border-left:4px solid #e74c3c; border-radius:8px;
+            padding:12px 16px; margin-bottom:14px; color:#991b1b; font-size:.84rem;
+            display:flex; align-items:center; gap:8px;
         }
 
-        body {
-            background-color: var(--background-color);
-            color: var(--text-color);
-            line-height: 1.6;
+        /* ── RESPONSIVE ── */
+        @media (max-width:900px) {
+            .sidebar { width:0; overflow:hidden; }
+            .sidebar.open { width:240px; }
+            .main-content { margin-left:0; }
+            .menu-toggle { display:block !important; }
+            .stats-row { grid-template-columns:repeat(3,1fr); }
         }
-
-        .navbar {
-            background-color: var(--primary-color);
-            padding: 1rem;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .navbar-links {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .navbar a {
-            color: white;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            transition: background-color 0.3s ease;
-        }
-
-        .navbar a:hover {
-            background-color: rgba(255,255,255,0.1);
-        }
-
-        .function-keys {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .function-key {
-            background-color: rgba(255,255,255,0.2);
-            color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.8rem;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        .panel {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
-            overflow: hidden;
-        }
-
-        .panel-header {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 1rem;
-            font-weight: bold;
-            font-size: 1.2rem;
-        }
-
-        .warning-message {
-            background-color: var(--accent-color);
-            color: white;
-            padding: 0.75rem;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .search-form {
-            padding: 1.5rem;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            align-items: end;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .form-group label {
-            font-size: 0.9rem;
-            color: var(--text-color);
-            font-weight: 600;
-        }
-
-        select, input {
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
-        }
-
-        select:focus, input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-
-        .btn {
-            background-color: var(--secondary-color);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: bold;
-            transition: background-color 0.3s ease, transform 0.1s ease;
-        }
-
-        .btn:hover {
-            background-color: #27ae60;
-        }
-
-        .btn:active {
-            transform: translateY(1px);
-        }
-
-        .summary-table, .data-grid {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .summary-table th, .summary-table td,
-        .data-grid th, .data-grid td {
-            padding: 0.75rem;
-            text-align: left;
-            border: 1px solid var(--border-color);
-        }
-
-        .summary-table th, .data-grid th {
-            background-color: #f8f9fa;
-            font-weight: 600;
-        }
-
-        .data-grid tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-
-        .action-btn, .print-btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-            margin: 0.25rem;
-        }
-
-        .action-btn {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .action-btn:hover {
-            background-color: #2980b9;
-            transform: translateY(-2px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .print-btn {
-            background-color: #95a5a6;
-            color: white;
-        }
-
-        .print-btn:hover {
-            background-color: #7f8c8d;
-            transform: translateY(-2px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .date-range {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .date-range input[type="date"] {
-            flex: 1;
-            min-width: 0;
-        }
-
-        @media (max-width: 768px) {
-            .navbar {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .navbar-links, .function-keys {
-                margin-top: 1rem;
-            }
-
-            .search-form {
-                grid-template-columns: 1fr;
-            }
-
-            .date-range {
-                flex-direction: column;
-            }
-        }
-        
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 1rem;
-            font-style: italic;
-            color: #666;
-        }
-
-        .error-message {
-            display: none;
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            border: 1px solid #f5c6cb;
-            border-radius: 4px;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            margin-top: 1rem;
-        }
-
-        .pagination button {
-            margin: 0 0.25rem;
+        @media (max-width:560px) {
+            .stats-row { grid-template-columns:repeat(2,1fr); }
         }
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="navbar-links">
-            
-            <h1> Good Way Express </h1>
-        </div>
-        <div class="function-keys">
-            
-        </div>
-    </nav>
 
-    <div class="container">
-        <div class="panel">
-            <div class="panel-header">Receive Dispatched LR</div>
-            <div class="warning-message">Only top 200 Loading Sheet will be allowed to receive!</div>
-            
-            <form class="search-form" id="searchForm">
-                <div class="form-group">
-                    <label for="searchBy">Search By</label>
-                    <select id="searchBy">
-                        <option value="all">All</option>
-                        <option value="dealer">Dealer</option>
-                        <option value="date">Date</option>
-                        <option value="lsNumber">LS Number</option>
-                    </select>
-                </div>
-                <div class="form-group" id="secondFieldGroup">
-                    <!-- This will be populated by JavaScript -->
-                </div>
-                <div class="form-group">
-                    <button type="button" button id="findRecordButton" class="btn" onclick="findRecords()">Find Records</button>
-                </div>
-            </form>
-        </div>
-
-        <div class="panel">
-            <div class="panel-header">Receivables Summary</div>
-            <div class="loading" id="loadingMessage">Loading data...</div>
-            <div class="error-message" id="errorMessage"></div>
-            <div style="overflow-x: auto;">
-                <table class="data-grid">
-                    <thead>
-                        <tr>
-                            <th>Sr No.</th>
-                            <th>LS No.</th>
-                            <th>LS Date/Time</th>
-                            <th>Dealer</th>
-                            <th>Total LRs</th>
-                            <th>Pending LRs</th>
-                            <th>Total Art.</th>
-                            <th>Pending Art.</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="receivablesData">
-                        <!-- Data will be populated by JavaScript -->
-                    </tbody>
-                </table>
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<div class="sidebar" id="sidebar">
+    <div class="logo-section">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-shipping-fast"></i></div>
+            <div>
+                <div class="logo-text">Good Way Express</div>
+                <div class="logo-sub">Transport Panel</div>
             </div>
-            <div class="pagination" id="pagination"></div>
-        </div>
-
-        <div class="panel">
-            <div class="panel-header">Pending Receive Summary</div>
-            <table class="summary-table">
-                <thead>
-                    <tr>
-                        <th>LR Count</th>
-                        <th>Total Quantity</th>
-                        <th>Total Receivable Weight</th>
-                        <th>Paid</th>
-                        <th>To Pay</th>
-                        <th>TBB</th>
-                    </tr>
-                </thead>
-                <tbody id="summaryData">
-                    <!-- Summary data will be populated by JavaScript -->
-                </tbody>
-            </table>
         </div>
     </div>
-    
-    <script>
-        // Check if Axios is loaded
-        if (typeof axios === 'undefined') {
-            console.error('Axios is not loaded. Please check the CDN link.');
-            document.getElementById('errorMessage').textContent = 'Error: Required libraries not loaded. Please refresh the page.';
-            document.getElementById('errorMessage').style.display = 'block';
-        }
-    
-        // Get CSRF token from cookie
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-    
-        // Configure Axios
-        axios.defaults.headers.common['X-CSRFToken'] = getCookie('csrftoken');
-        axios.defaults.headers.common['Content-Type'] = 'application/json';
-    
-        // Global variables
-        let allData = [];
-        let currentPage = 1;
-        const itemsPerPage = 10;
-    
-        // Function to fetch data from the backend
-        async function fetchData(params = {}) {
-            const loadingMessage = document.getElementById('loadingMessage');
-            const errorMessage = document.getElementById('errorMessage');
-            const receivablesData = document.getElementById('receivablesData');
-    
-            try {
-                loadingMessage.style.display = 'block';
-                errorMessage.style.display = 'none';
-                receivablesData.innerHTML = ''; // Clear existing data
-    
-                const response = await axios.get('/transporter/api/receivables/', {
-                    params: params,
-                    timeout: 10000 // 10 second timeout
-                });
-    
-                if (response.status === 200 && response.data.status === 'success') {
-                    allData = response.data.receivables;
-                    updateSummary(response.data.summary);
-                    displayData();
-                } else {
-                    throw new Error(response.data.message || 'Failed to fetch data');
-                }
-            } catch (error) {
-                console.error('Error fetching data:', error);
-                let errorMessage = 'An error occurred while fetching data. ';
-                if (error.response) {
-                    errorMessage += error.response.data.message || error.response.statusText;
-                } else if (error.request) {
-                    errorMessage += 'No response received from server';
-                } else {
-                    errorMessage += error.message;
-                }
-                document.getElementById('errorMessage').textContent = errorMessage;
-                document.getElementById('errorMessage').style.display = 'block';
-                // Clear data on error
-                allData = [];
-                updateSummary({
-                    lrCount: 0,
-                    totalQuantity: 0,
-                    totalReceivableWeight: 0,
-                    paid: 0,
-                    toPay: 0,
-                    tbb: 0
-                });
-            } finally {
-                loadingMessage.style.display = 'none';
-            }
-        }
-    
-        // Function to update the summary table
-        function updateSummary(summaryData) {
-            const summaryBody = document.getElementById('summaryData');
-            if (!summaryData) {
-                summaryBody.innerHTML = '<tr><td colspan="6">No data available</td></tr>';
-                return;
-            }
-    
-            summaryBody.innerHTML = `
-                <tr>
-                    <td>${summaryData.lrCount || 0}</td>
-                    <td>${summaryData.totalQuantity || 0}</td>
-                    <td>${summaryData.totalReceivableWeight || 0}</td>
-                    <td>${summaryData.paid || 0}</td>
-                    <td>${summaryData.toPay || 0}</td>
-                    <td>${summaryData.tbb || 0}</td>
-                </tr>
-            `;
-        }
-    
-        function displayData() {
-            const tbody = document.getElementById('receivablesData');
-            if (!allData || allData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9">No data available</td></tr>';
-                return;
-            }
-        
-            // Filter out rows where pendingLRs is 0
-            const filteredData = allData.filter(row => row.pendingLRs > 0);
-        
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const pageData = filteredData.slice(startIndex, endIndex);
-        
-            tbody.innerHTML = pageData.map((row, index) => `
-                <tr>
-                    <td>${startIndex + index + 1}</td>
-                    <td>${row.lsNo || '-'}</td>
-                    <td>${row.lsDateTime || '-'}</td>
-                    <td>${row.dealer || '-'}</td>
-                    <td>${row.totalLRs || 0}</td>
-                    <td>${row.pendingLRs || 0}</td>
-                    <td>${row.totalArt || 0}</td>
-                    <td>${row.pendingArt || 0}</td>
-                    <td>
-                        <button class="action-btn" onclick="receiveShipment('${row.lsNo}')" ${row.pendingLRs === 0 ? 'disabled' : ''}>
-                            ${row.pendingLRs === 0 ? 'Received' : 'Receive'}
-                        </button>
-                        <button class="print-btn" onclick="printMF('${row.lsNo}')">Print</button>
-                    </td>
-                </tr>
-            `).join('');
-        
-            updatePagination(filteredData.length);
-        }
-    
-        // Function to update pagination
-        function updatePagination(totalItems) {
-            const totalPages = Math.ceil(totalItems / itemsPerPage);
-            const paginationElement = document.getElementById('pagination');
-            
-            let paginationHTML = '';
-            if (currentPage > 1) {
-                paginationHTML += `<button class="btn" onclick="changePage(${currentPage - 1})">Previous</button>`;
-            }
-            
-            // Show maximum 5 page numbers
-            let startPage = Math.max(1, currentPage - 2);
-            let endPage = Math.min(totalPages, startPage + 4);
-            
-            for (let i = startPage; i <= endPage; i++) {
-                paginationHTML += `
-                    <button class="btn ${i === currentPage ? 'btn-primary' : ''}" 
-                            onclick="changePage(${i})" 
-                            ${i === currentPage ? 'disabled' : ''}>
-                        ${i}
-                    </button>`;
-            }
-            
-            if (currentPage < totalPages) {
-                paginationHTML += `<button class="btn" onclick="changePage(${currentPage + 1})">Next</button>`;
-            }
-            
-            paginationElement.innerHTML = paginationHTML;
-        }
-    
-        // Function to change page
-        function changePage(page) {
-            currentPage = page;
-            displayData();
-        }
-    
-        // Function to receive shipment
-        function receiveShipment(lsNumber) {
-            // Encode the LS number as a query parameter
-            const queryString = new URLSearchParams({ lsNumber: lsNumber }).toString();
-            
-            // Redirect to RECEIVED_CNOTES.HTML with the LS number as a query parameter
-            window.location.href = `/transporter/receive/RECEIVED_CNOTES.HTML?${queryString}`;
-        }
-    
-        // Function to fetch dealers with loading sheets
-        async function fetchDealersWithLoadingSheets() {
-            try {
-                const response = await axios.get('/transporter/api/dealers-with-loadingsheets/');
-                if (response.data.status === 'success') {
-                    return response.data.dealers;
-                } else {
-                    throw new Error(response.data.message || 'Failed to fetch dealers');
-                }
-            } catch (error) {
-                console.error('Error fetching dealers:', error);
-                document.getElementById('errorMessage').textContent = 'Failed to fetch dealers. Please try again.';
-                document.getElementById('errorMessage').style.display = 'block';
-                return [];
-            }
-        }
-    
-        // Function to update search fields based on search type
-        async function updateSearchFields() {
-            const searchBy = document.getElementById('searchBy').value;
-            const secondFieldGroup = document.getElementById('secondFieldGroup');
-            
-            let fieldHTML = '';
-            switch(searchBy) {
-                case 'dealer':
-                    const dealers = await fetchDealersWithLoadingSheets();
-                    fieldHTML = `
-                        <label for="secondField">Select Dealer</label>
-                        <select id="secondField">
-                            <option value="">Select a dealer</option>
-                            ${dealers.map(dealer => `<option value="${dealer.dealer_id}">${dealer.name}</option>`).join('')}
+
+    <div class="nav-section">
+        <div class="nav-title">Main</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="{% url 'transporter:home' %}" class="nav-link">
+                    <i class="fas fa-home"></i><span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'transporter:receive' %}" class="nav-link active">
+                    <i class="fas fa-clock"></i><span>Pending Requests</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="toggleSub('sub-del',this);return false;">
+                    <i class="fas fa-clipboard-list"></i><span>Delivery Management</span>
+                    <i class="fas fa-chevron-right" id="arr-del" style="margin-left:auto;font-size:10px;transition:transform .2s;"></i>
+                </a>
+                <ul class="sub-menu" id="sub-del" style="display:none;">
+                    <li><a href="{% url 'transporter:delivery_cnotes' %}">Single Delivery</a></li>
+                    <li><a href="{% url 'transporter:ddm_settlement' %}">DDM Settlements</a></li>
+                </ul>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'transporter:received_cnote' %}" class="nav-link">
+                    <i class="fas fa-check-circle"></i><span>Completed</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="nav-title">Reports & Masters</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="toggleSub('sub-rep',this);return false;">
+                    <i class="fas fa-chart-bar"></i><span>Reports</span>
+                    <i class="fas fa-chevron-right" id="arr-rep" style="margin-left:auto;font-size:10px;transition:transform .2s;"></i>
+                </a>
+                <ul class="sub-menu" id="sub-rep" style="display:none;">
+                    <li><a href="{% url 'transporter:all_booking_register' %}">Booking Register</a></li>
+                    <li><a href="{% url 'transporter:loading_sheet_report' %}">Loading Sheet Report</a></li>
+                </ul>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="toggleSub('sub-mas',this);return false;">
+                    <i class="fas fa-cog"></i><span>Master</span>
+                    <i class="fas fa-chevron-right" id="arr-mas" style="margin-left:auto;font-size:10px;transition:transform .2s;"></i>
+                </a>
+                <ul class="sub-menu" id="sub-mas" style="display:none;">
+                    <li><a href="{% url 'transporter:rate_card_master' %}">Rate Card Master</a></li>
+                    <li><a href="{% url 'transporter:billing' %}">Billing Dealer</a></li>
+                    <li><a href="{% url 'transporter:bill_manage' %}">Bill Management</a></li>
+                    <li><a href="{% url 'transporter:manage_location' %}">Manage Location</a></li>
+                    <li><a href="{% url 'transporter:party_master' %}">Party Master</a></li>
+                    <li><a href="{% url 'transporter:add_user' %}">Add User</a></li>
+                    <li><a href="{% url 'transporter:view_users' %}">View Users</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div class="sidebar-footer">
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<div class="main-content">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="page-title">
+                <i class="fas fa-clock"></i> Pending Requests
+            </div>
+        </div>
+        <div class="topbar-right">
+            <div style="text-align:right;">
+                <div class="user-info">
+                    <div class="uname">{{ request.user.username|title }}</div>
+                    <div class="urole">Transporter</div>
+                </div>
+            </div>
+            <div class="user-avatar">{{ request.user.username|first|upper }}</div>
+        </div>
+    </div>
+
+    <!-- PAGE BODY -->
+    <div class="page-body">
+
+        <!-- ALERT BANNER -->
+        <div class="alert-banner">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Only <strong>top 200 Loading Sheets</strong> will be allowed to receive at a time.</span>
+        </div>
+
+        <!-- STATS CARDS -->
+        <div class="stats-row">
+            <div class="stat-box s-lr">
+                <div class="stat-val" id="st-lr">—</div>
+                <div class="stat-lbl">LR Count</div>
+            </div>
+            <div class="stat-box s-qty">
+                <div class="stat-val" id="st-qty">—</div>
+                <div class="stat-lbl">Total Qty</div>
+            </div>
+            <div class="stat-box s-wt">
+                <div class="stat-val" id="st-wt">—</div>
+                <div class="stat-lbl">Total Weight</div>
+            </div>
+            <div class="stat-box s-paid">
+                <div class="stat-val" id="st-paid">—</div>
+                <div class="stat-lbl">Paid</div>
+            </div>
+            <div class="stat-box s-topay">
+                <div class="stat-val" id="st-topay">—</div>
+                <div class="stat-lbl">To Pay</div>
+            </div>
+            <div class="stat-box s-tbb">
+                <div class="stat-val" id="st-tbb">—</div>
+                <div class="stat-lbl">TBB</div>
+            </div>
+        </div>
+
+        <!-- SEARCH CARD -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-search"></i> Search Loading Sheets</div>
+            </div>
+            <div class="card-body">
+                <div class="search-row" id="searchRow">
+                    <div class="fg">
+                        <label>Search By</label>
+                        <select id="searchBy" onchange="updateSearchFields()">
+                            <option value="all">All Pending</option>
+                            <option value="dealer">By Dealer</option>
+                            <option value="date">By Date Range</option>
+                            <option value="lsNumber">By LS Number</option>
                         </select>
-                    `;
-                    break;
-                case 'date':
-                    fieldHTML = `
-                        <label>Select Date Range</label>
-                        <div class="date-range">
-                            <input type="date" id="fromDate" placeholder="From Date">
-                            <input type="date" id="toDate" placeholder="To Date">
+                    </div>
+                    <div id="dynamicField"></div>
+                    <div class="fg" style="margin-left:auto;">
+                        <label>&nbsp;</label>
+                        <div style="display:flex;gap:8px;">
+                            <button class="btn-clear" onclick="clearSearch()">
+                                <i class="fas fa-undo"></i> Reset
+                            </button>
+                            <button class="btn-find" onclick="findRecords()">
+                                <i class="fas fa-search"></i> Find Records
+                            </button>
                         </div>
-                    `;
-                    break;
-                case 'lsNumber':
-                    fieldHTML = `
-                        <label for="secondField">LS Number</label>
-                        <input type="text" id="secondField" placeholder="Enter LS number">
-                    `;
-                    break;
-                default:
-                    fieldHTML = '';
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLE CARD -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fas fa-list-alt"></i> Receivables Summary
+                    <span id="countBadge" class="badge badge-info" style="display:none;"></span>
+                </div>
+                <div style="font-size:.75rem; color:#94a3b8;" id="lastRefresh"></div>
+            </div>
+
+            <div class="card-body" style="padding:0;">
+                <div class="err-box" id="errBox">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="errMsg"></span>
+                </div>
+
+                <div class="tbl-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>LS No.</th>
+                                <th>LS Date / Time</th>
+                                <th>Dealer</th>
+                                <th>Total LRs</th>
+                                <th>Pending LRs</th>
+                                <th>Total Art.</th>
+                                <th>Pending Art.</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mainTableBody">
+                            <tr class="loading-row">
+                                <td colspan="10">
+                                    <i class="fas fa-circle-notch spin" style="font-size:1.2rem;color:#3498db;"></i>
+                                    <span style="margin-left:10px;">Loading data...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+
+    </div><!-- /page-body -->
+</div><!-- /main-content -->
+
+<div id="toastBox"></div>
+
+<script>
+    // ── CSRF ──
+    axios.defaults.headers.common['X-CSRFToken'] = '{{ csrf_token }}';
+    axios.defaults.headers.common['Content-Type'] = 'application/json';
+
+    // ── STATE ──
+    let allData     = [];
+    let currentPage = 1;
+    const PER_PAGE  = 15;
+
+    // ── SIDEBAR TOGGLE ──
+    function toggleSub(id, el) {
+        const sub = document.getElementById(id);
+        const arrId = 'arr-' + id.replace('sub-', '');
+        const arr = document.getElementById(arrId);
+        const open = sub.style.display !== 'none';
+        sub.style.display = open ? 'none' : 'block';
+        if (arr) arr.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)';
+    }
+
+    // ── INIT ──
+    document.addEventListener('DOMContentLoaded', () => {
+        updateSearchFields();
+        fetchData();
+    });
+
+    // ── FETCH DATA ──
+    async function fetchData(params = {}) {
+        const tbody = document.getElementById('mainTableBody');
+        tbody.innerHTML = `<tr class="loading-row"><td colspan="10">
+            <i class="fas fa-circle-notch spin" style="font-size:1.2rem;color:#3498db;"></i>
+            <span style="margin-left:10px;">Fetching records...</span></td></tr>`;
+        hideError();
+
+        try {
+            const res = await axios.get('/transporter/api/receivables/', { params, timeout: 15000 });
+            if (res.data.status === 'success') {
+                allData = res.data.receivables || [];
+                updateStats(res.data.summary || {});
+                currentPage = 1;
+                renderTable();
+                document.getElementById('lastRefresh').textContent =
+                    'Last updated: ' + new Date().toLocaleTimeString('en-IN');
+                const pending = allData.filter(r => r.pendingLRs > 0).length;
+                const badge = document.getElementById('countBadge');
+                badge.textContent = pending + ' pending';
+                badge.style.display = pending > 0 ? 'inline-flex' : 'none';
+            } else {
+                throw new Error(res.data.message || 'Server returned error');
             }
-            
-            secondFieldGroup.innerHTML = fieldHTML;
+        } catch (err) {
+            const msg = err.response?.data?.message || err.message || 'Network error';
+            showError(msg);
+            allData = [];
+            renderTable();
+            updateStats({});
         }
-    
-        // Function to handle search
-        function findRecords() {
-            const searchBy = document.getElementById('searchBy').value;
-            const params = { searchBy: searchBy };
-            
-            if (searchBy !== 'all') {
-                if (searchBy === 'date') {
-                    const fromDate = document.getElementById('fromDate').value;
-                    const toDate = document.getElementById('toDate').value;
-                    if (fromDate && toDate) {
-                        params.fromDate = fromDate;
-                        params.toDate = toDate;
-                    } else {
-                        alert('Please select both From and To dates');
-                        return;
-                    }
-                } else if (searchBy === 'dealer') {
-                    const dealerSelect = document.getElementById('secondField');
-                    if (dealerSelect && dealerSelect.value) {
-                        params.dealerId = dealerSelect.value;
-                    } else {
-                        alert('Please select a dealer');
-                        return;
-                    }
-                } else if (searchBy === 'lsNumber') {
-                    const lsNumberInput = document.getElementById('secondField');
-                    if (lsNumberInput && lsNumberInput.value) {
-                        params.lsNumber = lsNumberInput.value;
-                    } else {
-                        alert('Please enter an LS number');
-                        return;
-                    }
+    }
+
+    // ── STATS ──
+    function updateStats(s) {
+        document.getElementById('st-lr').textContent    = s.lrCount            ?? '—';
+        document.getElementById('st-qty').textContent   = s.totalQuantity       ?? '—';
+        document.getElementById('st-wt').textContent    = s.totalReceivableWeight ?? '—';
+        document.getElementById('st-paid').textContent  = s.paid                ?? '—';
+        document.getElementById('st-topay').textContent = s.toPay               ?? '—';
+        document.getElementById('st-tbb').textContent   = s.tbb                 ?? '—';
+    }
+
+    // ── RENDER TABLE ──
+    function renderTable() {
+        const tbody = document.getElementById('mainTableBody');
+        const filtered = allData.filter(r => r.pendingLRs > 0);
+
+        if (!filtered.length) {
+            tbody.innerHTML = `<tr><td colspan="10">
+                <div class="empty-state">
+                    <i class="fas fa-check-circle" style="color:#27ae60;"></i>
+                    <p>Koi pending loading sheet nahi hai — sab receive ho gaye! 🎉</p>
+                </div></td></tr>`;
+            document.getElementById('pagination').innerHTML = '';
+            return;
+        }
+
+        const start   = (currentPage - 1) * PER_PAGE;
+        const pageData = filtered.slice(start, start + PER_PAGE);
+
+        tbody.innerHTML = pageData.map((row, i) => {
+            const isPending = row.pendingLRs > 0;
+            const isPartial = row.pendingLRs < row.totalLRs && row.pendingLRs > 0;
+            const statusBadge = isPartial
+                ? `<span class="badge badge-partial"><i class="fas fa-hourglass-half"></i> Partial</span>`
+                : `<span class="badge badge-pending"><i class="fas fa-clock"></i> Pending</span>`;
+
+            return `<tr>
+                <td style="color:#94a3b8;font-weight:600;">${start + i + 1}</td>
+                <td><span class="ls-no">${row.lsNo || '—'}</span></td>
+                <td style="font-size:.8rem;color:#64748b;">${formatDateTime(row.lsDateTime)}</td>
+                <td><span class="dealer-name">${row.dealer || '—'}</span></td>
+                <td><span class="num-badge num-total">${row.totalLRs || 0}</span></td>
+                <td><span class="num-badge ${isPending ? 'num-pending' : 'num-zero'}">${row.pendingLRs || 0}</span></td>
+                <td><span class="num-badge num-total">${row.totalArt || 0}</span></td>
+                <td><span class="num-badge ${row.pendingArt > 0 ? 'num-pending' : 'num-zero'}">${row.pendingArt || 0}</span></td>
+                <td>${statusBadge}</td>
+                <td>
+                    <div class="action-wrap">
+                        <button class="act-receive" onclick="receiveShipment('${row.lsNo}')" ${!isPending ? 'disabled' : ''}>
+                            <i class="fas fa-download"></i> Receive
+                        </button>
+                        <button class="act-print" onclick="printMF('${row.lsNo}')">
+                            <i class="fas fa-print"></i> Print
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+
+        renderPagination(filtered.length);
+    }
+
+    // ── PAGINATION ──
+    function renderPagination(total) {
+        const pages = Math.ceil(total / PER_PAGE);
+        if (pages <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
+
+        const start = Math.max(1, currentPage - 2);
+        const end   = Math.min(pages, start + 4);
+        let html = '';
+
+        html += `<button class="pg-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>
+                    <i class="fas fa-chevron-left"></i></button>`;
+
+        for (let p = start; p <= end; p++) {
+            html += `<button class="pg-btn ${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+        }
+
+        html += `<button class="pg-btn" onclick="goPage(${currentPage+1})" ${currentPage===pages?'disabled':''}>
+                    <i class="fas fa-chevron-right"></i></button>`;
+        html += `<span class="pg-info">Page ${currentPage} / ${pages} &nbsp;·&nbsp; ${total} records</span>`;
+
+        document.getElementById('pagination').innerHTML = html;
+    }
+
+    function goPage(p) { currentPage = p; renderTable(); window.scrollTo({top:0,behavior:'smooth'}); }
+
+    // ── SEARCH FIELDS ──
+    async function updateSearchFields() {
+        const val = document.getElementById('searchBy').value;
+        const div = document.getElementById('dynamicField');
+
+        if (val === 'all') { div.innerHTML = ''; return; }
+
+        if (val === 'dealer') {
+            div.innerHTML = `<div class="fg"><label>Select Dealer</label>
+                <select id="dealerField"><option value="">Loading...</option></select></div>`;
+            try {
+                const res = await axios.get('/transporter/api/dealers-with-loadingsheets/');
+                if (res.data.status === 'success') {
+                    const opts = res.data.dealers.map(d =>
+                        `<option value="${d.dealer_id}">${d.name}</option>`).join('');
+                    document.getElementById('dealerField').innerHTML =
+                        `<option value="">-- Select Dealer --</option>${opts}`;
                 }
-            }
-            
-            fetchData(params);
+            } catch { document.getElementById('dealerField').innerHTML = '<option>Error loading</option>'; }
         }
-    
-        // Function to print MF
-        function printMF(lsNumber) {
-            window.open(`/dealer/mf_print/${lsNumber}`, '_blank');
+        else if (val === 'date') {
+            const today = new Date().toISOString().split('T')[0];
+            div.innerHTML = `<div class="fg"><label>Date Range</label>
+                <div class="date-pair">
+                    <input type="date" id="fromDate" value="${today}">
+                    <input type="date" id="toDate"   value="${today}">
+                </div></div>`;
         }
-    
-        // Initialize the page
-        document.addEventListener('DOMContentLoaded', () => {
-            updateSearchFields(); // Initialize search fields
-    
-            // Add event listener for searchBy changes
-            document.getElementById('searchBy').addEventListener('change', updateSearchFields);
-    
-            // Add event listener for the "Find Record" button
-            document.getElementById('findRecordButton').addEventListener('click', findRecords);
-        });
-    </script>
+        else if (val === 'lsNumber') {
+            div.innerHTML = `<div class="fg"><label>LS Number</label>
+                <input type="text" id="lsField" placeholder="Enter LS number..."
+                    onkeydown="if(event.key==='Enter') findRecords()"></div>`;
+            setTimeout(() => document.getElementById('lsField')?.focus(), 50);
+        }
+    }
+
+    // ── FIND RECORDS ──
+    function findRecords() {
+        const val = document.getElementById('searchBy').value;
+        const params = { searchBy: val };
+
+        if (val === 'dealer') {
+            const v = document.getElementById('dealerField')?.value;
+            if (!v) { showToast('Dealer select karo', 'warning'); return; }
+            params.dealerId = v;
+        } else if (val === 'date') {
+            const f = document.getElementById('fromDate')?.value;
+            const t = document.getElementById('toDate')?.value;
+            if (!f || !t) { showToast('Date range select karo', 'warning'); return; }
+            if (f > t) { showToast('From date, To date se pehle honi chahiye', 'warning'); return; }
+            params.fromDate = f;
+            params.toDate   = t;
+        } else if (val === 'lsNumber') {
+            const v = document.getElementById('lsField')?.value?.trim();
+            if (!v) { showToast('LS Number enter karo', 'warning'); return; }
+            params.lsNumber = v;
+        }
+
+        fetchData(params);
+    }
+
+    // ── CLEAR SEARCH ──
+    function clearSearch() {
+        document.getElementById('searchBy').value = 'all';
+        updateSearchFields();
+        fetchData();
+    }
+
+    // ── RECEIVE SHIPMENT ──
+    function receiveShipment(lsNo) {
+        const qs = new URLSearchParams({ lsNumber: lsNo }).toString();
+        window.location.href = `/transporter/receive/RECEIVED_CNOTES.HTML?${qs}`;
+    }
+
+    // ── PRINT MF ──
+    function printMF(lsNo) {
+        window.open(`/dealer/mf_print/${lsNo}`, '_blank');
+        showToast('Print window open ho raha hai...', 'info');
+    }
+
+    // ── HELPERS ──
+    function formatDateTime(dt) {
+        if (!dt) return '—';
+        try {
+            const d = new Date(dt);
+            return d.toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'})
+                 + ' ' + d.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'});
+        } catch { return dt; }
+    }
+
+    function showError(msg) {
+        const box = document.getElementById('errBox');
+        document.getElementById('errMsg').textContent = msg;
+        box.style.display = 'flex';
+        box.style.padding = '12px 16px';
+    }
+    function hideError() {
+        const box = document.getElementById('errBox');
+        box.style.display = 'none';
+    }
+
+    function showToast(msg, type = 'info') {
+        const box = document.getElementById('toastBox');
+        const t = document.createElement('div');
+        const icons = { success:'check-circle', error:'times-circle', info:'info-circle', warning:'exclamation-triangle' };
+        t.className = `toast toast-${type}`;
+        t.innerHTML = `<i class="fas fa-${icons[type]||'info-circle'}"></i> ${msg}`;
+        box.appendChild(t);
+        setTimeout(() => t.remove(), 3500);
+    }
+</script>
 </body>
 </html>
-
