@@ -322,3 +322,135 @@ class BillItem(models.Model):
     
     class Meta:
         unique_together = ('bill', 'cnote')
+
+
+# ══════════════════════════════════════════════════════════════════
+#  transporter_app/models.py ke END mein add karo ye 4 models
+# ══════════════════════════════════════════════════════════════════
+
+from django.db import models
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+
+class RateCard(models.Model):
+    """Main rate card table — party + dealer ke liye rates store karta hai"""
+
+    CHARGE_CHOICES = [
+        ('freight',   'Freight Charges'),
+        ('loading',   'Loading Charges'),
+        ('unloading', 'Unloading Charges'),
+        ('detention', 'Detention Charges'),
+    ]
+    WEIGHT_CHOICES = [
+        ('slab1', '0-100 kg'),
+        ('slab2', '101-500 kg'),
+        ('slab3', '501-1000 kg'),
+        ('slab4', '1001-2000 kg'),
+    ]
+
+    party         = models.ForeignKey('PartyMaster',  on_delete=models.CASCADE,  related_name='rate_cards')
+    dealer        = models.ForeignKey('dealer_app.Dealer', on_delete=models.SET_NULL, null=True, blank=True)
+    containers    = models.JSONField(default=list)   # e.g. ['LCL', '20FT', '40FT']
+    destinations  = models.JSONField(default=list)   # e.g. ['Mumbai', 'Delhi']
+    forward_rate  = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    reverse_rate  = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    has_reverse   = models.BooleanField(default=False)     # separate reverse rate?
+    charge_type   = models.CharField(max_length=20, choices=CHARGE_CHOICES, blank=True)
+    weight_slab   = models.CharField(max_length=20, choices=WEIGHT_CHOICES, blank=True)
+    door_delivery   = models.BooleanField(default=True)
+    godown_delivery = models.BooleanField(default=False)
+    is_active     = models.BooleanField(default=True)
+    notes         = models.TextField(blank=True)
+    created_by    = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_rates')
+    created_at    = models.DateTimeField(auto_now_add=True)
+    updated_at    = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Rate Card'
+        verbose_name_plural = 'Rate Cards'
+
+    def __str__(self):
+        return f"{self.party.party_name} | ₹{self.forward_rate} fwd | ₹{self.reverse_rate} rev"
+
+    def rate_id(self):
+        return f"RT{str(self.id).zfill(3)}"
+
+
+class RateCardHistory(models.Model):
+    """Rate card ka har change yahan save hoga"""
+    CHANGE_CHOICES = [
+        ('Created', 'Created'),
+        ('Updated', 'Updated'),
+        ('Deleted', 'Deleted'),
+        ('Activated', 'Activated'),
+        ('Deactivated', 'Deactivated'),
+    ]
+
+    rate_card        = models.ForeignKey(RateCard, on_delete=models.SET_NULL, null=True, blank=True, related_name='history')
+    rate_id_display  = models.CharField(max_length=20)          # RT001 etc. — even after delete
+    party_name       = models.CharField(max_length=200)
+    change_type      = models.CharField(max_length=20, choices=CHANGE_CHOICES)
+    old_forward_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    new_forward_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    old_reverse_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    new_reverse_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    changed_by       = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    changed_at       = models.DateTimeField(auto_now_add=True)
+    remarks          = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-changed_at']
+
+    def __str__(self):
+        return f"{self.rate_id_display} | {self.change_type} | {self.changed_at.strftime('%d-%m-%Y')}"
+
+
+class MinimumConfig(models.Model):
+    """Minimum rate configuration — route + container type ke liye"""
+    ROUTE_CHOICES = [
+        ('local',    'Local (Within State)'),
+        ('regional', 'Regional (Neighboring States)'),
+        ('national', 'National (All India)'),
+        ('special',  'Special (Restricted Routes)'),
+    ]
+    CONTAINER_CHOICES = [
+        ('20FT', '20FT Container'),
+        ('40FT', '40FT Container'),
+        ('LCL',  'LCL (Less than Container)'),
+        ('FTL',  'FTL (Full Truck Load)'),
+    ]
+
+    route_category    = models.CharField(max_length=20, choices=ROUTE_CHOICES)
+    container_type    = models.CharField(max_length=20, choices=CONTAINER_CHOICES)
+    min_forward_rate  = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    min_reverse_rate  = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    applicable_cities = models.JSONField(default=list)   # ['Mumbai', 'Delhi']
+    is_active         = models.BooleanField(default=True)
+    created_by        = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at        = models.DateTimeField(auto_now_add=True)
+    updated_at        = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = [['route_category', 'container_type']]
+
+    def __str__(self):
+        return f"{self.get_route_category_display()} | {self.container_type} | fwd:₹{self.min_forward_rate}"
+
+
+class RateCardAuditLog(models.Model):
+    """Har action ka log — kaun, kya, kab"""
+    user       = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    action     = models.CharField(max_length=100)     # e.g. "Rate Created"
+    module     = models.CharField(max_length=100)     # e.g. "Rate Master"
+    details    = models.TextField()                   # e.g. "FUJITSU GENERAL → Mumbai"
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    timestamp  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.action} by {self.user} at {self.timestamp.strftime('%d-%m-%Y %H:%M')}"
