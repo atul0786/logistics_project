@@ -129,8 +129,27 @@ urlpatterns = [
     path('api/loading-sheet-reports/', views.loading_sheet_reports, name='loading_sheet_reports'),
     path('api/loading-sheet-details/<int:ls_number>/', views.loading_sheet_details, name='loading_sheet_details'),
 
-    # rate card master
-    path('rate_card_master/', views.rate_card_master, name='rate_card_master'),
     
     
+    # Rate Card Master - Main page
+    path('rate_card_master/',                  views.rate_card_master,         name='rate_card_master'),
+    
+    # Rate Card APIs
+    path('api/rate-cards/',                    views.api_rate_cards,           name='api_rate_cards'),
+    path('api/rate-cards/stats/',              views.api_rate_stats,           name='api_rate_stats'),
+    path('api/rate-cards/history/',            views.api_rate_history,         name='api_rate_history'),
+    path('api/rate-cards/audit/',              views.api_audit_log,            name='api_audit_log'),
+    path('api/rate-cards/search/',             views.api_search_rates,         name='api_search_rates'),
+    path('api/rate-cards/copy/',               views.api_copy_rates,           name='api_copy_rates'),
+    path('api/rate-cards/bulk-update/',        views.api_bulk_update,          name='api_bulk_update'),
+    path('api/rate-cards/export/',             views.api_export_rates,         name='api_export_rates'),
+    path('api/rate-cards/<int:pk>/',           views.api_rate_card_detail,     name='api_rate_card_detail'),
+    
+    # Minimum Config API
+    path('api/minimum-config/',               views.api_minimum_config,        name='api_minimum_config'),
+    
+    # CNotes auto-rate lookup (CNotes form mein call karo)
+    path('api/get-auto-rate/',                views.api_get_auto_rate,          name='api_get_auto_rate'),
+    
+        
 ]
