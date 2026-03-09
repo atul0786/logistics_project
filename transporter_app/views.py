@@ -4471,3 +4471,24 @@ def api_get_auto_rate(request):
         'party_name':   best.party.party_name,
         'containers':   best.containers,
     })
+# ══════════════════════════════════════════════════════════════════
+#  DESTINATION SEARCH API — City Master se live search
+#  URL: /transporter/api/destinations/search/?q=mumbai
+# ══════════════════════════════════════════════════════════════════
+@login_required
+def api_destination_search(request):
+    """
+    City Master (DeliveryDestination) se naam ke hisaab se search karo.
+    ?q=  → search query (empty = all destinations)
+    """
+    from dealer_app.models import DeliveryDestination
+
+    q = request.GET.get('q', '').strip()
+
+    qs = DeliveryDestination.objects.all().order_by('destination_name')
+    if q:
+        qs = qs.filter(destination_name__icontains=q)
+
+    destinations = list(qs.values_list('destination_name', flat=True).distinct()[:50])
+
+    return JsonResponse({'destinations': destinations, 'count': len(destinations)})
