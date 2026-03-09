@@ -70,7 +70,14 @@ from dealer_app.models import (
     Article,
     ArtType,
 )
-
+from django.shortcuts import render
+from django.http import JsonResponse
+from django.db.models import Sum, Q
+from django.contrib.auth.decorators import login_required
+from dealer_app.models import LoadingSheetSummary, LoadingSheetDetail
+from dealer_app.models import Dealer
+from transporter_app.models import Transporter
+import json
 # Logging configuration
 logger = logging.getLogger(__name__)
 
@@ -3615,14 +3622,7 @@ def fetch_users(request):
         return JsonResponse({"success": False, "message": f"Error fetching users: {str(e)}"})
 
 
-from django.shortcuts import render
-from django.http import JsonResponse
-from django.db.models import Sum, Q
-from django.contrib.auth.decorators import login_required
-from dealer_app.models import LoadingSheetSummary, LoadingSheetDetail
-from dealer_app.models import Dealer
-from transporter_app.models import Transporter
-import json
+
 
 @login_required
 def loading_sheet_report(request):
@@ -3798,3 +3798,676 @@ def rate_card_master(request):
     return render(request, 'transporter/rate_card_master.html')  # Corrected template path
 
 
+
+
+# ══════════════════════════════════════════════════════════════════
+#  transporter_app/views.py ke END mein add karo
+#  Pehle top mein RateCard import karo:
+#  from .models import RateCard, RateCardHistory, MinimumConfig, RateCardAuditLog
+# ══════════════════════════════════════════════════════════════════
+
+import json
+import csv
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse, HttpResponse
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.utils import timezone
+
+
+# ─── HELPER: Audit Log entry banao ───────────────────────────────
+def _audit(request, action, module, details):
+    from .models import RateCardAuditLog
+    ip = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', ''))
+    if ',' in ip:
+        ip = ip.split(',')[0].strip()
+    RateCardAuditLog.objects.create(
+        user=request.user,
+        action=action,
+        module=module,
+        details=details,
+        ip_address=ip or None,
+    )
+
+
+# ─── HELPER: Transporter naam ────────────────────────────────────
+def _get_transporter_name(request):
+    name = request.user.username.title()
+    try:
+        from .models import Transporter
+        t = Transporter.objects.get(user=request.user)
+        name = t.user.username.title()
+    except Exception:
+        pass
+    return name
+
+
+# ══════════════════════════════════════════════════════════════════
+#  1. MAIN PAGE VIEW
+# ══════════════════════════════════════════════════════════════════
+@login_required
+def rate_card_master(request):
+    from dealer_app.models import Dealer
+    from .models import PartyMaster
+
+    parties      = PartyMaster.objects.all().order_by('party_name')
+    dealers      = Dealer.objects.all().order_by('name')
+
+    context = {
+        'parties':          parties,
+        'dealers':          dealers,
+        'transporter_name': _get_transporter_name(request),
+    }
+    return render(request, 'transporter/rate_card_master.html', context)
+
+
+# ══════════════════════════════════════════════════════════════════
+#  2. RATE CARDS — LIST + CREATE
+# ══════════════════════════════════════════════════════════════════
+@csrf_exempt
+@login_required
+@require_http_methods(['GET', 'POST'])
+def api_rate_cards(request):
+    from .models import RateCard, RateCardHistory
+    from dealer_app.models import Dealer
+    from .models import PartyMaster
+
+    if request.method == 'GET':
+        cards = RateCard.objects.select_related('party', 'dealer').all()
+        data = []
+        for c in cards:
+            data.append({
+                'id':              c.id,
+                'rate_id':         c.rate_id(),
+                'party_id':        c.party_id,
+                'party_name':      c.party.party_name,
+                'dealer_id':       c.dealer_id,
+                'dealer_name':     c.dealer.name if c.dealer else 'Not specified',
+                'containers':      c.containers,
+                'destinations':    c.destinations,
+                'forward_rate':    float(c.forward_rate),
+                'reverse_rate':    float(c.reverse_rate),
+                'has_reverse':     c.has_reverse,
+                'charge_type':     c.charge_type,
+                'weight_slab':     c.weight_slab,
+                'door_delivery':   c.door_delivery,
+                'godown_delivery': c.godown_delivery,
+                'is_active':       c.is_active,
+                'notes':           c.notes,
+                'created_at':      c.created_at.strftime('%d-%m-%Y %H:%M'),
+                'created_by':      c.created_by.username.title() if c.created_by else '-',
+            })
+        return JsonResponse({'rate_cards': data})
+
+    elif request.method == 'POST':
+        try:
+            body         = json.loads(request.body)
+            party_id     = body.get('party_id')
+            forward_rate = body.get('forward_rate', 0)
+
+            if not party_id or not forward_rate:
+                return JsonResponse({'error': 'party_id aur forward_rate required hai'}, status=400)
+
+            party  = PartyMaster.objects.get(id=party_id)
+            dealer = Dealer.objects.get(id=body['dealer_id']) if body.get('dealer_id') else None
+
+            card = RateCard.objects.create(
+                party=party,
+                dealer=dealer,
+                containers=body.get('containers', []),
+                destinations=body.get('destinations', []),
+                forward_rate=forward_rate,
+                reverse_rate=body.get('reverse_rate', forward_rate),
+                has_reverse=body.get('has_reverse', False),
+                charge_type=body.get('charge_type', ''),
+                weight_slab=body.get('weight_slab', ''),
+                door_delivery=body.get('door_delivery', True),
+                godown_delivery=body.get('godown_delivery', False),
+                notes=body.get('notes', ''),
+                created_by=request.user,
+                is_active=True,
+            )
+
+            # History
+            RateCardHistory.objects.create(
+                rate_card=card,
+                rate_id_display=card.rate_id(),
+                party_name=party.party_name,
+                change_type='Created',
+                new_forward_rate=card.forward_rate,
+                new_reverse_rate=card.reverse_rate,
+                changed_by=request.user,
+                remarks='New rate card created',
+            )
+
+            _audit(request, 'Rate Created', 'Rate Master',
+                   f"{party.party_name} → {', '.join(card.destinations)}")
+
+            return JsonResponse({'success': True, 'id': card.id, 'rate_id': card.rate_id()}, status=201)
+
+        except PartyMaster.DoesNotExist:
+            return JsonResponse({'error': 'Party nahi mili'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+
+# ══════════════════════════════════════════════════════════════════
+#  3. RATE CARD DETAIL — GET / PUT / DELETE
+# ══════════════════════════════════════════════════════════════════
+@csrf_exempt
+@login_required
+@require_http_methods(['GET', 'PUT', 'DELETE'])
+def api_rate_card_detail(request, pk):
+    from .models import RateCard, RateCardHistory
+    from dealer_app.models import Dealer
+    from .models import PartyMaster
+
+    try:
+        card = RateCard.objects.select_related('party', 'dealer').get(id=pk)
+    except RateCard.DoesNotExist:
+        return JsonResponse({'error': 'Rate card nahi mila'}, status=404)
+
+    if request.method == 'GET':
+        return JsonResponse({
+            'id':              card.id,
+            'rate_id':         card.rate_id(),
+            'party_id':        card.party_id,
+            'party_name':      card.party.party_name,
+            'dealer_id':       card.dealer_id,
+            'dealer_name':     card.dealer.name if card.dealer else '',
+            'containers':      card.containers,
+            'destinations':    card.destinations,
+            'forward_rate':    float(card.forward_rate),
+            'reverse_rate':    float(card.reverse_rate),
+            'has_reverse':     card.has_reverse,
+            'charge_type':     card.charge_type,
+            'weight_slab':     card.weight_slab,
+            'door_delivery':   card.door_delivery,
+            'godown_delivery': card.godown_delivery,
+            'is_active':       card.is_active,
+            'notes':           card.notes,
+        })
+
+    elif request.method == 'PUT':
+        try:
+            body = json.loads(request.body)
+
+            # History ke liye purani values
+            old_fwd = card.forward_rate
+            old_rev = card.reverse_rate
+
+            if body.get('party_id'):
+                card.party = PartyMaster.objects.get(id=body['party_id'])
+            if 'dealer_id' in body:
+                card.dealer = Dealer.objects.get(id=body['dealer_id']) if body['dealer_id'] else None
+            if 'containers' in body:     card.containers    = body['containers']
+            if 'destinations' in body:   card.destinations  = body['destinations']
+            if 'forward_rate' in body:   card.forward_rate  = body['forward_rate']
+            if 'reverse_rate' in body:   card.reverse_rate  = body['reverse_rate']
+            if 'has_reverse' in body:    card.has_reverse   = body['has_reverse']
+            if 'charge_type' in body:    card.charge_type   = body['charge_type']
+            if 'weight_slab' in body:    card.weight_slab   = body['weight_slab']
+            if 'door_delivery' in body:  card.door_delivery = body['door_delivery']
+            if 'godown_delivery' in body:card.godown_delivery = body['godown_delivery']
+            if 'is_active' in body:      card.is_active     = body['is_active']
+            if 'notes' in body:          card.notes         = body['notes']
+            card.save()
+
+            # History
+            RateCardHistory.objects.create(
+                rate_card=card,
+                rate_id_display=card.rate_id(),
+                party_name=card.party.party_name,
+                change_type='Updated',
+                old_forward_rate=old_fwd,
+                new_forward_rate=card.forward_rate,
+                old_reverse_rate=old_rev,
+                new_reverse_rate=card.reverse_rate,
+                changed_by=request.user,
+                remarks=body.get('remarks', 'Rate updated'),
+            )
+
+            _audit(request, 'Rate Updated', 'Rate Master',
+                   f"{card.party.party_name} → {', '.join(card.destinations)}")
+
+            return JsonResponse({'success': True})
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    elif request.method == 'DELETE':
+        party_name = card.party.party_name
+        rate_id_str = card.rate_id()
+        dests = ', '.join(card.destinations)
+
+        # History mein record rakhte hain
+        RateCardHistory.objects.create(
+            rate_card=None,
+            rate_id_display=rate_id_str,
+            party_name=party_name,
+            change_type='Deleted',
+            old_forward_rate=card.forward_rate,
+            old_reverse_rate=card.reverse_rate,
+            changed_by=request.user,
+            remarks='Rate card deleted',
+        )
+
+        card.delete()
+        _audit(request, 'Rate Deleted', 'Rate Master', f"{party_name} → {dests}")
+        return JsonResponse({'success': True})
+
+
+# ══════════════════════════════════════════════════════════════════
+#  4. DASHBOARD STATS
+# ══════════════════════════════════════════════════════════════════
+@login_required
+def api_rate_stats(request):
+    from .models import RateCard
+    from dealer_app.models import Dealer
+    from .models import PartyMaster
+
+    total    = RateCard.objects.count()
+    active   = RateCard.objects.filter(is_active=True).count()
+    parties  = RateCard.objects.values('party_id').distinct().count()
+    cities   = 0
+    all_dest = set()
+    for r in RateCard.objects.values_list('destinations', flat=True):
+        if r:
+            all_dest.update(r)
+    cities = len(all_dest)
+
+    return JsonResponse({
+        'total_rates':   total,
+        'active_rates':  active,
+        'active_parties': parties,
+        'destination_cities': cities,
+    })
+
+
+# ══════════════════════════════════════════════════════════════════
+#  5. RATE HISTORY
+# ══════════════════════════════════════════════════════════════════
+@login_required
+def api_rate_history(request):
+    from .models import RateCardHistory
+
+    days = request.GET.get('days', '30')
+    qs = RateCardHistory.objects.select_related('changed_by')
+    if days and days != 'all':
+        from datetime import timedelta
+        cutoff = timezone.now() - timedelta(days=int(days))
+        qs = qs.filter(changed_at__gte=cutoff)
+
+    data = []
+    for h in qs[:100]:
+        data.append({
+            'date':       h.changed_at.strftime('%d-%m-%Y %H:%M:%S'),
+            'rate_id':    h.rate_id_display,
+            'party':      h.party_name,
+            'change':     h.change_type,
+            'old_fwd':    f"₹{h.old_forward_rate:,.0f}" if h.old_forward_rate else '-',
+            'new_fwd':    f"₹{h.new_forward_rate:,.0f}" if h.new_forward_rate else '-',
+            'old_rev':    f"₹{h.old_reverse_rate:,.0f}" if h.old_reverse_rate else '-',
+            'new_rev':    f"₹{h.new_reverse_rate:,.0f}" if h.new_reverse_rate else '-',
+            'user':       h.changed_by.username.title() if h.changed_by else '-',
+            'remarks':    h.remarks,
+        })
+    return JsonResponse({'history': data})
+
+
+# ══════════════════════════════════════════════════════════════════
+#  6. AUDIT LOG
+# ══════════════════════════════════════════════════════════════════
+@login_required
+def api_audit_log(request):
+    from .models import RateCardAuditLog
+
+    logs = RateCardAuditLog.objects.select_related('user')[:100]
+    data = []
+    for l in logs:
+        data.append({
+            'timestamp':  l.timestamp.strftime('%d-%m-%Y %H:%M:%S'),
+            'user':       l.user.username.title() if l.user else '-',
+            'action':     l.action,
+            'module':     l.module,
+            'details':    l.details,
+            'ip':         l.ip_address or '-',
+        })
+    return JsonResponse({'logs': data})
+
+
+# ══════════════════════════════════════════════════════════════════
+#  7. SEARCH RATES
+# ══════════════════════════════════════════════════════════════════
+@login_required
+def api_search_rates(request):
+    from .models import RateCard
+
+    qs = RateCard.objects.select_related('party', 'dealer').all()
+
+    party    = request.GET.get('party', '').strip()
+    dealer   = request.GET.get('dealer', '').strip()
+    dest     = request.GET.get('destination', '').strip()
+    container = request.GET.get('container', '').strip()
+    rate_min = request.GET.get('rate_min', '')
+    rate_max = request.GET.get('rate_max', '')
+    date_from = request.GET.get('date_from', '')
+    date_to   = request.GET.get('date_to', '')
+    active_only    = request.GET.get('active_only') == 'true'
+    with_reverse   = request.GET.get('with_reverse') == 'true'
+    door_only      = request.GET.get('door_only') == 'true'
+
+    if party:
+        qs = qs.filter(party__party_name__icontains=party)
+    if dealer:
+        qs = qs.filter(dealer__name__icontains=dealer)
+    if active_only:
+        qs = qs.filter(is_active=True)
+    if with_reverse:
+        qs = qs.filter(has_reverse=True)
+    if door_only:
+        qs = qs.filter(door_delivery=True)
+    if rate_min:
+        qs = qs.filter(forward_rate__gte=float(rate_min))
+    if rate_max:
+        qs = qs.filter(forward_rate__lte=float(rate_max))
+    if date_from:
+        qs = qs.filter(created_at__date__gte=date_from)
+    if date_to:
+        qs = qs.filter(created_at__date__lte=date_to)
+
+    # Destination and container are JSON fields — filter in Python
+    results = []
+    for c in qs:
+        if dest and not any(dest.lower() in d.lower() for d in c.destinations):
+            continue
+        if container and container.upper() not in [cn.upper() for cn in c.containers]:
+            continue
+        results.append({
+            'id':            c.id,
+            'rate_id':       c.rate_id(),
+            'party_name':    c.party.party_name,
+            'dealer_name':   c.dealer.name if c.dealer else '-',
+            'destinations':  c.destinations,
+            'forward_rate':  float(c.forward_rate),
+            'reverse_rate':  float(c.reverse_rate),
+            'containers':    c.containers,
+            'is_active':     c.is_active,
+        })
+
+    return JsonResponse({'results': results, 'count': len(results)})
+
+
+# ══════════════════════════════════════════════════════════════════
+#  8. COPY RATES
+# ══════════════════════════════════════════════════════════════════
+@csrf_exempt
+@login_required
+@require_http_methods(['POST'])
+def api_copy_rates(request):
+    from .models import RateCard, RateCardHistory
+    from .models import PartyMaster
+    from dealer_app.models import Dealer
+
+    try:
+        body = json.loads(request.body)
+        src_party_id  = body.get('source_party_id')
+        src_dealer_id = body.get('source_dealer_id')
+        dst_party_id  = body.get('dest_party_id')
+        dst_dealer_id = body.get('dest_dealer_id')
+        copy_opts     = body.get('copy_options', {})  # {forward, reverse, containers, delivery}
+
+        if not src_party_id or not dst_party_id:
+            return JsonResponse({'error': 'Source aur destination party dono required hai'}, status=400)
+
+        dst_party  = PartyMaster.objects.get(id=dst_party_id)
+        dst_dealer = Dealer.objects.get(id=dst_dealer_id) if dst_dealer_id else None
+
+        # Source rates
+        qs = RateCard.objects.filter(party_id=src_party_id, is_active=True)
+        if src_dealer_id:
+            qs = qs.filter(dealer_id=src_dealer_id)
+
+        copied = 0
+        for src in qs:
+            new_card = RateCard.objects.create(
+                party=dst_party,
+                dealer=dst_dealer,
+                containers=src.containers if copy_opts.get('containers', True) else [],
+                destinations=src.destinations,
+                forward_rate=src.forward_rate if copy_opts.get('forward', True) else 0,
+                reverse_rate=src.reverse_rate if copy_opts.get('reverse', True) else 0,
+                has_reverse=src.has_reverse,
+                charge_type=src.charge_type,
+                weight_slab=src.weight_slab,
+                door_delivery=src.door_delivery if copy_opts.get('delivery', True) else True,
+                godown_delivery=src.godown_delivery if copy_opts.get('delivery', True) else False,
+                notes=f"Copied from {src.party.party_name}",
+                created_by=request.user,
+                is_active=True,
+            )
+            RateCardHistory.objects.create(
+                rate_card=new_card,
+                rate_id_display=new_card.rate_id(),
+                party_name=dst_party.party_name,
+                change_type='Created',
+                new_forward_rate=new_card.forward_rate,
+                new_reverse_rate=new_card.reverse_rate,
+                changed_by=request.user,
+                remarks=f"Copied from {src.party.party_name}",
+            )
+            copied += 1
+
+        _audit(request, 'Rates Copied', 'Copy Rates',
+               f"From {src_party_id} → {dst_party.party_name} | {copied} rates")
+
+        return JsonResponse({'success': True, 'copied': copied})
+
+    except PartyMaster.DoesNotExist:
+        return JsonResponse({'error': 'Party nahi mili'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+# ══════════════════════════════════════════════════════════════════
+#  9. MINIMUM CONFIG — LIST + CREATE
+# ══════════════════════════════════════════════════════════════════
+@csrf_exempt
+@login_required
+@require_http_methods(['GET', 'POST'])
+def api_minimum_config(request):
+    from .models import MinimumConfig
+
+    if request.method == 'GET':
+        configs = MinimumConfig.objects.all()
+        data = []
+        for m in configs:
+            data.append({
+                'id':               m.id,
+                'route_category':   m.get_route_category_display(),
+                'container_type':   m.container_type,
+                'min_forward_rate': float(m.min_forward_rate),
+                'min_reverse_rate': float(m.min_reverse_rate),
+                'applicable_cities': m.applicable_cities,
+                'is_active':        m.is_active,
+            })
+        return JsonResponse({'configs': data})
+
+    elif request.method == 'POST':
+        try:
+            body = json.loads(request.body)
+            config, created = MinimumConfig.objects.update_or_create(
+                route_category=body['route_category'],
+                container_type=body['container_type'],
+                defaults={
+                    'min_forward_rate':  body.get('min_forward_rate', 0),
+                    'min_reverse_rate':  body.get('min_reverse_rate', 0),
+                    'applicable_cities': body.get('applicable_cities', []),
+                    'is_active':         True,
+                    'created_by':        request.user,
+                }
+            )
+            _audit(request, 'Min Config Saved', 'Minimum Config',
+                   f"{body['route_category']} | {body['container_type']}")
+            return JsonResponse({'success': True, 'id': config.id, 'created': created}, status=201)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+
+# ══════════════════════════════════════════════════════════════════
+#  10. BULK UPDATE
+# ══════════════════════════════════════════════════════════════════
+@csrf_exempt
+@login_required
+@require_http_methods(['POST'])
+def api_bulk_update(request):
+    from .models import RateCard, RateCardHistory
+    from decimal import Decimal
+
+    try:
+        body       = json.loads(request.body)
+        party_ids  = body.get('party_ids', [])   # [] means all
+        update_type = body.get('update_type')     # percentage / fixed / replace
+        value       = Decimal(str(body.get('value', 0)))
+        direction   = body.get('direction', 'increase')  # increase / decrease
+        apply_to    = body.get('apply_to', 'both')       # forward / reverse / both
+        eff_date    = body.get('effective_date', '')
+
+        qs = RateCard.objects.filter(is_active=True)
+        if party_ids:
+            qs = qs.filter(party_id__in=party_ids)
+
+        updated = 0
+        for card in qs:
+            old_fwd = card.forward_rate
+            old_rev = card.reverse_rate
+
+            def calc(rate):
+                if update_type == 'percentage':
+                    delta = rate * value / Decimal('100')
+                    return rate + delta if direction == 'increase' else rate - delta
+                elif update_type == 'fixed':
+                    return rate + value if direction == 'increase' else rate - value
+                else:  # replace
+                    return value
+
+            if apply_to in ('forward', 'both'):
+                card.forward_rate = max(Decimal('0'), calc(card.forward_rate))
+            if apply_to in ('reverse', 'both'):
+                card.reverse_rate = max(Decimal('0'), calc(card.reverse_rate))
+            card.save()
+
+            RateCardHistory.objects.create(
+                rate_card=card,
+                rate_id_display=card.rate_id(),
+                party_name=card.party.party_name,
+                change_type='Updated',
+                old_forward_rate=old_fwd,
+                new_forward_rate=card.forward_rate,
+                old_reverse_rate=old_rev,
+                new_reverse_rate=card.reverse_rate,
+                changed_by=request.user,
+                remarks=f"Bulk update: {update_type} {direction} by {value}",
+            )
+            updated += 1
+
+        _audit(request, 'Bulk Rate Update', 'Bulk Update',
+               f"{updated} rates updated | {update_type} {direction} by {value}")
+
+        return JsonResponse({'success': True, 'updated': updated})
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+# ══════════════════════════════════════════════════════════════════
+#  11. EXPORT CSV
+# ══════════════════════════════════════════════════════════════════
+@login_required
+def api_export_rates(request):
+    from .models import RateCard
+
+    party_id = request.GET.get('party_id', '')
+    qs = RateCard.objects.select_related('party', 'dealer').filter(is_active=True)
+    if party_id:
+        qs = qs.filter(party_id=party_id)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="rate_cards.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Rate ID', 'Party', 'Dealer', 'Destinations', 'Containers',
+                     'Forward Rate (₹)', 'Reverse Rate (₹)', 'Charge Type',
+                     'Door Delivery', 'Godown Delivery', 'Status', 'Created'])
+    for c in qs:
+        writer.writerow([
+            c.rate_id(),
+            c.party.party_name,
+            c.dealer.name if c.dealer else '-',
+            ', '.join(c.destinations),
+            ', '.join(c.containers),
+            float(c.forward_rate),
+            float(c.reverse_rate),
+            c.charge_type or '-',
+            'Yes' if c.door_delivery else 'No',
+            'Yes' if c.godown_delivery else 'No',
+            'Active' if c.is_active else 'Inactive',
+            c.created_at.strftime('%d-%m-%Y'),
+        ])
+
+    _audit(request, 'Data Exported', 'Export', 'Rate cards exported to CSV')
+    return response
+
+
+# ══════════════════════════════════════════════════════════════════
+#  12. CNotes create karte waqt auto rate fetch karo
+#  Dealer + destinations ke based rate automatically apply hoga
+# ══════════════════════════════════════════════════════════════════
+@login_required
+def api_get_auto_rate(request):
+    """
+    CNotes form mein call karo — dealer + destination ke hisaab se rate milega
+    GET params: dealer_id, destination (string), container (string)
+    """
+    from .models import RateCard
+
+    dealer_id   = request.GET.get('dealer_id')
+    destination = (request.GET.get('destination') or '').strip().lower()
+    container   = (request.GET.get('container') or '').strip().upper()
+
+    if not dealer_id:
+        return JsonResponse({'found': False, 'forward_rate': 0, 'reverse_rate': 0})
+
+    qs = RateCard.objects.filter(dealer_id=dealer_id, is_active=True)
+    best = None
+
+    for card in qs:
+        dest_match = not destination or any(destination in d.lower() for d in card.destinations)
+        cont_match = not container  or container in [c.upper() for c in card.containers]
+        if dest_match and cont_match:
+            best = card
+            break  # Most specific match first
+
+    if not best and destination:
+        # Try without container filter
+        for card in qs:
+            if any(destination in d.lower() for d in card.destinations):
+                best = card
+                break
+
+    if not best:
+        best = qs.first()  # Fallback to any active rate for this dealer
+
+    if not best:
+        return JsonResponse({'found': False, 'forward_rate': 0, 'reverse_rate': 0})
+
+    return JsonResponse({
+        'found':        True,
+        'rate_id':      best.rate_id(),
+        'forward_rate': float(best.forward_rate),
+        'reverse_rate': float(best.reverse_rate),
+        'party_name':   best.party.party_name,
+        'containers':   best.containers,
+    })
