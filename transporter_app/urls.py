@@ -150,6 +150,10 @@ urlpatterns = [
     
     # CNotes auto-rate lookup (CNotes form mein call karo)
     path('api/get-auto-rate/',                views.api_get_auto_rate,          name='api_get_auto_rate'),
+
+    # Destination live search (City Master se)
+    path('api/destinations/search/',          views.api_destination_search,    name='api_destination_search'),
+
     
         
 ]
