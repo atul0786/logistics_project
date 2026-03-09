@@ -890,55 +890,93 @@
         </div>
 
         <div class="nav-section">
-            <div class="nav-title">Main</div>
+
+            <!-- ── Back to Main App ── -->
+            <div class="nav-title">Main App</div>
             <ul class="nav-menu">
                 <li class="nav-item">
-                    <a href="{% url 'transporter:home' %}" class="nav-link"><i class="fas fa-home"></i><span class="nav-text">Dashboard</span></a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'transporter:receive' %}" class="nav-link"><i class="fas fa-clock"></i><span class="nav-text">Pending Requests</span></a>
-                </li>
-                <li class="nav-item has-sub">
-                    <a href="#" class="nav-link" onclick="toggleSub('sub-delivery',this)">
-                        <i class="fas fa-clipboard-list"></i><span class="nav-text">Delivery Management</span>
-                        <i class="fas fa-chevron-right" style="margin-left:auto;font-size:11px;transition:transform .2s;" id="arr-delivery"></i>
+                    <a href="{% url 'transporter:home' %}" class="nav-link" style="opacity:.75;">
+                        <i class="fas fa-arrow-left"></i><span class="nav-text">Back to Dashboard</span>
                     </a>
-                    <ul class="sub-menu" id="sub-delivery" style="display:none;list-style:none;background:#0a1322;">
-                        <li><a href="{% url 'transporter:delivery_cnotes' %}" style="display:block;padding:.45rem 1.25rem .45rem 2.8rem;font-size:.8rem;color:rgba(255,255,255,.6);text-decoration:none;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,.6)'">Single Delivery</a></li>
-                        <li><a href="{% url 'transporter:ddm_settlement' %}" style="display:block;padding:.45rem 1.25rem .45rem 2.8rem;font-size:.8rem;color:rgba(255,255,255,.6);text-decoration:none;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,.6)'">DDM Settlements</a></li>
-                    </ul>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'transporter:received_cnote' %}" class="nav-link"><i class="fas fa-check-circle"></i><span class="nav-text">Completed</span></a>
                 </li>
             </ul>
 
-            <div class="nav-title">Reports & Masters</div>
+            <!-- ── Rate Card Master Internal Pages ── -->
+            <div class="nav-title">Rate Card Master</div>
             <ul class="nav-menu">
-                <li class="nav-item has-sub">
-                    <a href="#" class="nav-link" onclick="toggleSub('sub-reports',this)">
-                        <i class="fas fa-chart-bar"></i><span class="nav-text">Reports</span>
-                        <i class="fas fa-chevron-right" style="margin-left:auto;font-size:11px;transition:transform .2s;" id="arr-reports"></i>
+                <li class="nav-item">
+                    <a href="#dashboard" class="nav-link active" data-page="dashboard">
+                        <i class="fas fa-home"></i><span class="nav-text">Dashboard</span>
                     </a>
-                    <ul class="sub-menu" id="sub-reports" style="display:none;list-style:none;background:#0a1322;">
-                        <li><a href="{% url 'transporter:all_booking_register' %}" style="display:block;padding:.45rem 1.25rem .45rem 2.8rem;font-size:.8rem;color:rgba(255,255,255,.6);text-decoration:none;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,.6)'">Booking Register</a></li>
-                        <li><a href="{% url 'transporter:loading_sheet_report' %}" style="display:block;padding:.45rem 1.25rem .45rem 2.8rem;font-size:.8rem;color:rgba(255,255,255,.6);text-decoration:none;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,.6)'">Loading Sheet Report</a></li>
-                    </ul>
                 </li>
-                <li class="nav-item has-sub">
-                    <a href="#" class="nav-link active" onclick="toggleSub('sub-master',this)">
-                        <i class="fas fa-cog"></i><span class="nav-text">Master</span>
-                        <i class="fas fa-chevron-right" style="margin-left:auto;font-size:11px;transition:transform .2s;transform:rotate(90deg);" id="arr-master"></i>
+                <li class="nav-item">
+                    <a href="#rate-master" class="nav-link" data-page="rateMaster">
+                        <i class="fas fa-coins"></i><span class="nav-text">Add New Rate</span>
+                        <span class="badge">New</span>
                     </a>
-                    <ul class="sub-menu" id="sub-master" style="list-style:none;background:#0a1322;">
-                        <li><a href="{% url 'transporter:rate_card_master' %}" style="display:block;padding:.45rem 1.25rem .45rem 2.8rem;font-size:.8rem;color:white;text-decoration:none;border-left:2px solid #4f46e5;">Rate Card Master</a></li>
-                        <li><a href="{% url 'transporter:billing' %}" style="display:block;padding:.45rem 1.25rem .45rem 2.8rem;font-size:.8rem;color:rgba(255,255,255,.6);text-decoration:none;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,.6)'">Billing Dealer</a></li>
-                        <li><a href="{% url 'transporter:bill_manage' %}" style="display:block;padding:.45rem 1.25rem .45rem 2.8rem;font-size:.8rem;color:rgba(255,255,255,.6);text-decoration:none;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,.6)'">Bill Management</a></li>
-                        <li><a href="{% url 'transporter:manage_location' %}" style="display:block;padding:.45rem 1.25rem .45rem 2.8rem;font-size:.8rem;color:rgba(255,255,255,.6);text-decoration:none;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,.6)'">Manage Location</a></li>
-                        <li><a href="{% url 'transporter:party_master' %}" style="display:block;padding:.45rem 1.25rem .45rem 2.8rem;font-size:.8rem;color:rgba(255,255,255,.6);text-decoration:none;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,.6)'">Party Master</a></li>
-                        <li><a href="{% url 'transporter:add_user' %}" style="display:block;padding:.45rem 1.25rem .45rem 2.8rem;font-size:.8rem;color:rgba(255,255,255,.6);text-decoration:none;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,.6)'">Add User</a></li>
-                        <li><a href="{% url 'transporter:view_users' %}" style="display:block;padding:.45rem 1.25rem .45rem 2.8rem;font-size:.8rem;color:rgba(255,255,255,.6);text-decoration:none;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,.6)'">View Users</a></li>
-                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="#view-rates" class="nav-link" data-page="viewRates">
+                        <i class="fas fa-list-alt"></i><span class="nav-text">View All Rates</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#copy-rates" class="nav-link" data-page="copyRates">
+                        <i class="fas fa-copy"></i><span class="nav-text">Copy Rates</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#minimum-config" class="nav-link" data-page="minimumConfig">
+                        <i class="fas fa-calculator"></i><span class="nav-text">Minimum Config</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#search-rates" class="nav-link" data-page="searchRates">
+                        <i class="fas fa-search"></i><span class="nav-text">Search Rates</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="nav-title">Reports & Tools</div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#reports" class="nav-link" data-page="reports">
+                        <i class="fas fa-chart-bar"></i><span class="nav-text">Reports</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#export" class="nav-link" data-page="export">
+                        <i class="fas fa-file-export"></i><span class="nav-text">Export Rates</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#rate-history" class="nav-link" data-page="rateHistory">
+                        <i class="fas fa-history"></i><span class="nav-text">Rate History</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#bulk-update" class="nav-link" data-page="bulkUpdate">
+                        <i class="fas fa-sync-alt"></i><span class="nav-text">Bulk Update</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="nav-title">Admin</div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#settings" class="nav-link" data-page="settings">
+                        <i class="fas fa-cog"></i><span class="nav-text">System Settings</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#user-management" class="nav-link" data-page="userManagement">
+                        <i class="fas fa-users"></i><span class="nav-text">User Management</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#audit-log" class="nav-link" data-page="auditLog">
+                        <i class="fas fa-clipboard-check"></i><span class="nav-text">Audit Log</span>
+                    </a>
                 </li>
             </ul>
         </div>
