@@ -1,746 +1,450 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receive Sheet Details</title>
-
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <title>Receive Sheet Details — Good Way Express</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.2/dist/axios.min.js"></script>
     <style>
-        :root {
-            --primary: #2563eb;
-            --success: #22c55e;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --info: #3b82f6;
-        }
+        :root{--primary:#1a252f;--primary-light:#3498db;--secondary:#e74c3c;--success:#27ae60;--warning:#f39c12;--info:#8e44ad;--light:#f8f9fa;--dark:#2c3e50;--border:#e0e6ed;--sidebar:#1a252f;--text:#34495e;}
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif;}
+        body{background:#f5f7fa;color:var(--text);display:flex;min-height:100vh;}
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', -apple-system, sans-serif;
-        }
+        .sidebar{width:240px;background:var(--sidebar);color:white;height:100vh;position:fixed;left:0;top:0;display:flex;flex-direction:column;z-index:1000;box-shadow:2px 0 15px rgba(0,0,0,.15);transition:width .3s;overflow-y:auto;}
+        .logo-section{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.08);}
+        .logo{display:flex;align-items:center;gap:10px;}
+        .logo-icon{width:36px;height:36px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+        .logo-text{font-size:14px;font-weight:700;line-height:1.2;} .logo-sub{font-size:10px;color:rgba(255,255,255,.45);}
+        .nav-section{padding:12px 0;flex:1;}
+        .nav-title{padding:6px 16px 4px;font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+        .nav-menu{list-style:none;} .nav-item{margin:1px 0;}
+        .nav-link{display:flex;align-items:center;gap:10px;padding:.55rem 1rem;color:rgba(255,255,255,.65);text-decoration:none;font-size:.82rem;transition:all .2s;}
+        .nav-link:hover{color:white;background:rgba(255,255,255,.07);}
+        .nav-link.active{color:white;background:rgba(52,152,219,.2);border-left:3px solid var(--primary-light);padding-left:calc(1rem - 3px);}
+        .nav-link i{width:16px;text-align:center;font-size:.85rem;}
+        .sub-menu{list-style:none;background:rgba(0,0,0,.15);}
+        .sub-menu a{display:block;padding:.4rem 1rem .4rem 2.6rem;font-size:.78rem;color:rgba(255,255,255,.55);text-decoration:none;transition:color .2s;}
+        .sub-menu a:hover{color:white;}
+        .sidebar-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.08);}
+        .logout-btn{width:100%;background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);padding:.45rem;border-radius:6px;cursor:pointer;font-size:.78rem;transition:all .2s;}
+        .logout-btn:hover{background:rgba(231,76,60,.2);color:#e74c3c;border-color:#e74c3c;}
 
-        body {
-            background: #f1f5f9;
-        }
+        .main-content{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
+        .topbar{background:white;padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 8px rgba(0,0,0,.06);position:sticky;top:0;z-index:100;}
+        .topbar-left{display:flex;align-items:center;gap:14px;}
+        .menu-toggle{background:none;border:none;font-size:18px;color:var(--dark);cursor:pointer;display:none;padding:4px;}
+        .page-title{font-size:1.1rem;font-weight:700;color:var(--dark);display:flex;align-items:center;gap:8px;}
+        .page-title i{color:var(--primary-light);}
+        .topbar-right{display:flex;align-items:center;gap:16px;}
+        .user-avatar{width:34px;height:34px;background:linear-gradient(135deg,#3498db,#2980b9);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:.9rem;}
+        .uname{font-size:.82rem;font-weight:600;color:var(--dark);} .urole{font-size:.72rem;color:#95a5a6;}
 
-        .header {
-            background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%);
-            padding: 1rem;
-            color: white;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
+        .page-body{padding:20px 24px;flex:1;}
 
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        /* STATS */
+        .stats-row{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px;}
+        .stat-card{background:white;border-radius:10px;padding:16px 18px;border:1px solid var(--border);display:flex;align-items:center;gap:14px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+        .stat-icon{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
+        .stat-val{font-size:1.6rem;font-weight:700;color:var(--dark);}
+        .stat-lbl{font-size:.72rem;color:#95a5a6;text-transform:uppercase;letter-spacing:.5px;}
 
-        .logo-section {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
+        .card{background:white;border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,.05);margin-bottom:18px;overflow:hidden;}
+        .card-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+        .card-title{font-size:.95rem;font-weight:700;color:var(--dark);display:flex;align-items:center;gap:8px;}
+        .card-title i{color:var(--primary-light);}
+        .card-body{padding:18px 20px;}
 
-        .nav {
-            background: white;
-            padding: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
+        /* CONTROLS */
+        .controls-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+        .form-control{padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:7px;font-size:.85rem;color:var(--dark);background:white;transition:border-color .2s;}
+        .form-control:focus{outline:none;border-color:var(--primary-light);}
 
-        .nav-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            gap: 1rem;
-        }
+        .btn{padding:.5rem 1.1rem;border:none;border-radius:7px;font-size:.84rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s;}
+        .btn-success{background:var(--success);color:white;} .btn-success:hover{filter:brightness(.9);}
+        .btn-danger{background:var(--secondary);color:white;} .btn-danger:hover{filter:brightness(.9);}
+        .btn-warning{background:var(--warning);color:white;} .btn-warning:hover{filter:brightness(.9);}
+        .btn-info{background:var(--info);color:white;} .btn-info:hover{filter:brightness(.9);}
+        .btn-secondary{background:var(--light);color:var(--dark);border:1.5px solid var(--border);}
 
-        .nav-item {
-            padding: 0.75rem 1rem;
-            color: #64748b;
-            text-decoration: none;
-            border-radius: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-        }
+        /* TABLE */
+        .tbl-wrap{overflow-x:auto;}
+        .data-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+        .data-table thead th{background:#f8fafc;padding:10px 12px;text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:#64748b;border-bottom:2px solid var(--border);white-space:nowrap;}
+        .data-table tbody td{padding:10px 12px;border-bottom:1px solid #f1f5f9;color:var(--dark);vertical-align:middle;}
+        .data-table tbody tr:hover{background:#f8fafc;}
 
-        .nav-item:hover {
-            background: #f8fafc;
-            color: var(--primary);
-        }
+        .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:600;}
+        .badge-success{background:#d1fae5;color:#065f46;}
+        .badge-warning{background:#fef3cd;color:#856404;}
+        .badge-danger{background:#fee2e2;color:#991b1b;}
+        .badge-info{background:#dbeafe;color:#1e40af;}
 
-        .nav-item.active {
-            color: var(--primary);
-            background: #eff6ff;
-        }
+        /* MODAL */
+        .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;}
+        .modal-overlay.show{display:flex;}
+        .modal{background:white;border-radius:12px;padding:24px;width:90%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.2);text-align:center;}
+        .modal h2{font-size:1.2rem;font-weight:700;color:var(--success);margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px;}
+        .modal p{color:#4b5563;margin-bottom:20px;}
 
-        .content {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
+        /* TOAST */
+        #toastBox{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+        .toast{display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:8px;color:white;font-size:.84rem;font-weight:500;min-width:260px;box-shadow:0 4px 16px rgba(0,0,0,.15);animation:slideIn .25s ease;}
+        @keyframes slideIn{from{transform:translateX(100px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+        .toast-success{background:#27ae60;} .toast-error{background:#e74c3c;} .toast-info{background:#3498db;} .toast-warning{background:#f39c12;}
 
-        .card {
-            background: white;
-            border-radius: 0.75rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            margin-bottom: 1.5rem;
-            overflow: hidden;
-        }
+        .spin{animation:spin 1s linear infinite;display:inline-block;}
+        @keyframes spin{to{transform:rotate(360deg);}}
 
-        .card-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .card-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #1e293b;
-        }
-
-        .card-body {
-            padding: 1.5rem;
-        }
-
-        .btn {
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            border: none;
-            cursor: pointer;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .btn-sm {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-        }
-
-        .btn-success { background: var(--success); color: white; }
-        .btn-info { background: var(--info); color: white; }
-        .btn-warning { background: var(--warning); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-
-        .btn:hover {
-            filter: brightness(110%);
-            transform: translateY(-1px);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-            margin: 1rem 0;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        th {
-            background: #f8fafc;
-            font-weight: 600;
-            color: #64748b;
-        }
-
-        tr:hover {
-            background: #f8fafc;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .stat-info h3 {
-            color: #64748b;
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-info p {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #1e293b;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.5rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .toast {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            padding: 1rem 1.5rem;
-            background: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            animation: slideInRight 0.3s ease;
-            z-index: 1000;
-        }
-
-        @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        .modal {
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            background-color: #ffffff;
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 90%;
-            max-width: 400px;
-            animation: slideDown 0.3s ease-out;
-        }
-
-        @keyframes slideDown {
-            from {
-                transform: translateY(-50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .modal h2 {
-            color: #22c55e;
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-
-        .modal p {
-            color: #4b5563;
-            margin-bottom: 1.5rem;
-            font-size: 1.1rem;
-        }
-
-        .modal button {
-            background-color: #2563eb;
-            color: white;
-            padding: 0.75rem 2rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .modal button:hover {
-            background-color: #1d4ed8;
-            transform: translateY(-1px);
-        }
-
-        .sort-icon {
-            cursor: pointer;
-            margin-left: 0.5rem;
-        }
-
-        .sort-icon.active {
-            color: var(--primary);
+        @media(max-width:900px){
+            .sidebar{width:0;overflow:hidden;} .sidebar.open{width:240px;}
+            .main-content{margin-left:0;} .menu-toggle{display:block!important;}
+            .stats-row{grid-template-columns:1fr;}
         }
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="header-content">
-            <div class="logo-section">
-                
-                <h1>Good Way Express</h1>
-            </div>
-        </div>
-    </header>
 
-    <nav class="nav">
-        <div class="nav-content">
-            
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+    <div class="logo-section">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-shipping-fast"></i></div>
+            <div><div class="logo-text">Good Way Express</div><div class="logo-sub">Transport Panel</div></div>
         </div>
-    </nav>
+    </div>
+    <div class="nav-section">
+        <div class="nav-title">Main</div>
+        <ul class="nav-menu">
+            <li class="nav-item"><a href="{% url 'transporter:home' %}" class="nav-link"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+            <li class="nav-item"><a href="{% url 'transporter:receive' %}" class="nav-link active"><i class="fas fa-clock"></i><span>Pending Requests</span></a></li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="toggleSub('sub-del',this);return false;">
+                    <i class="fas fa-clipboard-list"></i><span>Delivery Management</span>
+                    <i class="fas fa-chevron-right" id="arr-del" style="margin-left:auto;font-size:10px;transition:transform .2s;"></i>
+                </a>
+                <ul class="sub-menu" id="sub-del" style="display:none;">
+                    <li><a href="{% url 'transporter:delivery_cnotes' %}">Single Delivery</a></li>
+                    <li><a href="{% url 'transporter:ddm_settlement' %}">DDM Settlements</a></li>
+                </ul>
+            </li>
+            <li class="nav-item"><a href="{% url 'transporter:received_cnote' %}" class="nav-link"><i class="fas fa-check-circle"></i><span>Completed</span></a></li>
+        </ul>
+        <div class="nav-title">Reports & Masters</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="toggleSub('sub-rep',this);return false;">
+                    <i class="fas fa-chart-bar"></i><span>Reports</span>
+                    <i class="fas fa-chevron-right" id="arr-rep" style="margin-left:auto;font-size:10px;transition:transform .2s;"></i>
+                </a>
+                <ul class="sub-menu" id="sub-rep" style="display:none;">
+                    <li><a href="{% url 'transporter:all_booking_register' %}">Booking Register</a></li>
+                    <li><a href="{% url 'transporter:loading_sheet_report' %}">Loading Sheet Report</a></li>
+                </ul>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="toggleSub('sub-mas',this);return false;">
+                    <i class="fas fa-cog"></i><span>Master</span>
+                    <i class="fas fa-chevron-right" id="arr-mas" style="margin-left:auto;font-size:10px;transition:transform .2s;"></i>
+                </a>
+                <ul class="sub-menu" id="sub-mas" style="display:none;">
+                    <li><a href="{% url 'transporter:rate_card_master' %}">Rate Card Master</a></li>
+                    <li><a href="{% url 'transporter:billing' %}">Billing Dealer</a></li>
+                    <li><a href="{% url 'transporter:manage_location' %}">Manage Location</a></li>
+                    <li><a href="{% url 'transporter:party_master' %}">Party Master</a></li>
+                    <li><a href="{% url 'transporter:add_user' %}">Add User</a></li>
+                    <li><a href="{% url 'transporter:view_users' %}">View Users</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div class="sidebar-footer">
+        <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+            <button type="submit" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </form>
+    </div>
+</div>
 
-    <main class="content">
+<!-- MAIN -->
+<div class="main-content">
+    <div class="topbar">
+        <div class="topbar-left">
+            <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+            <div class="page-title"><i class="fas fa-inbox"></i> Receive Sheet Details</div>
+        </div>
+        <div class="topbar-right">
+            <div class="user-avatar">{{ request.user.username|first|upper }}</div>
+            <div><div class="uname">{{ request.user.username|title }}</div><div class="urole">Transporter</div></div>
+        </div>
+    </div>
+
+    <div class="page-body">
+        <!-- Loading Sheet Info -->
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title">Loading Sheet Details</h2>
+                <div class="card-title"><i class="fas fa-file-alt"></i> Loading Sheet Details</div>
             </div>
             <div class="card-body">
-                <div class="table-responsive">
-                    <table id="loadingSheetDetails">
-                        <tr>
-                            <th>LS No</th>
-                            <th>LS Date/Time</th>
-                            <th>Dealer Name</th>
-                            <th>Transporter Name</th>
-                            <th>Total Cnotes</th>
-                            <th>Total Art</th>
-                            <th>Total Amount</th>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-info">
-                    <h3>Total Short Entry</h3>
-                    <p id="shortEntryCount">0</p>
-                </div>
-                <i class="fas fa-exclamation-triangle fa-2x" style="color: var(--warning)"></i>
-            </div>
-            <div class="stat-card">
-                <div class="stat-info">
-                    <h3>Total Damage Entry</h3>
-                    <p id="damageEntryCount">0</p>
-                </div>
-                <i class="fas fa-times-circle fa-2x" style="color: var(--danger)"></i>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-body">
-                <div class="grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem;">
-                    <textarea id="remarks" class="form-control" placeholder="Enter remarks..." rows="3"></textarea>
-                    <select id="godownSelect" class="form-control">
-                        <option>{{ user.username }} Godown</option>
-                    </select>
-                    <select id="userSelect" class="form-control">
-                        <option>User: {{ user.username }}</option>
-                    </select>
-                </div>
-                <div class="action-buttons">
-                    <button class="btn btn-success" id="receiveBtn">
-                        <i class="fas fa-check-circle"></i>
-                        Receive
-                    </button>
-                    
-                    <button class="btn btn-danger" id="closeBtn">
-                        <i class="fas fa-times-circle"></i>
-                        Close
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">LR Details</h2>
-                <input type="text" id="searchInput" class="form-control" placeholder="Search LR...">
-            </div>
-            <div class="card-body">
-                <div id="loadingIndicator" style="display:none;" class="text-center p-4">
-                    <i class="fas fa-spinner fa-spin fa-2x"></i>
-                    <p>Loading LR details...</p>
-                </div>
-                <div class="table-responsive">
-                    <table id="lrDetailsTable">
+                <div class="tbl-wrap">
+                    <table class="data-table" id="loadingSheetDetails">
                         <thead>
-                            <tr>
-                                <th><input type="checkbox" id="selectAll"></th>
-                                <th>LR No. <i class="fas fa-sort sort-icon" data-column="lr_no"></i></th>
-                                <th>To <i class="fas fa-sort sort-icon" data-column="to"></i></th>
-                                <th>Consignee Name <i class="fas fa-sort sort-icon" data-column="consignee_name"></i></th>
-                                <th>Articles <i class="fas fa-sort sort-icon" data-column="articles"></i></th>
-                                <th>Amount <i class="fas fa-sort sort-icon" data-column="amount"></i></th>
-                                <th>Cnote Type <i class="fas fa-sort sort-icon" data-column="cnote_type"></i></th>
-                                <th>Status <i class="fas fa-sort sort-icon" data-column="status"></i></th>
-                                <th>Actions</th>
-                            </tr>
+                            <tr><th>LS No</th><th>LS Date/Time</th><th>Dealer Name</th><th>Transporter</th><th>Total CNotes</th><th>Total Art</th><th>Total Amount</th></tr>
                         </thead>
-                        <tbody id="tableBody">
-                            <!-- LR details will be populated here -->
+                        <tbody id="loadingSheetBody">
+                            <tr><td colspan="7" style="text-align:center;padding:20px;color:#94a3b8;"><i class="fas fa-spinner spin"></i> Loading…</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-    </main>
 
-    <div id="successPopup" class="modal" style="display:none;">
-        <div class="modal-content">
-            <h2>
-                <i class="fas fa-check-circle"></i>
-                Success
-            </h2>
-            <p>Your data has been successfully received.</p>
-            <button id="okButton" class="btn">OK</button>
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#fef3c7;color:#92400e;"><i class="fas fa-exclamation-triangle"></i></div>
+                <div><div class="stat-val" id="shortEntryCount">0</div><div class="stat-lbl">Short Entries</div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#fee2e2;color:#991b1b;"><i class="fas fa-times-circle"></i></div>
+                <div><div class="stat-val" id="damageEntryCount">0</div><div class="stat-lbl">Damage Entries</div></div>
+            </div>
+        </div>
+
+        <!-- Remarks + Actions -->
+        <div class="card">
+            <div class="card-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px;">
+                    <div>
+                        <label style="font-size:.8rem;font-weight:600;color:var(--dark);display:block;margin-bottom:6px;">Remarks</label>
+                        <textarea id="remarks" class="form-control" rows="3" placeholder="Enter remarks…" style="width:100%;"></textarea>
+                    </div>
+                    <div>
+                        <label style="font-size:.8rem;font-weight:600;color:var(--dark);display:block;margin-bottom:6px;">Godown</label>
+                        <select id="godownSelect" class="form-control" style="width:100%;">
+                            <option>{{ user.username }} Godown</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:.8rem;font-weight:600;color:var(--dark);display:block;margin-bottom:6px;">User</label>
+                        <select id="userSelect" class="form-control" style="width:100%;">
+                            <option>{{ user.username }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="controls-row">
+                    <button class="btn btn-success" id="receiveBtn"><i class="fas fa-check-circle"></i> Receive Selected</button>
+                    <button class="btn btn-secondary" id="closeBtn" onclick="window.close();"><i class="fas fa-times"></i> Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LR Details -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-list"></i> LR Details</div>
+                <input type="text" id="searchInput" class="form-control" placeholder="🔍 Search LR…" style="min-width:220px;">
+            </div>
+            <div class="card-body">
+                <div id="loadingIndicator" style="display:none;text-align:center;padding:20px;color:#94a3b8;">
+                    <i class="fas fa-spinner spin" style="font-size:1.5rem;"></i>
+                    <p>Loading LR details…</p>
+                </div>
+                <div class="tbl-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAll"></th>
+                                <th>LR No.</th>
+                                <th>To</th>
+                                <th>Consignee Name</th>
+                                <th>Articles</th>
+                                <th>Amount</th>
+                                <th>CN Type</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr><td colspan="9" style="text-align:center;padding:40px;color:#94a3b8;"><i class="fas fa-info-circle" style="font-size:2rem;margin-bottom:8px;display:block;"></i>No LS number provided. Open this page with a valid ?lsNumber= parameter.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
-    <script>
-        // Add CSRF token to Axios headers
-        axios.defaults.headers.common['X-CSRFToken'] = '{{ csrf_token }}';
-    
-        // Global variables
-        let loadingSheetData = null;
-        let lrDetails = [];
-        let stats = {
-            shortEntry: 0,
-            damageEntry: 0
-        };
-        let currentSortColumn = 'lr_no';
-        let currentSortDirection = 'asc';
-    
-        // Function to get URL parameters
-        function getUrlParameter(name) {
-            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-            var results = regex.exec(location.search);
-            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+</div>
+
+<!-- Success Modal -->
+<div class="modal-overlay" id="successPopup">
+    <div class="modal">
+        <h2><i class="fas fa-check-circle"></i> Success!</h2>
+        <p>Your data has been successfully received. Redirecting to pending requests…</p>
+        <button class="btn btn-success" id="okButton"><i class="fas fa-check"></i> OK</button>
+    </div>
+</div>
+
+<div id="toastBox"></div>
+
+<script>
+    axios.defaults.headers.common['X-CSRFToken'] = '{{ csrf_token }}';
+
+    let loadingSheetData = null;
+    let lrDetails = [];
+    let stats = { shortEntry: 0, damageEntry: 0 };
+    let currentSortColumn = 'lr_no';
+    let currentSortDirection = 'asc';
+
+    function getUrlParameter(name) {
+        const regex = new RegExp('[\\?&]' + name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]') + '=([^&#]*)');
+        const results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
+    async function fetchLoadingSheetDetails(lsNumber) {
+        document.getElementById('loadingIndicator').style.display = 'block';
+        try {
+            const response = await axios.get(`/transporter/api/loading-sheet/${lsNumber}/`);
+            if (response.data.status === 'success') {
+                populateLoadingSheetDetails(response.data.loading_sheet);
+                lrDetails = response.data.lr_details;
+                populateLRDetails();
+            } else throw new Error(response.data.message || 'Failed to fetch loading sheet');
+        } catch (error) {
+            showToast('Failed to fetch loading sheet details', 'error');
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="9" style="text-align:center;padding:30px;color:#e74c3c;"><i class="fas fa-exclamation-circle" style="font-size:2rem;display:block;margin-bottom:8px;"></i>${error.message}</td></tr>`;
+        } finally {
+            document.getElementById('loadingIndicator').style.display = 'none';
         }
-    
-        // Function to fetch loading sheet details
-        async function fetchLoadingSheetDetails(lsNumber) {
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            loadingIndicator.style.display = 'block';
-            
-            try {
-                const response = await axios.get(`/transporter/api/loading-sheet/${lsNumber}/`);
-                console.log('API Response:', response.data);
-                
-                if (response.data.status === 'success') {
-                    populateLoadingSheetDetails(response.data.loading_sheet);
-                    lrDetails = response.data.lr_details;
-                    populateLRDetails();
-                } else {
-                    throw new Error(response.data.message || 'Failed to fetch loading sheet details');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('Failed to fetch loading sheet details', 'error');
-                document.getElementById('tableBody').innerHTML = `
-                    <tr>
-                        <td colspan="9" class="text-center text-red-600">
-                            Error loading LR details. Please try again.
-                        </td>
-                    </tr>
-                `;
-            } finally {
-                loadingIndicator.style.display = 'none';
-            }
+    }
+
+    function populateLoadingSheetDetails(data) {
+        loadingSheetData = data;
+        document.getElementById('loadingSheetBody').innerHTML = `
+            <tr>
+                <td><strong>${data.ls_no || '-'}</strong></td>
+                <td>${data.created_at || '-'}</td>
+                <td>${data.dealer_name || '-'}</td>
+                <td>${data.transporter_name || '-'}</td>
+                <td><span class="badge badge-info">${data.total_cnotes || 0}</span></td>
+                <td>${data.total_articles || 0}</td>
+                <td><strong>₹${data.total_amount || 0}</strong></td>
+            </tr>`;
+    }
+
+    function populateLRDetails() {
+        const tableBody = document.getElementById('tableBody');
+        if (!lrDetails || lrDetails.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8;">No pending LR details available</td></tr>';
+            return;
         }
-    
-        // Function to populate loading sheet details
-        function populateLoadingSheetDetails(data) {
-            loadingSheetData = data;
-            const table = document.getElementById('loadingSheetDetails');
-            table.innerHTML = `
-                <tr>
-                    <th>LS No</th>
-                    <th>LS Date/Time</th>
-                    <th>Dealer Name</th>
-                    <th>Transporter Name</th>
-                    <th>Total Cnotes</th>
-                    <th>Total Art</th>
-                    <th>Total Amount</th>
-                </tr>
-                <tr>
-                    <td>${data.ls_no || '-'}</td>
-                    <td>${data.created_at || '-'}</td>
-                    <td>${data.dealer_name || '-'}</td>
-                    <td>${data.transporter_name || '-'}</td>
-                    <td>${data.total_cnotes || 0}</td>
-                    <td>${data.total_articles || 0}</td>
-                    <td>₹${data.total_amount || 0}</td>
-                </tr>
-            `;
-        }
-    
-        // Function to populate LR details table
-        function populateLRDetails() {
-            const tableBody = document.getElementById('tableBody');
-            if (!lrDetails || lrDetails.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="9" class="text-center">No pending LR details available</td></tr>';
-                return;
-            }
-    
-            tableBody.innerHTML = lrDetails.map(item => {
-                const lr_no = item.lr_no || '-';
-                const to = item.to || 'N/A';
-                const consignee_name = item.consignee_name || 'N/A';
-                const articles = item.articles || 0;
-                const amount = item.amount || 0;
-                const cnote_type = item.cnote_type || 'N/A';
-                const status = item.status || 'Pending';
-                const isReceived = status.toLowerCase() === 'received';
-    
-                return `
-                    <tr>
-                        <td><input type="checkbox" class="selectItem" data-id="${lr_no}" ${isReceived ? 'disabled' : ''}></td>
-                        <td>${lr_no}</td>
-                        <td>${to}</td>
-                        <td>${consignee_name}</td>
-                        <td>${articles}</td>
-                        <td>₹${amount}</td>
-                        <td>${cnote_type}</td>
-                        <td>${status}</td>
-                        <td>
-                            <div class="action-buttons">
-                                <button class="btn btn-warning btn-sm" onclick="handleShort('${lr_no}')" ${isReceived ? 'disabled' : ''}>
-                                    <i class="fas fa-exclamation-triangle"></i> Short
-                                </button>
-                                <button class="btn btn-danger btn-sm" onclick="handleDamage('${lr_no}')" ${isReceived ? 'disabled' : ''}>
-                                    <i class="fas fa-times-circle"></i> Damage
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-    
-        // Function to handle short entry
-        async function handleShort(lrNo) {
-            try {
-                const response = await axios.post('/transporter/api/short-entry/', { lr_no: lrNo });
-                stats.shortEntry++;
-                updateStats();
-                showToast(`Short entry recorded for ${lrNo}`);
-                await fetchLoadingSheetDetails(loadingSheetData.ls_no);
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('Failed to record short entry', 'error');
-            }
-        }
-    
-        // Function to handle damage entry
-        async function handleDamage(lrNo) {
-            try {
-                const response = await axios.post('/transporter/api/damage-entry/', { lr_no: lrNo });
-                stats.damageEntry++;
-                updateStats();
-                showToast(`Damage entry recorded for ${lrNo}`);
-                await fetchLoadingSheetDetails(loadingSheetData.ls_no);
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('Failed to record damage entry', 'error');
-            }
-        }
-    
-        // Function to update stats
-        function updateStats() {
+        tableBody.innerHTML = lrDetails.map(item => {
+            const lr_no = item.lr_no || '-';
+            const isReceived = (item.status || '').toLowerCase() === 'received';
+            const statusBadge = isReceived
+                ? '<span class="badge badge-success"><i class="fas fa-check"></i> Received</span>'
+                : '<span class="badge badge-warning"><i class="fas fa-clock"></i> Pending</span>';
+            return `
+            <tr>
+                <td><input type="checkbox" class="selectItem" data-id="${lr_no}" ${isReceived ? 'disabled' : ''}></td>
+                <td><strong>${lr_no}</strong></td>
+                <td>${item.to || 'N/A'}</td>
+                <td>${item.consignee_name || 'N/A'}</td>
+                <td>${item.articles || 0}</td>
+                <td>₹${item.amount || 0}</td>
+                <td>${item.cnote_type || 'N/A'}</td>
+                <td>${statusBadge}</td>
+                <td>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn btn-warning" onclick="handleShort('${lr_no}')" ${isReceived ? 'disabled' : ''} style="font-size:.75rem;padding:.3rem .6rem;">
+                            <i class="fas fa-exclamation-triangle"></i> Short
+                        </button>
+                        <button class="btn btn-danger" onclick="handleDamage('${lr_no}')" ${isReceived ? 'disabled' : ''} style="font-size:.75rem;padding:.3rem .6rem;">
+                            <i class="fas fa-times-circle"></i> Damage
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    async function handleShort(lrNo) {
+        try {
+            await axios.post('/transporter/api/short-entry/', { lr_no: lrNo });
+            stats.shortEntry++;
             document.getElementById('shortEntryCount').textContent = stats.shortEntry;
+            showToast(`Short entry recorded for ${lrNo}`, 'warning');
+            await fetchLoadingSheetDetails(loadingSheetData.ls_no);
+        } catch { showToast('Failed to record short entry', 'error'); }
+    }
+
+    async function handleDamage(lrNo) {
+        try {
+            await axios.post('/transporter/api/damage-entry/', { lr_no: lrNo });
+            stats.damageEntry++;
             document.getElementById('damageEntryCount').textContent = stats.damageEntry;
+            showToast(`Damage entry recorded for ${lrNo}`, 'warning');
+            await fetchLoadingSheetDetails(loadingSheetData.ls_no);
+        } catch { showToast('Failed to record damage entry', 'error'); }
+    }
+
+    function showToast(message, type = 'info') {
+        const icons = { success: 'check-circle', error: 'exclamation-circle', warning: 'exclamation-triangle', info: 'info-circle' };
+        const t = document.createElement('div');
+        t.className = `toast toast-${type}`;
+        t.innerHTML = `<i class="fas fa-${icons[type] || 'info-circle'}"></i> ${message}`;
+        document.getElementById('toastBox').appendChild(t);
+        setTimeout(() => t.remove(), 3500);
+    }
+
+    function toggleSub(id, el) {
+        const sub = document.getElementById(id);
+        const isOpen = sub.style.display === 'block';
+        sub.style.display = isOpen ? 'none' : 'block';
+        const arr = el.querySelector('.fa-chevron-right');
+        if (arr) arr.style.transform = isOpen ? '' : 'rotate(90deg)';
+    }
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        const lsNumber = getUrlParameter('lsNumber');
+        if (lsNumber) {
+            await fetchLoadingSheetDetails(lsNumber);
+        } else {
+            showToast('No Loading Sheet number provided in URL', 'error');
         }
-    
-        // Function to show toast notification
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle" style="color: var(--${type === 'success' ? 'success' : 'danger'})"></i>
-                <span>${message}</span>
-            `;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-    
-        // Function to show success popup
-        function showSuccessPopup() {
-            const popup = document.getElementById('successPopup');
-            popup.style.display = 'flex';
-            
-            // Automatically redirect after 3 seconds
-            setTimeout(() => {
-                window.location.href = '/transporter/receive/';
-            }, 3000);
-        }
-    
-        // Function to sort LR details
-        function sortLRDetails(column) {
-            if (column === currentSortColumn) {
-                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
-            } else {
-                currentSortColumn = column;
-                currentSortDirection = 'asc';
-            }
-    
-            lrDetails.sort((a, b) => {
-                let valueA = a[column];
-                let valueB = b[column];
-    
-                if (typeof valueA === 'string') valueA = valueA.toLowerCase();
-                if (typeof valueB === 'string') valueB = valueB.toLowerCase();
-    
-                if (valueA < valueB) return currentSortDirection === 'asc' ? -1 : 1;
-                if (valueA > valueB) return currentSortDirection === 'asc' ? 1 : -1;
-                return 0;
+    });
+
+    document.getElementById('selectAll').addEventListener('change', function(e) {
+        document.querySelectorAll('.selectItem:not(:disabled)').forEach(cb => cb.checked = e.target.checked);
+    });
+
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll('#tableBody tr').forEach(row => {
+            row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+        });
+    });
+
+    document.getElementById('receiveBtn').addEventListener('click', async function() {
+        const selectedLRs = Array.from(document.querySelectorAll('.selectItem:checked')).map(cb => cb.dataset.id);
+        if (selectedLRs.length === 0) { showToast('No LRs selected for receiving', 'error'); return; }
+        const remarks = document.getElementById('remarks').value;
+        const godown = document.getElementById('godownSelect').value;
+        const user = document.getElementById('userSelect').value;
+        try {
+            const response = await axios.post('/transporter/api/receive-cnotes/', {
+                cnotes: selectedLRs, loadingSheetData, remarks, godown, user
             });
-    
-            populateLRDetails();
-            updateSortIcons();
+            if (response.data.status === 'success') {
+                document.getElementById('successPopup').classList.add('show');
+                setTimeout(() => window.location.href = '/transporter/receive/', 3000);
+            } else showToast(response.data.message || 'Failed to receive LRs', 'error');
+        } catch (error) {
+            showToast(error.response?.data?.message || 'Failed to receive LRs', 'error');
         }
-    
-        // Function to update sort icons
-        function updateSortIcons() {
-            document.querySelectorAll('.sort-icon').forEach(icon => {
-                icon.classList.remove('active');
-                icon.classList.remove('fa-sort-up', 'fa-sort-down');
-                if (icon.dataset.column === currentSortColumn) {
-                    icon.classList.add('active');
-                    icon.classList.add(currentSortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down');
-                }
-            });
-        }
-    
-        // Event Listeners
-        document.addEventListener('DOMContentLoaded', async function() {
-            const lsNumber = getUrlParameter('lsNumber');
-            if (lsNumber) {
-                await fetchLoadingSheetDetails(lsNumber);
-            } else {
-                showToast('No Loading Sheet number provided', 'error');
-            }
-    
-            // Add event listeners for sorting
-            document.querySelectorAll('.sort-icon').forEach(icon => {
-                icon.addEventListener('click', () => sortLRDetails(icon.dataset.column));
-            });
-        });
-    
-        document.getElementById('selectAll').addEventListener('change', function(e) {
-            document.querySelectorAll('.selectItem:not(:disabled)').forEach(checkbox => {
-                checkbox.checked = e.target.checked;
-            });
-        });
-    
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            const filteredData = lrDetails.filter(item => 
-                Object.values(item).some(val => 
-                    val.toString().toLowerCase().includes(searchTerm)
-                )
-            );
-            lrDetails = filteredData;
-            populateLRDetails();
-        });
-    
-        // Receive button functionality
-        document.getElementById('receiveBtn').addEventListener('click', async function() {
-            const selectedLRs = Array.from(document.querySelectorAll('.selectItem:checked')).map(cb => cb.dataset.id);
-            if (selectedLRs.length === 0) {
-                showToast('No LRs selected for receiving', 'error');
-                return;
-            }
-    
-            const remarks = document.getElementById('remarks').value;
-            const godown = document.getElementById('godownSelect').value;
-            const user = document.getElementById('userSelect').value;
-    
-            try {
-                const response = await axios.post('/transporter/api/receive-cnotes/', { 
-                    cnotes: selectedLRs,
-                    loadingSheetData: loadingSheetData,
-                    remarks: remarks,
-                    godown: godown,
-                    user: user
-                });
-                console.log('Response:', response.data);
-                if (response.data.status === 'success') {
-                    showSuccessPopup();
-                } else {
-                    showToast(response.data.message || 'Failed to receive LRs', 'error');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showToast(error.response?.data?.message || 'Failed to receive LRs', 'error');
-            }
-        });
-    
-        // OK button event listener
-        document.getElementById('okButton').addEventListener('click', function() {
-            window.location.href = '/transporter/receive/';
-        });
-    
-        // Close button functionality
-        document.getElementById('closeBtn').addEventListener('click', function() {
-            window.close();
-        });
-    
-        // Logout button functionality
-        document.getElementById('logoutBtn').addEventListener('click', async function() {
-            try {
-                const response = await axios.post('/transporter/api/logout/');
-                window.location.href = '/login/';  // Redirect to login page
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('Logout failed', 'error');
-            }
-        });
-    </script>
+    });
+
+    document.getElementById('okButton').addEventListener('click', () => window.location.href = '/transporter/receive/');
+</script>
 </body>
 </html>
