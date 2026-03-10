@@ -742,7 +742,7 @@
         <td>${r.loading_sheet_number&&r.loading_sheet_number!=='N/A'&&r.loading_sheet_number!=='0'
           ?`<a href="/dealer/mf_print/${r.loading_sheet_number}/" target="_blank">${r.loading_sheet_number}</a>`:'N/A'}</td>
         <td>${r.ddm_number&&r.ddm_number!=='N/A'&&r.ddm_number!=='0'
-          ?`<a href="/transporter/ddm-details/?search=${encodeURIComponent(r.ddm_number)}" target="_blank">${r.ddm_number}</a>`:'N/A'}</td>
+          ?`<a href="/transporter/ddm-details/?ddmId=${encodeURIComponent(r.ddm_number)}" target="_blank">${r.ddm_number}</a>`:'N/A'}</td>
       </tr>`).join('');
       this.renderPagination(); this.updateCount();
     }
