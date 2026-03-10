@@ -94,21 +94,6 @@
 .form-control:focus { outline: none; border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(52,152,219,.1); }
 .form-control.error { border-color: var(--secondary); }
 
-/* ===== MULTISELECT ===== */
-.multiselect { position: relative; }
-.selectBox { position: relative; cursor: pointer; }
-.selectBox select { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: .88rem; cursor: pointer; background: #fff; }
-.overSelect { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
-#checkboxes {
-    display: none; border: 1px solid #ddd; background: #fff;
-    max-height: 200px; overflow-y: auto; position: absolute;
-    width: 100%; z-index: 200; border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0,0,0,.1);
-}
-#checkboxes label { display: block; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: .85rem; cursor: pointer; }
-#checkboxes label:hover { background: #f8f9fa; }
-#checkboxes label input { margin-right: 8px; }
-
 /* ===== BUTTONS ===== */
 .btn {
     padding: 8px 18px; border: none; border-radius: 6px; font-size: .85rem;
@@ -218,7 +203,7 @@ tr:last-child td { border-bottom: none; }
 </head>
 <body>
 
-<!-- Sidebar -->
+<!-- Sidebar (unchanged) -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
         <i class="fas fa-truck-fast"></i>
@@ -317,7 +302,7 @@ tr:last-child td { border-bottom: none; }
     </div>
 </aside>
 
-<!-- Topbar -->
+<!-- Topbar (unchanged) -->
 <div class="topbar" id="topbar">
     <div style="display:flex;align-items:center;gap:12px;">
         <button onclick="toggleSidebar()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:#666;">
@@ -337,7 +322,7 @@ tr:last-child td { border-bottom: none; }
 <div class="main-content" id="mainContent">
     <div class="content-area">
 
-        <!-- Search Card -->
+        <!-- Search Card (modified: single destination select) -->
         <div class="card">
             <div class="card-header">
                 <i class="fas fa-search"></i>
@@ -346,14 +331,10 @@ tr:last-child td { border-bottom: none; }
             <div class="card-body">
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Destinations</label>
-                        <div class="multiselect">
-                            <div class="selectBox" onclick="toggleCheckboxes()">
-                                <select><option>Select Destinations</option></select>
-                                <div class="overSelect"></div>
-                            </div>
-                            <div id="checkboxes"></div>
-                        </div>
+                        <label for="destinationSelect">Destination</label>
+                        <select id="destinationSelect" class="form-control">
+                            <option value="">All Destinations</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="deliveryFor">Delivery For</label>
@@ -376,7 +357,7 @@ tr:last-child td { border-bottom: none; }
             </div>
         </div>
 
-        <!-- Selected CNotes Card -->
+        <!-- Selected CNotes Card (unchanged) -->
         <div class="card">
             <div class="card-header" style="justify-content:space-between;">
                 <div style="display:flex;align-items:center;gap:10px;">
@@ -424,7 +405,7 @@ tr:last-child td { border-bottom: none; }
     </div>
 </div>
 
-<!-- Search Results Modal -->
+<!-- Search Results Modal (unchanged) -->
 <div class="modal-overlay" id="searchModal">
     <div class="modal-box">
         <div class="modal-header-bar">
@@ -466,7 +447,7 @@ tr:last-child td { border-bottom: none; }
     </div>
 </div>
 
-<!-- Delivery Details Modal -->
+<!-- Delivery Details Modal (unchanged) -->
 <div class="modal-overlay" id="deliveryModal">
     <div class="modal-box">
         <div class="modal-header-bar">
@@ -527,7 +508,7 @@ tr:last-child td { border-bottom: none; }
     </div>
 </div>
 
-<!-- Success Modal -->
+<!-- Success Modal (unchanged) -->
 <div class="modal-overlay" id="successModal">
     <div class="modal-box sm">
         <div class="modal-body-area" style="text-align:center;padding:30px 20px;">
@@ -545,10 +526,10 @@ tr:last-child td { border-bottom: none; }
     </div>
 </div>
 
-<!-- Toast Container -->
+<!-- Toast Container (unchanged) -->
 <div class="toast-container" id="toastContainer"></div>
 
-<!-- Loading Overlay -->
+<!-- Loading Overlay (unchanged) -->
 <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
 </div>
@@ -557,8 +538,6 @@ tr:last-child td { border-bottom: none; }
 // ===== State =====
 let selectedCNotes = [];
 let destinations = [];
-let expanded = false;
-let selectedDestinations = [];
 let currentDDMId = null;
 let currentDDMNo = null;
 
@@ -584,12 +563,6 @@ function toggleSidebar() {
 // ===== Init =====
 document.addEventListener('DOMContentLoaded', () => {
     loadDestinations();
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.multiselect')) {
-            const cb = document.getElementById('checkboxes');
-            if (cb) { cb.style.display = 'none'; expanded = false; }
-        }
-    });
     document.getElementById('selectAll').addEventListener('change', toggleSelectAll);
     document.getElementById('selectAllSearch').addEventListener('change', toggleSelectAllSearch);
 });
@@ -599,54 +572,42 @@ function loadDestinations() {
     fetch('/transporter/api/get-destinations/')
         .then(r => r.json())
         .then(data => {
+            // data can be an array of strings or an object with a destinations property
             destinations = data.destinations || data || [];
-            const container = document.getElementById('checkboxes');
-            container.innerHTML = '';
+            const select = document.getElementById('destinationSelect');
+            select.innerHTML = '<option value="">All Destinations</option>';
             destinations.forEach(dest => {
-                const lbl = document.createElement('label');
-                lbl.innerHTML = `<input type="checkbox" value="${dest}" onchange="updateSelectedDestinations()"> ${dest}`;
-                container.appendChild(lbl);
+                const option = document.createElement('option');
+                option.value = dest;
+                option.textContent = dest;
+                select.appendChild(option);
             });
         })
         .catch(err => showToast('Failed to load destinations', 'error'));
 }
 
-function toggleCheckboxes() {
-    const cb = document.getElementById('checkboxes');
-    if (!expanded) { cb.style.display = 'block'; expanded = true; }
-    else { cb.style.display = 'none'; expanded = false; }
-}
-
-function updateSelectedDestinations() {
-    selectedDestinations = Array.from(
-        document.querySelectorAll('#checkboxes input:checked')
-    ).map(i => i.value);
-}
-
-// ===== Search (converted to GET) =====
+// ===== Search =====
 function handleSearch() {
-    const destinations = selectedDestinations;
+    const destination = document.getElementById('destinationSelect').value;
     const deliveryFor = document.getElementById('deliveryFor').value;
     const lrNumber = document.getElementById('lrNumber').value.trim();
 
-    // Build URL with query parameters
+    // Build URL with query parameters matching backend expectations
     let url = '/transporter/api/search-cnotes-for-ddm/?';
     const params = new URLSearchParams();
-    
-    if (destinations.length > 0) {
-        destinations.forEach(d => params.append('destinations[]', d));
+    if (destination) {
+        params.append('destination', destination);
     } else {
-        params.append('destinations[]', 'ALL'); // some views expect ALL
+        params.append('destination', 'ALL');
     }
     params.append('deliveryFor', deliveryFor);
     if (lrNumber) params.append('lrNumber', lrNumber);
-
     url += params.toString();
 
     showLoading();
     fetch(url, {
         method: 'GET',
-        headers: { 'X-CSRFToken': getCookie('csrftoken') } // CSRF might not be needed for GET
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
     })
     .then(async response => {
         const text = await response.text();
@@ -659,7 +620,6 @@ function handleSearch() {
         }
     })
     .then(data => {
-        // data should be an array of objects with keys: cnote_number, consignee_name, delivery_destination_name, total_art, actual_weight, declared_value, status
         populateSearchResults(data);
         document.getElementById('searchModal').classList.add('show');
     })
@@ -675,7 +635,7 @@ function populateSearchResults(cnotes) {
         return;
     }
     cnotes.forEach(c => {
-        // Map backend fields to frontend expected field names
+        // Map backend fields to frontend expected keys
         const lrNo = c.cnote_number || c.lrNo || '';
         const consigneeName = c.consignee_name || c.consigneeName || '';
         const destination = c.delivery_destination_name || c.destination || '';
