@@ -623,21 +623,44 @@ function updateSelectedDestinations() {
     ).map(i => i.value);
 }
 
-// ===== Search =====
+// ===== Search (converted to GET) =====
 function handleSearch() {
     const destinations = selectedDestinations;
     const deliveryFor = document.getElementById('deliveryFor').value;
     const lrNumber = document.getElementById('lrNumber').value.trim();
 
+    // Build URL with query parameters
+    let url = '/transporter/api/search-cnotes-for-ddm/?';
+    const params = new URLSearchParams();
+    
+    if (destinations.length > 0) {
+        destinations.forEach(d => params.append('destinations[]', d));
+    } else {
+        params.append('destinations[]', 'ALL'); // some views expect ALL
+    }
+    params.append('deliveryFor', deliveryFor);
+    if (lrNumber) params.append('lrNumber', lrNumber);
+
+    url += params.toString();
+
     showLoading();
-    fetch('/transporter/api/search-cnotes-for-ddm/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-        body: JSON.stringify({ destinations, deliveryFor, lrNumber })
+    fetch(url, {
+        method: 'GET',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') } // CSRF might not be needed for GET
     })
-    .then(r => r.json())
+    .then(async response => {
+        const text = await response.text();
+        try {
+            const data = JSON.parse(text);
+            if (!response.ok) throw new Error(data.error || data.message || 'Unknown error');
+            return data;
+        } catch (e) {
+            throw new Error(`Invalid JSON response: ${text.substring(0, 100)}`);
+        }
+    })
     .then(data => {
-        populateSearchResults(data.cnotes || data || []);
+        // data should be an array of objects with keys: cnote_number, consignee_name, delivery_destination_name, total_art, actual_weight, declared_value, status
+        populateSearchResults(data);
         document.getElementById('searchModal').classList.add('show');
     })
     .catch(err => showToast('Search failed: ' + err.message, 'error'))
@@ -652,21 +675,39 @@ function populateSearchResults(cnotes) {
         return;
     }
     cnotes.forEach(c => {
+        // Map backend fields to frontend expected field names
+        const lrNo = c.cnote_number || c.lrNo || '';
+        const consigneeName = c.consignee_name || c.consigneeName || '';
+        const destination = c.delivery_destination_name || c.destination || '';
+        const packages = c.total_art || c.packages || 0;
+        const weight = c.actual_weight || c.weight || 0;
+        const value = c.declared_value || c.value || 0;
+        const status = c.status || '';
+
         const existingLRs = selectedCNotes.map(s => s.lrNo);
-        const alreadyAdded = existingLRs.includes(c.lrNo || c.lr_no);
+        const alreadyAdded = existingLRs.includes(lrNo);
         const row = document.createElement('tr');
         if (alreadyAdded) row.style.opacity = '0.5';
         row.innerHTML = `
-            <td><input type="checkbox" data-lr="${c.lrNo || c.lr_no}" ${alreadyAdded ? 'disabled' : ''}></td>
-            <td>${c.lrNo || c.lr_no || ''}</td>
-            <td>${c.consigneeName || c.consignee_name || ''}</td>
-            <td>${c.destination || ''}</td>
-            <td>${c.packages || 0}</td>
-            <td>${c.weight || 0}</td>
-            <td>₹${c.value || 0}</td>
-            <td><span class="status-badge status-${(c.status || '').toLowerCase()}">${c.status || ''}</span></td>
+            <td><input type="checkbox" data-lr="${lrNo}" ${alreadyAdded ? 'disabled' : ''}></td>
+            <td>${lrNo}</td>
+            <td>${consigneeName}</td>
+            <td>${destination}</td>
+            <td>${packages}</td>
+            <td>${weight}</td>
+            <td>₹${value}</td>
+            <td><span class="status-badge status-${status.toLowerCase()}">${status}</span></td>
         `;
-        row._cnoteData = c;
+        // Store original data in row._cnoteData for adding later
+        row._cnoteData = {
+            lrNo,
+            consigneeName,
+            destination,
+            packages,
+            weight,
+            value,
+            status
+        };
         body.appendChild(row);
     });
 }
@@ -677,18 +718,9 @@ function addSelected() {
     rows.forEach(row => {
         const cb = row.querySelector('input[type="checkbox"]');
         if (cb && cb.checked && !cb.disabled) {
-            const lrNo = cb.getAttribute('data-lr');
-            const cells = row.querySelectorAll('td');
-            if (cells.length >= 7) {
-                selectedCNotes.push({
-                    lrNo,
-                    consigneeName: cells[2].textContent,
-                    destination: cells[3].textContent,
-                    packages: cells[4].textContent,
-                    weight: cells[5].textContent,
-                    value: cells[6].textContent.replace('₹',''),
-                    status: cells[7]?.querySelector('.status-badge')?.textContent || ''
-                });
+            const data = row._cnoteData;
+            if (data) {
+                selectedCNotes.push(data);
                 added++;
             }
         }
@@ -701,7 +733,6 @@ function addSelected() {
 // ===== Selected Table =====
 function updateSelectedCNotesTable() {
     const body = document.getElementById('selectedCNotesBody');
-    const noData = document.getElementById('noDataRow');
     body.innerHTML = '';
     document.getElementById('selectedCount').textContent = `${selectedCNotes.length} selected`;
 
