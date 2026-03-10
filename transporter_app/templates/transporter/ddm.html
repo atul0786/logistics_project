@@ -1,631 +1,450 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Door Delivery Memo System</title>
+<title>Door Delivery Memo | Good Way Express</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
 <style>
-    :root {
-        --primary-color: #00a2e8;
-        --secondary-color: #0073aa;
-        --background-color: #f2f2f2;
-        --surface-color: #ffffff;
-        --text-color: #333333;
-        --border-color: #dddddd;
-        --success-color: #2ecc71;
-        --error-color: #e74c3c;
-        --warning-color: #f39c12;
-        --modal-overlay: rgba(0, 0, 0, 0.5);
-    }
-
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    body {
-        background-color: var(--background-color);
-        color: var(--text-color);
-        line-height: 1.6;
-    }
-
-    .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 20px;
-    }
-
-    header {
-        background-color: var(--primary-color);
-        color: white;
-        padding: 1rem 0;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-
-    .header-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .logo {
-        font-size: 1.5rem;
-        font-weight: bold;
-    }
-
-    nav ul {
-        list-style-type: none;
-        display: flex;
-    }
-
-    nav ul li {
-        margin-left: 1rem;
-    }
-
-    nav ul li a {
-        color: white;
-        text-decoration: none;
-        transition: color 0.3s ease;
-    }
-
-    nav ul li a:hover {
-        color: var(--secondary-color);
-    }
-
-    main {
-        padding: 2rem 0;
-    }
-
-    .search-section {
-        background-color: var(--surface-color);
-        border-radius: 8px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .search-title {
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
-        color: var(--secondary-color);
-    }
-
-    .search-form {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-    }
-
-    .form-group {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .form-group label {
-        margin-bottom: 0.5rem;
-        font-weight: bold;
-    }
-
-    .form-group input,
-    .form-group select {
-        padding: 0.5rem;
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        font-size: 1rem;
-    }
-
-    .form-group input.error,
-    .form-group select.error {
-        border-color: var(--error-color);
-    }
-
-    /* Multiple select styling */
-    .multiselect {
-        position: relative;
-        width: 100%;
-    }
-
-    .selectBox {
-        position: relative;
-    }
-
-    .selectBox select {
-        width: 100%;
-        padding: 0.5rem;
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        font-size: 1rem;
-        cursor: pointer;
-    }
-
-    .overSelect {
-        position: absolute;
-        left: 0;
-        right: 0;
-        top: 0;
-        bottom: 0;
-    }
-
-    #checkboxes {
-        display: none;
-        border: 1px solid var(--border-color);
-        background-color: var(--surface-color);
-        max-height: 200px;
-        overflow-y: auto;
-        position: absolute;
-        width: 100%;
-        z-index: 100;
-        border-radius: 4px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    #checkboxes label {
-        display: block;
-        padding: 0.5rem;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    #checkboxes label:hover {
-        background-color: var(--background-color);
-    }
-
-    #checkboxes label input {
-        margin-right: 0.5rem;
-    }
-
-    .search-btn {
-        background-color: var(--primary-color);
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-
-    .search-btn:hover {
-        background-color: var(--secondary-color);
-    }
-
-    .results-section {
-        background-color: var(--surface-color);
-        border-radius: 8px;
-        padding: 2rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .results-title {
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
-        color: var(--secondary-color);
-    }
-
-    .table-container {
-        overflow-x: auto;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    th, td {
-        padding: 0.75rem;
-        text-align: left;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    th {
-        background-color: var(--secondary-color);
-        color: white;
-    }
-
-    tr:nth-child(even) {
-        background-color: #f8f8f8;
-    }
-
-    .action-buttons {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 1rem;
-    }
-
-    .action-btn {
-        padding: 0.5rem 1rem;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-        margin-left: 0.5rem;
-    }
-
-    .remove-btn {
-        background-color: var(--error-color);
-        color: white;
-    }
-
-    .remove-btn:hover {
-        background-color: #c0392b;
-    }
-
-    .delivery-btn {
-        background-color: var(--success-color);
-        color: white;
-    }
-
-    .delivery-btn:hover {
-        background-color: #27ae60;
-    }
-
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: var(--modal-overlay);
-        overflow: auto;
-    }
-
-    .modal-content {
-        background-color: var(--surface-color);
-        margin: 2% auto;
-        padding: 2rem;
-        border-radius: 8px;
-        width: 90%;
-        max-width: 1200px;
-        height: 90vh;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
-
-    .modal-title {
-        font-size: 1.5rem;
-        font-weight: bold;
-    }
-
-    .close {
-        color: #aaa;
-        font-size: 28px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: color 0.3s ease;
-    }
-
-    .close:hover,
-    .close:focus {
-        color: #000;
-        text-decoration: none;
-    }
-
-    .modal-body {
-        flex-grow: 1;
-        overflow-y: auto;
-    }
-
-    .modal-footer {
-        margin-top: 1rem;
-        text-align: right;
-    }
-
-    .filter-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 10px;
-    }
-
-    .filter-row input {
-        padding: 8px;
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        flex-grow: 1;
-    }
-
-    .notification {
-        position: fixed;
-        top: 1rem;
-        right: 1rem;
-        padding: 1rem;
-        border-radius: 4px;
-        color: white;
-        font-weight: bold;
-        z-index: 1001;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .notification.success {
-        background-color: var(--success-color);
-    }
-
-    .notification.error {
-        background-color: var(--error-color);
-    }
-
-    .notification.warning {
-        background-color: var(--warning-color);
-    }
-
-    .notification.show {
-        opacity: 1;
-    }
-
-    .loading {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-
-    .loading-spinner {
-        border: 5px solid #f3f3f3;
-        border-top: 5px solid var(--primary-color);
-        border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .error-message {
-        color: var(--error-color);
-        font-size: 0.9rem;
-        margin-top: 5px;
-    }
-
-    .success-modal-content {
-        background-color: var(--surface-color);
-        margin: 10% auto;
-        padding: 2rem;
-        border-radius: 8px;
-        width: 90%;
-        max-width: 500px;
-        text-align: center;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .success-modal-content p {
-        font-size: 1.2rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .modal-buttons {
-        display: flex;
-        justify-content: center;
-        gap: 1rem;
-        margin-top: 1.5rem;
-    }
-
-    .modal-button {
-        padding: 0.75rem 1.5rem;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-weight: bold;
-        transition: background-color 0.3s ease;
-    }
-
-    .modal-button:nth-child(1) {
-        background-color: var(--primary-color);
-        color: white;
-    }
-
-    .modal-button:nth-child(2) {
-        background-color: var(--secondary-color);
-        color: white;
-    }
-
-    .modal-button:nth-child(3) {
-        background-color: var(--success-color);
-        color: white;
-    }
-
-    .modal-button:hover {
-        opacity: 0.9;
-    }
-
-    .summary-section {
-        margin-top: 1rem;
-        padding: 1rem;
-        background-color: #f8f8f8;
-        border-radius: 4px;
-    }
-
-    .summary-title {
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-    }
-
-    .summary-item {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.25rem;
-    }
-
-    .status-badge {
-        display: inline-block;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.8rem;
-        font-weight: bold;
-        text-transform: uppercase;
-    }
-
-    .status-received {
-        background-color: var(--success-color);
-        color: white;
-    }
-
-    .status-short {
-        background-color: var(--warning-color);
-        color: white;
-    }
-
-    .status-undelivered {
-        background-color: var(--error-color);
-        color: white;
-    }
-
-    .status-godown {
-        background-color: var(--primary-color);
-        color: white;
-    }
-
-    @media print {
-        .no-print {
-            display: none;
-        }
-    }
-
-    @media screen and (max-width: 600px) {
-        .search-form {
-            grid-template-columns: 1fr;
-        }
-
-        .filter-row {
-            flex-direction: column;
-        }
-
-        .modal-buttons {
-            flex-direction: column;
-        }
-
-        .modal-button {
-            margin-bottom: 0.5rem;
-        }
-    }
+:root {
+    --primary: #1a252f;
+    --primary-light: #3498db;
+    --secondary: #e74c3c;
+    --success: #27ae60;
+    --warning: #f39c12;
+    --sidebar: #1a252f;
+    --sidebar-width: 240px;
+    --topbar-height: 58px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+    position: fixed; top: 0; left: 0; height: 100vh; width: var(--sidebar-width);
+    background: var(--sidebar); z-index: 1000; overflow-y: auto; transition: width .3s;
+    display: flex; flex-direction: column;
+}
+.sidebar-brand {
+    padding: 18px 20px; background: rgba(0,0,0,.2);
+    display: flex; align-items: center; gap: 10px;
+    font-size: 1.1rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden;
+}
+.sidebar-brand i { color: var(--primary-light); font-size: 1.3rem; min-width: 22px; }
+.sidebar-nav { flex: 1; padding: 10px 0; }
+.nav-section { padding: 8px 20px 4px; font-size: .68rem; font-weight: 600; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: 1px; }
+.nav-item { position: relative; }
+.nav-link {
+    display: flex; align-items: center; gap: 12px; padding: 10px 20px;
+    color: rgba(255,255,255,.75); text-decoration: none; font-size: .88rem;
+    transition: all .2s; white-space: nowrap; overflow: hidden;
+}
+.nav-link:hover, .nav-link.active { background: rgba(255,255,255,.1); color: #fff; }
+.nav-link.active { border-left: 3px solid var(--primary-light); }
+.nav-link i { min-width: 18px; font-size: .95rem; }
+.nav-toggle { margin-left: auto; font-size: .7rem; transition: transform .3s; }
+.sub-menu { display: none; background: rgba(0,0,0,.15); }
+.sub-menu .nav-link { padding-left: 52px; font-size: .84rem; }
+.sub-menu.open { display: block; }
+
+/* ===== TOPBAR ===== */
+.topbar {
+    position: fixed; top: 0; left: var(--sidebar-width); right: 0;
+    height: var(--topbar-height); background: #fff; z-index: 999;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    transition: left .3s;
+}
+.topbar-title { font-size: 1.05rem; font-weight: 600; color: #333; }
+.topbar-right { display: flex; align-items: center; gap: 14px; }
+.topbar-user { display: flex; align-items: center; gap: 8px; font-size: .88rem; color: #555; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary-light); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: .8rem; }
+
+/* ===== MAIN CONTENT ===== */
+.main-content {
+    margin-left: var(--sidebar-width);
+    padding-top: var(--topbar-height);
+    min-height: 100vh;
+    background: #f0f2f5;
+    transition: margin-left .3s;
+}
+.content-area { padding: 24px; }
+
+/* ===== PAGE CARD ===== */
+.card {
+    background: #fff; border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07); margin-bottom: 20px;
+}
+.card-header {
+    padding: 16px 20px; border-bottom: 1px solid #f0f0f0;
+    display: flex; align-items: center; gap: 10px;
+}
+.card-header h5 { font-size: .95rem; font-weight: 600; color: #333; margin: 0; }
+.card-header i { color: var(--primary-light); }
+.card-body { padding: 20px; }
+
+/* ===== SEARCH FORM ===== */
+.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; align-items: end; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label { font-size: .82rem; font-weight: 600; color: #555; }
+.form-control {
+    padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;
+    font-size: .88rem; transition: border-color .2s;
+}
+.form-control:focus { outline: none; border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(52,152,219,.1); }
+.form-control.error { border-color: var(--secondary); }
+
+/* ===== MULTISELECT ===== */
+.multiselect { position: relative; }
+.selectBox { position: relative; cursor: pointer; }
+.selectBox select { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: .88rem; cursor: pointer; background: #fff; }
+.overSelect { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
+#checkboxes {
+    display: none; border: 1px solid #ddd; background: #fff;
+    max-height: 200px; overflow-y: auto; position: absolute;
+    width: 100%; z-index: 200; border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.1);
+}
+#checkboxes label { display: block; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: .85rem; cursor: pointer; }
+#checkboxes label:hover { background: #f8f9fa; }
+#checkboxes label input { margin-right: 8px; }
+
+/* ===== BUTTONS ===== */
+.btn {
+    padding: 8px 18px; border: none; border-radius: 6px; font-size: .85rem;
+    font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+    transition: all .2s;
+}
+.btn-primary { background: var(--primary-light); color: #fff; }
+.btn-primary:hover { background: #2980b9; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover { background: #219a52; }
+.btn-danger { background: var(--secondary); color: #fff; }
+.btn-danger:hover { background: #c0392b; }
+.btn-warning { background: var(--warning); color: #fff; }
+.btn-warning:hover { background: #d68910; }
+
+/* ===== TABLE ===== */
+.table-responsive { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+th { background: var(--primary); color: #fff; padding: 10px 12px; text-align: left; font-weight: 600; font-size: .82rem; }
+td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; color: #444; }
+tr:hover td { background: #f8f9fa; }
+tr:last-child td { border-bottom: none; }
+.status-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 12px;
+    font-size: .72rem; font-weight: 600; text-transform: uppercase;
+}
+.status-received { background: #d4edda; color: #155724; }
+.status-short { background: #fff3cd; color: #856404; }
+.status-undelivered { background: #f8d7da; color: #721c24; }
+.status-godown { background: #cce5ff; color: #004085; }
+
+.action-bar {
+    padding: 12px 20px; border-top: 1px solid #f0f0f0;
+    display: flex; justify-content: flex-end; gap: 10px;
+}
+
+/* ===== MODALS ===== */
+.modal-overlay {
+    display: none; position: fixed; z-index: 2000;
+    left: 0; top: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,.5); justify-content: center; align-items: flex-start;
+    padding-top: 40px;
+}
+.modal-overlay.show { display: flex; }
+.modal-box {
+    background: #fff; border-radius: 10px; width: 90%; max-width: 1000px;
+    max-height: 85vh; display: flex; flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,.2);
+}
+.modal-box.sm { max-width: 480px; }
+.modal-header-bar {
+    padding: 16px 20px; border-bottom: 1px solid #eee;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.modal-header-bar h5 { font-size: .95rem; font-weight: 700; color: #333; margin: 0; }
+.modal-close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #999; line-height: 1; }
+.modal-close:hover { color: #333; }
+.modal-body-area { flex: 1; overflow-y: auto; padding: 20px; }
+.modal-footer-bar { padding: 12px 20px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; }
+
+/* filter row */
+.filter-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.filter-row input { padding: 6px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: .82rem; flex: 1; min-width: 100px; }
+
+/* summary section */
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 16px; }
+.summary-card { background: #f8f9fa; border-radius: 8px; padding: 12px; text-align: center; }
+.summary-card .val { font-size: 1.3rem; font-weight: 700; color: var(--primary-light); }
+.summary-card .lbl { font-size: .75rem; color: #666; margin-top: 2px; }
+
+/* success modal */
+.success-icon { font-size: 3rem; color: var(--success); text-align: center; margin-bottom: 10px; }
+.success-msg { text-align: center; font-size: 1rem; color: #333; margin-bottom: 16px; }
+.success-btns { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+
+/* toast */
+.toast-container { position: fixed; top: 80px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+    padding: 12px 18px; border-radius: 8px; color: #fff; font-size: .85rem; font-weight: 600;
+    min-width: 240px; box-shadow: 0 4px 12px rgba(0,0,0,.15);
+    animation: slideIn .3s ease; display: flex; align-items: center; gap: 8px;
+}
+.toast.success { background: var(--success); }
+.toast.error { background: var(--secondary); }
+.toast.warning { background: var(--warning); }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* loading */
+.loading-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.4); z-index: 9998;
+    justify-content: center; align-items: center;
+}
+.loading-overlay.show { display: flex; }
+.spinner { width: 44px; height: 44px; border: 4px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error-msg { color: var(--secondary); font-size: .78rem; margin-top: 3px; }
+
+@media (max-width: 768px) {
+    .sidebar { width: 0; overflow: hidden; }
+    .sidebar.open { width: var(--sidebar-width); }
+    .topbar { left: 0; }
+    .main-content { margin-left: 0; }
+}
 </style>
 </head>
 <body>
-<header class="no-print">
-    <div class="container">
-        <div class="header-content">
-            <div class="logo">
-                <i class="fas fa-truck"></i> Door Delivery Memo
-            </div>
-           <!-- <nav>
-                <ul>
-                    <li><a href="#"><i class="fas fa-home"></i> Home</a></li>
-                    <li><a href="#"><i class="fas fa-search"></i> Search</a></li>
-                    <li><a href="#"><i class="fas fa-file-alt"></i> Reports</a></li>
-                    <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
-                </ul>
-            </nav> -->
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <i class="fas fa-truck-fast"></i>
+        <span>Good Way Express</span>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="nav-section">Main</div>
+        <div class="nav-item">
+            <a href="{% url 'transporter:home' %}" class="nav-link">
+                <i class="fas fa-home"></i><span>Dashboard</span>
+            </a>
+        </div>
+        <div class="nav-section">Operations</div>
+        <div class="nav-item">
+            <a href="{% url 'transporter:receive' %}" class="nav-link">
+                <i class="fas fa-box-open"></i><span>Receive</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{% url 'transporter:delivery_cnotes' %}" class="nav-link">
+                <i class="fas fa-hand-holding-box"></i><span>Delivery CNotes</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{% url 'transporter:ddm_settlement' %}" class="nav-link">
+                <i class="fas fa-clipboard-check"></i><span>DDM Settlement</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="#" class="nav-link active">
+                <i class="fas fa-truck"></i><span>Door Delivery Memo</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{% url 'transporter:received_cnote' %}" class="nav-link">
+                <i class="fas fa-file-invoice"></i><span>Received CNotes</span>
+            </a>
+        </div>
+        <div class="nav-section">Reports</div>
+        <div class="nav-item">
+            <a href="{% url 'transporter:all_booking_register' %}" class="nav-link">
+                <i class="fas fa-book"></i><span>Booking Register</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{% url 'transporter:loading_sheet_report' %}" class="nav-link">
+                <i class="fas fa-file-alt"></i><span>Loading Sheet</span>
+            </a>
+        </div>
+        <div class="nav-section">Masters</div>
+        <div class="nav-item">
+            <a href="{% url 'transporter:rate_card_master' %}" class="nav-link">
+                <i class="fas fa-tags"></i><span>Rate Card</span>
+            </a>
+        </div>
+        <div class="nav-section">Billing</div>
+        <div class="nav-item">
+            <a href="{% url 'transporter:billing' %}" class="nav-link">
+                <i class="fas fa-file-invoice-dollar"></i><span>Billing</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{% url 'transporter:bill_manage' %}" class="nav-link">
+                <i class="fas fa-receipt"></i><span>Manage Bills</span>
+            </a>
+        </div>
+        <div class="nav-section">Settings</div>
+        <div class="nav-item">
+            <a href="{% url 'transporter:manage_location' %}" class="nav-link">
+                <i class="fas fa-map-marker-alt"></i><span>Manage Location</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{% url 'transporter:party_master' %}" class="nav-link">
+                <i class="fas fa-building"></i><span>Party Master</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{% url 'transporter:add_user' %}" class="nav-link">
+                <i class="fas fa-user-plus"></i><span>Add User</span>
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{% url 'transporter:view_users' %}" class="nav-link">
+                <i class="fas fa-users"></i><span>View Users</span>
+            </a>
+        </div>
+    </nav>
+    <div style="padding:16px 20px; border-top:1px solid rgba(255,255,255,.08);">
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;display:flex;align-items:center;gap:10px;font-size:.88rem;width:100%;padding:6px 0;">
+                <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+            </button>
+        </form>
+    </div>
+</aside>
+
+<!-- Topbar -->
+<div class="topbar" id="topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+        <button onclick="toggleSidebar()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:#666;">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="topbar-title"><i class="fas fa-truck" style="color:var(--primary-light);margin-right:6px;"></i>Door Delivery Memo</span>
+    </div>
+    <div class="topbar-right">
+        <div class="topbar-user">
+            <div class="avatar">{{ request.user.username|slice:":2"|upper }}</div>
+            <span>{{ request.user.username }}</span>
         </div>
     </div>
-</header>
+</div>
 
-<main>
-    <div class="container">
-        <section class="search-section no-print">
-            <h2 class="search-title">Search CNotes</h2>
-            <form id="searchForm" class="search-form">
-                <div class="form-group">
-                    <label for="destination">Destinations</label>
-                    <div class="multiselect">
-                        <div class="selectBox" onclick="toggleCheckboxes()">
-                            <select>
-                                <option>Select Destinations</option>
-                            </select>
-                            <div class="overSelect"></div>
-                        </div>
-                        <div id="checkboxes">
-                            <!-- Destinations will be populated here -->
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
+    <div class="content-area">
+
+        <!-- Search Card -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-search"></i>
+                <h5>Search CNotes</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Destinations</label>
+                        <div class="multiselect">
+                            <div class="selectBox" onclick="toggleCheckboxes()">
+                                <select><option>Select Destinations</option></select>
+                                <div class="overSelect"></div>
+                            </div>
+                            <div id="checkboxes"></div>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label for="deliveryFor">Delivery For</label>
+                        <select id="deliveryFor" class="form-control">
+                            <option value="BOTH">BOTH</option>
+                            <option value="DOOR">Door Delivery</option>
+                            <option value="GODOWN">Godown Delivery</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="lrNumber">LR Number</label>
+                        <input type="text" id="lrNumber" class="form-control" placeholder="Enter LR Number">
+                    </div>
+                    <div class="form-group" style="justify-content:flex-end;">
+                        <button class="btn btn-primary" onclick="handleSearch()">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="deliveryFor">Delivery For</label>
-                    <select id="deliveryFor" required>
-                        <option value="BOTH">BOTH</option>
-                        <option value="DOOR">Door Delivery</option>
-                        <option value="GODOWN">Godown Delivery</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="lrNumber">LR Number</label>
-                    <input type="text" id="lrNumber" placeholder="Enter LR Number">
-                </div>
-                <div class="form-group">
-                    <label>&nbsp;</label>
-                    <button type="submit" class="search-btn">Search</button>
-                </div>
-            </form>
-        </section>
-
-        <section class="results-section">
-            <h2 class="results-title">Selected CNotes</h2>
-            <div class="table-container">
-                <table id="selectedCNotesTable">
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" id="selectAll"></th>
-                            <th>LR No.</th>
-                            <th>Consignee Name</th>
-                            <th>Destination</th>
-                            <th>Packages</th>
-                            <th>Weight</th>
-                            <th>Value</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="selectedCNotesBody"></tbody>
-                </table>
             </div>
-            <div class="action-buttons no-print">
-                <button id="removeSelectedBtn" class="action-btn remove-btn">Remove Selected</button>
-                <button id="doorDeliveryBtn" class="action-btn delivery-btn">Door Delivery</button>
-            </div>
-        </section>
-    </div>
-</main>
-
-<div id="searchModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 class="modal-title">Search Results</h2>
-            <span class="close">&times;</span>
         </div>
-        <div class="modal-body">
-            <div class="filter-row">
-                <input type="text" placeholder="Filter LR No." id="filter-lr">
-                <input type="text" placeholder="Filter Consignee" id="filter-consignee">
-                <input type="text" placeholder="Filter Destination" id="filter-destination">
-                <input type="text" placeholder="Filter Packages" id="filter-packages">
-                <input type="text" placeholder="Filter Weight" id="filter-weight">
-                <input type="text" placeholder="Filter Value" id="filter-value">
-                <input type="text" placeholder="Filter Status" id="filter-status">
+
+        <!-- Selected CNotes Card -->
+        <div class="card">
+            <div class="card-header" style="justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <i class="fas fa-list-check"></i>
+                    <h5>Selected CNotes</h5>
+                </div>
+                <span id="selectedCount" style="font-size:.82rem;color:#888;">0 selected</span>
             </div>
-            <div class="table-container">
-                <table id="searchResultsTable">
+            <div class="card-body" style="padding:0;">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:40px;"><input type="checkbox" id="selectAll"></th>
+                                <th>LR No.</th>
+                                <th>Consignee Name</th>
+                                <th>Destination</th>
+                                <th>Packages</th>
+                                <th>Weight</th>
+                                <th>Value</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="selectedCNotesBody">
+                            <tr id="noDataRow">
+                                <td colspan="8" style="text-align:center;color:#aaa;padding:30px;">
+                                    <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:8px;"></i>
+                                    No CNotes selected. Use search to add CNotes.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="action-bar">
+                <button class="btn btn-danger" id="removeSelectedBtn" onclick="removeSelected()">
+                    <i class="fas fa-trash"></i> Remove Selected
+                </button>
+                <button class="btn btn-success" id="doorDeliveryBtn" onclick="openDeliveryModal()">
+                    <i class="fas fa-truck"></i> Create DDM
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Search Results Modal -->
+<div class="modal-overlay" id="searchModal">
+    <div class="modal-box">
+        <div class="modal-header-bar">
+            <h5><i class="fas fa-search" style="color:var(--primary-light);margin-right:8px;"></i>Search Results</h5>
+            <button class="modal-close" onclick="closeModal('searchModal')">&times;</button>
+        </div>
+        <div class="modal-body-area">
+            <div class="filter-row">
+                <input type="text" placeholder="Filter LR No." id="filter-lr" oninput="filterSearchResults()">
+                <input type="text" placeholder="Filter Consignee" id="filter-consignee" oninput="filterSearchResults()">
+                <input type="text" placeholder="Filter Destination" id="filter-destination" oninput="filterSearchResults()">
+                <input type="text" placeholder="Filter Packages" id="filter-packages" oninput="filterSearchResults()">
+                <input type="text" placeholder="Filter Weight" id="filter-weight" oninput="filterSearchResults()">
+                <input type="text" placeholder="Filter Status" id="filter-status" oninput="filterSearchResults()">
+            </div>
+            <div class="table-responsive">
+                <table>
                     <thead>
                         <tr>
-                            <th><input type="checkbox" id="selectAllSearch"></th>
+                            <th style="width:40px;"><input type="checkbox" id="selectAllSearch"></th>
                             <th>LR No.</th>
                             <th>Consignee</th>
                             <th>Destination</th>
@@ -639,757 +458,454 @@
                 </table>
             </div>
         </div>
-        <div class="modal-footer">
-            <button id="addSelectedBtn" class="action-btn delivery-btn">Add Selected</button>
+        <div class="modal-footer-bar">
+            <button class="btn btn-success" onclick="addSelected()">
+                <i class="fas fa-plus"></i> Add Selected
+            </button>
         </div>
     </div>
 </div>
 
-<div id="deliveryModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 class="modal-title">Door Delivery Details</h2>
-            <span class="close">&times;</span>
+<!-- Delivery Details Modal -->
+<div class="modal-overlay" id="deliveryModal">
+    <div class="modal-box">
+        <div class="modal-header-bar">
+            <h5><i class="fas fa-truck" style="color:var(--primary-light);margin-right:8px;"></i>Door Delivery Details</h5>
+            <button class="modal-close" onclick="closeModal('deliveryModal')">&times;</button>
         </div>
-        <div class="modal-body">
-            <div class="loading-details">
-                <h3>Loading Information</h3>
-                <form id="loadingForm" class="search-form">
-                    <div class="form-group">
-                        <label for="truckNo">Truck No.</label>
-                        <input type="text" id="truckNo" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="driverName">Driver Name</label>
-                        <input type="text" id="driverName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="driverNo">Driver No.</label>
-                        <input type="text" id="driverNo" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="lorryHire">Lorry Hire</label>
-                        <input type="number" id="lorryHire" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="remarks">Remarks</label>
-                        <input type="text" id="remarks">
-                    </div>
-                </form>
-            </div>
-            
-            <div class="summary-section">
-                <div class="summary-title">Delivery Summary</div>
-                <div class="summary-item">
-                    <span>Total CNotes:</span>
-                    <span id="summary-total-cnotes">0</span>
+        <div class="modal-body-area">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Truck No. *</label>
+                    <input type="text" id="truckNo" class="form-control" placeholder="e.g. MH04AB1234">
+                    <span class="error-msg" id="err-truckNo"></span>
                 </div>
-                <div class="summary-item">
-                    <span>Total Packages:</span>
-                    <span id="summary-total-packages">0</span>
+                <div class="form-group">
+                    <label>Driver Name *</label>
+                    <input type="text" id="driverName" class="form-control" placeholder="Driver full name">
+                    <span class="error-msg" id="err-driverName"></span>
                 </div>
-                <div class="summary-item">
-                    <span>Total Weight:</span>
-                    <span id="summary-total-weight">0</span>
+                <div class="form-group">
+                    <label>Driver Mobile *</label>
+                    <input type="text" id="driverNo" class="form-control" placeholder="10-digit mobile">
+                    <span class="error-msg" id="err-driverNo"></span>
                 </div>
-                <div class="summary-item">
-                    <span>Total Value:</span>
-                    <span id="summary-total-value">0</span>
+                <div class="form-group">
+                    <label>Lorry Hire (₹) *</label>
+                    <input type="number" id="lorryHire" class="form-control" placeholder="0.00" min="0" step="0.01">
+                    <span class="error-msg" id="err-lorryHire"></span>
+                </div>
+                <div class="form-group">
+                    <label>Remarks</label>
+                    <input type="text" id="remarks" class="form-control" placeholder="Optional remarks">
                 </div>
             </div>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="val" id="summary-total-cnotes">0</div>
+                    <div class="lbl">Total CNotes</div>
+                </div>
+                <div class="summary-card">
+                    <div class="val" id="summary-total-packages">0</div>
+                    <div class="lbl">Total Packages</div>
+                </div>
+                <div class="summary-card">
+                    <div class="val" id="summary-total-weight">0</div>
+                    <div class="lbl">Total Weight (kg)</div>
+                </div>
+                <div class="summary-card">
+                    <div class="val" id="summary-total-value">₹0</div>
+                    <div class="lbl">Total Value</div>
+                </div>
+            </div>
         </div>
-        <div class="modal-footer">
-            <button id="confirmDeliveryBtn" class="action-btn delivery-btn">Confirm Delivery</button>
+        <div class="modal-footer-bar">
+            <button class="btn btn-success" onclick="confirmDelivery()">
+                <i class="fas fa-check"></i> Confirm Delivery
+            </button>
         </div>
     </div>
 </div>
 
-<div id="successModal" class="modal">
-    <div class="success-modal-content">
-        <h2 class="modal-title">Success!</h2>
-        <p id="successMessage"></p>
-        <div class="modal-buttons">
-            <button class="modal-button" onclick="saveDDMasPDF()">Save DDM</button>
-            <button class="modal-button" onclick="printDDM()">Print DDM</button>
-            <button class="modal-button" onclick="createNewDDM()">Create New DDM</button>
+<!-- Success Modal -->
+<div class="modal-overlay" id="successModal">
+    <div class="modal-box sm">
+        <div class="modal-body-area" style="text-align:center;padding:30px 20px;">
+            <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+            <p id="successMessage" class="success-msg"></p>
+            <div class="success-btns">
+                <button class="btn btn-primary" onclick="printDDM()">
+                    <i class="fas fa-print"></i> Print DDM
+                </button>
+                <button class="btn btn-success" onclick="createNewDDM()">
+                    <i class="fas fa-plus"></i> New DDM
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
-<div id="notification" class="notification"></div>
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
 
-<div id="loadingIndicator" class="loading" style="display: none;">
-    <div class="loading-spinner"></div>
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
 </div>
 
 <script>
-    // Global variables
-    let selectedCNotes = [];
-    let destinations = [];
-    let expanded = false;
-    let selectedDestinations = [];
-    let currentDDMId = null;
-    let currentDDMNo = null;
+// ===== State =====
+let selectedCNotes = [];
+let destinations = [];
+let expanded = false;
+let selectedDestinations = [];
+let currentDDMId = null;
+let currentDDMNo = null;
 
-    // DOM Elements
-    const searchForm = document.getElementById('searchForm');
-    const deliveryForSelect = document.getElementById('deliveryFor');
-    const lrNumberInput = document.getElementById('lrNumber');
-    const selectedCNotesBody = document.getElementById('selectedCNotesBody');
-    const searchModal = document.getElementById('searchModal');
-    const searchResultsBody = document.getElementById('searchResultsBody');
-    const deliveryModal = document.getElementById('deliveryModal');
-    const successModal = document.getElementById('successModal');
-    const notification = document.getElementById('notification');
-    const checkboxesContainer = document.getElementById('checkboxes');
+// ===== Sidebar Toggle =====
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const topbar = document.getElementById('topbar');
+    const main = document.getElementById('mainContent');
+    sidebar.classList.toggle('open');
+    if (window.innerWidth > 768) {
+        if (sidebar.style.width === '0px' || sidebar.style.width === '') {
+            sidebar.style.width = 'var(--sidebar-width)';
+            topbar.style.left = 'var(--sidebar-width)';
+            main.style.marginLeft = 'var(--sidebar-width)';
+        } else {
+            sidebar.style.width = '0';
+            topbar.style.left = '0';
+            main.style.marginLeft = '0';
+        }
+    }
+}
 
-    // Event Listeners
-    document.addEventListener('DOMContentLoaded', initializeApp);
-    searchForm.addEventListener('submit', handleSearch);
+// ===== Init =====
+document.addEventListener('DOMContentLoaded', () => {
+    loadDestinations();
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.multiselect')) {
+            const cb = document.getElementById('checkboxes');
+            if (cb) { cb.style.display = 'none'; expanded = false; }
+        }
+    });
     document.getElementById('selectAll').addEventListener('change', toggleSelectAll);
     document.getElementById('selectAllSearch').addEventListener('change', toggleSelectAllSearch);
-    document.getElementById('removeSelectedBtn').addEventListener('click', removeSelectedCNotes);
-    document.getElementById('doorDeliveryBtn').addEventListener('click', showDeliveryModal);
-    document.getElementById('addSelectedBtn').addEventListener('click', addSelectedCNotes);
-    document.getElementById('confirmDeliveryBtn').addEventListener('click', confirmDelivery);
-    document.querySelectorAll('.close').forEach(closeBtn => {
-        closeBtn.addEventListener('click', () => {
-            searchModal.style.display = 'none';
-            deliveryModal.style.display = 'none';
-            successModal.style.display = 'none';
-        });
-    });
+});
 
-    // Filter functionality for search results
-    document.querySelectorAll('.filter-row input').forEach(input => {
-        input.addEventListener('input', filterSearchResults);
-    });
-
-    // Functions
-    function initializeApp() {
-        fetchDestinations();
-    }
-
-    function fetchDestinations() {
-        showLoading();
-        fetch('/transporter/api/get-destinations/')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (Array.isArray(data) && data.length > 0) {
-                    destinations = data;
-                    populateDestinations();
-                } else {
-                    throw new Error('No destinations received');
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching destinations:', error);
-                showNotification('Failed to load destinations. Please try again.', 'error');
-            })
-            .finally(() => {
-                hideLoading();
-            });
-    }
-
-    function populateDestinations() {
-        checkboxesContainer.innerHTML = '';
-        
-        // Add "Select All" option
-        const allLabel = document.createElement('label');
-        const allCheckbox = document.createElement('input');
-        allCheckbox.type = 'checkbox';
-        allCheckbox.value = 'ALL';
-        allCheckbox.addEventListener('change', function() {
-            const checkboxes = checkboxesContainer.querySelectorAll('input[type="checkbox"]:not([value="ALL"])');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
-            });
-            updateSelectedDestinations();
-        });
-        allLabel.appendChild(allCheckbox);
-        allLabel.appendChild(document.createTextNode('Select All'));
-        checkboxesContainer.appendChild(allLabel);
-        
-        // Add individual destinations
-        destinations.forEach(dest => {
-            const label = document.createElement('label');
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.value = dest;
-            checkbox.addEventListener('change', updateSelectedDestinations);
-            label.appendChild(checkbox);
-            label.appendChild(document.createTextNode(dest));
-            checkboxesContainer.appendChild(label);
-        });
-    }
-
-    function updateSelectedDestinations() {
-        const checkboxes = checkboxesContainer.querySelectorAll('input[type="checkbox"]:not([value="ALL"])');
-        selectedDestinations = Array.from(checkboxes)
-            .filter(checkbox => checkbox.checked)
-            .map(checkbox => checkbox.value);
-        
-        // Update the select box text
-        const selectBox = document.querySelector('.selectBox select');
-        if (selectedDestinations.length === 0) {
-            selectBox.options[0].text = 'Select Destinations';
-        } else if (selectedDestinations.length === destinations.length) {
-            selectBox.options[0].text = 'All Destinations Selected';
-        } else {
-            selectBox.options[0].text = `${selectedDestinations.length} Destinations Selected`;
-        }
-    }
-
-    function toggleCheckboxes() {
-        if (!expanded) {
-            checkboxesContainer.style.display = 'block';
-            expanded = true;
-        } else {
-            checkboxesContainer.style.display = 'none';
-            expanded = false;
-        }
-    }
-
-    // Close the checkboxes if clicked outside
-    document.addEventListener('click', function(e) {
-        const multiselect = document.querySelector('.multiselect');
-        if (expanded && !multiselect.contains(e.target)) {
-            checkboxesContainer.style.display = 'none';
-            expanded = false;
-        }
-    });
-
-    function handleSearch(e) {
-        e.preventDefault();
-        const deliveryFor = deliveryForSelect.value;
-        const lrNumber = lrNumberInput.value;
-    
-        if (selectedDestinations.length === 0) {
-            showNotification('Please select at least one destination', 'error');
-            return;
-        }
-    
-        showLoading();
-        
-        // Check if "Select All" is checked
-        const allCheckbox = checkboxesContainer.querySelector('input[value="ALL"]');
-        const isAllSelected = allCheckbox && allCheckbox.checked;
-        
-        // Build query parameters properly
-        const params = new URLSearchParams();
-        
-        // Add each destination as a separate parameter
-        if (isAllSelected) {
-            params.append('all_destinations', 'true');
-        } else {
-            // Add each destination as a separate parameter with the same name
-            selectedDestinations.forEach(dest => {
-                params.append('destination', dest);
-            });
-        }
-        
-        params.append('deliveryFor', deliveryFor);
-        if (lrNumber) params.append('lrNumber', lrNumber);
-        
-        const url = `/transporter/api/search-cnotes-for-ddm/?${params.toString()}`;
-        console.log("API URL:", url); // Log the URL for debugging
-        
-        fetch(url)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log("API Response:", data); // Log the API response
-                displaySearchResults(data);
-            })
-            .catch(error => {
-                console.error('Error fetching search results:', error);
-                showNotification('Failed to fetch search results. Please try again.', 'error');
-            })
-            .finally(() => {
-                hideLoading();
-            });
-    }
-    
-    function displaySearchResults(results) {
-        searchResultsBody.innerHTML = '';
-        if (results.length === 0) {
-            searchResultsBody.innerHTML = '<tr><td colspan="8">No results found</td></tr>';
-        } else {
-            results.forEach(result => {
-                const row = document.createElement('tr');
-                
-                // Apply status styling
-                const statusClass = getStatusClass(result.status);
-                const statusHtml = `<span class="status-badge ${statusClass}">${result.status}</span>`;
-                
-                row.innerHTML = `
-                    <td><input type="checkbox" class="search-checkbox" data-lr="${result.cnote_number}"></td>
-                    <td>${result.cnote_number}</td>
-                    <td>${result.consignee_name}</td>
-                    <td>${result.delivery_destination_name || 'N/A'}</td>
-                    <td>${result.total_art}</td>
-                    <td>${result.actual_weight}</td>
-                    <td>${result.declared_value}</td>
-                    <td>${statusHtml}</td>
-                `;
-                searchResultsBody.appendChild(row);
-            });
-        }
-        searchModal.style.display = 'block';
-        adjustModalHeight();
-    }
-
-    function getStatusClass(status) {
-        status = status.toLowerCase();
-        if (status.includes('received')) {
-            return 'status-received';
-        } else if (status.includes('short')) {
-            return 'status-short';
-        } else if (status.includes('undelivered')) {
-            return 'status-undelivered';
-        } else if (status.includes('godown')) {
-            return 'status-godown';
-        }
-        return '';
-    }
-
-    function toggleSelectAll(e) {
-        const checkboxes = selectedCNotesBody.querySelectorAll('input[type="checkbox"]');
-        checkboxes.forEach(checkbox => checkbox.checked = e.target.checked);
-    }
-
-    function toggleSelectAllSearch(e) {
-        const checkboxes = searchResultsBody.querySelectorAll('input[type="checkbox"]');
-        checkboxes.forEach(checkbox => checkbox.checked = e.target.checked);
-    }
-
-    function addSelectedCNotes() {
-        const selectedCheckboxes = searchResultsBody.querySelectorAll('input[type="checkbox"]:checked');
-        if (selectedCheckboxes.length === 0) {
-            showNotification('Please select at least one CNotes', 'error');
-            return;
-        }
-        
-        selectedCheckboxes.forEach(checkbox => {
-            const row = checkbox.closest('tr');
-            const cnote = {
-                lrNo: row.cells[1].textContent,
-                consigneeName: row.cells[2].textContent,
-                destination: row.cells[3].textContent,
-                packages: row.cells[4].textContent,
-                weight: row.cells[5].textContent,
-                value: row.cells[6].textContent,
-                status: row.cells[7].textContent.trim()
-            };
-            
-            if (!selectedCNotes.some(item => item.lrNo === cnote.lrNo)) {
-                selectedCNotes.push(cnote);
-            }
-        });
-        updateSelectedCNotesTable();
-        searchModal.style.display = 'none';
-        showNotification(`${selectedCheckboxes.length} CNotes added successfully`, 'success');
-    }
-
-    function updateSelectedCNotesTable() {
-        selectedCNotesBody.innerHTML = '';
-        selectedCNotes.forEach(cnote => {
-            const row = document.createElement('tr');
-            
-            // Apply status styling
-            const statusClass = getStatusClass(cnote.status);
-            const statusHtml = `<span class="status-badge ${statusClass}">${cnote.status}</span>`;
-            
-            row.innerHTML = `
-                <td><input type="checkbox" class="selected-checkbox" data-lr="${cnote.lrNo}"></td>
-                <td>${cnote.lrNo}</td>
-                <td>${cnote.consigneeName}</td>
-                <td>${cnote.destination}</td>
-                <td>${cnote.packages}</td>
-                <td>${cnote.weight}</td>
-                <td>${cnote.value}</td>
-                <td>${statusHtml}</td>
-            `;
-            selectedCNotesBody.appendChild(row);
-        });
-        
-        // Update summary
-        updateDeliverySummary();
-    }
-
-    function updateDeliverySummary() {
-        const totalCNotes = selectedCNotes.length;
-        let totalPackages = 0;
-        let totalWeight = 0;
-        let totalValue = 0;
-        
-        selectedCNotes.forEach(cnote => {
-            totalPackages += parseInt(cnote.packages) || 0;
-            totalWeight += parseFloat(cnote.weight) || 0;
-            totalValue += parseFloat(cnote.value.replace(/,/g, '')) || 0;
-        });
-        
-        document.getElementById('summary-total-cnotes').textContent = totalCNotes;
-        document.getElementById('summary-total-packages').textContent = totalPackages;
-        document.getElementById('summary-total-weight').textContent = totalWeight.toFixed(2);
-        document.getElementById('summary-total-value').textContent = totalValue.toFixed(2);
-    }
-
-    function removeSelectedCNotes() {
-        const selectedCheckboxes = selectedCNotesBody.querySelectorAll('input[type="checkbox"]:checked');
-        if (selectedCheckboxes.length === 0) {
-            showNotification('Please select CNotes to remove', 'error');
-            return;
-        }
-        
-        selectedCheckboxes.forEach(checkbox => {
-            const lrNo = checkbox.getAttribute('data-lr');
-            selectedCNotes = selectedCNotes.filter(cnote => cnote.lrNo !== lrNo);
-        });
-        updateSelectedCNotesTable();
-        showNotification(`${selectedCheckboxes.length} CNotes removed successfully`, 'success');
-    }
-
-    // ✅ Also update the showDeliveryModal function to check for selected checkboxes
-    function showDeliveryModal() {
-        const checkedCheckboxes = selectedCNotesBody.querySelectorAll('input[type="checkbox"]:checked');
-        
-        if (checkedCheckboxes.length === 0) {
-            showNotification('Please select at least one CNote for delivery', 'error');
-            return;
-        }
-        
-        // Update summary for only checked items
-        updateDeliverySummaryForChecked();
-        
-        deliveryModal.style.display = 'block';
-    }
-
-    // ✅ New function to update summary for only checked items
-    function updateDeliverySummaryForChecked() {
-        const checkedCheckboxes = selectedCNotesBody.querySelectorAll('input[type="checkbox"]:checked');
-        
-        let totalCNotes = checkedCheckboxes.length;
-        let totalPackages = 0;
-        let totalWeight = 0;
-        let totalValue = 0;
-        
-        checkedCheckboxes.forEach(checkbox => {
-            const row = checkbox.closest('tr');
-            const packages = parseInt(row.cells[4].textContent) || 0;
-            const weight = parseFloat(row.cells[5].textContent) || 0;
-            const value = parseFloat(row.cells[6].textContent.replace(/,/g, '')) || 0;
-            
-            totalPackages += packages;
-            totalWeight += weight;
-            totalValue += value;
-        });
-        
-        document.getElementById('summary-total-cnotes').textContent = totalCNotes;
-        document.getElementById('summary-total-packages').textContent = totalPackages;
-        document.getElementById('summary-total-weight').textContent = totalWeight.toFixed(2);
-        document.getElementById('summary-total-value').textContent = totalValue.toFixed(2);
-    }
-
-
-
-    function confirmDelivery() {
-        if (!validateDeliveryForm()) {
-            return;
-        }
-
-        // ✅ FIX: Get only the checked CNotes from the selected table
-        const checkedCheckboxes = selectedCNotesBody.querySelectorAll('input[type="checkbox"]:checked');
-        
-        if (checkedCheckboxes.length === 0) {
-            showNotification('Please select at least one CNote for delivery', 'error');
-            return;
-        }
-
-        // Extract LR numbers from checked checkboxes
-        const checkedCNotes = Array.from(checkedCheckboxes).map(checkbox => 
-            checkbox.getAttribute('data-lr')
-        );
-
-        const truckNo = document.getElementById('truckNo').value;
-        const driverName = document.getElementById('driverName').value;
-        const driverNo = document.getElementById('driverNo').value;
-        const lorryHire = document.getElementById('lorryHire').value;
-        const remarks = document.getElementById('remarks').value;
-
-        const deliveryData = {
-            cnotes: checkedCNotes, // ✅ Only send checked CNotes
-            truckNo,
-            driverName,
-            driverNo,
-            lorryHire,
-            remarks
-        };
-
-        showLoading();
-        fetch('/transporter/api/create-delivery-memo/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify(deliveryData)
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
+// ===== Destinations =====
+function loadDestinations() {
+    fetch('/transporter/api/get-destinations/')
+        .then(r => r.json())
         .then(data => {
-            if (data.status === 'success') {
-                currentDDMId = data.ddm_id;
-                currentDDMNo = data.ddm_no;
-                
-                // Show success message
-                document.getElementById('successMessage').textContent = `Door Delivery Memo ${data.ddm_no} created successfully!`;
-                successModal.style.display = 'block';
-                
-                // ✅ Remove only the processed CNotes from selectedCNotes array
-                selectedCNotes = selectedCNotes.filter(cnote => !checkedCNotes.includes(cnote.lrNo));
-                updateSelectedCNotesTable();
-                
-                // Hide delivery modal
-                deliveryModal.style.display = 'none';
-            } else {
-                throw new Error(data.message || 'Unknown error occurred');
-            }
+            destinations = data.destinations || data || [];
+            const container = document.getElementById('checkboxes');
+            container.innerHTML = '';
+            destinations.forEach(dest => {
+                const lbl = document.createElement('label');
+                lbl.innerHTML = `<input type="checkbox" value="${dest}" onchange="updateSelectedDestinations()"> ${dest}`;
+                container.appendChild(lbl);
+            });
         })
-        .catch(error => {
-            console.error('Error creating delivery memo:', error);
-            showNotification(`Failed to create delivery memo: ${error.message}`, 'error');
-        })
-        .finally(() => {
-            hideLoading();
-        });
+        .catch(err => showToast('Failed to load destinations', 'error'));
+}
+
+function toggleCheckboxes() {
+    const cb = document.getElementById('checkboxes');
+    if (!expanded) { cb.style.display = 'block'; expanded = true; }
+    else { cb.style.display = 'none'; expanded = false; }
+}
+
+function updateSelectedDestinations() {
+    selectedDestinations = Array.from(
+        document.querySelectorAll('#checkboxes input:checked')
+    ).map(i => i.value);
+}
+
+// ===== Search =====
+function handleSearch() {
+    const destinations = selectedDestinations;
+    const deliveryFor = document.getElementById('deliveryFor').value;
+    const lrNumber = document.getElementById('lrNumber').value.trim();
+
+    showLoading();
+    fetch('/transporter/api/search-cnotes-for-ddm/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ destinations, deliveryFor, lrNumber })
+    })
+    .then(r => r.json())
+    .then(data => {
+        populateSearchResults(data.cnotes || data || []);
+        document.getElementById('searchModal').classList.add('show');
+    })
+    .catch(err => showToast('Search failed: ' + err.message, 'error'))
+    .finally(() => hideLoading());
+}
+
+function populateSearchResults(cnotes) {
+    const body = document.getElementById('searchResultsBody');
+    body.innerHTML = '';
+    if (!cnotes.length) {
+        body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:20px;">No CNotes found</td></tr>';
+        return;
     }
+    cnotes.forEach(c => {
+        const existingLRs = selectedCNotes.map(s => s.lrNo);
+        const alreadyAdded = existingLRs.includes(c.lrNo || c.lr_no);
+        const row = document.createElement('tr');
+        if (alreadyAdded) row.style.opacity = '0.5';
+        row.innerHTML = `
+            <td><input type="checkbox" data-lr="${c.lrNo || c.lr_no}" ${alreadyAdded ? 'disabled' : ''}></td>
+            <td>${c.lrNo || c.lr_no || ''}</td>
+            <td>${c.consigneeName || c.consignee_name || ''}</td>
+            <td>${c.destination || ''}</td>
+            <td>${c.packages || 0}</td>
+            <td>${c.weight || 0}</td>
+            <td>₹${c.value || 0}</td>
+            <td><span class="status-badge status-${(c.status || '').toLowerCase()}">${c.status || ''}</span></td>
+        `;
+        row._cnoteData = c;
+        body.appendChild(row);
+    });
+}
 
-
-    function validateDeliveryForm() {
-        const truckNo = document.getElementById('truckNo');
-        const driverName = document.getElementById('driverName');
-        const driverNo = document.getElementById('driverNo');
-        const lorryHire = document.getElementById('lorryHire');
-
-        let isValid = true;
-
-        if (!truckNo.value) {
-            showError(truckNo, 'Truck No. is required');
-            isValid = false;
-        } else {
-            clearError(truckNo);
-        }
-
-        if (!driverName.value) {
-            showError(driverName, 'Driver Name is required');
-            isValid = false;
-        } else {
-            clearError(driverName);
-        }
-
-        if (!driverNo.value) {
-            showError(driverNo, 'Driver No. is required');
-            isValid = false;
-        } else {
-            clearError(driverNo);
-        }
-
-        if (!lorryHire.value) {
-            showError(lorryHire, 'Lorry Hire is required');
-            isValid = false;
-        } else if (isNaN(lorryHire.value) || parseFloat(lorryHire.value) <= 0) {
-            showError(lorryHire, 'Lorry Hire must be a positive number');
-            isValid = false;
-        } else {
-            clearError(lorryHire);
-        }
-
-        return isValid;
-    }
-
-    function showError(input, message) {
-        const formGroup = input.closest('.form-group');
-        const error = formGroup.querySelector('.error-message') || document.createElement('div');
-        error.className = 'error-message';
-        error.textContent = message;
-        if (!formGroup.querySelector('.error-message')) {
-            formGroup.appendChild(error);
-        }
-        input.classList.add('error');
-    }
-
-    function clearError(input) {
-        const formGroup = input.closest('.form-group');
-        const error = formGroup.querySelector('.error-message');
-        if (error) {
-            formGroup.removeChild(error);
-        }
-        input.classList.remove('error');
-    }
-
-    function saveDDMasPDF() {
-        if (!currentDDMId) {
-            showNotification('No DDM ID available', 'error');
-            return;
-        }
-        
-        showLoading();
-        fetch(`/transporter/api/save-ddm-pdf/${currentDDMId}/`, {
-            method: 'GET',
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken')
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to generate PDF');
-            }
-            return response.blob();
-        })
-        .then(blob => {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = `DDM-${currentDDMNo || currentDDMId}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification('Failed to generate PDF. Please try again.', 'error');
-        })
-        .finally(() => {
-            hideLoading();
-            successModal.style.display = 'none';
-        });
-    }
-
-    function printDDM() {
-        if (!currentDDMId) {
-            showNotification('No DDM ID available', 'error');
-            return;
-        }
-        
-        showLoading();
-        window.location.href = `/transporter/ddm-details/?ddmId=${currentDDMId}`;
-    }
-
-    function createNewDDM() {
-        successModal.style.display = 'none';
-        // Reset form and selected CNotes
-        selectedCNotes = [];
-        updateSelectedCNotesTable();
-        document.getElementById('truckNo').value = '';
-        document.getElementById('driverName').value = '';
-        document.getElementById('driverNo').value = '';
-        document.getElementById('lorryHire').value = '';
-        document.getElementById('remarks').value = '';
-        
-        // Reset current DDM ID and No
-        currentDDMId = null;
-        currentDDMNo = null;
-    }
-
-    function showNotification(message, type) {
-        notification.textContent = message;
-        notification.className = `notification ${type}`;
-        notification.classList.add('show');
-        setTimeout(() => {
-            notification.classList.remove('show');
-        }, 3000);
-    }
-
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
+function addSelected() {
+    const rows = document.querySelectorAll('#searchResultsBody tr');
+    let added = 0;
+    rows.forEach(row => {
+        const cb = row.querySelector('input[type="checkbox"]');
+        if (cb && cb.checked && !cb.disabled) {
+            const lrNo = cb.getAttribute('data-lr');
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 7) {
+                selectedCNotes.push({
+                    lrNo,
+                    consigneeName: cells[2].textContent,
+                    destination: cells[3].textContent,
+                    packages: cells[4].textContent,
+                    weight: cells[5].textContent,
+                    value: cells[6].textContent.replace('₹',''),
+                    status: cells[7]?.querySelector('.status-badge')?.textContent || ''
+                });
+                added++;
             }
         }
-        return cookieValue;
+    });
+    updateSelectedCNotesTable();
+    closeModal('searchModal');
+    if (added > 0) showToast(`${added} CNotes added`, 'success');
+}
+
+// ===== Selected Table =====
+function updateSelectedCNotesTable() {
+    const body = document.getElementById('selectedCNotesBody');
+    const noData = document.getElementById('noDataRow');
+    body.innerHTML = '';
+    document.getElementById('selectedCount').textContent = `${selectedCNotes.length} selected`;
+
+    if (!selectedCNotes.length) {
+        body.innerHTML = `<tr id="noDataRow"><td colspan="8" style="text-align:center;color:#aaa;padding:30px;"><i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:8px;"></i>No CNotes selected. Use search to add CNotes.</td></tr>`;
+        return;
     }
+    selectedCNotes.forEach((c, idx) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><input type="checkbox" data-idx="${idx}"></td>
+            <td>${c.lrNo}</td>
+            <td>${c.consigneeName}</td>
+            <td>${c.destination}</td>
+            <td>${c.packages}</td>
+            <td>${c.weight}</td>
+            <td>₹${c.value}</td>
+            <td><span class="status-badge status-${(c.status||'').toLowerCase()}">${c.status || '-'}</span></td>
+        `;
+        body.appendChild(row);
+    });
+}
 
-    function adjustModalHeight() {
-        const modalContent = document.querySelector('.modal-content');
-        const modalHeader = document.querySelector('.modal-header');
-        const modalFooter = document.querySelector('.modal-footer');
-        const modalBody = document.querySelector('.modal-body');
-        
-        const availableHeight = window.innerHeight * 0.8; // 80% of viewport height
-        const headerHeight = modalHeader.offsetHeight;
-        const footerHeight = modalFooter.offsetHeight;
-        
-        const maxBodyHeight = availableHeight - headerHeight - footerHeight - 40; // 40px for padding
-        modalBody.style.maxHeight = `${maxBodyHeight}px`;
-        
-        modalContent.style.maxHeight = `${availableHeight}px`;
+function removeSelected() {
+    const checkboxes = document.querySelectorAll('#selectedCNotesBody input[type="checkbox"]:checked');
+    const idxToRemove = new Set(Array.from(checkboxes).map(c => parseInt(c.getAttribute('data-idx'))));
+    selectedCNotes = selectedCNotes.filter((_, i) => !idxToRemove.has(i));
+    updateSelectedCNotesTable();
+    showToast(`${idxToRemove.size} CNotes removed`, 'warning');
+}
+
+function toggleSelectAll() {
+    const checked = document.getElementById('selectAll').checked;
+    document.querySelectorAll('#selectedCNotesBody input[type="checkbox"]')
+        .forEach(cb => { cb.checked = checked; });
+}
+
+function toggleSelectAllSearch() {
+    const checked = document.getElementById('selectAllSearch').checked;
+    document.querySelectorAll('#searchResultsBody input[type="checkbox"]:not(:disabled)')
+        .forEach(cb => { cb.checked = checked; });
+}
+
+// ===== Delivery Modal =====
+function openDeliveryModal() {
+    if (!selectedCNotes.length) { showToast('Please select CNotes first', 'warning'); return; }
+    const checked = Array.from(document.querySelectorAll('#selectedCNotesBody input[type="checkbox"]:checked'));
+    const checkedCount = checked.length || selectedCNotes.length;
+    const checkedCNotes = checked.length
+        ? selectedCNotes.filter((_, i) => checked.some(c => parseInt(c.getAttribute('data-idx')) === i))
+        : selectedCNotes;
+
+    let totalPkg = 0, totalWt = 0, totalVal = 0;
+    checkedCNotes.forEach(c => {
+        totalPkg += parseFloat(c.packages) || 0;
+        totalWt += parseFloat(c.weight) || 0;
+        totalVal += parseFloat(c.value) || 0;
+    });
+
+    document.getElementById('summary-total-cnotes').textContent = checkedCNotes.length;
+    document.getElementById('summary-total-packages').textContent = totalPkg;
+    document.getElementById('summary-total-weight').textContent = totalWt.toFixed(2);
+    document.getElementById('summary-total-value').textContent = '₹' + totalVal.toFixed(2);
+
+    document.getElementById('deliveryModal').classList.add('show');
+}
+
+function confirmDelivery() {
+    if (!validateDeliveryForm()) return;
+
+    const checkedCheckboxes = document.querySelectorAll('#selectedCNotesBody input[type="checkbox"]:checked');
+    const checkedIdxs = Array.from(checkedCheckboxes).map(c => parseInt(c.getAttribute('data-idx')));
+    const checkedCNotes = checkedIdxs.length
+        ? selectedCNotes.filter((_, i) => checkedIdxs.includes(i))
+        : selectedCNotes;
+
+    const deliveryData = {
+        cnotes: checkedCNotes.map(c => c.lrNo),
+        truckNo: document.getElementById('truckNo').value,
+        driverName: document.getElementById('driverName').value,
+        driverNo: document.getElementById('driverNo').value,
+        lorryHire: document.getElementById('lorryHire').value,
+        remarks: document.getElementById('remarks').value
+    };
+
+    showLoading();
+    fetch('/transporter/api/create-delivery-memo/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify(deliveryData)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'success') {
+            currentDDMId = data.ddm_id;
+            currentDDMNo = data.ddm_no;
+            document.getElementById('successMessage').textContent = `DDM ${data.ddm_no} created successfully!`;
+            closeModal('deliveryModal');
+            document.getElementById('successModal').classList.add('show');
+            const processedLRs = new Set(checkedCNotes.map(c => c.lrNo));
+            selectedCNotes = selectedCNotes.filter(c => !processedLRs.has(c.lrNo));
+            updateSelectedCNotesTable();
+        } else {
+            throw new Error(data.message || 'Unknown error occurred');
+        }
+    })
+    .catch(err => showToast('Failed to create DDM: ' + err.message, 'error'))
+    .finally(() => hideLoading());
+}
+
+function validateDeliveryForm() {
+    let valid = true;
+    const fields = [
+        { id: 'truckNo', errId: 'err-truckNo', msg: 'Truck No. is required' },
+        { id: 'driverName', errId: 'err-driverName', msg: 'Driver Name is required' },
+        { id: 'driverNo', errId: 'err-driverNo', msg: 'Driver Mobile is required' },
+        { id: 'lorryHire', errId: 'err-lorryHire', msg: 'Lorry Hire is required' },
+    ];
+    fields.forEach(f => {
+        const el = document.getElementById(f.id);
+        const err = document.getElementById(f.errId);
+        if (!el.value.trim()) {
+            err.textContent = f.msg;
+            el.classList.add('error');
+            valid = false;
+        } else {
+            err.textContent = '';
+            el.classList.remove('error');
+        }
+    });
+    const hire = document.getElementById('lorryHire');
+    if (hire.value && (isNaN(hire.value) || parseFloat(hire.value) <= 0)) {
+        document.getElementById('err-lorryHire').textContent = 'Must be a positive number';
+        hire.classList.add('error');
+        valid = false;
     }
+    return valid;
+}
 
-    window.addEventListener('resize', adjustModalHeight);
+function printDDM() {
+    if (!currentDDMId) { showToast('No DDM ID available', 'error'); return; }
+    window.location.href = `/transporter/ddm-details/?ddmId=${currentDDMId}`;
+}
 
-    function filterSearchResults() {
-        const filters = {
-            lr: document.getElementById('filter-lr').value.toLowerCase(),
-            consignee: document.getElementById('filter-consignee').value.toLowerCase(),
-            destination: document.getElementById('filter-destination').value.toLowerCase(),
-            packages: document.getElementById('filter-packages').value.toLowerCase(),
-            weight: document.getElementById('filter-weight').value.toLowerCase(),
-            value: document.getElementById('filter-value').value.toLowerCase(),
-            status: document.getElementById('filter-status').value.toLowerCase()
-        };
+function createNewDDM() {
+    closeModal('successModal');
+    selectedCNotes = [];
+    updateSelectedCNotesTable();
+    ['truckNo','driverName','driverNo','lorryHire','remarks'].forEach(id => {
+        document.getElementById(id).value = '';
+    });
+    currentDDMId = null;
+    currentDDMNo = null;
+}
 
-        const rows = searchResultsBody.querySelectorAll('tr');
-        rows.forEach(row => {
-            if (row.cells.length < 8) return; // Skip rows without enough cells
-            
-            const lr = row.cells[1].textContent.toLowerCase();
-            const consignee = row.cells[2].textContent.toLowerCase();
-            const destination = row.cells[3].textContent.toLowerCase();
-            const packages = row.cells[4].textContent.toLowerCase();
-            const weight = row.cells[5].textContent.toLowerCase();
-            const value = row.cells[6].textContent.toLowerCase();
-            const status = row.cells[7].textContent.toLowerCase();
+// ===== Filter =====
+function filterSearchResults() {
+    const filters = {
+        lr: document.getElementById('filter-lr').value.toLowerCase(),
+        consignee: document.getElementById('filter-consignee').value.toLowerCase(),
+        destination: document.getElementById('filter-destination').value.toLowerCase(),
+        packages: document.getElementById('filter-packages').value.toLowerCase(),
+        weight: document.getElementById('filter-weight').value.toLowerCase(),
+        status: document.getElementById('filter-status').value.toLowerCase()
+    };
+    document.querySelectorAll('#searchResultsBody tr').forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 7) return;
+        const show =
+            cells[1].textContent.toLowerCase().includes(filters.lr) &&
+            cells[2].textContent.toLowerCase().includes(filters.consignee) &&
+            cells[3].textContent.toLowerCase().includes(filters.destination) &&
+            cells[4].textContent.toLowerCase().includes(filters.packages) &&
+            cells[5].textContent.toLowerCase().includes(filters.weight) &&
+            cells[7].textContent.toLowerCase().includes(filters.status);
+        row.style.display = show ? '' : 'none';
+    });
+}
 
-            const showRow = lr.includes(filters.lr) &&
-                            consignee.includes(filters.consignee) &&
-                            destination.includes(filters.destination) &&
-                            packages.includes(filters.packages) &&
-                            weight.includes(filters.weight) &&
-                            value.includes(filters.value) &&
-                            status.includes(filters.status);
+// ===== Modal Helpers =====
+function closeModal(id) {
+    document.getElementById(id).classList.remove('show');
+}
 
-            row.style.display = showRow ? '' : 'none';
-        });
-    }
+// ===== Toast =====
+function showToast(msg, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const icons = { success: 'check-circle', error: 'times-circle', warning: 'exclamation-triangle' };
+    toast.innerHTML = `<i class="fas fa-${icons[type] || 'info-circle'}"></i> ${msg}`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
 
-    function showLoading() {
-        document.getElementById('loadingIndicator').style.display = 'flex';
-    }
+// ===== Loading =====
+function showLoading() { document.getElementById('loadingOverlay').classList.add('show'); }
+function hideLoading() { document.getElementById('loadingOverlay').classList.remove('show'); }
 
-    function hideLoading() {
-        document.getElementById('loadingIndicator').style.display = 'none';
-    }
+// ===== CSRF =====
+function getCookie(name) {
+    const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+    return v ? v[2] : null;
+}
 </script>
 </body>
 </html>
