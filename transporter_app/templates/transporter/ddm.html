@@ -2,934 +2,497 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Door Delivery Memo | Good Way Express</title>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
-<style>
-:root {
-    --primary: #1a252f;
-    --primary-light: #3498db;
-    --secondary: #e74c3c;
-    --success: #27ae60;
-    --warning: #f39c12;
-    --sidebar: #1a252f;
-    --sidebar-width: 240px;
-    --topbar-height: 58px;
-}
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DDM Settlement — Good Way Express</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root{--primary:#1a252f;--primary-light:#3498db;--secondary:#e74c3c;--success:#27ae60;--warning:#f39c12;--info:#8e44ad;--light:#f8f9fa;--dark:#2c3e50;--border:#e0e6ed;--sidebar:#1a252f;--text:#34495e;}
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif;}
+        body{background:#f5f7fa;color:var(--text);display:flex;min-height:100vh;}
 
-/* ===== SIDEBAR ===== */
-.sidebar {
-    position: fixed; top: 0; left: 0; height: 100vh; width: var(--sidebar-width);
-    background: var(--sidebar); z-index: 1000; overflow-y: auto; transition: width .3s;
-    display: flex; flex-direction: column;
-}
-.sidebar-brand {
-    padding: 18px 20px; background: rgba(0,0,0,.2);
-    display: flex; align-items: center; gap: 10px;
-    font-size: 1.1rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden;
-}
-.sidebar-brand i { color: var(--primary-light); font-size: 1.3rem; min-width: 22px; }
-.sidebar-nav { flex: 1; padding: 10px 0; }
-.nav-section { padding: 8px 20px 4px; font-size: .68rem; font-weight: 600; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: 1px; }
-.nav-item { position: relative; }
-.nav-link {
-    display: flex; align-items: center; gap: 12px; padding: 10px 20px;
-    color: rgba(255,255,255,.75); text-decoration: none; font-size: .88rem;
-    transition: all .2s; white-space: nowrap; overflow: hidden;
-}
-.nav-link:hover, .nav-link.active { background: rgba(255,255,255,.1); color: #fff; }
-.nav-link.active { border-left: 3px solid var(--primary-light); }
-.nav-link i { min-width: 18px; font-size: .95rem; }
-.nav-toggle { margin-left: auto; font-size: .7rem; transition: transform .3s; }
-.sub-menu { display: none; background: rgba(0,0,0,.15); }
-.sub-menu .nav-link { padding-left: 52px; font-size: .84rem; }
-.sub-menu.open { display: block; }
+        /* SIDEBAR */
+        .sidebar{width:240px;background:var(--sidebar);color:white;height:100vh;position:fixed;left:0;top:0;display:flex;flex-direction:column;z-index:1000;box-shadow:2px 0 15px rgba(0,0,0,.15);transition:width .3s;overflow-y:auto;}
+        .logo-section{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.08);}
+        .logo{display:flex;align-items:center;gap:10px;}
+        .logo-icon{width:36px;height:36px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+        .logo-text{font-size:14px;font-weight:700;line-height:1.2;} .logo-sub{font-size:10px;color:rgba(255,255,255,.45);}
+        .nav-section{padding:12px 0;flex:1;}
+        .nav-title{padding:6px 16px 4px;font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+        .nav-menu{list-style:none;} .nav-item{margin:1px 0;}
+        .nav-link{display:flex;align-items:center;gap:10px;padding:.55rem 1rem;color:rgba(255,255,255,.65);text-decoration:none;font-size:.82rem;transition:all .2s;}
+        .nav-link:hover{color:white;background:rgba(255,255,255,.07);}
+        .nav-link.active{color:white;background:rgba(52,152,219,.2);border-left:3px solid var(--primary-light);padding-left:calc(1rem - 3px);}
+        .nav-link i{width:16px;text-align:center;font-size:.85rem;}
+        .sub-menu{list-style:none;background:rgba(0,0,0,.15);}
+        .sub-menu a{display:block;padding:.4rem 1rem .4rem 2.6rem;font-size:.78rem;color:rgba(255,255,255,.55);text-decoration:none;transition:color .2s;}
+        .sub-menu a:hover{color:white;}
+        .sub-menu a.active-sub{color:white;font-weight:700;}
+        .sidebar-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.08);}
+        .logout-btn{width:100%;background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);padding:.45rem;border-radius:6px;cursor:pointer;font-size:.78rem;transition:all .2s;}
+        .logout-btn:hover{background:rgba(231,76,60,.2);color:#e74c3c;border-color:#e74c3c;}
 
-/* ===== TOPBAR ===== */
-.topbar {
-    position: fixed; top: 0; left: var(--sidebar-width); right: 0;
-    height: var(--topbar-height); background: #fff; z-index: 999;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 24px; box-shadow: 0 1px 4px rgba(0,0,0,.08);
-    transition: left .3s;
-}
-.topbar-title { font-size: 1.05rem; font-weight: 600; color: #333; }
-.topbar-right { display: flex; align-items: center; gap: 14px; }
-.topbar-user { display: flex; align-items: center; gap: 8px; font-size: .88rem; color: #555; }
-.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary-light); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: .8rem; }
+        .main-content{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
+        .topbar{background:white;padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 8px rgba(0,0,0,.06);position:sticky;top:0;z-index:100;}
+        .topbar-left{display:flex;align-items:center;gap:14px;}
+        .menu-toggle{background:none;border:none;font-size:18px;color:var(--dark);cursor:pointer;display:none;padding:4px;}
+        .page-title{font-size:1.1rem;font-weight:700;color:var(--dark);display:flex;align-items:center;gap:8px;}
+        .page-title i{color:var(--primary-light);}
+        .topbar-right{display:flex;align-items:center;gap:16px;}
+        .user-avatar{width:34px;height:34px;background:linear-gradient(135deg,#3498db,#2980b9);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:.9rem;}
+        .uname{font-size:.82rem;font-weight:600;color:var(--dark);} .urole{font-size:.72rem;color:#95a5a6;}
+        .datetime-chip{background:var(--light);border:1px solid var(--border);border-radius:20px;padding:.3rem .9rem;font-size:.78rem;color:var(--dark);font-weight:600;}
 
-/* ===== MAIN CONTENT ===== */
-.main-content {
-    margin-left: var(--sidebar-width);
-    padding-top: var(--topbar-height);
-    min-height: 100vh;
-    background: #f0f2f5;
-    transition: margin-left .3s;
-}
-.content-area { padding: 24px; }
+        .page-body{padding:20px 24px;flex:1;}
 
-/* ===== PAGE CARD ===== */
-.card {
-    background: #fff; border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.07); margin-bottom: 20px;
-}
-.card-header {
-    padding: 16px 20px; border-bottom: 1px solid #f0f0f0;
-    display: flex; align-items: center; gap: 10px;
-}
-.card-header h5 { font-size: .95rem; font-weight: 600; color: #333; margin: 0; }
-.card-header i { color: var(--primary-light); }
-.card-body { padding: 20px; }
+        .card{background:white;border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,.05);margin-bottom:18px;overflow:hidden;}
+        .card-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+        .card-title{font-size:.95rem;font-weight:700;color:var(--dark);display:flex;align-items:center;gap:8px;}
+        .card-title i{color:var(--primary-light);}
+        .card-body{padding:18px 20px;}
 
-/* ===== SEARCH FORM ===== */
-.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; align-items: end; }
-.form-group { display: flex; flex-direction: column; gap: 5px; }
-.form-group label { font-size: .82rem; font-weight: 600; color: #555; }
-.form-control {
-    padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;
-    font-size: .88rem; transition: border-color .2s;
-}
-.form-control:focus { outline: none; border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(52,152,219,.1); }
-.form-control.error { border-color: var(--secondary); }
+        .controls-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+        .form-control{padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:7px;font-size:.85rem;color:var(--dark);background:white;transition:border-color .2s;}
+        .form-control:focus{outline:none;border-color:var(--primary-light);}
 
-/* ===== MULTISELECT ===== */
-.multiselect { position: relative; }
-.selectBox { position: relative; cursor: pointer; }
-.selectBox select { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: .88rem; cursor: pointer; background: #fff; }
-.overSelect { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
-#checkboxes {
-    display: none; border: 1px solid #ddd; background: #fff;
-    max-height: 200px; overflow-y: auto; position: absolute;
-    width: 100%; z-index: 200; border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0,0,0,.1);
-}
-#checkboxes label { display: block; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: .85rem; cursor: pointer; }
-#checkboxes label:hover { background: #f8f9fa; }
-#checkboxes label input { margin-right: 8px; }
+        .btn{padding:.5rem 1.1rem;border:none;border-radius:7px;font-size:.84rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s;}
+        .btn-primary{background:var(--primary-light);color:white;} .btn-primary:hover{background:#2980b9;}
+        .btn-success{background:var(--success);color:white;} .btn-success:hover{filter:brightness(.9);}
+        .btn-warning{background:var(--warning);color:white;} .btn-warning:hover{filter:brightness(.9);}
+        .btn-danger{background:var(--secondary);color:white;} .btn-danger:hover{filter:brightness(.9);}
+        .btn-secondary{background:var(--light);color:var(--dark);border:1.5px solid var(--border);}
 
-/* ===== BUTTONS ===== */
-.btn {
-    padding: 8px 18px; border: none; border-radius: 6px; font-size: .85rem;
-    font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
-    transition: all .2s;
-}
-.btn-primary { background: var(--primary-light); color: #fff; }
-.btn-primary:hover { background: #2980b9; }
-.btn-success { background: var(--success); color: #fff; }
-.btn-success:hover { background: #219a52; }
-.btn-danger { background: var(--secondary); color: #fff; }
-.btn-danger:hover { background: #c0392b; }
-.btn-warning { background: var(--warning); color: #fff; }
-.btn-warning:hover { background: #d68910; }
+        /* SHORTCUT KEYS PANEL */
+        .shortcut-panel{display:flex;gap:8px;flex-wrap:wrap;}
+        .shortcut-btn{padding:.45rem 1rem;border:1.5px solid var(--border);border-radius:7px;background:white;color:var(--dark);font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;}
+        .shortcut-btn:hover,.shortcut-btn.active{background:var(--primary-light);color:white;border-color:var(--primary-light);}
+        .kbd{display:inline-block;padding:1px 6px;border:1px solid #ccc;border-radius:3px;background:#f5f5f5;font-size:.72rem;font-family:monospace;}
 
-/* ===== TABLE ===== */
-.table-responsive { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-th { background: var(--primary); color: #fff; padding: 10px 12px; text-align: left; font-weight: 600; font-size: .82rem; }
-td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; color: #444; }
-tr:hover td { background: #f8f9fa; }
-tr:last-child td { border-bottom: none; }
-.status-badge {
-    display: inline-block; padding: 2px 8px; border-radius: 12px;
-    font-size: .72rem; font-weight: 600; text-transform: uppercase;
-}
-.status-received { background: #d4edda; color: #155724; }
-.status-short { background: #fff3cd; color: #856404; }
-.status-undelivered { background: #f8d7da; color: #721c24; }
-.status-godown { background: #cce5ff; color: #004085; }
+        /* TABLE */
+        .tbl-wrap{overflow-x:auto;}
+        .data-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+        .data-table thead th{background:#f8fafc;padding:10px 12px;text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:#64748b;border-bottom:2px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
+        .data-table thead th:hover{background:#e8f0fe;color:var(--primary-light);}
+        .data-table tbody td{padding:10px 12px;border-bottom:1px solid #f1f5f9;color:var(--dark);vertical-align:middle;}
+        .data-table tbody tr:hover{background:#f8fafc;}
+        .data-table tbody tr.disabled-row{opacity:.5;}
 
-.action-bar {
-    padding: 12px 20px; border-top: 1px solid #f0f0f0;
-    display: flex; justify-content: flex-end; gap: 10px;
-}
+        .status-delivered{color:var(--success);font-weight:700;}
+        .status-pending{color:var(--warning);font-weight:700;}
 
-/* ===== MODALS ===== */
-.modal-overlay {
-    display: none; position: fixed; z-index: 2000;
-    left: 0; top: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,.5); justify-content: center; align-items: flex-start;
-    padding-top: 40px;
-}
-.modal-overlay.show { display: flex; }
-.modal-box {
-    background: #fff; border-radius: 10px; width: 90%; max-width: 1000px;
-    max-height: 85vh; display: flex; flex-direction: column;
-    box-shadow: 0 8px 32px rgba(0,0,0,.2);
-}
-.modal-box.sm { max-width: 480px; }
-.modal-header-bar {
-    padding: 16px 20px; border-bottom: 1px solid #eee;
-    display: flex; align-items: center; justify-content: space-between;
-}
-.modal-header-bar h5 { font-size: .95rem; font-weight: 700; color: #333; margin: 0; }
-.modal-close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #999; line-height: 1; }
-.modal-close:hover { color: #333; }
-.modal-body-area { flex: 1; overflow-y: auto; padding: 20px; }
-.modal-footer-bar { padding: 12px 20px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; }
+        .reason-box{display:none;margin-top:6px;}
+        .reason-box textarea{width:100%;padding:.4rem;border:1px solid var(--border);border-radius:4px;font-size:.8rem;resize:vertical;}
 
-/* filter row */
-.filter-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-.filter-row input { padding: 6px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: .82rem; flex: 1; min-width: 100px; }
+        /* TOAST */
+        #toastBox{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+        .toast{display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:8px;color:white;font-size:.84rem;font-weight:500;min-width:260px;box-shadow:0 4px 16px rgba(0,0,0,.15);animation:slideIn .25s ease;}
+        @keyframes slideIn{from{transform:translateX(100px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+        .toast-success{background:#27ae60;} .toast-error{background:#e74c3c;} .toast-info{background:#3498db;} .toast-warning{background:#f39c12;}
 
-/* summary section */
-.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 16px; }
-.summary-card { background: #f8f9fa; border-radius: 8px; padding: 12px; text-align: center; }
-.summary-card .val { font-size: 1.3rem; font-weight: 700; color: var(--primary-light); }
-.summary-card .lbl { font-size: .75rem; color: #666; margin-top: 2px; }
+        .spin{animation:spin 1s linear infinite;display:inline-block;}
+        @keyframes spin{to{transform:rotate(360deg);}}
 
-/* success modal */
-.success-icon { font-size: 3rem; color: var(--success); text-align: center; margin-bottom: 10px; }
-.success-msg { text-align: center; font-size: 1rem; color: #333; margin-bottom: 16px; }
-.success-btns { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
-
-/* toast */
-.toast-container { position: fixed; top: 80px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
-.toast {
-    padding: 12px 18px; border-radius: 8px; color: #fff; font-size: .85rem; font-weight: 600;
-    min-width: 240px; box-shadow: 0 4px 12px rgba(0,0,0,.15);
-    animation: slideIn .3s ease; display: flex; align-items: center; gap: 8px;
-}
-.toast.success { background: var(--success); }
-.toast.error { background: var(--secondary); }
-.toast.warning { background: var(--warning); }
-@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-/* loading */
-.loading-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,.4); z-index: 9998;
-    justify-content: center; align-items: center;
-}
-.loading-overlay.show { display: flex; }
-.spinner { width: 44px; height: 44px; border: 4px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.error-msg { color: var(--secondary); font-size: .78rem; margin-top: 3px; }
-
-@media (max-width: 768px) {
-    .sidebar { width: 0; overflow: hidden; }
-    .sidebar.open { width: var(--sidebar-width); }
-    .topbar { left: 0; }
-    .main-content { margin-left: 0; }
-}
-</style>
+        @media(max-width:900px){
+            .sidebar{width:0;overflow:hidden;} .sidebar.open{width:240px;}
+            .main-content{margin-left:0;} .menu-toggle{display:block!important;}
+        }
+    </style>
 </head>
 <body>
 
-<!-- Sidebar (unchanged) -->
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-        <i class="fas fa-truck-fast"></i>
-        <span>Good Way Express</span>
+<!-- ═══ SIDEBAR ═══ -->
+<div class="sidebar" id="sidebar">
+    <div class="logo-section">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-shipping-fast"></i></div>
+            <div>
+                <div class="logo-text">Good Way Express</div>
+                <div class="logo-sub">Transport Panel</div>
+            </div>
+        </div>
     </div>
-    <nav class="sidebar-nav">
-        <div class="nav-section">Main</div>
-        <div class="nav-item">
-            <a href="{% url 'transporter:home' %}" class="nav-link">
-                <i class="fas fa-home"></i><span>Dashboard</span>
-            </a>
-        </div>
-        <div class="nav-section">Operations</div>
-        <div class="nav-item">
-            <a href="{% url 'transporter:receive' %}" class="nav-link">
-                <i class="fas fa-box-open"></i><span>Receive</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="{% url 'transporter:delivery_cnotes' %}" class="nav-link">
-                <i class="fas fa-hand-holding-box"></i><span>Delivery CNotes</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="{% url 'transporter:ddm_settlement' %}" class="nav-link">
-                <i class="fas fa-clipboard-check"></i><span>DDM Settlement</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="#" class="nav-link active">
-                <i class="fas fa-truck"></i><span>Door Delivery Memo</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="{% url 'transporter:received_cnote' %}" class="nav-link">
-                <i class="fas fa-file-invoice"></i><span>Received CNotes</span>
-            </a>
-        </div>
-        <div class="nav-section">Reports</div>
-        <div class="nav-item">
-            <a href="{% url 'transporter:all_booking_register' %}" class="nav-link">
-                <i class="fas fa-book"></i><span>Booking Register</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="{% url 'transporter:loading_sheet_report' %}" class="nav-link">
-                <i class="fas fa-file-alt"></i><span>Loading Sheet</span>
-            </a>
-        </div>
-        <div class="nav-section">Masters</div>
-        <div class="nav-item">
-            <a href="{% url 'transporter:rate_card_master' %}" class="nav-link">
-                <i class="fas fa-tags"></i><span>Rate Card</span>
-            </a>
-        </div>
-        <div class="nav-section">Billing</div>
-        <div class="nav-item">
-            <a href="{% url 'transporter:billing' %}" class="nav-link">
-                <i class="fas fa-file-invoice-dollar"></i><span>Billing</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="{% url 'transporter:bill_manage' %}" class="nav-link">
-                <i class="fas fa-receipt"></i><span>Manage Bills</span>
-            </a>
-        </div>
-        <div class="nav-section">Settings</div>
-        <div class="nav-item">
-            <a href="{% url 'transporter:manage_location' %}" class="nav-link">
-                <i class="fas fa-map-marker-alt"></i><span>Manage Location</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="{% url 'transporter:party_master' %}" class="nav-link">
-                <i class="fas fa-building"></i><span>Party Master</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="{% url 'transporter:add_user' %}" class="nav-link">
-                <i class="fas fa-user-plus"></i><span>Add User</span>
-            </a>
-        </div>
-        <div class="nav-item">
-            <a href="{% url 'transporter:view_users' %}" class="nav-link">
-                <i class="fas fa-users"></i><span>View Users</span>
-            </a>
-        </div>
-    </nav>
-    <div style="padding:16px 20px; border-top:1px solid rgba(255,255,255,.08);">
+    <div class="nav-section">
+        <div class="nav-title">Main</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="{% url 'transporter:home' %}" class="nav-link">
+                    <i class="fas fa-home"></i><span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'transporter:receive' %}" class="nav-link">
+                    <i class="fas fa-clock"></i><span>Pending Requests</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="toggleSub('sub-del',this);return false;">
+                    <i class="fas fa-clipboard-list"></i><span>Delivery Management</span>
+                    <i class="fas fa-chevron-right" id="arr-del" style="margin-left:auto;font-size:10px;transition:transform .2s;transform:rotate(90deg);"></i>
+                </a>
+                <ul class="sub-menu" id="sub-del" style="display:block;">
+                    <li><a href="{% url 'transporter:delivery_cnotes' %}">Single Delivery</a></li>
+                    <li><a href="{% url 'transporter:ddm_settlement' %}" class="active-sub">DDM Settlements</a></li>
+                </ul>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'transporter:received_cnote' %}" class="nav-link">
+                    <i class="fas fa-check-circle"></i><span>Completed</span>
+                </a>
+            </li>
+        </ul>
+        <div class="nav-title">Reports &amp; Masters</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="toggleSub('sub-rep',this);return false;">
+                    <i class="fas fa-chart-bar"></i><span>Reports</span>
+                    <i class="fas fa-chevron-right" id="arr-rep" style="margin-left:auto;font-size:10px;transition:transform .2s;transform:;"></i>
+                </a>
+                <ul class="sub-menu" id="sub-rep" style="display:none;">
+                    <li><a href="{% url 'transporter:all_booking_register' %}">Booking Register</a></li>
+                    <li><a href="{% url 'transporter:loading_sheet_report' %}">Loading Sheet Report</a></li>
+                </ul>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="toggleSub('sub-mas',this);return false;">
+                    <i class="fas fa-cog"></i><span>Master</span>
+                    <i class="fas fa-chevron-right" id="arr-mas" style="margin-left:auto;font-size:10px;transition:transform .2s;transform:;"></i>
+                </a>
+                <ul class="sub-menu" id="sub-mas" style="display:none;">
+                    <li><a href="{% url 'transporter:rate_card_master' %}">Rate Card Master</a></li>
+                    <li><a href="{% url 'transporter:billing' %}">Billing Dealer</a></li>
+                    <li><a href="{% url 'transporter:bill_manage' %}">Bill Management</a></li>
+                    <li><a href="{% url 'transporter:manage_location' %}">Manage Location</a></li>
+                    <li><a href="{% url 'transporter:party_master' %}">Party Master</a></li>
+                    <li><a href="{% url 'transporter:add_user' %}">Add User</a></li>
+                    <li><a href="{% url 'transporter:view_users' %}">View Users</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div class="sidebar-footer">
         <form method="post" action="{% url 'logout' %}">
             {% csrf_token %}
-            <button type="submit" style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;display:flex;align-items:center;gap:10px;font-size:.88rem;width:100%;padding:6px 0;">
-                <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+            <button type="submit" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
             </button>
         </form>
     </div>
-</aside>
-
-<!-- Topbar -->
-<div class="topbar" id="topbar">
-    <div style="display:flex;align-items:center;gap:12px;">
-        <button onclick="toggleSidebar()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:#666;">
-            <i class="fas fa-bars"></i>
-        </button>
-        <span class="topbar-title"><i class="fas fa-truck" style="color:var(--primary-light);margin-right:6px;"></i>Door Delivery Memo</span>
-    </div>
-    <div class="topbar-right">
-        <div class="topbar-user">
-            <div class="avatar">{{ request.user.username|slice:":2"|upper }}</div>
-            <span>{{ request.user.username }}</span>
-        </div>
-    </div>
 </div>
 
-<!-- Main Content -->
-<div class="main-content" id="mainContent">
-    <div class="content-area">
+<!-- MAIN -->
+<div class="main-content">
+    <div class="topbar">
+        <div class="topbar-left">
+            <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+            <div class="page-title"><i class="fas fa-truck"></i> DDM Settlement</div>
+        </div>
+        <div class="topbar-right">
+            <div class="datetime-chip" id="currentDateTime"></div>
+            <div class="user-avatar">{{ request.user.username|first|upper }}</div>
+            <div><div class="uname">{{ request.user.username|title }}</div><div class="urole">Transporter</div></div>
+        </div>
+    </div>
 
-        <!-- Search Card with multiselect destinations -->
+    <div class="page-body">
+        <!-- Search DDM -->
         <div class="card">
             <div class="card-header">
-                <i class="fas fa-search"></i>
-                <h5>Search CNotes</h5>
+                <div class="card-title"><i class="fas fa-search"></i> Search DDM</div>
             </div>
             <div class="card-body">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Destinations</label>
-                        <div class="multiselect">
-                            <div class="selectBox" onclick="toggleCheckboxes()">
-                                <select><option>Select Destinations</option></select>
-                                <div class="overSelect"></div>
-                            </div>
-                            <div id="checkboxes"></div>
-                        </div>
+                <div class="controls-row">
+                    <div style="display:flex;align-items:center;border:1.5px solid var(--border);border-radius:7px;overflow:hidden;background:white;">
+                        <span style="padding:.5rem .85rem;background:#f1f5f9;color:var(--primary-light);font-weight:700;font-size:.9rem;border-right:1.5px solid var(--border);white-space:nowrap;letter-spacing:.5px;">DDM-</span>
+                        <input type="number" id="ddmNumber" class="form-control" placeholder="e.g. 1" min="1" step="1"
+                               style="border:none;border-radius:0;min-width:140px;outline:none;box-shadow:none;"
+                               onkeydown="if(event.key==='Enter')handleSearch()">
                     </div>
-                    <div class="form-group">
-                        <label for="deliveryFor">Delivery For</label>
-                        <select id="deliveryFor" class="form-control">
-                            <option value="BOTH">BOTH</option>
-                            <option value="DOOR">Door Delivery</option>
-                            <option value="GODOWN">Godown Delivery</option>
+                    <button class="btn btn-primary" onclick="handleSearch()"><i class="fas fa-search"></i> Search</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- DDM Info Banner (shown after search) -->
+        <div class="card" id="ddmInfoCard" style="display:none;">
+            <div class="card-body" style="padding:12px 20px;">
+                <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:center;">
+                    <div><span style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;font-weight:600;">DDM No</span><div style="font-size:1rem;font-weight:700;color:var(--primary-light);" id="info-ddmNo">—</div></div>
+                    <div><span style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;font-weight:600;">Date</span><div style="font-size:.88rem;font-weight:600;" id="info-date">—</div></div>
+                    <div><span style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;font-weight:600;">Truck No</span><div style="font-size:.88rem;font-weight:600;" id="info-truck">—</div></div>
+                    <div><span style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;font-weight:600;">Driver</span><div style="font-size:.88rem;font-weight:600;" id="info-driver">—</div></div>
+                    <div><span style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;font-weight:600;">Driver Mobile</span><div style="font-size:.88rem;font-weight:600;" id="info-driverNo">—</div></div>
+                    <div><span style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;font-weight:600;">Lorry Hire</span><div style="font-size:.88rem;font-weight:600;" id="info-lorryHire">—</div></div>
+                    <div><span style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;font-weight:600;">Remarks</span><div style="font-size:.88rem;font-weight:600;" id="info-remarks">—</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Controls -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-credit-card"></i> Payment Mode</div>
+                <div class="shortcut-panel">
+                    <button class="shortcut-btn" onclick="handlePaymentType('CASH',this)"><span class="kbd">F7</span> Cash</button>
+                    <button class="shortcut-btn" onclick="handlePaymentType('CHEQUE',this)"><span class="kbd">F8</span> Cheque</button>
+                    <button class="shortcut-btn" onclick="handlePaymentType('ONLINE',this)"><span class="kbd">F9</span> Online</button>
+                    <button class="shortcut-btn" onclick="handlePaymentType('RECEIVE_AT_GODOWN',this)"><span class="kbd">F10</span> At Godown</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="controls-row">
+                    <div>
+                        <label style="font-size:.8rem;font-weight:600;margin-bottom:4px;display:block;">Payment Type</label>
+                        <select id="paymentType" class="form-control" onchange="updateAllRcvDlyAS(this.value)">
+                            <option value="">— Select Mode —</option>
+                            <option value="CASH">Cash</option>
+                            <option value="CHEQUE">Cheque</option>
+                            <option value="ONLINE">Online</option>
+                            <option value="RECEIVE_AT_GODOWN">Receive at Godown</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="lrNumber">LR Number</label>
-                        <input type="text" id="lrNumber" class="form-control" placeholder="Enter LR Number">
+                    <div>
+                        <label style="font-size:.8rem;font-weight:600;margin-bottom:4px;display:block;">Settlement Date</label>
+                        <input type="date" id="settlementDate" class="form-control">
                     </div>
-                    <div class="form-group" style="justify-content:flex-end;">
-                        <button class="btn btn-primary" onclick="handleSearch()">
-                            <i class="fas fa-search"></i> Search
-                        </button>
+                    <div style="margin-top:22px;">
+                        <button class="btn btn-success" onclick="handleReceive()"><i class="fas fa-check-circle"></i> Receive Selected</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Selected CNotes Card -->
+        <!-- Delivery Table -->
         <div class="card">
-            <div class="card-header" style="justify-content:space-between;">
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <i class="fas fa-list-check"></i>
-                    <h5>Selected CNotes</h5>
-                </div>
-                <span id="selectedCount" style="font-size:.82rem;color:#888;">0 selected</span>
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-table"></i> Delivery Details</div>
             </div>
-            <div class="card-body" style="padding:0;">
-                <div class="table-responsive">
-                    <table>
+            <div class="card-body">
+                <div class="tbl-wrap">
+                    <table class="data-table" id="deliveryTable">
                         <thead>
                             <tr>
-                                <th style="width:40px;"><input type="checkbox" id="selectAll"></th>
-                                <th>LR No.</th>
-                                <th>Consignee Name</th>
-                                <th>Destination</th>
-                                <th>Packages</th>
-                                <th>Weight</th>
-                                <th>Value</th>
-                                <th>Status</th>
+                                <th><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
+                                <th onclick="sortTable(1)">LR No <i class="fas fa-sort" style="font-size:.65rem;"></i></th>
+                                <th onclick="sortTable(2)">From <i class="fas fa-sort" style="font-size:.65rem;"></i></th>
+                                <th onclick="sortTable(3)">Consignee Name <i class="fas fa-sort" style="font-size:.65rem;"></i></th>
+                                <th onclick="sortTable(4)">LR Type <i class="fas fa-sort" style="font-size:.65rem;"></i></th>
+                                <th onclick="sortTable(5)">Booking Total <i class="fas fa-sort" style="font-size:.65rem;"></i></th>
+                                <th>Art</th>
+                                <th>Rcv Dly AS</th>
+                                <th>Delivery Amount</th>
+                                <th onclick="sortTable(9)">Status <i class="fas fa-sort" style="font-size:.65rem;"></i></th>
                             </tr>
                         </thead>
-                        <tbody id="selectedCNotesBody">
-                            <tr id="noDataRow">
-                                <td colspan="8" style="text-align:center;color:#aaa;padding:30px;">
-                                    <i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:8px;"></i>
-                                    No CNotes selected. Use search to add CNotes.
-                                </td>
-                            </tr>
+                        <tbody id="tableBody">
+                            <tr><td colspan="10" style="text-align:center;padding:40px;color:#94a3b8;"><i class="fas fa-search" style="font-size:2rem;margin-bottom:8px;display:block;"></i>Search a DDM number to view delivery details</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-            <div class="action-bar">
-                <button class="btn btn-danger" id="removeSelectedBtn" onclick="removeSelected()">
-                    <i class="fas fa-trash"></i> Remove Selected
-                </button>
-                <button class="btn btn-success" id="doorDeliveryBtn" onclick="openDeliveryModal()">
-                    <i class="fas fa-truck"></i> Create DDM
-                </button>
-            </div>
-        </div>
-
-    </div>
-</div>
-
-<!-- Search Results Modal -->
-<div class="modal-overlay" id="searchModal">
-    <div class="modal-box">
-        <div class="modal-header-bar">
-            <h5><i class="fas fa-search" style="color:var(--primary-light);margin-right:8px;"></i>Search Results</h5>
-            <button class="modal-close" onclick="closeModal('searchModal')">&times;</button>
-        </div>
-        <div class="modal-body-area">
-            <div class="filter-row">
-                <input type="text" placeholder="Filter LR No." id="filter-lr" oninput="applyFilters()">
-                <input type="text" placeholder="Filter Consignee" id="filter-consignee" oninput="applyFilters()">
-                <input type="text" placeholder="Filter Destination" id="filter-destination" oninput="applyFilters()">
-                <input type="text" placeholder="Filter Packages" id="filter-packages" oninput="applyFilters()">
-                <input type="text" placeholder="Filter Weight" id="filter-weight" oninput="applyFilters()">
-                <input type="text" placeholder="Filter Status" id="filter-status" oninput="applyFilters()">
-            </div>
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width:40px;"><input type="checkbox" id="selectAllSearch" onchange="toggleAllSearchCheckboxes()"></th>
-                            <th>LR No.</th>
-                            <th>Consignee</th>
-                            <th>Destination</th>
-                            <th>Packages</th>
-                            <th>Weight</th>
-                            <th>Value</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="searchResultsBody"></tbody>
-                </table>
-            </div>
-        </div>
-        <div class="modal-footer-bar">
-            <button class="btn btn-success" onclick="addSelectedFromModal()">
-                <i class="fas fa-plus"></i> Add Selected
-            </button>
         </div>
     </div>
 </div>
 
-<!-- Delivery Details Modal (unchanged) -->
-<div class="modal-overlay" id="deliveryModal">
-    <div class="modal-box">
-        <div class="modal-header-bar">
-            <h5><i class="fas fa-truck" style="color:var(--primary-light);margin-right:8px;"></i>Door Delivery Details</h5>
-            <button class="modal-close" onclick="closeModal('deliveryModal')">&times;</button>
-        </div>
-        <div class="modal-body-area">
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Truck No. *</label>
-                    <input type="text" id="truckNo" class="form-control" placeholder="e.g. MH04AB1234">
-                    <span class="error-msg" id="err-truckNo"></span>
-                </div>
-                <div class="form-group">
-                    <label>Driver Name *</label>
-                    <input type="text" id="driverName" class="form-control" placeholder="Driver full name">
-                    <span class="error-msg" id="err-driverName"></span>
-                </div>
-                <div class="form-group">
-                    <label>Driver Mobile *</label>
-                    <input type="text" id="driverNo" class="form-control" placeholder="10-digit mobile">
-                    <span class="error-msg" id="err-driverNo"></span>
-                </div>
-                <div class="form-group">
-                    <label>Lorry Hire (₹) *</label>
-                    <input type="number" id="lorryHire" class="form-control" placeholder="0.00" min="0" step="0.01">
-                    <span class="error-msg" id="err-lorryHire"></span>
-                </div>
-                <div class="form-group">
-                    <label>Remarks</label>
-                    <input type="text" id="remarks" class="form-control" placeholder="Optional remarks">
-                </div>
-            </div>
-            <div class="summary-grid">
-                <div class="summary-card">
-                    <div class="val" id="summary-total-cnotes">0</div>
-                    <div class="lbl">Total CNotes</div>
-                </div>
-                <div class="summary-card">
-                    <div class="val" id="summary-total-packages">0</div>
-                    <div class="lbl">Total Packages</div>
-                </div>
-                <div class="summary-card">
-                    <div class="val" id="summary-total-weight">0</div>
-                    <div class="lbl">Total Weight (kg)</div>
-                </div>
-                <div class="summary-card">
-                    <div class="val" id="summary-total-value">₹0</div>
-                    <div class="lbl">Total Value</div>
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer-bar">
-            <button class="btn btn-success" onclick="confirmDelivery()">
-                <i class="fas fa-check"></i> Confirm Delivery
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Success Modal (unchanged) -->
-<div class="modal-overlay" id="successModal">
-    <div class="modal-box sm">
-        <div class="modal-body-area" style="text-align:center;padding:30px 20px;">
-            <div class="success-icon"><i class="fas fa-check-circle"></i></div>
-            <p id="successMessage" class="success-msg"></p>
-            <div class="success-btns">
-                <button class="btn btn-primary" onclick="printDDM()">
-                    <i class="fas fa-print"></i> Print DDM
-                </button>
-                <button class="btn btn-success" onclick="createNewDDM()">
-                    <i class="fas fa-plus"></i> New DDM
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Toast Container -->
-<div class="toast-container" id="toastContainer"></div>
-
-<!-- Loading Overlay -->
-<div class="loading-overlay" id="loadingOverlay">
-    <div class="spinner"></div>
-</div>
+<div id="toastBox"></div>
 
 <script>
-// ===== State =====
-let selectedCNotes = [];
-let destinations = [];
-let expanded = false;
-let allSearchResults = [];          // stores all CNotes fetched from backend
-let currentDDMId = null;
-let currentDDMNo = null;
-
-// ===== Sidebar Toggle =====
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const topbar = document.getElementById('topbar');
-    const main = document.getElementById('mainContent');
-    sidebar.classList.toggle('open');
-    if (window.innerWidth > 768) {
-        if (sidebar.style.width === '0px' || sidebar.style.width === '') {
-            sidebar.style.width = 'var(--sidebar-width)';
-            topbar.style.left = 'var(--sidebar-width)';
-            main.style.marginLeft = 'var(--sidebar-width)';
-        } else {
-            sidebar.style.width = '0';
-            topbar.style.left = '0';
-            main.style.marginLeft = '0';
-        }
+    function showToast(msg, type = 'info', duration = 3000) {
+        const icons = { success: 'check-circle', error: 'exclamation-circle', warning: 'exclamation-triangle', info: 'info-circle' };
+        const t = document.createElement('div');
+        t.className = `toast toast-${type}`;
+        t.innerHTML = `<i class="fas fa-${icons[type] || 'info-circle'}"></i> ${msg}`;
+        document.getElementById('toastBox').appendChild(t);
+        setTimeout(() => t.remove(), duration);
     }
-}
 
-// ===== Init =====
-document.addEventListener('DOMContentLoaded', () => {
-    loadDestinations();
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.multiselect')) {
-            const cb = document.getElementById('checkboxes');
-            if (cb) { cb.style.display = 'none'; expanded = false; }
-        }
-    });
-    document.getElementById('selectAll').addEventListener('change', toggleSelectAll);
-});
-
-// ===== Destinations =====
-function loadDestinations() {
-    fetch('/transporter/api/get-destinations/')
-        .then(r => r.json())
-        .then(data => {
-            destinations = data.destinations || data || [];
-            const container = document.getElementById('checkboxes');
-            container.innerHTML = '';
-            // Add "All" option? We'll handle by not selecting any.
-            destinations.forEach(dest => {
-                const lbl = document.createElement('label');
-                lbl.innerHTML = `<input type="checkbox" value="${dest}" onchange="onDestinationChange()"> ${dest}`;
-                container.appendChild(lbl);
-            });
-        })
-        .catch(err => showToast('Failed to load destinations', 'error'));
-}
-
-function toggleCheckboxes() {
-    const cb = document.getElementById('checkboxes');
-    if (!expanded) { cb.style.display = 'block'; expanded = true; }
-    else { cb.style.display = 'none'; expanded = false; }
-}
-
-function onDestinationChange() {
-    // When destinations change, if the modal is open, re-apply filters
-    if (document.getElementById('searchModal').classList.contains('show')) {
-        applyFilters();
+    function formatCurrency(amount) {
+        return '₹' + Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 2 });
     }
-}
 
-function getSelectedDestinations() {
-    return Array.from(
-        document.querySelectorAll('#checkboxes input:checked')
-    ).map(i => i.value);
-}
+    function updateDateTime() {
+        document.getElementById('currentDateTime').textContent = new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+    }
 
-// ===== Search (fetch all, then filter client-side) =====
-function handleSearch() {
-    const deliveryFor = document.getElementById('deliveryFor').value;
-    const lrNumber = document.getElementById('lrNumber').value.trim();
+    function toggleSub(id, el) {
+        const sub = document.getElementById(id);
+        const isOpen = sub.style.display === 'block';
+        sub.style.display = isOpen ? 'none' : 'block';
+        const arr = el.querySelector('.fa-chevron-right');
+        if (arr) arr.style.transform = isOpen ? '' : 'rotate(90deg)';
+    }
 
-    // Build URL with destination=ALL to get all eligible CNotes
-    let url = '/transporter/api/search-cnotes-for-ddm/?destination=ALL';
-    if (deliveryFor) url += `&deliveryFor=${encodeURIComponent(deliveryFor)}`;
-    if (lrNumber) url += `&lrNumber=${encodeURIComponent(lrNumber)}`;
+    function populateTable(data) {
+        const tableBody = document.getElementById('tableBody');
+        if (!data || !data.length) {
+            tableBody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:30px;color:#94a3b8;">No details found for this DDM.</td></tr>`;
+            return;
+        }
+        tableBody.innerHTML = data.map(item => {
+            // rcvDlyAS from view is actually the payment/settlement mode, status is delivery status
+            const isDelivered = (item.status || '').toLowerCase() === 'delivered';
+            // rcvDlyAS may contain payment mode values; if it matches a status word, treat as empty
+            const paymentModes = ['CASH','CHEQUE','ONLINE','RECEIVE_AT_GODOWN'];
+            const rcvVal = paymentModes.includes(item.rcvDlyAS) ? item.rcvDlyAS : '';
+            return `
+            <tr class="${isDelivered ? 'disabled-row' : ''}">
+                <td><input type="checkbox" class="row-checkbox" data-id="${item.id}" ${isDelivered ? 'disabled' : ''}></td>
+                <td><strong>${item.lrNo}</strong></td>
+                <td>${item.from || '—'}</td>
+                <td>${item.cneeName}</td>
+                <td>${item.lrType}</td>
+                <td>${formatCurrency(item.bookingTotal)}</td>
+                <td>${item.art}</td>
+                <td>
+                    <select class="rcv-dly-as form-control" onchange="updateDeliveryStatus(${item.id}, this)" ${isDelivered ? 'disabled' : ''} style="min-width:140px;">
+                        <option value="">— Select —</option>
+                        <option value="CASH" ${rcvVal === 'CASH' ? 'selected' : ''}>Cash</option>
+                        <option value="CHEQUE" ${rcvVal === 'CHEQUE' ? 'selected' : ''}>Cheque</option>
+                        <option value="ONLINE" ${rcvVal === 'ONLINE' ? 'selected' : ''}>Online</option>
+                        <option value="RECEIVE_AT_GODOWN" ${rcvVal === 'RECEIVE_AT_GODOWN' ? 'selected' : ''}>At Godown</option>
+                    </select>
+                    <div class="reason-box" style="display:${rcvVal === 'RECEIVE_AT_GODOWN' ? 'block' : 'none'};">
+                        <textarea rows="2" placeholder="Reason for godown…">${item.reason || ''}</textarea>
+                    </div>
+                </td>
+                <td><input type="number" value="${item.deliveryAmount}" class="form-control" style="width:100px;" ${isDelivered ? 'disabled' : ''} onchange="updateDeliveryAmount(${item.id}, this.value)"></td>
+                <td class="${isDelivered ? 'status-delivered' : 'status-pending'}">${item.status}</td>
+            </tr>`;
+        }).join('');
+    }
 
-    showLoading();
-    fetch(url, {
-        method: 'GET',
-        headers: { 'X-CSRFToken': getCookie('csrftoken') }
-    })
-    .then(async response => {
-        const text = await response.text();
+    let sortDirection = {};
+    function sortTable(col) {
+        const tbody = document.querySelector('#deliveryTable tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        sortDirection[col] = !sortDirection[col];
+        rows.sort((a, b) => {
+            const av = a.cells[col]?.textContent || '';
+            const bv = b.cells[col]?.textContent || '';
+            if (!isNaN(av) && !isNaN(bv)) return sortDirection[col] ? +av - +bv : +bv - +av;
+            return sortDirection[col] ? av.localeCompare(bv) : bv.localeCompare(av);
+        });
+        rows.forEach(r => tbody.appendChild(r));
+    }
+
+    function toggleSelectAll() {
+        const checked = document.getElementById('selectAll').checked;
+        document.querySelectorAll('.row-checkbox:not(:disabled)').forEach(cb => cb.checked = checked);
+    }
+
+    async function handleSearch() {
+        const numInput = document.getElementById('ddmNumber').value.trim();
+        if (!numInput) { showToast('Please enter a DDM number', 'warning'); return; }
+        const ddmNo = 'DDM-' + numInput;   // combine prefix + number → "DDM-1"
+
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="10" style="text-align:center;padding:30px;color:#94a3b8;"><i class="fas fa-spinner spin" style="font-size:1.5rem;"></i></td></tr>`;
+        document.getElementById('ddmInfoCard').style.display = 'none';
         try {
-            const data = JSON.parse(text);
-            if (!response.ok) throw new Error(data.error || data.message || 'Unknown error');
-            return data;
-        } catch (e) {
-            throw new Error(`Invalid JSON response: ${text.substring(0, 100)}`);
-        }
-    })
-    .then(data => {
-        // Store all results after mapping to consistent format
-        allSearchResults = (data || []).map(c => ({
-            lrNo: c.cnote_number || c.lrNo || '',
-            consigneeName: c.consignee_name || c.consigneeName || '',
-            destination: c.delivery_destination_name || c.destination || '',
-            packages: c.total_art || c.packages || 0,
-            weight: c.actual_weight || c.weight || 0,
-            value: c.declared_value || c.value || 0,
-            status: c.status || ''
-        }));
-        // Open modal and apply filters
-        document.getElementById('searchModal').classList.add('show');
-        applyFilters();
-    })
-    .catch(err => showToast('Search failed: ' + err.message, 'error'))
-    .finally(() => hideLoading());
-}
-
-// ===== Apply client-side filters (destinations + text filters) =====
-function applyFilters() {
-    const selectedDests = getSelectedDestinations();
-    const filterLr = document.getElementById('filter-lr').value.toLowerCase();
-    const filterConsignee = document.getElementById('filter-consignee').value.toLowerCase();
-    const filterDest = document.getElementById('filter-destination').value.toLowerCase();
-    const filterPackages = document.getElementById('filter-packages').value.toLowerCase();
-    const filterWeight = document.getElementById('filter-weight').value.toLowerCase();
-    const filterStatus = document.getElementById('filter-status').value.toLowerCase();
-
-    const filtered = allSearchResults.filter(c => {
-        // Destination filter (if any selected)
-        if (selectedDests.length > 0 && !selectedDests.includes(c.destination)) {
-            return false;
-        }
-        // Text filters
-        return c.lrNo.toLowerCase().includes(filterLr) &&
-               c.consigneeName.toLowerCase().includes(filterConsignee) &&
-               c.destination.toLowerCase().includes(filterDest) &&
-               String(c.packages).toLowerCase().includes(filterPackages) &&
-               String(c.weight).toLowerCase().includes(filterWeight) &&
-               c.status.toLowerCase().includes(filterStatus);
-    });
-
-    renderSearchResults(filtered);
-}
-
-function renderSearchResults(cnotes) {
-    const body = document.getElementById('searchResultsBody');
-    body.innerHTML = '';
-    if (!cnotes.length) {
-        body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:20px;">No matching CNotes</td></tr>';
-        return;
-    }
-    cnotes.forEach(c => {
-        const existingLRs = selectedCNotes.map(s => s.lrNo);
-        const alreadyAdded = existingLRs.includes(c.lrNo);
-        const row = document.createElement('tr');
-        if (alreadyAdded) row.style.opacity = '0.5';
-        row.innerHTML = `
-            <td><input type="checkbox" data-lr="${c.lrNo}" ${alreadyAdded ? 'disabled' : ''}></td>
-            <td>${c.lrNo}</td>
-            <td>${c.consigneeName}</td>
-            <td>${c.destination}</td>
-            <td>${c.packages}</td>
-            <td>${c.weight}</td>
-            <td>₹${c.value}</td>
-            <td><span class="status-badge status-${c.status.toLowerCase()}">${c.status}</span></td>
-        `;
-        // Store the full cnote data in the row for later use
-        row._cnoteData = c;
-        body.appendChild(row);
-    });
-}
-
-function addSelectedFromModal() {
-    const rows = document.querySelectorAll('#searchResultsBody tr');
-    let added = 0;
-    rows.forEach(row => {
-        const cb = row.querySelector('input[type="checkbox"]');
-        if (cb && cb.checked && !cb.disabled) {
-            const data = row._cnoteData;
-            if (data) {
-                selectedCNotes.push(data);
-                added++;
+            const response = await fetch(`/transporter/api/ddm-details-for-update/?ddmNo=${encodeURIComponent(ddmNo)}`);
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.error || 'DDM not found');
             }
+            const data = await response.json();
+
+            // Show DDM info banner
+            document.getElementById('info-ddmNo').textContent    = data.ddmNo   || ddmNo;
+            document.getElementById('info-date').textContent     = data.date ? new Date(data.date).toLocaleDateString('en-IN') : '—';
+            document.getElementById('info-truck').textContent    = data.truckNo  || '—';
+            document.getElementById('info-driver').textContent   = data.driverName || '—';
+            document.getElementById('info-driverNo').textContent = data.driverNo || '—';
+            document.getElementById('info-lorryHire').textContent = data.lorryHire ? '₹' + Number(data.lorryHire).toLocaleString('en-IN') : '—';
+            document.getElementById('info-remarks').textContent  = data.remarks  || '—';
+            document.getElementById('ddmInfoCard').style.display = 'block';
+
+            populateTable(data.details);
+            showToast(`Loaded ${ddmNo}`, 'success');
+        } catch (error) {
+            showToast(`Error: ${error.message}`, 'error');
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="10" style="text-align:center;padding:30px;color:#e74c3c;">${error.message}</td></tr>`;
         }
-    });
-    updateSelectedCNotesTable();
-    closeModal('searchModal');
-    if (added > 0) showToast(`${added} CNotes added`, 'success');
-}
-
-function toggleAllSearchCheckboxes() {
-    const checked = document.getElementById('selectAllSearch').checked;
-    document.querySelectorAll('#searchResultsBody input[type="checkbox"]:not(:disabled)')
-        .forEach(cb => { cb.checked = checked; });
-}
-
-// ===== Selected Table =====
-function updateSelectedCNotesTable() {
-    const body = document.getElementById('selectedCNotesBody');
-    body.innerHTML = '';
-    document.getElementById('selectedCount').textContent = `${selectedCNotes.length} selected`;
-
-    if (!selectedCNotes.length) {
-        body.innerHTML = `<tr id="noDataRow"><td colspan="8" style="text-align:center;color:#aaa;padding:30px;"><i class="fas fa-inbox" style="font-size:2rem;display:block;margin-bottom:8px;"></i>No CNotes selected. Use search to add CNotes.</td></tr>`;
-        return;
     }
-    selectedCNotes.forEach((c, idx) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td><input type="checkbox" data-idx="${idx}"></td>
-            <td>${c.lrNo}</td>
-            <td>${c.consigneeName}</td>
-            <td>${c.destination}</td>
-            <td>${c.packages}</td>
-            <td>${c.weight}</td>
-            <td>₹${c.value}</td>
-            <td><span class="status-badge status-${(c.status||'').toLowerCase()}">${c.status || '-'}</span></td>
-        `;
-        body.appendChild(row);
-    });
-}
 
-function removeSelected() {
-    const checkboxes = document.querySelectorAll('#selectedCNotesBody input[type="checkbox"]:checked');
-    const idxToRemove = new Set(Array.from(checkboxes).map(c => parseInt(c.getAttribute('data-idx'))));
-    selectedCNotes = selectedCNotes.filter((_, i) => !idxToRemove.has(i));
-    updateSelectedCNotesTable();
-    showToast(`${idxToRemove.size} CNotes removed`, 'warning');
-}
-
-function toggleSelectAll() {
-    const checked = document.getElementById('selectAll').checked;
-    document.querySelectorAll('#selectedCNotesBody input[type="checkbox"]')
-        .forEach(cb => { cb.checked = checked; });
-}
-
-// ===== Delivery Modal =====
-function openDeliveryModal() {
-    if (!selectedCNotes.length) { showToast('Please select CNotes first', 'warning'); return; }
-    const checked = Array.from(document.querySelectorAll('#selectedCNotesBody input[type="checkbox"]:checked'));
-    const checkedCount = checked.length || selectedCNotes.length;
-    const checkedCNotes = checked.length
-        ? selectedCNotes.filter((_, i) => checked.some(c => parseInt(c.getAttribute('data-idx')) === i))
-        : selectedCNotes;
-
-    let totalPkg = 0, totalWt = 0, totalVal = 0;
-    checkedCNotes.forEach(c => {
-        totalPkg += parseFloat(c.packages) || 0;
-        totalWt += parseFloat(c.weight) || 0;
-        totalVal += parseFloat(c.value) || 0;
-    });
-
-    document.getElementById('summary-total-cnotes').textContent = checkedCNotes.length;
-    document.getElementById('summary-total-packages').textContent = totalPkg;
-    document.getElementById('summary-total-weight').textContent = totalWt.toFixed(2);
-    document.getElementById('summary-total-value').textContent = '₹' + totalVal.toFixed(2);
-
-    document.getElementById('deliveryModal').classList.add('show');
-}
-
-function confirmDelivery() {
-    if (!validateDeliveryForm()) return;
-
-    const checkedCheckboxes = document.querySelectorAll('#selectedCNotesBody input[type="checkbox"]:checked');
-    const checkedIdxs = Array.from(checkedCheckboxes).map(c => parseInt(c.getAttribute('data-idx')));
-    const checkedCNotes = checkedIdxs.length
-        ? selectedCNotes.filter((_, i) => checkedIdxs.includes(i))
-        : selectedCNotes;
-
-    const deliveryData = {
-        cnotes: checkedCNotes.map(c => c.lrNo),
-        truckNo: document.getElementById('truckNo').value,
-        driverName: document.getElementById('driverName').value,
-        driverNo: document.getElementById('driverNo').value,
-        lorryHire: document.getElementById('lorryHire').value,
-        remarks: document.getElementById('remarks').value
-    };
-
-    showLoading();
-    fetch('/transporter/api/create-delivery-memo/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-        body: JSON.stringify(deliveryData)
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.status === 'success') {
-            currentDDMId = data.ddm_id;
-            currentDDMNo = data.ddm_no;
-            document.getElementById('successMessage').textContent = `DDM ${data.ddm_no} created successfully!`;
-            closeModal('deliveryModal');
-            document.getElementById('successModal').classList.add('show');
-            const processedLRs = new Set(checkedCNotes.map(c => c.lrNo));
-            selectedCNotes = selectedCNotes.filter(c => !processedLRs.has(c.lrNo));
-            updateSelectedCNotesTable();
-        } else {
-            throw new Error(data.message || 'Unknown error occurred');
-        }
-    })
-    .catch(err => showToast('Failed to create DDM: ' + err.message, 'error'))
-    .finally(() => hideLoading());
-}
-
-function validateDeliveryForm() {
-    let valid = true;
-    const fields = [
-        { id: 'truckNo', errId: 'err-truckNo', msg: 'Truck No. is required' },
-        { id: 'driverName', errId: 'err-driverName', msg: 'Driver Name is required' },
-        { id: 'driverNo', errId: 'err-driverNo', msg: 'Driver Mobile is required' },
-        { id: 'lorryHire', errId: 'err-lorryHire', msg: 'Lorry Hire is required' },
-    ];
-    fields.forEach(f => {
-        const el = document.getElementById(f.id);
-        const err = document.getElementById(f.errId);
-        if (!el.value.trim()) {
-            err.textContent = f.msg;
-            el.classList.add('error');
-            valid = false;
-        } else {
-            err.textContent = '';
-            el.classList.remove('error');
-        }
-    });
-    const hire = document.getElementById('lorryHire');
-    if (hire.value && (isNaN(hire.value) || parseFloat(hire.value) <= 0)) {
-        document.getElementById('err-lorryHire').textContent = 'Must be a positive number';
-        hire.classList.add('error');
-        valid = false;
+    function handlePaymentType(type, btnEl) {
+        document.getElementById('paymentType').value = type;
+        updateAllRcvDlyAS(type);
+        document.querySelectorAll('.shortcut-btn').forEach(b => b.classList.remove('active'));
+        if (btnEl) btnEl.classList.add('active');
+        showToast(`Payment type: ${type}`, 'info');
     }
-    return valid;
-}
 
-function printDDM() {
-    if (!currentDDMId) { showToast('No DDM ID available', 'error'); return; }
-    window.location.href = `/transporter/ddm-details/?ddmId=${currentDDMId}`;
-}
+    function updateAllRcvDlyAS(type) {
+        document.querySelectorAll('#tableBody .rcv-dly-as').forEach(select => {
+            if (!select.disabled) {
+                select.value = type;
+                const reasonBox = select.nextElementSibling;
+                if (reasonBox) reasonBox.style.display = type === 'RECEIVE_AT_GODOWN' ? 'block' : 'none';
+            }
+        });
+    }
 
-function createNewDDM() {
-    closeModal('successModal');
-    selectedCNotes = [];
-    updateSelectedCNotesTable();
-    ['truckNo','driverName','driverNo','lorryHire','remarks'].forEach(id => {
-        document.getElementById(id).value = '';
+    async function handleReceive() {
+        const selectedRows = document.querySelectorAll('.row-checkbox:checked');
+        if (selectedRows.length === 0) { showToast('Please select at least one row', 'warning'); return; }
+        const updates = Array.from(selectedRows).map(cb => {
+            const row = cb.closest('tr');
+            const id = cb.dataset.id;
+            const select = row.querySelector('.rcv-dly-as');
+            const paymentType = select.value;
+            const status = paymentType === 'RECEIVE_AT_GODOWN' ? 'Pending' : 'Delivered';
+            const reason = paymentType === 'RECEIVE_AT_GODOWN' ? (row.querySelector('.reason-box textarea')?.value || '') : '';
+            return updateCNoteStatus(id, status, paymentType, reason);
+        });
+        try {
+            await Promise.all(updates);
+            showToast(`Successfully processed ${selectedRows.length} CNotes`, 'success');
+            handleSearch();
+        } catch { showToast('Error updating CNotes. Please try again.', 'error'); }
+    }
+
+    async function updateCNoteStatus(id, status, paymentType, reason = '') {
+        const response = await fetch('/transporter/api/update-ddm/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ id, status, paymentType, reason })
+        });
+        if (!response.ok) throw new Error('Failed to update');
+        return await response.json();
+    }
+
+    function updateDeliveryStatus(id, selectElement) {
+        const reasonBox = selectElement.nextElementSibling;
+        if (reasonBox) reasonBox.style.display = selectElement.value === 'RECEIVE_AT_GODOWN' ? 'block' : 'none';
+    }
+
+    function updateDeliveryAmount(id, amount) { /* API call can be added here */ }
+
+    function getCookie(name) {
+        let v = null;
+        if (document.cookie) document.cookie.split(';').forEach(c => {
+            c = c.trim();
+            if (c.startsWith(name + '=')) v = decodeURIComponent(c.substring(name.length + 1));
+        });
+        return v;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        updateDateTime();
+        setInterval(updateDateTime, 60000);
+        document.getElementById('settlementDate').value = new Date().toISOString().split('T')[0];
+        document.addEventListener('keydown', e => {
+            const keyMap = { F7:'CASH', F8:'CHEQUE', F9:'ONLINE', F10:'RECEIVE_AT_GODOWN' };
+            if (keyMap[e.key]) {
+                e.preventDefault();
+                const type = keyMap[e.key];
+                const btn = Array.from(document.querySelectorAll('.shortcut-btn'))
+                               .find(b => b.textContent.includes(type === 'RECEIVE_AT_GODOWN' ? 'Godown' : type.charAt(0) + type.slice(1).toLowerCase()));
+                handlePaymentType(type, btn || null);
+            }
+        });
+        document.getElementById('ddmNumber').addEventListener('keydown', e => {
+            if (e.key === 'Enter') handleSearch();
+        });
     });
-    currentDDMId = null;
-    currentDDMNo = null;
-}
-
-// ===== Modal Helpers =====
-function closeModal(id) {
-    document.getElementById(id).classList.remove('show');
-}
-
-// ===== Toast =====
-function showToast(msg, type = 'success') {
-    const container = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    const icons = { success: 'check-circle', error: 'times-circle', warning: 'exclamation-triangle' };
-    toast.innerHTML = `<i class="fas fa-${icons[type] || 'info-circle'}"></i> ${msg}`;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
-
-// ===== Loading =====
-function showLoading() { document.getElementById('loadingOverlay').classList.add('show'); }
-function hideLoading() { document.getElementById('loadingOverlay').classList.remove('show'); }
-
-// ===== CSRF =====
-function getCookie(name) {
-    const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
-    return v ? v[2] : null;
-}
 </script>
 </body>
 </html>
