@@ -4878,9 +4878,3 @@ def update_user(request):
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=500)
 
-
-# ═══════════════════════════════════════════════════════════════════
-#  URLs — transporter_app/urls.py mein add karo
-# ═══════════════════════════════════════════════════════════════════
-
-# path('update-user/', views.update_user, name='update_user'),
