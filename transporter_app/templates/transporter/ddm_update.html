@@ -1,656 +1,498 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced DDM Settlement System</title>
+    <title>DDM Settlement — Good Way Express</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary: #2196F3;
-            --primary-dark: #1976D2;
-            --secondary: #4CAF50;
-            --danger: #f44336;
-            --warning: #ff9800;
-            --header-bg: #1565C0;
-            --nav-bg: #0D47A1;
-        }
+        :root{--primary:#1a252f;--primary-light:#3498db;--secondary:#e74c3c;--success:#27ae60;--warning:#f39c12;--info:#8e44ad;--light:#f8f9fa;--dark:#2c3e50;--border:#e0e6ed;--sidebar:#1a252f;--text:#34495e;}
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif;}
+        body{background:#f5f7fa;color:var(--text);display:flex;min-height:100vh;}
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', sans-serif;
-        }
+        /* SIDEBAR */
+        .sidebar{width:240px;background:var(--sidebar);color:white;height:100vh;position:fixed;left:0;top:0;display:flex;flex-direction:column;z-index:1000;box-shadow:2px 0 15px rgba(0,0,0,.15);transition:width .3s;overflow-y:auto;}
+        .logo-section{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.08);}
+        .logo{display:flex;align-items:center;gap:10px;}
+        .logo-icon{width:36px;height:36px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+        .logo-text{font-size:14px;font-weight:700;line-height:1.2;} .logo-sub{font-size:10px;color:rgba(255,255,255,.45);}
+        .nav-section{padding:12px 0;flex:1;}
+        .nav-title{padding:6px 16px 4px;font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+        .nav-menu{list-style:none;} .nav-item{margin:1px 0;}
+        .nav-link{display:flex;align-items:center;gap:10px;padding:.55rem 1rem;color:rgba(255,255,255,.65);text-decoration:none;font-size:.82rem;transition:all .2s;}
+        .nav-link:hover{color:white;background:rgba(255,255,255,.07);}
+        .nav-link.active{color:white;background:rgba(52,152,219,.2);border-left:3px solid var(--primary-light);padding-left:calc(1rem - 3px);}
+        .nav-link i{width:16px;text-align:center;font-size:.85rem;}
+        .sub-menu{list-style:none;background:rgba(0,0,0,.15);}
+        .sub-menu a{display:block;padding:.4rem 1rem .4rem 2.6rem;font-size:.78rem;color:rgba(255,255,255,.55);text-decoration:none;transition:color .2s;}
+        .sub-menu a:hover{color:white;}
+        .sub-menu a.active-sub{color:white;font-weight:700;}
+        .sidebar-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.08);}
+        .logout-btn{width:100%;background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);padding:.45rem;border-radius:6px;cursor:pointer;font-size:.78rem;transition:all .2s;}
+        .logout-btn:hover{background:rgba(231,76,60,.2);color:#e74c3c;border-color:#e74c3c;}
 
-        body {
-            background: #f5f5f5;
-            color: #333;
-            line-height: 1.6;
-        }
+        .main-content{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
+        .topbar{background:white;padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 8px rgba(0,0,0,.06);position:sticky;top:0;z-index:100;}
+        .topbar-left{display:flex;align-items:center;gap:14px;}
+        .menu-toggle{background:none;border:none;font-size:18px;color:var(--dark);cursor:pointer;display:none;padding:4px;}
+        .page-title{font-size:1.1rem;font-weight:700;color:var(--dark);display:flex;align-items:center;gap:8px;}
+        .page-title i{color:var(--primary-light);}
+        .topbar-right{display:flex;align-items:center;gap:16px;}
+        .user-avatar{width:34px;height:34px;background:linear-gradient(135deg,#3498db,#2980b9);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:.9rem;}
+        .uname{font-size:.82rem;font-weight:600;color:var(--dark);} .urole{font-size:.72rem;color:#95a5a6;}
+        .datetime-chip{background:var(--light);border:1px solid var(--border);border-radius:20px;padding:.3rem .9rem;font-size:.78rem;color:var(--dark);font-weight:600;}
 
-        header {
-            background: var(--header-bg);
-            color: white;
-            padding: 1rem;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
+        .page-body{padding:20px 24px;flex:1;}
 
-        .header-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .card{background:white;border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,.05);margin-bottom:18px;overflow:hidden;}
+        .card-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+        .card-title{font-size:.95rem;font-weight:700;color:var(--dark);display:flex;align-items:center;gap:8px;}
+        .card-title i{color:var(--primary-light);}
+        .card-body{padding:18px 20px;}
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
+        .controls-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+        .form-control{padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:7px;font-size:.85rem;color:var(--dark);background:white;transition:border-color .2s;}
+        .form-control:focus{outline:none;border-color:var(--primary-light);}
 
-        .logo img {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: 2px solid white;
-            transition: transform 0.3s;
-        }
+        .btn{padding:.5rem 1.1rem;border:none;border-radius:7px;font-size:.84rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s;}
+        .btn-primary{background:var(--primary-light);color:white;} .btn-primary:hover{background:#2980b9;}
+        .btn-success{background:var(--success);color:white;} .btn-success:hover{filter:brightness(.9);}
+        .btn-warning{background:var(--warning);color:white;} .btn-warning:hover{filter:brightness(.9);}
+        .btn-danger{background:var(--secondary);color:white;} .btn-danger:hover{filter:brightness(.9);}
+        .btn-secondary{background:var(--light);color:var(--dark);border:1.5px solid var(--border);}
 
-        .logo img:hover {
-            transform: scale(1.1);
-        }
+        /* SHORTCUT KEYS PANEL */
+        .shortcut-panel{display:flex;gap:8px;flex-wrap:wrap;}
+        .shortcut-btn{padding:.45rem 1rem;border:1.5px solid var(--border);border-radius:7px;background:white;color:var(--dark);font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;}
+        .shortcut-btn:hover,.shortcut-btn.active{background:var(--primary-light);color:white;border-color:var(--primary-light);}
+        .kbd{display:inline-block;padding:1px 6px;border:1px solid #ccc;border-radius:3px;background:#f5f5f5;font-size:.72rem;font-family:monospace;}
 
-        .header-info {
-            text-align: center;
-            font-size: 1.1rem;
-        }
+        /* TABLE */
+        .tbl-wrap{overflow-x:auto;}
+        .data-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+        .data-table thead th{background:#f8fafc;padding:10px 12px;text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:#64748b;border-bottom:2px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
+        .data-table thead th:hover{background:#e8f0fe;color:var(--primary-light);}
+        .data-table tbody td{padding:10px 12px;border-bottom:1px solid #f1f5f9;color:var(--dark);vertical-align:middle;}
+        .data-table tbody tr:hover{background:#f8fafc;}
+        .data-table tbody tr.disabled-row{opacity:.5;}
 
-        .search-box {
-            display: flex;
-            gap: 1rem;
-        }
+        .status-delivered{color:var(--success);font-weight:700;}
+        .status-pending{color:var(--warning);font-weight:700;}
 
-        .search-box input {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 4px;
-            width: 250px;
-            transition: width 0.3s;
-        }
+        .reason-box{display:none;margin-top:6px;}
+        .reason-box textarea{width:100%;padding:.4rem;border:1px solid var(--border);border-radius:4px;font-size:.8rem;resize:vertical;}
 
-        .search-box input:focus {
-            width: 300px;
-            outline: none;
-            box-shadow: 0 0 0 2px var(--primary);
-        }
+        /* TOAST */
+        #toastBox{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+        .toast{display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:8px;color:white;font-size:.84rem;font-weight:500;min-width:260px;box-shadow:0 4px 16px rgba(0,0,0,.15);animation:slideIn .25s ease;}
+        @keyframes slideIn{from{transform:translateX(100px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+        .toast-success{background:#27ae60;} .toast-error{background:#e74c3c;} .toast-info{background:#3498db;} .toast-warning{background:#f39c12;}
 
-        nav {
-            background: var(--nav-bg);
-            padding: 1rem;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
+        .spin{animation:spin 1s linear infinite;display:inline-block;}
+        @keyframes spin{to{transform:rotate(360deg);}}
 
-        .nav-buttons {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-        }
-
-        .nav-btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 120px;
-            font-weight: 600;
-        }
-
-        .nav-btn:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        main {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        .page-title {
-            text-align: center;
-            color: var(--primary);
-            margin-bottom: 2rem;
-            font-size: 2rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .search-section, .action-buttons, .payment-section {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
-            transition: transform 0.3s;
-        }
-
-        .search-section:hover, .action-buttons:hover, .payment-section:hover {
-            transform: translateY(-2px);
-        }
-
-        .input-group {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .input-group label {
-            font-weight: 600;
-            min-width: 120px;
-        }
-
-        .input-group input, .input-group select {
-            padding: 0.5rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            width: 200px;
-            transition: all 0.3s;
-        }
-
-        .input-group input:focus, .input-group select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
-        }
-
-        .table-container {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        th {
-            background: var(--primary);
-            color: white;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-        }
-
-        .sortable {
-            cursor: pointer;
-            position: relative;
-            user-select: none;
-        }
-
-        .sortable:hover {
-            background: var(--primary-dark);
-        }
-
-        .sortable::after {
-            content: '↕';
-            position: absolute;
-            right: 8px;
-            color: white;
-        }
-
-        .sortable.asc::after { content: '↑'; }
-        .sortable.desc::after { content: '↓'; }
-
-        tr:hover {
-            background: #f8f9fa;
-        }
-
-        .action-btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-            min-width: 120px;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-secondary {
-            background: var(--secondary);
-            color: white;
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 1rem 2rem;
-            background: var(--secondary);
-            color: white;
-            border-radius: 4px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            display: none;
-            z-index: 1000;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(100%); }
-            to { transform: translateX(0); }
-        }
-
-        @media (max-width: 1200px) {
-            .header-container {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .nav-buttons {
-                flex-wrap: wrap;
-            }
-
-            .search-section, .payment-section {
-                flex-direction: column;
-            }
-
-            .input-group {
-                width: 100%;
-            }
-        }
-
-        .payment-section {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
-        }
-
-        .input-group {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .input-group label {
-            font-weight: 600;
-            white-space: nowrap;
-        }
-
-        .reason-box {
-            display: none;
-            margin-top: 0.5rem;
-        }
-
-        .reason-box textarea {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            resize: vertical;
-        }
-
-        .status-delivered {
-            color: var(--secondary);
-            font-weight: bold;
-        }
-
-        .status-pending {
-            color: var(--warning);
-            font-weight: bold;
+        @media(max-width:900px){
+            .sidebar{width:0;overflow:hidden;} .sidebar.open{width:240px;}
+            .main-content{margin-left:0;} .menu-toggle{display:block!important;}
         }
     </style>
 </head>
 <body>
-    <div id="toast" class="toast"></div>
-    
-    <header>
-        <div class="header-container">
-            <div class="logo">
-                <img src="https://via.placeholder.com/50" alt="Company Logo">
-                <h1>DDM System</h1>
-            </div>
-            <div class="header-info">
-                <p>Welcome ATUL (NAGPUR - NAGPUR)</p>
-                <p id="currentDateTime"></p>
-            </div>
-            <div class="search-box">
-                <input type="text" placeholder="Search LR..." id="searchLR">
-                <button class="action-btn btn-danger" onclick="handleLogout()">Logout</button>
+
+<!-- ═══ SIDEBAR ═══ -->
+<div class="sidebar" id="sidebar">
+    <div class="logo-section">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-shipping-fast"></i></div>
+            <div>
+                <div class="logo-text">Good Way Express</div>
+                <div class="logo-sub">Transport Panel</div>
             </div>
         </div>
-    </header>
+    </div>
+    <div class="nav-section">
+        <div class="nav-title">Main</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="{% url 'transporter:home' %}" class="nav-link">
+                    <i class="fas fa-home"></i><span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'transporter:receive' %}" class="nav-link">
+                    <i class="fas fa-clock"></i><span>Pending Requests</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="toggleSub('sub-del',this);return false;">
+                    <i class="fas fa-clipboard-list"></i><span>Delivery Management</span>
+                    <i class="fas fa-chevron-right" id="arr-del" style="margin-left:auto;font-size:10px;transition:transform .2s;transform:rotate(90deg);"></i>
+                </a>
+                <ul class="sub-menu" id="sub-del" style="display:block;">
+                    <li><a href="{% url 'transporter:delivery_cnotes' %}">Single Delivery</a></li>
+                    <li><a href="{% url 'transporter:ddm_settlement' %}" class="active-sub">DDM Settlements</a></li>
+                </ul>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'transporter:received_cnote' %}" class="nav-link">
+                    <i class="fas fa-check-circle"></i><span>Completed</span>
+                </a>
+            </li>
+        </ul>
+        <div class="nav-title">Reports &amp; Masters</div>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="toggleSub('sub-rep',this);return false;">
+                    <i class="fas fa-chart-bar"></i><span>Reports</span>
+                    <i class="fas fa-chevron-right" id="arr-rep" style="margin-left:auto;font-size:10px;transition:transform .2s;transform:;"></i>
+                </a>
+                <ul class="sub-menu" id="sub-rep" style="display:none;">
+                    <li><a href="{% url 'transporter:all_booking_register' %}">Booking Register</a></li>
+                    <li><a href="{% url 'transporter:loading_sheet_report' %}">Loading Sheet Report</a></li>
+                </ul>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="toggleSub('sub-mas',this);return false;">
+                    <i class="fas fa-cog"></i><span>Master</span>
+                    <i class="fas fa-chevron-right" id="arr-mas" style="margin-left:auto;font-size:10px;transition:transform .2s;transform:;"></i>
+                </a>
+                <ul class="sub-menu" id="sub-mas" style="display:none;">
+                    <li><a href="{% url 'transporter:rate_card_master' %}">Rate Card Master</a></li>
+                    <li><a href="{% url 'transporter:billing' %}">Billing Dealer</a></li>
+                    <li><a href="{% url 'transporter:bill_manage' %}">Bill Management</a></li>
+                    <li><a href="{% url 'transporter:manage_location' %}">Manage Location</a></li>
+                    <li><a href="{% url 'transporter:party_master' %}">Party Master</a></li>
+                    <li><a href="{% url 'transporter:add_user' %}">Add User</a></li>
+                    <li><a href="{% url 'transporter:view_users' %}">View Users</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div class="sidebar-footer">
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </form>
+    </div>
+</div>
 
-    <nav>
-        <div class="nav-buttons">
-            <button class="nav-btn" onclick="handlePaymentType('CASH')">F7: CASH</button>
-            <button class="nav-btn" onclick="handlePaymentType('CHEQUE')">F8: CHEQUE</button>
-            <button class="nav-btn" onclick="handlePaymentType('ONLINE')">F9: ONLINE</button>
-            <button class="nav-btn" onclick="handlePaymentType('RECEIVE_AT_GODOWN')">F10: RECEIVE AT GODOWN</button>
+<!-- MAIN -->
+<div class="main-content">
+    <div class="topbar">
+        <div class="topbar-left">
+            <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+            <div class="page-title"><i class="fas fa-truck"></i> DDM Settlement</div>
         </div>
-    </nav>
+        <div class="topbar-right">
+            <div class="datetime-chip" id="currentDateTime"></div>
+            <div class="user-avatar">{{ request.user.username|first|upper }}</div>
+            <div><div class="uname">{{ request.user.username|title }}</div><div class="urole">Transporter</div></div>
+        </div>
+    </div>
 
-    <main>
-        <h2 class="page-title">DDM Settlement</h2>
-        
-        <div class="search-section">
-            <div class="input-group">
-                <label for="ddmNo">DDM No:</label>
-                <input type="text" id="ddmNo" placeholder="Enter DDM Number">
-                <button class="action-btn btn-primary" onclick="handleSearch()">Search</button>
+    <div class="page-body">
+        <!-- Search DDM -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-search"></i> Search DDM</div>
+            </div>
+            <div class="card-body">
+                <div class="controls-row">
+                    <div style="display:flex;align-items:center;border:1.5px solid var(--border);border-radius:7px;overflow:hidden;background:white;">
+                        <span style="padding:.5rem .85rem;background:#f1f5f9;color:var(--primary-light);font-weight:700;font-size:.9rem;border-right:1.5px solid var(--border);white-space:nowrap;letter-spacing:.5px;">DDM-</span>
+                        <input type="number" id="ddmNumber" class="form-control" placeholder="e.g. 1" min="1" step="1"
+                               style="border:none;border-radius:0;min-width:140px;outline:none;box-shadow:none;"
+                               onkeydown="if(event.key==='Enter')handleSearch()">
+                    </div>
+                    <button class="btn btn-primary" onclick="handleSearch()"><i class="fas fa-search"></i> Search</button>
+                </div>
             </div>
         </div>
 
-        <div class="payment-section">
-            <button class="action-btn btn-secondary" onclick="handleReceive()">Receive</button>
-            <div class="input-group">
-                <label>Payment Type:</label>
-                <select id="paymentType" onchange="updateAllRcvDlyAS(this.value)">
-                    <option value="">--Select Mode--</option>
-                    <option value="CASH">Cash</option>
-                    <option value="CHEQUE">Cheque</option>
-                    <option value="ONLINE">Online</option>
-                    <option value="RECEIVE_AT_GODOWN">Receive at Godown</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label>Settlement Date:</label>
-                <input type="date" id="settlementDate">
+        <!-- DDM Info Banner (shown after search) -->
+        <div class="card" id="ddmInfoCard" style="display:none;">
+            <div class="card-body" style="padding:12px 20px;">
+                <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:center;">
+                    <div><span style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;font-weight:600;">DDM No</span><div style="font-size:1rem;font-weight:700;color:var(--primary-light);" id="info-ddmNo">—</div></div>
+                    <div><span style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;font-weight:600;">Date</span><div style="font-size:.88rem;font-weight:600;" id="info-date">—</div></div>
+                    <div><span style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;font-weight:600;">Truck No</span><div style="font-size:.88rem;font-weight:600;" id="info-truck">—</div></div>
+                    <div><span style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;font-weight:600;">Driver</span><div style="font-size:.88rem;font-weight:600;" id="info-driver">—</div></div>
+                    <div><span style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;font-weight:600;">Driver Mobile</span><div style="font-size:.88rem;font-weight:600;" id="info-driverNo">—</div></div>
+                    <div><span style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;font-weight:600;">Lorry Hire</span><div style="font-size:.88rem;font-weight:600;" id="info-lorryHire">—</div></div>
+                    <div><span style="font-size:.72rem;color:#94a3b8;text-transform:uppercase;font-weight:600;">Remarks</span><div style="font-size:.88rem;font-weight:600;" id="info-remarks">—</div></div>
+                </div>
             </div>
         </div>
 
-        <div class="table-container">
-            <table id="deliveryTable">
-                <thead>
-                    <tr>
-                        <th><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
-                        <th class="sortable" onclick="sortTable(1)">LR No ↕</th>
-                        <th class="sortable" onclick="sortTable(2)">From ↕</th>
-                        <th class="sortable" onclick="sortTable(3)">C/nee Name ↕</th>
-                        <th class="sortable" onclick="sortTable(4)">LR Type ↕</th>
-                        <th class="sortable" onclick="sortTable(5)">Booking Total ↕</th>
-                        <th class="sortable" onclick="sortTable(6)">Art ↕</th>
-                        <th>Rcv Dly AS</th>
-                        <th class="sortable" onclick="sortTable(8)">Delivery Amount ↕</th>
-                        <th class="sortable" onclick="sortTable(9)">Status ↕</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-            </table>
-        </div>
-    </main>
-
-    <script>
-        // Utility Functions
-        function showToast(message, duration = 3000) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.style.display = 'block';
-            setTimeout(() => {
-                toast.style.display = 'none';
-            }, duration);
-        }
-
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('en-IN', {
-                style: 'currency',
-                currency: 'INR'
-            }).format(amount);
-        }
-
-        function updateDateTime() {
-            const now = new Date();
-            document.getElementById('currentDateTime').textContent = 
-                now.toLocaleString('en-IN', { 
-                    dateStyle: 'medium', 
-                    timeStyle: 'medium' 
-                });
-        }
-
-        // Table Functions
-        function populateTable(data) {
-            const tableBody = document.getElementById('tableBody');
-            tableBody.innerHTML = '';
-
-            data.forEach(item => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><input type="checkbox" class="row-checkbox" data-id="${item.id}" ${item.status === 'Delivered' ? 'disabled' : ''}></td>
-                    <td>${item.lrNo}</td>
-                    <td>${item.from}</td>
-                    <td>${item.cneeName}</td>
-                    <td>${item.lrType}</td>
-                    <td>${formatCurrency(item.bookingTotal)}</td>
-                    <td>${item.art}</td>
-                    <td>
-                        <select class="rcv-dly-as" onchange="updateDeliveryStatus(${item.id}, this)" ${item.status === 'Delivered' ? 'disabled' : ''}>
-                            <option value="">--Select--</option>
-                            <option value="CASH" ${item.rcvDlyAS === 'CASH' ? 'selected' : ''}>Cash</option>
-                            <option value="CHEQUE" ${item.rcvDlyAS === 'CHEQUE' ? 'selected' : ''}>Cheque</option>
-                            <option value="ONLINE" ${item.rcvDlyAS === 'ONLINE' ? 'selected' : ''}>Online</option>
-                            <option value="RECEIVE_AT_GODOWN" ${item.rcvDlyAS === 'RECEIVE_AT_GODOWN' ? 'selected' : ''}>Receive at Godown</option>
+        <!-- Payment Controls -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-credit-card"></i> Payment Mode</div>
+                <div class="shortcut-panel">
+                    <button class="shortcut-btn" onclick="handlePaymentType('CASH',this)"><span class="kbd">F7</span> Cash</button>
+                    <button class="shortcut-btn" onclick="handlePaymentType('CHEQUE',this)"><span class="kbd">F8</span> Cheque</button>
+                    <button class="shortcut-btn" onclick="handlePaymentType('ONLINE',this)"><span class="kbd">F9</span> Online</button>
+                    <button class="shortcut-btn" onclick="handlePaymentType('RECEIVE_AT_GODOWN',this)"><span class="kbd">F10</span> At Godown</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="controls-row">
+                    <div>
+                        <label style="font-size:.8rem;font-weight:600;margin-bottom:4px;display:block;">Payment Type</label>
+                        <select id="paymentType" class="form-control" onchange="updateAllRcvDlyAS(this.value)">
+                            <option value="">— Select Mode —</option>
+                            <option value="CASH">Cash</option>
+                            <option value="CHEQUE">Cheque</option>
+                            <option value="ONLINE">Online</option>
+                            <option value="RECEIVE_AT_GODOWN">Receive at Godown</option>
                         </select>
-                        <div class="reason-box" style="display: ${item.rcvDlyAS === 'RECEIVE_AT_GODOWN' ? 'block' : 'none'};">
-                            <textarea placeholder="Enter reason for receiving at godown" rows="2">${item.reason || ''}</textarea>
-                        </div>
-                    </td>
-                    <td>
-                        <input type="number" value="${item.deliveryAmount}" onchange="updateDeliveryAmount(${item.id}, this.value)" style="width: 100px" ${item.status === 'Delivered' ? 'disabled' : ''}>
-                    </td>
-                    <td class="${item.status.toLowerCase() === 'delivered' ? 'status-delivered' : 'status-pending'}">
-                        ${item.status}
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
+                    </div>
+                    <div>
+                        <label style="font-size:.8rem;font-weight:600;margin-bottom:4px;display:block;">Settlement Date</label>
+                        <input type="date" id="settlementDate" class="form-control">
+                    </div>
+                    <div style="margin-top:22px;">
+                        <button class="btn btn-success" onclick="handleReceive()"><i class="fas fa-check-circle"></i> Receive Selected</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delivery Table -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-table"></i> Delivery Details</div>
+            </div>
+            <div class="card-body">
+                <div class="tbl-wrap">
+                    <table class="data-table" id="deliveryTable">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
+                                <th onclick="sortTable(1)">LR No <i class="fas fa-sort" style="font-size:.65rem;"></i></th>
+                                <th onclick="sortTable(2)">From <i class="fas fa-sort" style="font-size:.65rem;"></i></th>
+                                <th onclick="sortTable(3)">Consignee Name <i class="fas fa-sort" style="font-size:.65rem;"></i></th>
+                                <th onclick="sortTable(4)">LR Type <i class="fas fa-sort" style="font-size:.65rem;"></i></th>
+                                <th onclick="sortTable(5)">Booking Total <i class="fas fa-sort" style="font-size:.65rem;"></i></th>
+                                <th>Art</th>
+                                <th>Rcv Dly AS</th>
+                                <th>Delivery Amount</th>
+                                <th onclick="sortTable(9)">Status <i class="fas fa-sort" style="font-size:.65rem;"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr><td colspan="10" style="text-align:center;padding:40px;color:#94a3b8;"><i class="fas fa-search" style="font-size:2rem;margin-bottom:8px;display:block;"></i>Search a DDM number to view delivery details</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toastBox"></div>
+
+<script>
+    function showToast(msg, type = 'info', duration = 3000) {
+        const icons = { success: 'check-circle', error: 'exclamation-circle', warning: 'exclamation-triangle', info: 'info-circle' };
+        const t = document.createElement('div');
+        t.className = `toast toast-${type}`;
+        t.innerHTML = `<i class="fas fa-${icons[type] || 'info-circle'}"></i> ${msg}`;
+        document.getElementById('toastBox').appendChild(t);
+        setTimeout(() => t.remove(), duration);
+    }
+
+    function formatCurrency(amount) {
+        return '₹' + Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    }
+
+    function updateDateTime() {
+        document.getElementById('currentDateTime').textContent = new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+    }
+
+    function toggleSub(id, el) {
+        const sub = document.getElementById(id);
+        const isOpen = sub.style.display === 'block';
+        sub.style.display = isOpen ? 'none' : 'block';
+        const arr = el.querySelector('.fa-chevron-right');
+        if (arr) arr.style.transform = isOpen ? '' : 'rotate(90deg)';
+    }
+
+    function populateTable(data) {
+        const tableBody = document.getElementById('tableBody');
+        if (!data || !data.length) {
+            tableBody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:30px;color:#94a3b8;">No details found for this DDM.</td></tr>`;
+            return;
         }
+        tableBody.innerHTML = data.map(item => {
+            // rcvDlyAS from view is actually the payment/settlement mode, status is delivery status
+            const isDelivered = (item.status || '').toLowerCase() === 'delivered';
+            // rcvDlyAS may contain payment mode values; if it matches a status word, treat as empty
+            const paymentModes = ['CASH','CHEQUE','ONLINE','RECEIVE_AT_GODOWN'];
+            const rcvVal = paymentModes.includes(item.rcvDlyAS) ? item.rcvDlyAS : '';
+            return `
+            <tr class="${isDelivered ? 'disabled-row' : ''}">
+                <td><input type="checkbox" class="row-checkbox" data-id="${item.id}" ${isDelivered ? 'disabled' : ''}></td>
+                <td><strong>${item.lrNo}</strong></td>
+                <td>${item.from || '—'}</td>
+                <td>${item.cneeName}</td>
+                <td>${item.lrType}</td>
+                <td>${formatCurrency(item.bookingTotal)}</td>
+                <td>${item.art}</td>
+                <td>
+                    <select class="rcv-dly-as form-control" onchange="updateDeliveryStatus(${item.id}, this)" ${isDelivered ? 'disabled' : ''} style="min-width:140px;">
+                        <option value="">— Select —</option>
+                        <option value="CASH" ${rcvVal === 'CASH' ? 'selected' : ''}>Cash</option>
+                        <option value="CHEQUE" ${rcvVal === 'CHEQUE' ? 'selected' : ''}>Cheque</option>
+                        <option value="ONLINE" ${rcvVal === 'ONLINE' ? 'selected' : ''}>Online</option>
+                        <option value="RECEIVE_AT_GODOWN" ${rcvVal === 'RECEIVE_AT_GODOWN' ? 'selected' : ''}>At Godown</option>
+                    </select>
+                    <div class="reason-box" style="display:${rcvVal === 'RECEIVE_AT_GODOWN' ? 'block' : 'none'};">
+                        <textarea rows="2" placeholder="Reason for godown…">${item.reason || ''}</textarea>
+                    </div>
+                </td>
+                <td><input type="number" value="${item.deliveryAmount}" class="form-control" style="width:100px;" ${isDelivered ? 'disabled' : ''} onchange="updateDeliveryAmount(${item.id}, this.value)"></td>
+                <td class="${isDelivered ? 'status-delivered' : 'status-pending'}">${item.status}</td>
+            </tr>`;
+        }).join('');
+    }
 
-        let sortDirection = {};
-
-        function sortTable(columnIndex) {
-            const table = document.getElementById('deliveryTable');
-            const tbody = table.querySelector('tbody');
-            const rows = Array.from(tbody.querySelectorAll('tr'));
-            const header = table.querySelectorAll('th')[columnIndex];
-            
-            sortDirection[columnIndex] = !sortDirection[columnIndex];
-
-            table.querySelectorAll('th').forEach(th => {
-                th.classList.remove('asc', 'desc');
-            });
-            header.classList.add(sortDirection[columnIndex] ? 'asc' : 'desc');
-
-            rows.sort((a, b) => {
-                const aValue = a.cells[columnIndex].textContent;
-                const bValue = b.cells[columnIndex].textContent;
-                
-                if (!isNaN(aValue) && !isNaN(bValue)) {
-                    return sortDirection[columnIndex] 
-                        ? parseFloat(aValue) - parseFloat(bValue)
-                        : parseFloat(bValue) - parseFloat(aValue);
-                }
-                
-                return sortDirection[columnIndex]
-                    ? aValue.localeCompare(bValue)
-                    : bValue.localeCompare(aValue);
-            });
-
-            rows.forEach(row => tbody.appendChild(row));
-            showToast(`Sorted by ${header.textContent.replace('↕', '')}`);
-        }
-
-        function toggleSelectAll() {
-            const selectAll = document.getElementById('selectAll');
-            const checkboxes = document.querySelectorAll('.row-checkbox:not(:disabled)');
-            checkboxes.forEach(checkbox => checkbox.checked = selectAll.checked);
-        }
-
-        // Event Handlers
-        async function handleSearch() {
-            const ddmNo = document.getElementById('ddmNo').value;
-            if (!ddmNo) {
-                showToast('Please enter a DDM number', 3000);
-                return;
-            }
-        
-            try {
-                const response = await fetch(`/transporter/api/ddm-details-for-update/?ddmNo=${ddmNo}`);
-                if (!response.ok) {
-                    throw new Error('Failed to fetch DDM details');
-                }
-        
-                const data = await response.json();
-                console.log("API Response:", data);
-                populateTable(data.details);
-                showToast(`Loaded details for DDM No: ${ddmNo}`);
-            } catch (error) {
-                console.error('Error fetching DDM details:', error);
-                showToast('Error fetching DDM details. Please try again.', 4000);
-            }
-        }
-
-        function handlePaymentType(type) {
-            document.getElementById('paymentType').value = type;
-            updateAllRcvDlyAS(type);
-            showToast(`Selected payment type: ${type}`);
-        }
-
-        function updateAllRcvDlyAS(type) {
-            const selects = document.querySelectorAll('#tableBody .rcv-dly-as');
-            selects.forEach(select => {
-                if (!select.disabled) {
-                    select.value = type;
-                    const reasonBox = select.nextElementSibling;
-                    reasonBox.style.display = type === 'RECEIVE_AT_GODOWN' ? 'block' : 'none';
-                }
-            });
-        }
-
-        async function handleReceive() {
-            const selectedRows = document.querySelectorAll('.row-checkbox:checked');
-            if (selectedRows.length === 0) {
-                showToast('Please select at least one row to receive payment', 4000);
-                return;
-            }
-
-            const updatePromises = Array.from(selectedRows).map(checkbox => {
-                const row = checkbox.closest('tr');
-                const id = checkbox.dataset.id;
-                const select = row.querySelector('.rcv-dly-as');
-                const paymentType = select.value;
-                const status = paymentType === 'RECEIVE_AT_GODOWN' ? 'Pending' : 'Delivered';
-                const reasonBox = row.querySelector('.reason-box textarea');
-                const reason = paymentType === 'RECEIVE_AT_GODOWN' ? reasonBox.value : '';
-                return updateCNoteStatus(id, status, paymentType, reason);
-            });
-
-            try {
-                await Promise.all(updatePromises);
-                showToast(`Successfully processed ${selectedRows.length} CNotes`);
-                handleSearch(); // Refresh the table
-            } catch (error) {
-                console.error('Error updating CNotes:', error);
-                showToast('Error updating CNotes. Please try again.', 4000);
-            }
-        }
-
-        async function updateCNoteStatus(id, status, paymentType, reason = '') {
-            try {
-                const response = await fetch('/transporter/api/update-ddm/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        id,
-                        status,
-                        paymentType,
-                        reason,
-                    }),
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to update CNote status');
-                }
-
-                return await response.json();
-            } catch (error) {
-                console.error('Error updating CNote status:', error);
-                throw error;
-            }
-        }
-
-        function handleLogout() {
-            if (confirm('Are you sure you want to logout?')) {
-                showToast('Logging out...');
-                setTimeout(() => {
-                    window.location.href = '/logout';  // Replace with your logout URL
-                }, 2000);
-            }
-        }
-
-        function updateDeliveryStatus(id, selectElement) {
-            const status = selectElement.value;
-            const reasonBox = selectElement.nextElementSibling;
-            reasonBox.style.display = status === 'RECEIVE_AT_GODOWN' ? 'block' : 'none';
-            showToast(`Updated delivery status for LR ID: ${id} to ${status}`);
-        }
-
-        function updateDeliveryAmount(id, amount) {
-            showToast(`Updated delivery amount for LR ID: ${id} to ${formatCurrency(amount)}`);
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            updateDateTime();
-            setInterval(updateDateTime, 1000);
-            
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('settlementDate').value = today;
-
-            // Keyboard shortcuts
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'F7') handlePaymentType('CASH');
-                if (e.key === 'F8') handlePaymentType('CHEQUE');
-                if (e.key === 'F9') handlePaymentType('ONLINE');
-                if (e.key === 'F10') handlePaymentType('RECEIVE_AT_GODOWN');
-            });
+    let sortDirection = {};
+    function sortTable(col) {
+        const tbody = document.querySelector('#deliveryTable tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        sortDirection[col] = !sortDirection[col];
+        rows.sort((a, b) => {
+            const av = a.cells[col]?.textContent || '';
+            const bv = b.cells[col]?.textContent || '';
+            if (!isNaN(av) && !isNaN(bv)) return sortDirection[col] ? +av - +bv : +bv - +av;
+            return sortDirection[col] ? av.localeCompare(bv) : bv.localeCompare(av);
         });
-    </script>
+        rows.forEach(r => tbody.appendChild(r));
+    }
+
+    function toggleSelectAll() {
+        const checked = document.getElementById('selectAll').checked;
+        document.querySelectorAll('.row-checkbox:not(:disabled)').forEach(cb => cb.checked = checked);
+    }
+
+    async function handleSearch() {
+        const numInput = document.getElementById('ddmNumber').value.trim();
+        if (!numInput) { showToast('Please enter a DDM number', 'warning'); return; }
+        const ddmNo = 'DDM-' + numInput;   // combine prefix + number → "DDM-1"
+
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="10" style="text-align:center;padding:30px;color:#94a3b8;"><i class="fas fa-spinner spin" style="font-size:1.5rem;"></i></td></tr>`;
+        document.getElementById('ddmInfoCard').style.display = 'none';
+        try {
+            const response = await fetch(`/transporter/api/ddm-details-for-update/?ddmNo=${encodeURIComponent(ddmNo)}`);
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.error || 'DDM not found');
+            }
+            const data = await response.json();
+
+            // Show DDM info banner
+            document.getElementById('info-ddmNo').textContent    = data.ddmNo   || ddmNo;
+            document.getElementById('info-date').textContent     = data.date ? new Date(data.date).toLocaleDateString('en-IN') : '—';
+            document.getElementById('info-truck').textContent    = data.truckNo  || '—';
+            document.getElementById('info-driver').textContent   = data.driverName || '—';
+            document.getElementById('info-driverNo').textContent = data.driverNo || '—';
+            document.getElementById('info-lorryHire').textContent = data.lorryHire ? '₹' + Number(data.lorryHire).toLocaleString('en-IN') : '—';
+            document.getElementById('info-remarks').textContent  = data.remarks  || '—';
+            document.getElementById('ddmInfoCard').style.display = 'block';
+
+            populateTable(data.details);
+            showToast(`Loaded ${ddmNo}`, 'success');
+        } catch (error) {
+            showToast(`Error: ${error.message}`, 'error');
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="10" style="text-align:center;padding:30px;color:#e74c3c;">${error.message}</td></tr>`;
+        }
+    }
+
+    function handlePaymentType(type, btnEl) {
+        document.getElementById('paymentType').value = type;
+        updateAllRcvDlyAS(type);
+        document.querySelectorAll('.shortcut-btn').forEach(b => b.classList.remove('active'));
+        if (btnEl) btnEl.classList.add('active');
+        showToast(`Payment type: ${type}`, 'info');
+    }
+
+    function updateAllRcvDlyAS(type) {
+        document.querySelectorAll('#tableBody .rcv-dly-as').forEach(select => {
+            if (!select.disabled) {
+                select.value = type;
+                const reasonBox = select.nextElementSibling;
+                if (reasonBox) reasonBox.style.display = type === 'RECEIVE_AT_GODOWN' ? 'block' : 'none';
+            }
+        });
+    }
+
+    async function handleReceive() {
+        const selectedRows = document.querySelectorAll('.row-checkbox:checked');
+        if (selectedRows.length === 0) { showToast('Please select at least one row', 'warning'); return; }
+        const updates = Array.from(selectedRows).map(cb => {
+            const row = cb.closest('tr');
+            const id = cb.dataset.id;
+            const select = row.querySelector('.rcv-dly-as');
+            const paymentType = select.value;
+            const status = paymentType === 'RECEIVE_AT_GODOWN' ? 'Pending' : 'Delivered';
+            const reason = paymentType === 'RECEIVE_AT_GODOWN' ? (row.querySelector('.reason-box textarea')?.value || '') : '';
+            return updateCNoteStatus(id, status, paymentType, reason);
+        });
+        try {
+            await Promise.all(updates);
+            showToast(`Successfully processed ${selectedRows.length} CNotes`, 'success');
+            handleSearch();
+        } catch { showToast('Error updating CNotes. Please try again.', 'error'); }
+    }
+
+    async function updateCNoteStatus(id, status, paymentType, reason = '') {
+        const response = await fetch('/transporter/api/update-ddm/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ id, status, paymentType, reason })
+        });
+        if (!response.ok) throw new Error('Failed to update');
+        return await response.json();
+    }
+
+    function updateDeliveryStatus(id, selectElement) {
+        const reasonBox = selectElement.nextElementSibling;
+        if (reasonBox) reasonBox.style.display = selectElement.value === 'RECEIVE_AT_GODOWN' ? 'block' : 'none';
+    }
+
+    function updateDeliveryAmount(id, amount) { /* API call can be added here */ }
+
+    function getCookie(name) {
+        let v = null;
+        if (document.cookie) document.cookie.split(';').forEach(c => {
+            c = c.trim();
+            if (c.startsWith(name + '=')) v = decodeURIComponent(c.substring(name.length + 1));
+        });
+        return v;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        updateDateTime();
+        setInterval(updateDateTime, 60000);
+        document.getElementById('settlementDate').value = new Date().toISOString().split('T')[0];
+        document.addEventListener('keydown', e => {
+            const keyMap = { F7:'CASH', F8:'CHEQUE', F9:'ONLINE', F10:'RECEIVE_AT_GODOWN' };
+            if (keyMap[e.key]) {
+                e.preventDefault();
+                const type = keyMap[e.key];
+                const btn = Array.from(document.querySelectorAll('.shortcut-btn'))
+                               .find(b => b.textContent.includes(type === 'RECEIVE_AT_GODOWN' ? 'Godown' : type.charAt(0) + type.slice(1).toLowerCase()));
+                handlePaymentType(type, btn || null);
+            }
+        });
+        document.getElementById('ddmNumber').addEventListener('keydown', e => {
+            if (e.key === 'Enter') handleSearch();
+        });
+    });
+</script>
 </body>
 </html>
