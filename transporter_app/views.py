@@ -301,8 +301,24 @@ def delete_city(request, id):
 
 @login_required
 def party_master(request):
-    form = PartyMasterForm()
-    return render(request, 'transporter/party_master.html', {'form': form})
+    import json as _json
+    try:
+        parties = list(PartyMaster.objects.all().values(
+            'id','party_code','party_name','display_name',
+            'mobile_number_1','mobile_number_2','phone_number_1','phone_number_2',
+            'gst_no','pan_no','email','marketing_person','party_type',
+            'country','state','city','pincode','address','is_tbb','remark',
+            'created_at','updated_at'
+        ).order_by('-created_at'))
+        for p in parties:
+            if p.get('created_at'): p['created_at'] = p['created_at'].isoformat()
+            if p.get('updated_at'): p['updated_at'] = p['updated_at'].isoformat()
+    except Exception:
+        parties = []
+    return render(request, 'transporter/party_master.html', {
+        'parties_json': _json.dumps(parties),
+        'total_parties': len(parties),
+    })
 
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -310,14 +326,39 @@ def add_party(request):
     if request.method == 'POST':
         form = PartyMasterForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Party added successfully!")
-            return redirect('transporter:party_master')
+            party = form.save()
+            return JsonResponse({
+                'success': True,
+                'message': 'Party added successfully!',
+                'party': {
+                    'id': party.id,
+                    'party_code': party.party_code or '',
+                    'party_name': party.party_name,
+                    'display_name': party.display_name,
+                    'mobile_number_1': party.mobile_number_1,
+                    'mobile_number_2': party.mobile_number_2 or '',
+                    'phone_number_1': party.phone_number_1 or '',
+                    'phone_number_2': party.phone_number_2 or '',
+                    'gst_no': party.gst_no or '',
+                    'pan_no': party.pan_no or '',
+                    'email': party.email or '',
+                    'marketing_person': party.marketing_person or '',
+                    'party_type': party.party_type,
+                    'country': party.country,
+                    'state': party.state or '',
+                    'city': party.city,
+                    'pincode': party.pincode,
+                    'address': party.address,
+                    'is_tbb': party.is_tbb,
+                    'remark': party.remark or '',
+                    'created_at': party.created_at.isoformat(),
+                    'updated_at': party.updated_at.isoformat(),
+                }
+            }, status=201)
         else:
-            messages.error(request, "There were errors in the form. Please correct them.")
-    else:
-        form = PartyMasterForm()
-    return render(request, 'transporter/party_master.html', {'form': form})
+            errors = {field: errs[0] for field, errs in form.errors.items()}
+            return JsonResponse({'success': False, 'message': 'Validation error', 'errors': errors}, status=400)
+    return JsonResponse({'success': False, 'message': 'Method not allowed'}, status=405)
 
 @login_required
 @require_http_methods(["GET", "POST"])
