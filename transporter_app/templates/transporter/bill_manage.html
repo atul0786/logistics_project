@@ -35,13 +35,11 @@
     .page-title-bar i{color:var(--primary-light);}
     .user-chip{display:flex;align-items:center;gap:8px;background:#f1f5f9;border:1px solid #e2e8f0;padding:.35rem .875rem;border-radius:2rem;font-size:.8rem;color:#334155;font-weight:600;}
     .page-body{padding:24px;flex:1;}
-    /* Stats */
     .stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.25rem;}
     .stat-card{background:white;border-radius:10px;padding:1rem 1.25rem;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.05);display:flex;align-items:center;gap:.875rem;}
     .stat-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
     .stat-label{font-size:.7rem;color:#64748b;font-weight:500;margin-bottom:.15rem;}
     .stat-val{font-size:1.35rem;font-weight:800;color:#1a252f;line-height:1;}
-    /* Card */
     .card{background:white;border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,.05);overflow:hidden;margin-bottom:1.25rem;}
     .card-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
     .card-title{font-size:.95rem;font-weight:700;color:#1a252f;display:flex;align-items:center;gap:8px;}
@@ -52,32 +50,59 @@
     .form-group label{font-size:.75rem;font-weight:600;color:#334155;}
     .form-group input,.form-group select{padding:.48rem .7rem;border:1.5px solid #e2e8f0;border-radius:7px;font-size:.84rem;outline:none;transition:border-color .2s;}
     .form-group input:focus,.form-group select:focus{border-color:var(--primary-light);}
-    /* Buttons */
     .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.1rem;border-radius:7px;border:none;cursor:pointer;font-size:.84rem;font-weight:600;transition:all .2s;text-decoration:none;}
     .btn-primary{background:var(--primary-light);color:white;}.btn-primary:hover{background:#2980b9;}
     .btn-success{background:var(--success);color:white;}.btn-success:hover{filter:brightness(.9);}
+    .btn-warning{background:var(--warning);color:white;}.btn-warning:hover{filter:brightness(.9);}
     .btn-danger{background:var(--secondary);color:white;}.btn-danger:hover{filter:brightness(.9);}
     .btn-secondary{background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;}.btn-secondary:hover{background:#e2e8f0;}
     .btn-sm{padding:.3rem .65rem;font-size:.76rem;}
     .btn:disabled{opacity:.6;cursor:not-allowed;}
     .btn-actions{display:flex;gap:.625rem;align-items:center;flex-wrap:wrap;}
-    /* Table */
-    .tbl-wrap{overflow-x:auto;}
-    table{width:100%;border-collapse:collapse;font-size:.82rem;}
-    th{background:#f8fafc;color:#64748b;font-size:.72rem;font-weight:700;padding:.7rem 1rem;border-bottom:2px solid #e2e8f0;text-align:left;white-space:nowrap;}
-    td{padding:.6rem 1rem;border-bottom:1px solid #f1f5f9;color:#334155;vertical-align:middle;}
-    tr.bill-row:hover td{background:#f8fafc;cursor:pointer;}
-    tr.bill-row.active-row td{background:#eff6ff;}
     .badge{display:inline-block;padding:.2rem .6rem;border-radius:2rem;font-size:.68rem;font-weight:700;}
     .badge-pending{background:#fef9c3;color:#854d0e;}
     .badge-active{background:#dcfce7;color:#166534;}
     .badge-paid{background:#dbeafe;color:#1e40af;}
     .badge-cancelled{background:#fee2e2;color:#991b1b;}
-    /* Detail panel */
-    .detail-panel{background:#f8fafc;border-top:2px solid var(--primary-light);padding:20px;}
-    .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
-    .detail-item label{font-size:.72rem;font-weight:600;color:#64748b;text-transform:uppercase;}
-    .detail-item p{font-size:.84rem;font-weight:600;color:#1a252f;margin-top:2px;}
+    .tbl-wrap{overflow-x:auto;}
+    table{width:100%;border-collapse:collapse;font-size:.82rem;}
+    th{background:#f8fafc;color:#64748b;font-size:.72rem;font-weight:700;padding:.7rem 1rem;border-bottom:2px solid #e2e8f0;text-align:left;white-space:nowrap;}
+    td{padding:.6rem 1rem;border-bottom:1px solid #f1f5f9;color:#334155;vertical-align:middle;}
+    .bill-row:hover td{background:#f8fafc;cursor:pointer;}
+    .bill-row.active-row td{background:#eff6ff!important;}
+    /* Detail Panel */
+    .detail-panel{border-top:2px solid var(--primary-light);background:#fafcff;padding:20px;}
+    .detail-section-title{font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem;padding-bottom:.4rem;border-bottom:1px solid #e2e8f0;}
+    .detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.875rem;margin-bottom:1.25rem;}
+    .detail-field label{font-size:.7rem;color:#94a3b8;font-weight:600;text-transform:uppercase;}
+    .detail-field p{font-size:.875rem;font-weight:600;color:#1a252f;margin-top:2px;}
+    /* Edit form inside detail */
+    .edit-row{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.875rem;background:white;border:1.5px solid #e2e8f0;border-radius:8px;margin-bottom:1rem;}
+    .edit-row label{font-size:.75rem;font-weight:600;color:#64748b;white-space:nowrap;}
+    .edit-row select,.edit-row input{padding:.38rem .65rem;border:1.5px solid #e2e8f0;border-radius:6px;font-size:.82rem;outline:none;}
+    .edit-row select:focus,.edit-row input:focus{border-color:var(--primary-light);}
+    /* Cnotes detail table */
+    .cnotes-detail-wrap{max-height:250px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;}
+    .cnotes-detail-wrap table th{background:#334155;color:white;font-size:.7rem;}
+    /* Modal */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px;}
+    .modal-overlay.show{display:flex;}
+    .modal-box{background:white;border-radius:12px;width:100%;max-width:640px;box-shadow:0 8px 32px rgba(0,0,0,.2);max-height:85vh;display:flex;flex-direction:column;}
+    .modal-header{padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    .modal-header h3{font-size:.95rem;font-weight:700;color:#1a252f;display:flex;align-items:center;gap:8px;}
+    .modal-header h3 i{color:var(--primary-light);}
+    .modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:#94a3b8;line-height:1;}
+    .modal-close:hover{color:#334155;}
+    .modal-body{padding:16px 20px;overflow-y:auto;flex:1;}
+    .modal-footer{padding:12px 20px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:.75rem;flex-shrink:0;}
+    .search-inp{width:100%;padding:.5rem .75rem;border:1.5px solid #e2e8f0;border-radius:7px;font-size:.84rem;outline:none;margin-bottom:.875rem;}
+    .search-inp:focus{border-color:var(--primary-light);}
+    .cnote-add-row{display:flex;align-items:center;justify-content:space-between;padding:.6rem .875rem;border-bottom:1px solid #f1f5f9;font-size:.82rem;}
+    .cnote-add-row:hover{background:#f8fafc;}
+    .cnote-add-row:last-child{border-bottom:none;}
+    .cnote-add-row .info{display:flex;flex-direction:column;gap:1px;}
+    .cnote-add-row .cn-no{font-weight:700;color:var(--primary-light);}
+    .cnote-add-row .cn-meta{font-size:.72rem;color:#94a3b8;}
     /* Pagination */
     .pg-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid var(--border);flex-wrap:wrap;gap:8px;}
     .pg-info{font-size:.8rem;color:#64748b;}.pg-info strong{color:#1a252f;}
@@ -97,7 +122,7 @@
     .loading-overlay.show{display:flex;}
     .spinner{width:40px;height:40px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;}
     @keyframes spin{to{transform:rotate(360deg)}}
-    @media(max-width:900px){.sidebar{width:0;overflow:hidden;}.sidebar.open{width:240px;}.main-content{margin-left:0;}.menu-toggle{display:block;}.detail-grid{grid-template-columns:1fr;}}
+    @media(max-width:900px){.sidebar{width:0;overflow:hidden;}.sidebar.open{width:240px;}.main-content{margin-left:0;}.menu-toggle{display:block;}}
   </style>
 </head>
 <body>
@@ -110,8 +135,8 @@
   <div class="nav-section">
     <div class="nav-title">Main</div>
     <ul class="nav-menu">
-      <li class="nav-item"><a href="{% url 'transporter:home' %}" class="nav-link"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
-      <li class="nav-item"><a href="{% url 'transporter:receive' %}" class="nav-link"><i class="fas fa-clock"></i><span>Pending Requests</span></a></li>
+      <li><a href="{% url 'transporter:home' %}" class="nav-link"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+      <li><a href="{% url 'transporter:receive' %}" class="nav-link"><i class="fas fa-clock"></i><span>Pending Requests</span></a></li>
       <li class="nav-item">
         <a href="#" class="nav-link" onclick="toggleSub('sub-del',this);return false;"><i class="fas fa-clipboard-list"></i><span>Delivery Management</span><i class="fas fa-chevron-right" id="arr-del" style="margin-left:auto;font-size:10px;transition:transform .2s;"></i></a>
         <ul class="sub-menu" id="sub-del" style="display:none;">
@@ -165,7 +190,7 @@
   <div class="page-body">
 
     <!-- Stats -->
-    <div class="stat-row" id="statsRow">
+    <div class="stat-row">
       <div class="stat-card"><div class="stat-icon" style="background:#dbeafe;"><i class="fas fa-file-invoice" style="color:#2563eb;"></i></div><div><div class="stat-label">Total Bills</div><div class="stat-val" id="sTotalBills">—</div></div></div>
       <div class="stat-card"><div class="stat-icon" style="background:#fef9c3;"><i class="fas fa-clock" style="color:#d97706;"></i></div><div><div class="stat-label">Pending</div><div class="stat-val" id="sPending">—</div></div></div>
       <div class="stat-card"><div class="stat-icon" style="background:#dcfce7;"><i class="fas fa-check-circle" style="color:#16a34a;"></i></div><div><div class="stat-label">Paid</div><div class="stat-val" id="sPaid">—</div></div></div>
@@ -174,7 +199,8 @@
 
     <!-- Filters -->
     <div class="card">
-      <div class="card-header"><div class="card-title"><i class="fas fa-filter"></i> Filters</div>
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-filter"></i> Filters</div>
         <div class="btn-actions">
           <button class="btn btn-primary" onclick="loadBills(1)"><i class="fas fa-search"></i> Search</button>
           <button class="btn btn-secondary" onclick="resetFilters()"><i class="fas fa-undo"></i> Reset</button>
@@ -198,11 +224,10 @@
           <div class="form-group"><label>Month</label>
             <select id="fMonth">
               <option value="">All</option>
-              {% for i in "123456789101112"|make_list %}{% endfor %}
-              <option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option>
-              <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
-              <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
-              <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+              <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+              <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+              <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+              <option value="10">October</option><option value="11">November</option><option value="12">December</option>
             </select>
           </div>
         </div>
@@ -217,168 +242,426 @@
       <div class="tbl-wrap">
         <table>
           <thead><tr>
-            <th>#</th><th>Invoice No.</th><th>Date</th><th>Dealer</th><th>CNotes</th><th>Total Amount</th><th>Status</th><th>Actions</th>
+            <th style="width:36px;">#</th>
+            <th>Invoice No.</th>
+            <th>Date</th>
+            <th>Dealer</th>
+            <th style="text-align:center;">CNotes</th>
+            <th style="text-align:right;">Total Amount</th>
+            <th>Status</th>
+            <th>Actions</th>
           </tr></thead>
           <tbody id="billsBody">
             <tr><td colspan="8" style="text-align:center;padding:2.5rem;color:#94a3b8;"><i class="fas fa-file-alt" style="font-size:2rem;display:block;margin-bottom:8px;opacity:.3;"></i>Loading bills...</td></tr>
           </tbody>
         </table>
       </div>
-      <!-- Detail Panel (shown inline below selected row) -->
-      <div class="detail-panel" id="detailPanel" style="display:none;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-          <div style="font-size:.9rem;font-weight:700;color:#1a252f;">Bill Details — <span id="detailInvoice"></span></div>
-          <div class="btn-actions">
-            <a id="printBillBtn" href="#" target="_blank" class="btn btn-primary btn-sm"><i class="fas fa-print"></i> Print</a>
-            <button id="cancelBillBtn" class="btn btn-danger btn-sm" onclick="cancelBill()"><i class="fas fa-ban"></i> Cancel</button>
-            <button class="btn btn-secondary btn-sm" onclick="closeDetail()"><i class="fas fa-times"></i> Close</button>
+
+      <!-- Inline Detail Panel -->
+      <div id="detailPanel" style="display:none;">
+        <div class="detail-panel">
+
+          <!-- Panel Header -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
+            <div style="font-size:.95rem;font-weight:700;color:#1a252f;display:flex;align-items:center;gap:8px;">
+              <i class="fas fa-file-invoice" style="color:var(--primary-light);"></i>
+              <span id="dBillNo">—</span>
+              <span id="dStatusBadge"></span>
+            </div>
+            <div class="btn-actions">
+              <a id="printBtn" href="#" target="_blank" class="btn btn-primary btn-sm"><i class="fas fa-print"></i> Print</a>
+              <button id="editToggleBtn" class="btn btn-warning btn-sm" onclick="toggleEditMode()"><i class="fas fa-edit"></i> Edit</button>
+              <button id="cancelBillBtn" class="btn btn-danger btn-sm" onclick="cancelCurrentBill()"><i class="fas fa-ban"></i> Cancel Bill</button>
+              <button class="btn btn-secondary btn-sm" onclick="closeDetail()"><i class="fas fa-times"></i> Close</button>
+            </div>
           </div>
-        </div>
-        <div class="detail-grid">
-          <div class="detail-item"><label>Invoice No.</label><p id="dInvoice">—</p></div>
-          <div class="detail-item"><label>Date</label><p id="dDate">—</p></div>
-          <div class="detail-item"><label>Dealer</label><p id="dDealer">—</p></div>
-          <div class="detail-item"><label>Status</label><p id="dStatus">—</p></div>
-          <div class="detail-item"><label>Subtotal</label><p id="dSub">—</p></div>
-          <div class="detail-item"><label>GST</label><p id="dGST">—</p></div>
-          <div class="detail-item"><label>Total Amount</label><p id="dTotal" style="color:var(--primary-light);">—</p></div>
-          <div class="detail-item"><label>CNotes Count</label><p id="dCount">—</p></div>
-        </div>
-        <!-- CNotes in this bill -->
-        <div style="margin-top:.875rem;">
-          <div style="font-size:.78rem;font-weight:700;color:#64748b;margin-bottom:.5rem;">CNOTES IN THIS BILL</div>
-          <div class="tbl-wrap" style="max-height:220px;overflow-y:auto;">
-            <table style="font-size:.78rem;">
-              <thead><tr style="position:sticky;top:0;z-index:1;">
-                <th>#</th><th>CNote No.</th><th>Date</th><th>Pay Type</th><th style="text-align:right;">Amount</th>
+
+          <!-- Bill Info -->
+          <div class="detail-grid">
+            <div class="detail-field"><label>Invoice No.</label><p id="dInvoice">—</p></div>
+            <div class="detail-field"><label>Date</label><p id="dDate">—</p></div>
+            <div class="detail-field"><label>Dealer</label><p id="dDealer">—</p></div>
+            <div class="detail-field"><label>GST</label><p id="dGST">—</p></div>
+            <div class="detail-field"><label>Subtotal</label><p id="dSub">—</p></div>
+            <div class="detail-field"><label>Total Amount</label><p id="dTotal" style="color:var(--primary-light);font-size:1rem;">—</p></div>
+          </div>
+
+          <!-- Edit Mode Bar (hidden by default) -->
+          <div id="editBar" style="display:none;">
+            <div class="edit-row">
+              <label><i class="fas fa-tag"></i> Update Status:</label>
+              <select id="editStatus">
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <label style="margin-left:.5rem;"><i class="fas fa-calendar"></i> Bill Date:</label>
+              <input type="date" id="editDate" style="width:140px;">
+              <button class="btn btn-success btn-sm" onclick="saveBillEdit()"><i class="fas fa-save"></i> <span id="saveBillEditTxt">Save Changes</span></button>
+              <button class="btn btn-secondary btn-sm" onclick="toggleEditMode()">Cancel</button>
+            </div>
+          </div>
+
+          <!-- CNotes in this bill -->
+          <div class="detail-section-title">
+            CNotes in this Bill
+            <button id="addCNoteBtn" class="btn btn-success btn-sm" style="float:right;" onclick="openAddCNoteModal()"><i class="fas fa-plus"></i> Add CNote</button>
+          </div>
+          <div class="cnotes-detail-wrap">
+            <table>
+              <thead><tr>
+                <th>#</th><th>CNote No.</th><th>Date</th><th>Pay Type</th><th>Consignee</th><th style="text-align:right;">Amount</th><th>Remove</th>
               </tr></thead>
               <tbody id="detailItemsBody"></tbody>
             </table>
           </div>
+
+          <!-- Totals summary -->
+          <div style="display:flex;justify-content:flex-end;margin-top:.875rem;">
+            <table style="width:240px;font-size:.82rem;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+              <tr><td style="padding:6px 12px;border-bottom:1px solid #f1f5f9;">Subtotal</td><td style="padding:6px 12px;text-align:right;border-bottom:1px solid #f1f5f9;" id="dSubFoot">—</td></tr>
+              <tr><td style="padding:6px 12px;border-bottom:1px solid #f1f5f9;">GST</td><td style="padding:6px 12px;text-align:right;border-bottom:1px solid #f1f5f9;" id="dGSTFoot">—</td></tr>
+              <tr style="background:#1a252f;"><td style="padding:8px 12px;color:white;font-weight:700;">Total</td><td style="padding:8px 12px;text-align:right;color:white;font-weight:700;" id="dTotalFoot">—</td></tr>
+            </table>
+          </div>
+
         </div>
       </div>
+
       <div class="pg-bar" id="pgBar" style="display:none;">
         <div class="pg-info" id="pgInfo"></div>
         <div class="pg-controls" id="pgControls"></div>
       </div>
     </div>
 
+  </div><!-- /page-body -->
+</div>
+
+<!-- ADD CNOTE MODAL -->
+<div class="modal-overlay" id="addCNoteModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3><i class="fas fa-plus-circle"></i> Add CNote to Bill</h3>
+      <button class="modal-close" onclick="closeModal('addCNoteModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="text" class="search-inp" id="cnoteSearchInp" placeholder="Search CNote number or consignee..." oninput="filterAvailableCNotes()">
+      <div id="availableCNotesList" style="max-height:350px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;">
+        <div style="text-align:center;padding:2rem;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('addCNoteModal')">Close</button>
+    </div>
   </div>
 </div>
 
 <script>
 const CSRF = '{{ csrf_token }}';
-let selectedBillId=null, currentPage=1, totalPages=1;
+let selectedBillId = null;
+let currentBillData = null;
+let currentPage = 1;
+let totalPages = 1;
+let allAvailableCNotes = [];
+let editMode = false;
 
+// ── Sidebar ──────────────────────────────────────────────────────
 function toggleSub(id,el){const m=document.getElementById(id),a=el.querySelector('.fa-chevron-right'),open=m.style.display==='block';document.querySelectorAll('.sub-menu').forEach(x=>x.style.display='none');document.querySelectorAll('[id^="arr-"]').forEach(x=>x.style.transform='');if(!open){m.style.display='block';if(a)a.style.transform='rotate(90deg)';}}
 
+// ── Toast ────────────────────────────────────────────────────────
 function showToast(msg,type='success'){const c=document.getElementById('toastContainer'),t=document.createElement('div');t.className='toast toast-'+type;const ic={success:'check-circle',error:'times-circle',warning:'exclamation-triangle'};t.innerHTML='<i class="fas fa-'+ic[type]+'"></i> '+msg;c.appendChild(t);setTimeout(()=>t.remove(),4000);}
 
-function statusBadge(s){const m={pending:'badge-pending',active:'badge-active',paid:'badge-paid',cancelled:'badge-cancelled'};return`<span class="badge ${m[s]||'badge-pending'}">${s.toUpperCase()}</span>`;}
+// ── Loader ───────────────────────────────────────────────────────
+function setLoading(v){document.getElementById('loadingOverlay').classList[v?'add':'remove']('show');}
 
+// ── Helpers ──────────────────────────────────────────────────────
+function statusBadge(s){const m={pending:'badge-pending',active:'badge-active',paid:'badge-paid',cancelled:'badge-cancelled'};return`<span class="badge ${m[s]||'badge-pending'}">${(s||'pending').toUpperCase()}</span>`;}
+
+async function safeFetch(url, opts={}){
+  const res = await fetch(url, opts);
+  const text = await res.text();
+  try{ return [JSON.parse(text), res.ok]; }
+  catch{ throw new Error('Server returned invalid response'); }
+}
+
+// ── Load Bills ───────────────────────────────────────────────────
 async function loadBills(page=1){
   currentPage=page;
-  const params=new URLSearchParams({page,dealer:document.getElementById('fDealer').value.trim(),status:document.getElementById('fStatus').value,from_date:document.getElementById('fFrom').value,to_date:document.getElementById('fTo').value,month:document.getElementById('fMonth').value,invoice_no:document.getElementById('fInvoice').value.trim()});
-  document.getElementById('loadingOverlay').classList.add('show');
+  const params=new URLSearchParams({
+    page,
+    dealer:      document.getElementById('fDealer').value.trim(),
+    status:      document.getElementById('fStatus').value,
+    from_date:   document.getElementById('fFrom').value,
+    to_date:     document.getElementById('fTo').value,
+    month:       document.getElementById('fMonth').value,
+    invoice_no:  document.getElementById('fInvoice').value.trim(),
+  });
+  setLoading(true);
   try{
-    const res=await fetch('/transporter/bills/?'+params,{headers:{'X-Requested-With':'XMLHttpRequest'}});
-    const text=await res.text();
-    let data;try{data=JSON.parse(text);}catch{throw new Error('Server error');}
-    const bills=data.results||[];
-    totalPages=data.total_pages||1;
-    document.getElementById('billCount').textContent=bills.length?'('+bills.length+' on page)':'';
-    const tbody=document.getElementById('billsBody');
-    if(!bills.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:2rem;color:#94a3b8;"><i class="fas fa-file-alt" style="font-size:2rem;display:block;margin-bottom:8px;opacity:.3;"></i>No bills found.</td></tr>';document.getElementById('pgBar').style.display='none';return;}
-    tbody.innerHTML=bills.map((b,i)=>`
+    const [data] = await safeFetch('/transporter/bills/?'+params,{headers:{'X-Requested-With':'XMLHttpRequest'}});
+    const bills = data.results||[];
+    totalPages = data.total_pages||1;
+    document.getElementById('billCount').textContent = bills.length ? '('+bills.length+' bills)' : '';
+    const tbody = document.getElementById('billsBody');
+    if(!bills.length){
+      tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:2rem;color:#94a3b8;"><i class="fas fa-file-alt" style="font-size:2rem;display:block;margin-bottom:8px;opacity:.3;"></i>No bills found.</td></tr>';
+      document.getElementById('pgBar').style.display='none';
+      return;
+    }
+    tbody.innerHTML = bills.map((b,i)=>`
       <tr class="bill-row" data-id="${b.id}" onclick="loadDetail(${b.id},this)">
         <td style="color:#94a3b8;font-size:.72rem;">${(page-1)*10+i+1}</td>
         <td style="font-weight:700;color:var(--primary-light);">${b.bill_number}</td>
-        <td>${b.created_at?b.created_at.substring(0,10):''}</td>
+        <td>${b.created_at?b.created_at.substring(0,10):'—'}</td>
         <td>${b.dealer?.name||'—'}</td>
         <td style="text-align:center;">${b.items_count||0}</td>
-        <td style="font-weight:600;">₹${Number(b.total_amount||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-        <td>${statusBadge(b.status||'pending')}</td>
-        <td><div style="display:flex;gap:.3rem;">
-          <a href="/transporter/bill/${b.id}/print/" target="_blank" class="btn btn-primary btn-sm" onclick="event.stopPropagation()"><i class="fas fa-print"></i></a>
-          ${b.status==='pending'?`<button class="btn btn-danger btn-sm" data-id="${b.id}" onclick="event.stopPropagation();cancelBillById(${b.id})"><i class="fas fa-ban"></i></button>`:''}
-        </div></td>
+        <td style="text-align:right;font-weight:600;">₹${Number(b.total_amount||0).toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+        <td>${statusBadge(b.status)}</td>
+        <td onclick="event.stopPropagation()">
+          <div class="btn-actions">
+            <a href="/transporter/bill/${b.id}/print/" target="_blank" class="btn btn-primary btn-sm" title="Print"><i class="fas fa-print"></i></a>
+            <button class="btn btn-warning btn-sm" onclick="loadDetailAndEdit(${b.id})" title="Edit"><i class="fas fa-edit"></i></button>
+            ${b.status!=='cancelled'?`<button class="btn btn-danger btn-sm" onclick="cancelBillById(${b.id})" title="Cancel"><i class="fas fa-ban"></i></button>`:''}
+          </div>
+        </td>
       </tr>`).join('');
-    // pagination
     document.getElementById('pgBar').style.display='flex';
     document.getElementById('pgInfo').innerHTML=`Page <strong>${page}</strong> of <strong>${totalPages}</strong>`;
     renderPg(page,totalPages);
   }catch(e){showToast(e.message,'error');}
-  finally{document.getElementById('loadingOverlay').classList.remove('show');}
+  finally{setLoading(false);}
 }
 
 function renderPg(cur,total){
-  const c=document.getElementById('pgControls');
-  if(total<=1){c.innerHTML='';return;}
-  const btn=(lbl,p,active,dis)=>`<button class="pg-btn${active?' active':''}" ${dis?'disabled':''} ${!dis&&!active?`onclick="loadBills(${p})"`:''} >${lbl}</button>`;
+  const c=document.getElementById('pgControls');if(total<=1){c.innerHTML='';return;}
+  const btn=(lbl,p,active,dis)=>`<button class="pg-btn${active?' active':''}" ${dis?'disabled':''} ${!dis&&!active?`onclick="loadBills(${p})"`:''}>${lbl}</button>`;
   let h=btn('‹',cur-1,false,cur===1);
-  const pages=new Set([1,total,cur,cur-1,cur+1].filter(p=>p>=1&&p<=total));
-  let prev=0;[...pages].sort((a,b)=>a-b).forEach(p=>{if(prev&&p-prev>1)h+=`<button class="pg-btn" style="border:none;">…</button>`;h+=btn(p,p,p===cur);prev=p;});
+  const pages=new Set([1,total,cur,cur-1,cur+1,cur-2,cur+2].filter(p=>p>=1&&p<=total));
+  let prev=0;[...pages].sort((a,b)=>a-b).forEach(p=>{if(prev&&p-prev>1)h+='<button class="pg-btn" style="border:none;cursor:default;">…</button>';h+=btn(p,p,p===cur);prev=p;});
   h+=btn('›',cur+1,false,cur===total);c.innerHTML=h;
 }
 
-async function loadDetail(id,rowEl){
+// ── Load Detail ──────────────────────────────────────────────────
+async function loadDetail(id, rowEl){
   if(selectedBillId===id){closeDetail();return;}
   selectedBillId=id;
+  editMode=false;
+  document.getElementById('editBar').style.display='none';
+  document.getElementById('editToggleBtn').innerHTML='<i class="fas fa-edit"></i> Edit';
   document.querySelectorAll('.bill-row').forEach(r=>r.classList.remove('active-row'));
-  rowEl.classList.add('active-row');
-  document.getElementById('loadingOverlay').classList.add('show');
+  if(rowEl) rowEl.classList.add('active-row');
+  setLoading(true);
   try{
-    const res=await fetch('/transporter/bill/'+id+'/');
-    const text=await res.text();
-    let d;try{d=JSON.parse(text);}catch{throw new Error('Server error');}
-    document.getElementById('dInvoice').textContent=d.bill_number;
-    document.getElementById('detailInvoice').textContent=d.bill_number;
-    document.getElementById('dDate').textContent=d.created_at?d.created_at.substring(0,10):'—';
-    document.getElementById('dDealer').textContent=d.dealer?.name||'—';
-    document.getElementById('dStatus').innerHTML=statusBadge(d.status||'pending');
-    document.getElementById('dSub').textContent='₹'+(d.subtotal||0).toFixed(2);
-    document.getElementById('dGST').textContent=`${d.gst_percentage||0}% → ₹${(d.gst_amount||0).toFixed(2)}`;
-    document.getElementById('dTotal').textContent='₹'+(d.total_amount||0).toFixed(2);
-    document.getElementById('dCount').textContent=(d.items||[]).length;
-    document.getElementById('printBillBtn').href='/transporter/bill/'+id+'/print/';
-    const cancelBtn=document.getElementById('cancelBillBtn');
-    cancelBtn.style.display=d.status==='pending'?'inline-flex':'none';
-    const itemBody=document.getElementById('detailItemsBody');
-    itemBody.innerHTML=(d.items||[]).map((it,i)=>`<tr><td>${i+1}</td><td style="font-weight:600;color:var(--primary-light);">${it.cnote_number||'—'}</td><td>${it.created_date||'—'}</td><td style="text-transform:uppercase;font-size:.72rem;">${it.payment_type||'—'}</td><td style="text-align:right;">₹${Number(it.amount||0).toFixed(2)}</td></tr>`).join('');
+    const [d] = await safeFetch('/transporter/bill/'+id+'/');
+    currentBillData = d;
+    populateDetail(d);
     document.getElementById('detailPanel').style.display='block';
     document.getElementById('detailPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
   }catch(e){showToast(e.message,'error');}
-  finally{document.getElementById('loadingOverlay').classList.remove('show');}
+  finally{setLoading(false);}
 }
 
-function closeDetail(){document.getElementById('detailPanel').style.display='none';document.querySelectorAll('.bill-row').forEach(r=>r.classList.remove('active-row'));selectedBillId=null;}
-
-async function cancelBill(){
-  if(!selectedBillId)return;
-  cancelBillById(selectedBillId);
+async function loadDetailAndEdit(id){
+  const row = document.querySelector(`.bill-row[data-id="${id}"]`);
+  await loadDetail(id, row);
+  if(!editMode) toggleEditMode();
 }
+
+function populateDetail(d){
+  document.getElementById('dBillNo').textContent   = d.bill_number;
+  document.getElementById('dStatusBadge').innerHTML= statusBadge(d.status);
+  document.getElementById('dInvoice').textContent  = d.bill_number;
+  document.getElementById('dDate').textContent     = d.created_at?d.created_at.substring(0,10):'—';
+  document.getElementById('dDealer').textContent   = d.dealer?.name||'—';
+  document.getElementById('dSub').textContent      = '₹'+Number(d.subtotal||0).toFixed(2);
+  document.getElementById('dGST').textContent      = (d.gst_percentage||0)+'% → ₹'+Number(d.gst_amount||0).toFixed(2);
+  document.getElementById('dTotal').textContent    = '₹'+Number(d.total_amount||0).toFixed(2);
+  document.getElementById('dSubFoot').textContent  = '₹'+Number(d.subtotal||0).toFixed(2);
+  document.getElementById('dGSTFoot').textContent  = '₹'+Number(d.gst_amount||0).toFixed(2);
+  document.getElementById('dTotalFoot').textContent= '₹'+Number(d.total_amount||0).toFixed(2);
+  document.getElementById('printBtn').href         = '/transporter/bill/'+d.id+'/print/';
+  // Show/hide cancel & edit buttons
+  const canEdit   = d.status === 'pending';
+  const canCancel = d.status !== 'cancelled';
+  document.getElementById('cancelBillBtn').style.display = canCancel ? 'inline-flex' : 'none';
+  document.getElementById('editToggleBtn').style.display = canEdit   ? 'inline-flex' : 'none';
+  document.getElementById('addCNoteBtn').style.display   = canEdit   ? 'inline-flex' : 'none';
+  // Prefill edit fields
+  document.getElementById('editStatus').value = d.status||'pending';
+  document.getElementById('editDate').value   = d.created_at?d.created_at.substring(0,10):'';
+  // Populate items
+  const tbody = document.getElementById('detailItemsBody');
+  const items = d.items||[];
+  if(!items.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:1rem;color:#94a3b8;">No CNotes in this bill.</td></tr>';return;}
+  tbody.innerHTML = items.map((it,i)=>`
+    <tr>
+      <td style="color:#94a3b8;font-size:.7rem;">${i+1}</td>
+      <td style="font-weight:700;color:var(--primary-light);">${it.cnote_number||'—'}</td>
+      <td>${it.created_date||'—'}</td>
+      <td style="text-transform:uppercase;font-size:.72rem;">${it.payment_type||'—'}</td>
+      <td>${it.consignee_name||'—'}</td>
+      <td style="text-align:right;">₹${Number(it.amount||0).toFixed(2)}</td>
+      <td>${canEdit?`<button class="btn btn-danger btn-sm" data-cid="${it.cnote_id||it.id}" onclick="removeCNote(this.dataset.cid)"><i class="fas fa-times"></i></button>`:'—'}</td>
+    </tr>`).join('');
+}
+
+function closeDetail(){
+  document.getElementById('detailPanel').style.display='none';
+  document.querySelectorAll('.bill-row').forEach(r=>r.classList.remove('active-row'));
+  selectedBillId=null;currentBillData=null;editMode=false;
+}
+
+// ── Edit Mode Toggle ─────────────────────────────────────────────
+function toggleEditMode(){
+  editMode=!editMode;
+  document.getElementById('editBar').style.display=editMode?'block':'none';
+  document.getElementById('editToggleBtn').innerHTML=editMode?'<i class="fas fa-times"></i> Close Edit':'<i class="fas fa-edit"></i> Edit';
+}
+
+// ── Save Bill Edit ───────────────────────────────────────────────
+async function saveBillEdit(){
+  if(!selectedBillId) return;
+  const status  = document.getElementById('editStatus').value;
+  const created_at = document.getElementById('editDate').value;
+  const btn = document.getElementById('saveBillEditTxt');
+  btn.textContent='Saving...';
+  setLoading(true);
+  try{
+    const payload={status, created_at, dealer:{name:currentBillData?.dealer?.name||''}, items:[]};
+    const [data,ok] = await safeFetch('/transporter/bill/'+selectedBillId+'/update/',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},
+      body:JSON.stringify(payload)
+    });
+    if(data.status==='success'){
+      showToast('Bill updated successfully!','success');
+      currentBillData=data.bill;
+      populateDetail(data.bill);
+      toggleEditMode();
+      // refresh row in table
+      const row=document.querySelector(`.bill-row[data-id="${selectedBillId}"]`);
+      if(row){
+        row.cells[6].innerHTML=statusBadge(data.bill.status);
+        row.cells[4].textContent=data.bill.items?.length||0;
+        row.cells[5].textContent='₹'+Number(data.bill.total_amount||0).toLocaleString('en-IN',{minimumFractionDigits:2});
+      }
+      loadStats();
+    }else{
+      showToast(data.message||'Update failed.','error');
+    }
+  }catch(e){showToast(e.message,'error');}
+  finally{btn.textContent='Save Changes';setLoading(false);}
+}
+
+// ── Cancel Bill ──────────────────────────────────────────────────
+function cancelCurrentBill(){if(selectedBillId) cancelBillById(selectedBillId);}
 
 async function cancelBillById(id){
-  if(!confirm('Cancel this bill? This cannot be undone.'))return;
-  document.getElementById('loadingOverlay').classList.add('show');
+  if(!confirm('Cancel this bill? This action cannot be undone.')) return;
+  setLoading(true);
   try{
-    const res=await fetch('/transporter/cancel-bill/'+id+'/',{method:'POST',headers:{'X-CSRFToken':CSRF}});
-    const text=await res.text();
-    let d;try{d=JSON.parse(text);}catch{throw new Error('Server error');}
-    if(d.status==='success'){showToast('Bill cancelled.','warning');closeDetail();loadBills(currentPage);loadStats();}
-    else showToast(d.message||'Cancel failed.','error');
+    const [data] = await safeFetch('/transporter/cancel-bill/'+id+'/',{method:'POST',headers:{'X-CSRFToken':CSRF}});
+    if(data.status==='success'){
+      showToast('Bill cancelled.','warning');
+      if(selectedBillId===id){closeDetail();}
+      loadBills(currentPage);
+      loadStats();
+    }else{showToast(data.message||'Cancel failed.','error');}
   }catch(e){showToast(e.message,'error');}
-  finally{document.getElementById('loadingOverlay').classList.remove('show');}
+  finally{setLoading(false);}
 }
 
+// ── Remove CNote from Bill ───────────────────────────────────────
+async function removeCNote(cnoteId){
+  if(!selectedBillId) return;
+  if(!confirm('Remove this CNote from the bill?')) return;
+  setLoading(true);
+  try{
+    const [data] = await safeFetch('/transporter/bill/'+selectedBillId+'/remove-cnote/',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},
+      body:JSON.stringify({cnote_id:parseInt(cnoteId)})
+    });
+    if(data.status==='success'){
+      showToast('CNote removed.','warning');
+      currentBillData=data.bill;
+      populateDetail(data.bill);
+      // update row count
+      const row=document.querySelector(`.bill-row[data-id="${selectedBillId}"]`);
+      if(row){row.cells[4].textContent=data.bill.items?.length||0;row.cells[5].textContent='₹'+Number(data.bill.total_amount||0).toLocaleString('en-IN',{minimumFractionDigits:2});}
+    }else{showToast(data.message||'Remove failed.','error');}
+  }catch(e){showToast(e.message,'error');}
+  finally{setLoading(false);}
+}
+
+// ── Add CNote Modal ──────────────────────────────────────────────
+async function openAddCNoteModal(){
+  if(!selectedBillId) return;
+  document.getElementById('cnoteSearchInp').value='';
+  document.getElementById('availableCNotesList').innerHTML='<div style="text-align:center;padding:2rem;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Loading available CNotes...</div>';
+  document.getElementById('addCNoteModal').classList.add('show');
+  try{
+    const [data] = await safeFetch('/transporter/bill/'+selectedBillId+'/available-cnotes/');
+    allAvailableCNotes = data.cnotes||[];
+    renderAvailableCNotes(allAvailableCNotes);
+  }catch(e){
+    document.getElementById('availableCNotesList').innerHTML='<div style="text-align:center;padding:2rem;color:#e74c3c;">Error loading CNotes: '+e.message+'</div>';
+  }
+}
+
+function renderAvailableCNotes(list){
+  const el=document.getElementById('availableCNotesList');
+  if(!list.length){el.innerHTML='<div style="text-align:center;padding:2rem;color:#94a3b8;"><i class="fas fa-check-circle" style="font-size:1.5rem;display:block;margin-bottom:8px;color:#27ae60;"></i>No unbilled CNotes available for this dealer.</div>';return;}
+  el.innerHTML=list.map(c=>`
+    <div class="cnote-add-row">
+      <div class="info">
+        <span class="cn-no">${c.cnote_number}</span>
+        <span class="cn-meta">${c.created_at?c.created_at.substring(0,10):''} · ${c.payment_type||'N/A'} · ₹${Number(c.grand_total||0).toFixed(2)}</span>
+      </div>
+      <button class="btn btn-success btn-sm" data-cid="${c.id}" onclick="addCNoteToCurrentBill(${c.id}, this)">
+        <i class="fas fa-plus"></i> Add
+      </button>
+    </div>`).join('');
+}
+
+function filterAvailableCNotes(){
+  const q=(document.getElementById('cnoteSearchInp').value||'').toLowerCase();
+  const filtered = !q ? allAvailableCNotes : allAvailableCNotes.filter(c=>(c.cnote_number||'').toLowerCase().includes(q)||(c.payment_type||'').toLowerCase().includes(q));
+  renderAvailableCNotes(filtered);
+}
+
+async function addCNoteToCurrentBill(cnoteId, btn){
+  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+  try{
+    const [data] = await safeFetch('/transporter/bill/'+selectedBillId+'/add-cnote/',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},
+      body:JSON.stringify({cnote_id:cnoteId})
+    });
+    if(data.status==='success'){
+      showToast('CNote added!','success');
+      currentBillData=data.bill;
+      populateDetail(data.bill);
+      // Remove from available list
+      allAvailableCNotes=allAvailableCNotes.filter(c=>c.id!==cnoteId);
+      filterAvailableCNotes();
+      // update row
+      const row=document.querySelector(`.bill-row[data-id="${selectedBillId}"]`);
+      if(row){row.cells[4].textContent=data.bill.items?.length||0;row.cells[5].textContent='₹'+Number(data.bill.total_amount||0).toLocaleString('en-IN',{minimumFractionDigits:2});}
+    }else{showToast(data.message||'Add failed.','error');btn.disabled=false;btn.innerHTML='<i class="fas fa-plus"></i> Add';}
+  }catch(e){showToast(e.message,'error');btn.disabled=false;btn.innerHTML='<i class="fas fa-plus"></i> Add';}
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');}));
+
+// ── Stats ────────────────────────────────────────────────────────
 async function loadStats(){
   try{
-    const res=await fetch('/transporter/dashboard-summary/');
-    const text=await res.text();
-    let d;try{d=JSON.parse(text);}catch{return;}
-    if(d.total_bills!==undefined)document.getElementById('sTotalBills').textContent=d.total_bills;
-    if(d.pending_bills!==undefined)document.getElementById('sPending').textContent=d.pending_bills;
-    if(d.paid_bills!==undefined)document.getElementById('sPaid').textContent=d.paid_bills;
+    const [d]=await safeFetch('/transporter/dashboard-summary/');
+    if(d.total_bills!==undefined)    document.getElementById('sTotalBills').textContent=d.total_bills;
+    if(d.pending_bills!==undefined)  document.getElementById('sPending').textContent=d.pending_bills;
+    if(d.paid_bills!==undefined)     document.getElementById('sPaid').textContent=d.paid_bills;
     if(d.cancelled_bills!==undefined)document.getElementById('sCancelled').textContent=d.cancelled_bills;
   }catch(e){}
 }
@@ -386,6 +669,7 @@ async function loadStats(){
 function resetFilters(){
   ['fInvoice','fDealer','fFrom','fTo'].forEach(id=>document.getElementById(id).value='');
   ['fStatus','fMonth'].forEach(id=>document.getElementById(id).value='');
+  closeDetail();
   loadBills(1);
 }
 
