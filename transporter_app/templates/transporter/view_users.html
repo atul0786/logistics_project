@@ -7,8 +7,7 @@
   <title>View Users — Good Way Express</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  {# Inject server-side JSON safely — prevents XSS via proper escaping #}
-  {{ users_json|json_script:"users-data" }}
+  {# Inject server-side data directly as JS variable — most reliable approach #}
 
   <style>
     :root{--primary:#1a252f;--primary-light:#3498db;--secondary:#e74c3c;--success:#27ae60;--warning:#f39c12;--border:#e0e6ed;--text:#34495e;}
@@ -368,8 +367,14 @@
     setTimeout(() => t.remove(), 4000);
   }
 
-  // ── Data — loaded directly from Django context (no AJAX needed) ───
-  const INITIAL_USERS = JSON.parse(document.getElementById('users-data').textContent);
+  // ── Data — injected directly from Django (no AJAX, no json_script) ──
+  var INITIAL_USERS = [];
+  try {
+    INITIAL_USERS = {{ users_json|safe }};
+    if (!Array.isArray(INITIAL_USERS)) INITIAL_USERS = [];
+  } catch(e) {
+    console.error('User data parse error:', e);
+  }
   let allUsers = INITIAL_USERS;
   const userMap = {};
   allUsers.forEach(u => { userMap[u.username] = u; });
