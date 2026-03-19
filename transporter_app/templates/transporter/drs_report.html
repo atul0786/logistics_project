@@ -242,7 +242,7 @@ function renderTable(){
   const start=size>0?(currentPage-1)*size:0,end=size>0?Math.min(start+size,total):total,pageData=filteredDDMs.slice(start,end);
   document.getElementById("tableInfo").textContent=total?"("+total+")":"";
   const tbody=document.getElementById("reportBody");
-  if(!total){tbody.innerHTML="<tr><td colspan="13" style="text-align:center;padding:2.5rem;color:#94a3b8;\"><i class=\"fas fa-truck\" style=\"font-size:2rem;display:block;margin-bottom:8px;opacity:.3;\"></i>No DDMs found.</td></tr>";document.getElementById("pgInfo").textContent="";document.getElementById("pgControls").innerHTML="";return;}
+  if(!total){tbody.innerHTML='<tr><td colspan="13" style="text-align:center;padding:2.5rem;color:#94a3b8;"><i class="fas fa-truck" style="font-size:2rem;display:block;margin-bottom:8px;opacity:.3;"></i>No DDMs found.</td></tr>';document.getElementById("pgInfo").textContent="";document.getElementById("pgControls").innerHTML="";return;}
   let html="";
   pageData.forEach((ddm,i)=>{
     const date=ddm.date?ddm.date.substring(0,10):"",pct=ddm.total_cnotes>0?Math.round((ddm.delivered/ddm.total_cnotes)*100):0;
@@ -292,7 +292,7 @@ function resetFilters(){
   ["f_date_from","f_date_to","f_ddm_no","f_truck_no","f_search"].forEach(id=>document.getElementById(id).value="");
   document.getElementById("f_status").value="";allDDMs=[];filteredDDMs=[];
   ["statDDMs","statCNotes","statDelivered","statAmount"].forEach(id=>document.getElementById(id).textContent="—");
-  document.getElementById("reportBody").innerHTML="<tr><td colspan="13" style="text-align:center;padding:3rem;color:#94a3b8;\"><i class=\"fas fa-truck\" style=\"font-size:2rem;display:block;margin-bottom:8px;opacity:.3;\"></i>Apply filters and click Search.</td></tr>";
+  document.getElementById("reportBody").innerHTML='<tr><td colspan="13" style="text-align:center;padding:3rem;color:#94a3b8;"><i class="fas fa-truck" style="font-size:2rem;display:block;margin-bottom:8px;opacity:.3;"></i>Apply filters and click Search.</td></tr>';
   document.getElementById("tableInfo").textContent="";document.getElementById("pgInfo").textContent="";document.getElementById("pgControls").innerHTML="";
 }
 function exportExcel(){
