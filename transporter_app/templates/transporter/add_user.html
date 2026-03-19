@@ -1,246 +1,330 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Dealer or Transporter</title>
-    <style>
-        /* General Reset */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add User — Good Way Express</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root{--primary:#1a252f;--primary-light:#3498db;--secondary:#e74c3c;--success:#27ae60;--warning:#f39c12;--border:#e0e6ed;--text:#34495e;}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f7fa;color:var(--text);display:flex;min-height:100vh;}
 
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(120deg, #4facfe, #00f2fe);
-            color: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
+    /* SIDEBAR */
+    .sidebar{width:240px;background:var(--primary);color:white;height:100vh;position:fixed;left:0;top:0;display:flex;flex-direction:column;z-index:1000;box-shadow:2px 0 15px rgba(0,0,0,.15);transition:width .3s;overflow-y:auto;}
+    .logo-section{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.08);}
+    .logo{display:flex;align-items:center;gap:10px;}
+    .logo-icon{width:36px;height:36px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+    .logo-text{font-size:14px;font-weight:700;line-height:1.2;} .logo-sub{font-size:10px;color:rgba(255,255,255,.45);}
+    .nav-section{padding:12px 0;flex:1;}
+    .nav-title{padding:6px 16px 4px;font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+    .nav-menu{list-style:none;} .nav-item{margin:1px 0;}
+    .nav-link{display:flex;align-items:center;gap:10px;padding:.55rem 1rem;color:rgba(255,255,255,.65);text-decoration:none;font-size:.82rem;transition:all .2s;}
+    .nav-link:hover{color:white;background:rgba(255,255,255,.07);}
+    .nav-link i{width:16px;text-align:center;font-size:.85rem;}
+    .sub-menu{list-style:none;background:rgba(0,0,0,.15);}
+    .sub-menu a{display:block;padding:.4rem 1rem .4rem 2.6rem;font-size:.78rem;color:rgba(255,255,255,.55);text-decoration:none;transition:color .2s;}
+    .sub-menu a:hover,.sub-menu a.active-sub{color:white;font-weight:600;}
+    .sidebar-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.08);}
+    .logout-btn{width:100%;background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);padding:.45rem;border-radius:6px;cursor:pointer;font-size:.78rem;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+    .logout-btn:hover{background:rgba(231,76,60,.2);color:#e74c3c;border-color:#e74c3c;}
 
-        .container {
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            max-width: 500px;
-            padding: 20px;
-        }
+    /* MAIN */
+    .main-content{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
+    .topbar{background:white;padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 8px rgba(0,0,0,.06);position:sticky;top:0;z-index:100;}
+    .topbar-left{display:flex;align-items:center;gap:14px;}
+    .menu-toggle{display:none;background:none;border:none;font-size:18px;color:#333;cursor:pointer;padding:4px;}
+    .page-title-bar{font-size:1.05rem;font-weight:700;color:#2c3e50;display:flex;align-items:center;gap:8px;}
+    .page-title-bar i{color:var(--primary-light);}
+    .topbar-right{display:flex;align-items:center;gap:12px;}
+    .user-chip{display:flex;align-items:center;gap:8px;background:#f1f5f9;border:1px solid #e2e8f0;padding:.35rem .875rem;border-radius:2rem;font-size:.8rem;color:#334155;font-weight:600;}
+    .page-body{padding:24px;flex:1;}
+    .page-heading{font-size:1.15rem;font-weight:700;color:#1a252f;margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem;}
 
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #007bff;
-        }
+    /* CARD */
+    .card{background:white;border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,.05);padding:1.5rem;max-width:720px;}
+    .section-label{font-size:.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #e2e8f0;padding-bottom:.5rem;margin:1.25rem 0 1rem;grid-column:1/-1;}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+    .form-group{display:flex;flex-direction:column;gap:.35rem;}
+    .form-group.full{grid-column:1/-1;}
+    .form-group label{font-size:.8rem;font-weight:600;color:#334155;}
+    .form-group input,.form-group select,.form-group textarea{padding:.5rem .75rem;border:1.5px solid #e2e8f0;border-radius:7px;font-size:.875rem;outline:none;transition:border-color .2s;}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(52,152,219,.1);}
+    .form-group textarea{resize:vertical;min-height:80px;}
+    .form-actions{grid-column:1/-1;display:flex;gap:.75rem;margin-top:.5rem;}
+    .btn{display:inline-flex;align-items:center;gap:.5rem;padding:.55rem 1.25rem;border-radius:7px;border:none;cursor:pointer;font-size:.875rem;font-weight:600;transition:all .2s;}
+    .btn-primary{background:var(--primary-light);color:white;} .btn-primary:hover{background:#2980b9;}
+    .btn-secondary{background:#f1f5f9;color:#334155;border:1.5px solid #e2e8f0;} .btn-secondary:hover{background:#e2e8f0;}
+    .btn:disabled{opacity:.6;cursor:not-allowed;}
 
-        label {
-            font-weight: bold;
-            margin: 10px 0 5px;
-            display: block;
-        }
+    /* TOAST */
+    .toast-container{position:fixed;top:1rem;right:1rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem;}
+    .toast{display:flex;align-items:center;gap:.75rem;padding:.875rem 1.25rem;border-radius:.625rem;font-size:.85rem;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.15);animation:slideIn .3s ease;min-width:260px;}
+    .toast-success{background:#dcfce7;color:#166534;border:1px solid #86efac;}
+    .toast-error{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
 
-        input, select, textarea, button {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-
-        button {
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.3s ease;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        .alert {
-            display: none;
-            padding: 10px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-
-        .alert.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .bulk-actions {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                width: 100%;
-            }
-        }
-    </style>
+    @media(max-width:900px){
+      .sidebar{width:0;overflow:hidden;} .sidebar.open{width:240px;}
+      .main-content{margin-left:0;} .menu-toggle{display:block;}
+    }
+    @media(max-width:600px){.form-grid{grid-template-columns:1fr;}}
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Add Dealer or Transporter</h1>
-        <div id="alert" class="alert"></div>
-        <form id="userForm" method="POST" action="{% url 'transporter:add_user' %}">
-            {% csrf_token %}
-            <label for="role">Role:</label>
-            <select id="role" name="role" required>
-                <option value="">--Select Role--</option>
-                <option value="dealer">Dealer</option>
-                <option value="transporter">Transporter</option>
-            </select>
+<div class="toast-container" id="toastContainer"></div>
 
-            <label for="dealer_code">Dealer Code:</label>
-        <input type="text" id="dealer_code" name="dealer_code" maxlength="4" placeholder="Enter 4-character dealer code" pattern=".{4,4}" title="Dealer code must be exactly 4 characters" required>
-            
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" placeholder="Enter username" required>
-
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" placeholder="Enter password" required>
-
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" placeholder="Enter email" required>
-
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" placeholder="Enter full name" required>
-
-            <label for="phone_number">Phone Number:</label>
-            <input type="text" id="phone_number" name="phone_number" placeholder="Enter phone number" required>
-
-            <label for="address">Address:</label>
-            <textarea id="address" name="address" rows="3" placeholder="Enter address" required></textarea>
-
-            <label for="state">State:</label>
-            <input type="text" id="state" name="state" placeholder="Enter state" required>
-
-            <label for="city">City:</label>
-            <input type="text" id="city" name="city" placeholder="Enter city" required>
-
-            <button type="submit">Add User</button>
-        </form>
-<!--
-        <div class="bulk-actions">
-            <button id="exportDealers">Export Template</button>
-            <form id="importForm" enctype="multipart/form-data">
-                <input type="file" id="dealer_file" name="dealer_file" accept=".xlsx" required>
-                <button type="submit">Import Dealers</button>
-            </form>
-        </div> -->
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="logo-section">
+    <div class="logo">
+      <div class="logo-icon"><i class="fas fa-shipping-fast"></i></div>
+      <div>
+        <div class="logo-text">Good Way Express</div>
+        <div class="logo-sub">Transport Panel</div>
+      </div>
     </div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-title">Main</div>
+    <ul class="nav-menu">
+      <li class="nav-item">
+        <a href="{% url 'transporter:home' %}" class="nav-link"><i class="fas fa-home"></i><span>Dashboard</span></a>
+      </li>
+      <li class="nav-item">
+        <a href="{% url 'transporter:receive' %}" class="nav-link"><i class="fas fa-clock"></i><span>Pending Requests</span></a>
+      </li>
+      <li class="nav-item">
+        <a href="#" class="nav-link" onclick="toggleSub('sub-del',this);return false;">
+          <i class="fas fa-clipboard-list"></i><span>Delivery Management</span>
+          <i class="fas fa-chevron-right" id="arr-del" style="margin-left:auto;font-size:10px;transition:transform .2s;"></i>
+        </a>
+        <ul class="sub-menu" id="sub-del" style="display:none;">
+          <li><a href="{% url 'transporter:delivery_cnotes' %}">Single Delivery</a></li>
+          <li><a href="{% url 'transporter:ddm_settlement' %}">DDM Settlements</a></li>
+        </ul>
+      </li>
+    </ul>
+    <div class="nav-title">Reports &amp; Masters</div>
+    <ul class="nav-menu">
+      <li class="nav-item">
+        <a href="#" class="nav-link" onclick="toggleSub('sub-rep',this);return false;">
+          <i class="fas fa-chart-bar"></i><span>Reports</span>
+          <i class="fas fa-chevron-right" id="arr-rep" style="margin-left:auto;font-size:10px;transition:transform .2s;"></i>
+        </a>
+        <ul class="sub-menu" id="sub-rep" style="display:none;">
+          <li><a href="{% url 'transporter:all_booking_register' %}">Booking Register</a></li>
+          <li><a href="{% url 'transporter:loading_sheet_report' %}">Loading Sheet Report</a></li>
+        </ul>
+      </li>
+      <li class="nav-item">
+        <a href="#" class="nav-link" onclick="toggleSub('sub-mas',this);return false;">
+          <i class="fas fa-cog"></i><span>Master</span>
+          <i class="fas fa-chevron-right" id="arr-mas" style="margin-left:auto;font-size:10px;transition:transform .2s;transform:rotate(90deg);"></i>
+        </a>
+        <ul class="sub-menu" id="sub-mas" style="display:block;">
+          <li><a href="{% url 'transporter:rate_card_master' %}">Rate Card Master</a></li>
+          <li><a href="{% url 'transporter:billing' %}">Billing Dealer</a></li>
+          <li><a href="{% url 'transporter:bill_manage' %}">Bill Management</a></li>
+          <li><a href="{% url 'transporter:manage_location' %}">Manage Location</a></li>
+          <li><a href="{% url 'transporter:party_master' %}">Party Master</a></li>
+          <li><a href="{% url 'transporter:add_user' %}" class="active-sub">Add User</a></li>
+          <li><a href="{% url 'transporter:view_users' %}">View Users</a></li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+  <div class="sidebar-footer">
+    <form method="post" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </form>
+  </div>
+</div>
 
-    <script>
-        document.getElementById('userForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const alertBox = document.getElementById('alert');
-            const dealerCode = document.getElementById('dealer_code').value;
-            
-            if (dealerCode.length !== 4) {
-                alertBox.textContent = 'Dealer code must be exactly 4 characters.';
-                alertBox.className = 'alert alert-danger';
-                alertBox.style.display = 'block';
-                return;
-            }
-        // Handle Add User Form Submission
-        document.getElementById('userForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const alertBox = document.getElementById('alert');
-            const formData = new FormData(this);
+<!-- MAIN -->
+<div class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="page-title-bar"><i class="fas fa-user-plus"></i> Add User</div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-chip"><i class="fas fa-user"></i> {{ request.user.username }}</div>
+    </div>
+  </div>
 
-           try {
-            const response = await fetch("{% url 'transporter:add_user' %}", {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}'
-                }
-            });
-               if (!response.ok) {
-                const message = `An error occurred: ${response.statusText}`;
-                throw new Error(message);
-            }
+  <div class="page-body">
+    <div class="page-heading"><i class="fas fa-user-plus"></i> Add Dealer / Transporter</div>
 
-            const data = await response.json();
-            // handle the response data
-            console.log(data);
-        } catch (error) {
-            console.error('Error:', error);
-        }
+    <div class="card">
+      <form id="userForm">
+        {% csrf_token %}
+        <div class="form-grid">
+
+          <div class="section-label">Account Information</div>
+
+          <div class="form-group">
+            <label>Role *</label>
+            <select id="role" name="role" required onchange="handleRoleChange()">
+              <option value="">— Select Role —</option>
+              <option value="dealer">Dealer</option>
+              <option value="transporter">Transporter</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="dealerCodeGroup">
+            <label>Dealer Code (4 chars) *</label>
+            <input type="text" id="dealer_code" name="dealer_code" maxlength="4" placeholder="e.g. DL01">
+          </div>
+
+          <div class="form-group">
+            <label>Username *</label>
+            <input type="text" id="username" name="username" placeholder="Enter username" required>
+          </div>
+
+          <div class="form-group">
+            <label>Password *</label>
+            <input type="password" id="password" name="password" placeholder="Enter password" required>
+          </div>
+
+          <div class="form-group">
+            <label>Email *</label>
+            <input type="email" id="email" name="email" placeholder="Enter email" required>
+          </div>
+
+          <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" id="name" name="name" placeholder="Enter full name" required>
+          </div>
+
+          <div class="section-label">Contact &amp; Address</div>
+
+          <div class="form-group">
+            <label>Phone Number *</label>
+            <input type="text" id="phone_number" name="phone_number" placeholder="Enter phone number" required>
+          </div>
+
+          <div class="form-group">
+            <label>State *</label>
+            <input type="text" id="state" name="state" placeholder="Enter state" required>
+          </div>
+
+          <div class="form-group">
+            <label>City *</label>
+            <input type="text" id="city" name="city" placeholder="Enter city" required>
+          </div>
+
+          <div class="form-group full">
+            <label>Address *</label>
+            <textarea id="address" name="address" placeholder="Enter full address" required></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+              <i class="fas fa-user-plus"></i> <span id="submitText">Add User</span>
+            </button>
+            <button type="reset" class="btn btn-secondary" onclick="handleReset()">
+              <i class="fas fa-undo"></i> Reset
+            </button>
+          </div>
+
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleSub(id, el) {
+    const menu = document.getElementById(id);
+    const arr = el.querySelector('.fa-chevron-right');
+    const isOpen = menu.style.display === 'block';
+    document.querySelectorAll('.sub-menu').forEach(m => m.style.display = 'none');
+    document.querySelectorAll('[id^="arr-"]').forEach(a => a.style.transform = '');
+    if (!isOpen) { menu.style.display = 'block'; if (arr) arr.style.transform = 'rotate(90deg)'; }
+  }
+
+  function getCookie(n) {
+    let v = null;
+    if (document.cookie) document.cookie.split(';').forEach(c => {
+      c = c.trim();
+      if (c.startsWith(n + '=')) v = decodeURIComponent(c.substring(n.length + 1));
     });
+    return v;
+  }
 
-                const data = await response.json();
-                if (response.ok && data.success) {
-                    alertBox.textContent = data.message;
-                    alertBox.className = 'alert success';
-                    alertBox.style.display = 'block';
-                    this.reset();
-                } else {
-                    throw new Error(data.message || 'Failed to add user.');
-                }
-            } catch (error) {
-                alertBox.textContent = error.message;
-                alertBox.className = 'alert error';
-                alertBox.style.display = 'block';
-                console.error('Error:', error);
-            }
-        });
+  function showToast(msg, type = 'success') {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = `toast toast-${type}`;
+    t.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${msg}`;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
+  }
 
-        // Export Template
-        document.getElementById('exportDealers').addEventListener('click', function () {
-            window.location.href = "{% url 'transporter:export_dealers_template' %}";
-        });
+  // Show/hide dealer code field based on role
+  function handleRoleChange() {
+    const role = document.getElementById('role').value;
+    const dcGroup = document.getElementById('dealerCodeGroup');
+    const dcInput = document.getElementById('dealer_code');
+    if (role === 'dealer') {
+      dcGroup.style.display = 'flex';
+      dcInput.required = true;
+    } else {
+      dcGroup.style.display = 'none';
+      dcInput.required = false;
+      dcInput.value = '';
+    }
+  }
 
-        // Handle Import Dealers
-        document.getElementById('importForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const alertBox = document.getElementById('alert');
+  function handleReset() {
+    document.getElementById('dealerCodeGroup').style.display = 'flex';
+    document.getElementById('dealer_code').required = true;
+  }
 
-            try {
-                const response = await fetch("{% url 'transporter:import_dealers' %}", {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    }
-                });
+  // On load, set initial state
+  handleRoleChange();
 
-                const data = await response.json();
-                if (response.ok && data.success) {
-                    alertBox.textContent = data.message;
-                    alertBox.className = 'alert success';
-                    alertBox.style.display = 'block';
-                } else {
-                    throw new Error(data.message || 'Failed to import dealers.');
-                }
-            } catch (error) {
-                alertBox.textContent = error.message;
-                alertBox.className = 'alert error';
-                alertBox.style.display = 'block';
-                console.error('Error:', error);
-            }
-        });
-    </script>
+  document.getElementById('userForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const role = document.getElementById('role').value;
+    if (!role) { showToast('Please select a role.', 'error'); return; }
+    if (role === 'dealer') {
+      const dc = document.getElementById('dealer_code').value;
+      if (dc.length !== 4) { showToast('Dealer code must be exactly 4 characters.', 'error'); return; }
+    }
+
+    const btn = document.getElementById('submitBtn');
+    const txt = document.getElementById('submitText');
+    btn.disabled = true;
+    txt.textContent = 'Adding...';
+
+    try {
+      const formData = new FormData(this);
+      const res = await fetch("{% url 'transporter:add_user' %}", {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message || 'User added successfully!', 'success');
+        this.reset();
+        handleRoleChange();
+      } else {
+        showToast(data.message || 'Failed to add user.', 'error');
+      }
+    } catch (err) {
+      showToast(err.message || 'Server error.', 'error');
+    } finally {
+      btn.disabled = false;
+      txt.textContent = 'Add User';
+    }
+  });
+</script>
 </body>
 </html>
