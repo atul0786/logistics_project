@@ -106,6 +106,7 @@ urlpatterns = [
     path('view-users/', views.view_users, name='view_users'),
     path('fetch-users/', views.fetch_users, name='fetch_users'),
     path('reset-password/', views.reset_password, name='reset_password'),
+    path('update-user/', views.update_user, name='update_user')
     
     # Billing functionality
     path('billing/', views.billing, name='billing'),
