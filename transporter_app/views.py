@@ -499,6 +499,158 @@ def save_config(request):
         return redirect('transporter:home')
     return render(request, 'transporter/save_config.html')
 
+# ── Party Master Export ─────────────────────────────────────────────────────
+
+@login_required
+def export_party_master_excel(request):
+    """
+    Export all PartyMaster records to a formatted Excel file.
+    Uses openpyxl with header styling, column auto-width, and freeze panes.
+    """
+    try:
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        from openpyxl.utils import get_column_letter
+        from django.http import HttpResponse
+        from datetime import datetime
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Party Master"
+
+        # ── Header style ───────────────────────────────────────────────
+        header_font    = Font(name='Calibri', bold=True, color='FFFFFF', size=11)
+        header_fill    = PatternFill(start_color='1A252F', end_color='1A252F', fill_type='solid')
+        header_align   = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        thin           = Side(border_style='thin', color='CCCCCC')
+        cell_border    = Border(left=thin, right=thin, top=thin, bottom=thin)
+        alt_fill       = PatternFill(start_color='F5F7FA', end_color='F5F7FA', fill_type='solid')
+        center_align   = Alignment(horizontal='center', vertical='center')
+        left_align     = Alignment(horizontal='left', vertical='center')
+
+        # ── Column definitions ─────────────────────────────────────────
+        columns = [
+            ('Sr. No.',           'sr',                7),
+            ('Party Code',        'party_code',        14),
+            ('Party Name',        'party_name',        30),
+            ('Display Name',      'display_name',      25),
+            ('Party Type',        'party_type',        16),
+            ('Mobile 1',          'mobile_number_1',   15),
+            ('Mobile 2',          'mobile_number_2',   15),
+            ('Phone 1',           'phone_number_1',    15),
+            ('Phone 2',           'phone_number_2',    15),
+            ('GST No.',           'gst_no',            20),
+            ('PAN No.',           'pan_no',            14),
+            ('Email',             'email',             28),
+            ('Marketing Person',  'marketing_person',  22),
+            ('Country',           'country',           12),
+            ('State',             'state',             18),
+            ('City',              'city',              16),
+            ('Pincode',           'pincode',           10),
+            ('Address',           'address',           35),
+            ('Is TBB',            'is_tbb',            8),
+            ('Remark',            'remark',            25),
+            ('Created At',        'created_at',        20),
+            ('Updated At',        'updated_at',        20),
+        ]
+
+        # ── Title row ──────────────────────────────────────────────────
+        ws.row_dimensions[1].height = 22
+        ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(columns))
+        title_cell = ws.cell(row=1, column=1,
+            value=f"Good Way Express — Party Master Report   |   Generated: {datetime.now().strftime('%d %b %Y, %I:%M %p')}")
+        title_cell.font  = Font(name='Calibri', bold=True, size=12, color='FFFFFF')
+        title_cell.fill  = PatternFill(start_color='3498DB', end_color='3498DB', fill_type='solid')
+        title_cell.alignment = Alignment(horizontal='center', vertical='center')
+
+        # ── Header row ─────────────────────────────────────────────────
+        ws.row_dimensions[2].height = 30
+        for col_idx, (header, _, width) in enumerate(columns, start=1):
+            cell = ws.cell(row=2, column=col_idx, value=header)
+            cell.font      = header_font
+            cell.fill      = header_fill
+            cell.alignment = header_align
+            cell.border    = cell_border
+            ws.column_dimensions[get_column_letter(col_idx)].width = width
+
+        ws.freeze_panes = 'A3'  # Freeze title + header rows
+
+        # ── Data rows ──────────────────────────────────────────────────
+        parties = PartyMaster.objects.all().order_by('party_name')
+        type_labels = {'booking': 'Booking', 'delivery': 'Delivery', 'both': 'Booking & Delivery'}
+
+        for row_idx, party in enumerate(parties, start=3):
+            is_alt = (row_idx % 2 == 0)
+            fill   = alt_fill if is_alt else None
+            ws.row_dimensions[row_idx].height = 18
+
+            row_values = {
+                'sr':               row_idx - 2,
+                'party_code':       party.party_code or '',
+                'party_name':       party.party_name,
+                'display_name':     party.display_name,
+                'party_type':       type_labels.get(party.party_type, party.party_type),
+                'mobile_number_1':  party.mobile_number_1 or '',
+                'mobile_number_2':  party.mobile_number_2 or '',
+                'phone_number_1':   party.phone_number_1 or '',
+                'phone_number_2':   party.phone_number_2 or '',
+                'gst_no':           party.gst_no or '',
+                'pan_no':           party.pan_no or '',
+                'email':            party.email or '',
+                'marketing_person': party.marketing_person or '',
+                'country':          party.country or 'INDIA',
+                'state':            party.state or '',
+                'city':             party.city or '',
+                'pincode':          party.pincode or '',
+                'address':          party.address or '',
+                'is_tbb':           'Yes' if party.is_tbb else 'No',
+                'remark':           party.remark or '',
+                'created_at':       party.created_at.strftime('%d-%m-%Y %H:%M') if party.created_at else '',
+                'updated_at':       party.updated_at.strftime('%d-%m-%Y %H:%M') if party.updated_at else '',
+            }
+
+            for col_idx, (_, field, _) in enumerate(columns, start=1):
+                cell = ws.cell(row=row_idx, column=col_idx, value=row_values[field])
+                cell.border    = cell_border
+                cell.alignment = center_align if field in ('sr', 'is_tbb', 'party_type', 'pincode') else left_align
+                if fill:
+                    cell.fill = fill
+
+        # ── Summary row at bottom ───────────────────────────────────────
+        total_row = len(parties) + 3
+        ws.row_dimensions[total_row].height = 20
+        summary_cell = ws.cell(row=total_row, column=1,
+            value=f"Total Parties: {len(parties)}")
+        summary_cell.font  = Font(name='Calibri', bold=True, size=10, color='FFFFFF')
+        summary_cell.fill  = PatternFill(start_color='1A252F', end_color='1A252F', fill_type='solid')
+        summary_cell.alignment = Alignment(horizontal='left', vertical='center')
+        ws.merge_cells(start_row=total_row, start_column=1, end_row=total_row, end_column=len(columns))
+
+        # ── Response ───────────────────────────────────────────────────
+        filename = f"Party_Master_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        wb.save(response)
+        return response
+
+    except ImportError:
+        return HttpResponse(
+            "openpyxl not installed. Run: pip install openpyxl",
+            content_type='text/plain',
+            status=500
+        )
+    except Exception as e:
+        import traceback
+        return HttpResponse(
+            f"Export error: {str(e)}
+
+{traceback.format_exc()}",
+            content_type='text/plain',
+            status=500
+        )
+
 def success_page(request):
     return render(request, 'transporter/success.html')
 
