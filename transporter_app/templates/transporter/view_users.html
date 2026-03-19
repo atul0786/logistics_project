@@ -367,26 +367,51 @@
   const userMap = {};  // username → user object (safe data access without HTML injection)
 
   async function fetchUsers() {
+    document.getElementById('userTableBody').innerHTML =
+      `<tr class="loading-row"><td colspan="9"><span class="spinner"></span> Loading users...</td></tr>`;
+
+    // 15 second timeout — agar server slow ho to hang na ho
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+
     try {
       const res = await fetch("{% url 'transporter:fetch_users' %}", {
-        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        headers: { 'X-CSRFToken': getCookie('csrftoken') },
+        signal: controller.signal
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      clearTimeout(timer);
+
+      if (!res.ok) throw new Error(`Server error: HTTP ${res.status}`);
+
       const data = await res.json();
+
       if (data.success && data.users && data.users.length > 0) {
         allUsers = data.users;
-        // Build safe lookup map by username
         allUsers.forEach(u => { userMap[u.username] = u; });
         renderTable();
         updateStats();
-      } else {
+      } else if (data.success && (!data.users || data.users.length === 0)) {
         document.getElementById('userTableBody').innerHTML =
-          `<tr><td colspan="9" style="text-align:center;padding:2.5rem;color:#94a3b8;"><i class="fas fa-users" style="font-size:2rem;display:block;margin-bottom:8px;opacity:.3;"></i>No users found.</td></tr>`;
+          `<tr><td colspan="9" style="text-align:center;padding:2.5rem;color:#94a3b8;">
+            <i class="fas fa-users" style="font-size:2rem;display:block;margin-bottom:8px;opacity:.3;"></i>
+            No users found.
+          </td></tr>`;
+      } else {
+        throw new Error(data.message || 'Failed to load users');
       }
     } catch (err) {
+      clearTimeout(timer);
+      const isTimeout = err.name === 'AbortError';
+      const msg = isTimeout ? 'Request timed out. Server is slow or unreachable.' : err.message;
       document.getElementById('userTableBody').innerHTML =
-        `<tr><td colspan="9" style="text-align:center;padding:2rem;color:#e74c3c;">Error loading users: ${err.message}</td></tr>`;
-      showToast(err.message, 'error');
+        `<tr><td colspan="9" style="text-align:center;padding:2rem;">
+          <i class="fas fa-exclamation-triangle" style="color:#e74c3c;font-size:1.5rem;display:block;margin-bottom:8px;"></i>
+          <span style="color:#e74c3c;font-size:.85rem;">${msg}</span><br>
+          <button onclick="fetchUsers()" class="btn btn-primary" style="margin-top:12px;font-size:.8rem;">
+            <i class="fas fa-redo"></i> Retry
+          </button>
+        </td></tr>`;
+      showToast(msg, 'error');
     }
   }
 
