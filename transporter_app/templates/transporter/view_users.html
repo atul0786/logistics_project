@@ -506,7 +506,20 @@
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
         body: JSON.stringify(payload)
       });
-      const data = await res.json();
+
+      // Safe parse — agar server HTML return kare (login redirect / 500) to crash na ho
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch(parseErr) {
+        // Server ne JSON nahi bheja — likely login redirect ya server error
+        if (!res.ok) {
+          throw new Error(`Server error (HTTP ${res.status}). Please check login or contact admin.`);
+        }
+        throw new Error('Server returned unexpected response. Please refresh and try again.');
+      }
+
       if (data.success) {
         showToast(data.message || 'User updated successfully!', 'success');
         closeEditModal();
