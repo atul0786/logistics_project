@@ -4878,8 +4878,257 @@ def update_user(request):
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=500)
 
 
-# ═══════════════════════════════════════════════════════════════════
-#  URLs — transporter_app/urls.py mein add karo
-# ═══════════════════════════════════════════════════════════════════
 
-# path('update-user/', views.update_user, name='update_user'),
+
+@login_required
+def drs_report(request):
+    return render(request, 'transporter/drs_report.html')
+
+
+@login_required
+def drs_report_data(request):
+    from django.utils.dateparse import parse_date
+
+    date_from = request.GET.get('date_from', '').strip()
+    date_to   = request.GET.get('date_to', '').strip()
+    ddm_no    = request.GET.get('ddm_no', '').strip()
+    status    = request.GET.get('status', '').strip()
+    truck_no  = request.GET.get('truck_no', '').strip()
+
+    try:
+        qs = DDMSummary.objects.prefetch_related('details').all()
+
+        if date_from:
+            try: qs = qs.filter(creation_date__date__gte=parse_date(date_from))
+            except: pass
+        if date_to:
+            try: qs = qs.filter(creation_date__date__lte=parse_date(date_to))
+            except: pass
+        if ddm_no:   qs = qs.filter(ddm_no__icontains=ddm_no)
+        if truck_no: qs = qs.filter(truck_no__icontains=truck_no)
+
+        qs = qs.order_by('-creation_date')
+
+        results = []
+        for ddm in qs:
+            details_qs = ddm.details.all()
+
+            if status:
+                details_qs = details_qs.filter(status__iexact=status)
+                if not details_qs.exists():
+                    continue
+
+            details_list = [
+                {
+                    'id':           d.id,
+                    'cnote_number': d.cnote_number,
+                    'consignee':    d.consignee_name,
+                    'contact':      d.contact_number,
+                    'destination':  d.destination,
+                    'total_pkt':    d.total_pkt,
+                    'amount':       float(d.amount or 0),
+                    'payment_type': d.payment_type,
+                    'status':       d.status,
+                    'dealer':       d.dealer_name,
+                    'remark':       d.remark or '',
+                }
+                for d in details_qs
+            ]
+
+            all_details   = ddm.details.all()
+            delivered     = all_details.filter(status__iexact='Delivered').count()
+            pending       = all_details.exclude(status__iexact='Delivered').count()
+
+            results.append({
+                'ddm_id':       ddm.ddm_id,
+                'ddm_no':       ddm.ddm_no,
+                'date':         ddm.creation_date.isoformat(),
+                'truck_no':     ddm.truck_no or '',
+                'driver_name':  ddm.driver_name or '',
+                'driver_no':    ddm.driver_no or '',
+                'lorry_hire':   float(ddm.lorry_hire or 0),
+                'remarks':      ddm.remarks or '',
+                'total_cnotes': ddm.total_cnotes,
+                'total_pkgs':   ddm.total_packages,
+                'total_amount': float(ddm.total_amount or 0),
+                'delivered':    delivered,
+                'pending':      pending,
+                'details':      details_list,
+            })
+
+        return JsonResponse({
+            'success': True,
+            'results': results,
+            'summary': {
+                'total_ddms':      len(results),
+                'total_cnotes':    sum(r['total_cnotes'] for r in results),
+                'total_delivered': sum(r['delivered']    for r in results),
+                'total_amount':    sum(r['total_amount'] for r in results),
+            }
+        })
+
+    except Exception as e:
+        import traceback
+        return JsonResponse({
+            'success': False,
+            'message': str(e),
+            'detail':  traceback.format_exc()
+        }, status=500)
+
+
+@login_required
+def drs_report_export(request):
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+    from django.http import HttpResponse
+    from django.utils.dateparse import parse_date
+    from datetime import datetime
+
+    date_from = request.GET.get('date_from', '').strip()
+    date_to   = request.GET.get('date_to', '').strip()
+    ddm_no    = request.GET.get('ddm_no', '').strip()
+    status    = request.GET.get('status', '').strip()
+    truck_no  = request.GET.get('truck_no', '').strip()
+
+    qs = DDMSummary.objects.prefetch_related('details').all()
+    if date_from:
+        try: qs = qs.filter(creation_date__date__gte=parse_date(date_from))
+        except: pass
+    if date_to:
+        try: qs = qs.filter(creation_date__date__lte=parse_date(date_to))
+        except: pass
+    if ddm_no:   qs = qs.filter(ddm_no__icontains=ddm_no)
+    if truck_no: qs = qs.filter(truck_no__icontains=truck_no)
+    qs = qs.order_by('-creation_date')
+
+    wb  = openpyxl.Workbook()
+    ws  = wb.active
+    ws.title = "DDM-DRS Report"
+
+    thin     = Side(border_style='thin', color='CCCCCC')
+    brd      = Border(left=thin, right=thin, top=thin, bottom=thin)
+    h_font   = Font(name='Calibri', bold=True, color='FFFFFF', size=10)
+    h_fill   = PatternFill(start_color='1A252F', end_color='1A252F', fill_type='solid')
+    h_align  = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    c_align  = Alignment(horizontal='center', vertical='center')
+    l_align  = Alignment(horizontal='left',   vertical='center')
+    alt_fill = PatternFill(start_color='F5F7FA', end_color='F5F7FA', fill_type='solid')
+    ok_fill  = PatternFill(start_color='DCFCE7', end_color='DCFCE7', fill_type='solid')
+    w_fill   = PatternFill(start_color='FEF9C3', end_color='FEF9C3', fill_type='solid')
+
+    COLS = 17
+    # Title row
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=COLS)
+    tc = ws.cell(row=1, column=1,
+        value="Good Way Express — DDM / DRS Report  |  Generated: " +
+              datetime.now().strftime('%d %b %Y, %I:%M %p'))
+    tc.font      = Font(name='Calibri', bold=True, size=12, color='FFFFFF')
+    tc.fill      = PatternFill(start_color='3498DB', end_color='3498DB', fill_type='solid')
+    tc.alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[1].height = 22
+
+    # Filter info row
+    filters = []
+    if date_from: filters.append("From: " + date_from)
+    if date_to:   filters.append("To: "   + date_to)
+    if ddm_no:    filters.append("DDM: "  + ddm_no)
+    if status:    filters.append("Status: " + status)
+    if truck_no:  filters.append("Truck: " + truck_no)
+    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=COLS)
+    fc = ws.cell(row=2, column=1,
+        value="Filters: " + (" | ".join(filters) if filters else "All Records"))
+    fc.font      = Font(name='Calibri', italic=True, size=9, color='334155')
+    fc.fill      = PatternFill(start_color='EFF6FF', end_color='EFF6FF', fill_type='solid')
+    fc.alignment = l_align
+    ws.row_dimensions[2].height = 16
+
+    # Headers
+    headers = [
+        ('#',            5),  ('DDM No.',       14), ('Date',          12),
+        ('Truck No.',   12),  ('Driver',         18), ('Driver Mobile', 14),
+        ('Lorry Hire',  12),  ('Total CNotes',   12), ('Total Pkgs',    10),
+        ('Delivered',    9),  ('Pending',         9), ('Total Amount',  14),
+        ('CNote No.',   16),  ('Consignee',      22), ('Destination',   18),
+        ('Status',      16),  ('Remark',         20),
+    ]
+    ws.row_dimensions[3].height = 28
+    for ci, (h, w) in enumerate(headers, 1):
+        c = ws.cell(row=3, column=ci, value=h)
+        c.font = h_font; c.fill = h_fill
+        c.alignment = h_align; c.border = brd
+        ws.column_dimensions[get_column_letter(ci)].width = w
+    ws.freeze_panes = 'A4'
+
+    STATUS_FILLS = {
+        'delivered':    ok_fill,
+        'due delivered': w_fill,
+    }
+
+    row_i = 4
+    sr    = 0
+    for ddm in qs:
+        details_qs = ddm.details.all()
+        if status:
+            details_qs = details_qs.filter(status__iexact=status)
+        details_list = list(details_qs)
+        if not details_list:
+            continue
+
+        sr += 1
+        delivered = ddm.details.filter(status__iexact='Delivered').count()
+        pending   = ddm.details.exclude(status__iexact='Delivered').count()
+        is_alt    = (sr % 2 == 0)
+        base_fill = alt_fill if is_alt else None
+
+        for idx, d in enumerate(details_list):
+            ws.row_dimensions[row_i].height = 17
+            st         = (d.status or '').lower()
+            row_fill   = STATUS_FILLS.get(st, base_fill)
+
+            # DDM summary columns — only on first detail row
+            if idx == 0:
+                ddm_vals = [
+                    sr, ddm.ddm_no,
+                    ddm.creation_date.strftime('%d-%m-%Y') if ddm.creation_date else '',
+                    ddm.truck_no or '', ddm.driver_name or '', ddm.driver_no or '',
+                    float(ddm.lorry_hire or 0),
+                    ddm.total_cnotes, ddm.total_packages,
+                    delivered, pending, float(ddm.total_amount or 0),
+                ]
+            else:
+                ddm_vals = [sr, ddm.ddm_no, '', '', '', '', '', '', '', '', '', '']
+
+            all_vals = ddm_vals + [
+                d.cnote_number,
+                d.consignee_name or '',
+                d.destination    or '',
+                d.status         or '',
+                d.remark         or '',
+            ]
+
+            ctr_cols = {0, 7, 8, 9, 10, 12}
+            for ci, val in enumerate(all_vals, 1):
+                c = ws.cell(row=row_i, column=ci, value=val)
+                c.border    = brd
+                c.alignment = c_align if (ci - 1) in ctr_cols else l_align
+                if row_fill: c.fill = row_fill
+            row_i += 1
+
+    # Footer
+    ws.merge_cells(start_row=row_i, start_column=1, end_row=row_i, end_column=COLS)
+    sc = ws.cell(row=row_i, column=1,
+        value="Total DDMs: " + str(sr) + "  |  Exported: " +
+              datetime.now().strftime('%d %b %Y %I:%M %p'))
+    sc.font      = Font(name='Calibri', bold=True, size=10, color='FFFFFF')
+    sc.fill      = PatternFill(start_color='1A252F', end_color='1A252F', fill_type='solid')
+    sc.alignment = l_align
+    ws.row_dimensions[row_i].height = 20
+
+    fname    = "DDM_DRS_Report_" + datetime.now().strftime('%Y%m%d_%H%M%S') + ".xlsx"
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="' + fname + '"'
+    wb.save(response)
+    return response
