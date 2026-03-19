@@ -4492,3 +4492,90 @@ def api_destination_search(request):
     destinations = list(qs.values_list('destination_name', flat=True).distinct()[:50])
 
     return JsonResponse({'destinations': destinations, 'count': len(destinations)})
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  UPDATE USER VIEW — transporter_app/views.py mein add karo
+#  URL name: transporter:update_user
+# ═══════════════════════════════════════════════════════════════════
+
+@login_required
+def update_user(request):
+    """
+    Update Dealer or Transporter profile details.
+    Accepts: POST with JSON body
+    Returns: JSON {success: True/False, message: str}
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Method not allowed.'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        username    = data.get('username', '').strip()
+        role        = data.get('role', '').strip()
+        name        = data.get('name', '').strip()
+        email       = data.get('email', '').strip()
+        phone       = data.get('phone_number', '').strip()
+        state       = data.get('state', '').strip()
+        city        = data.get('city', '').strip()
+        address     = data.get('address', '').strip()
+        dealer_code = data.get('dealer_code', '').strip()
+
+        if not username or not role:
+            return JsonResponse({'success': False, 'message': 'Username and role are required.'}, status=400)
+        if not name or not email:
+            return JsonResponse({'success': False, 'message': 'Name and email are required.'}, status=400)
+
+        with transaction.atomic():
+            # Update the Django User email
+            user_obj = CustomUser.objects.get(username=username)
+            # Check if email is being changed to one that already exists
+            if email != user_obj.email:
+                if CustomUser.objects.filter(email=email).exclude(username=username).exists():
+                    return JsonResponse({'success': False, 'message': 'Email already in use by another user.'}, status=400)
+            user_obj.email = email
+            user_obj.save()
+
+            if role == 'Dealer':
+                dealer = Dealer.objects.get(user=user_obj)
+                if dealer_code and dealer_code != dealer.dealer_code:
+                    if len(dealer_code) != 4:
+                        return JsonResponse({'success': False, 'message': 'Dealer code must be exactly 4 characters.'}, status=400)
+                    if Dealer.objects.filter(dealer_code=dealer_code).exclude(user=user_obj).exists():
+                        return JsonResponse({'success': False, 'message': 'Dealer code already in use.'}, status=400)
+                    dealer.dealer_code = dealer_code
+                dealer.name            = name
+                dealer.email           = email
+                dealer.mobile_number_1 = phone
+                dealer.state           = state
+                dealer.city            = city
+                dealer.address         = address
+                dealer.save()
+
+            elif role == 'Transporter':
+                transporter = Transporter.objects.get(user=user_obj)
+                transporter.name            = name
+                transporter.email           = email
+                transporter.mobile_number_1 = phone
+                transporter.state           = state
+                transporter.city            = city
+                transporter.address         = address
+                transporter.save()
+            else:
+                return JsonResponse({'success': False, 'message': 'Invalid role.'}, status=400)
+
+        return JsonResponse({'success': True, 'message': f'{role} updated successfully!'})
+
+    except CustomUser.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'User not found.'}, status=404)
+    except (Dealer.DoesNotExist, Transporter.DoesNotExist):
+        return JsonResponse({'success': False, 'message': 'Profile record not found for this user.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=500)
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  URLs — transporter_app/urls.py mein add karo
+# ═══════════════════════════════════════════════════════════════════
+
+# path('update-user/', views.update_user, name='update_user'),
