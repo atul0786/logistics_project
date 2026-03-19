@@ -3559,56 +3559,110 @@ def reset_password(request):
 @login_required
 def view_users(request):
     """
-    Render the view_users.html template to display all users.
+    Render view_users.html with user data pre-loaded in context.
+    AJAX fetch_users endpoint is no longer needed for initial load.
+    This eliminates loading spinner issues caused by slow AJAX calls.
     """
-    return render(request, 'transporter/view_users.html')  # Corrected template path
+    server_error = None
+    dealer_data = []
+    transporter_data = []
+
+    try:
+        dealers = Dealer.objects.select_related('user').all()
+        dealer_data = [
+            {
+                "role": "Dealer",
+                "dealer_code": dealer.dealer_code or "-",
+                "username": dealer.user.username if dealer.user else "-",
+                "name": dealer.name or "-",
+                "company_name": getattr(dealer, "company_name", "") or "-",
+                "email": dealer.email or "-",
+                "mobile_number_1": getattr(dealer, "mobile_number_1", "") or "-",
+                "phone_number_1": getattr(dealer, "phone_number_1", "") or "-",
+                "address": dealer.address or "",
+                "state": dealer.state or "-",
+                "city": dealer.city or "-",
+            }
+            for dealer in dealers
+        ]
+    except Exception as e:
+        server_error = f"Dealers load error: {str(e)}"
+
+    try:
+        transporters = Transporter.objects.select_related('user').all()
+        transporter_data = [
+            {
+                "role": "Transporter",
+                "transporter_id": f"T{transporter.transporter_id:04d}" if transporter.transporter_id else "-",
+                "username": transporter.user.username if transporter.user else "-",
+                "name": transporter.name or "-",
+                "company_name": getattr(transporter, "company_name", "") or "-",
+                "email": transporter.email or "-",
+                "mobile_number_1": getattr(transporter, "mobile_number_1", "") or "-",
+                "phone_number_1": getattr(transporter, "phone_number_1", "") or "-",
+                "address": transporter.address or "",
+                "state": transporter.state or "-",
+                "city": transporter.city or "-",
+            }
+            for transporter in transporters
+        ]
+    except Exception as e:
+        server_error = (server_error + " | " if server_error else "") + f"Transporters load error: {str(e)}"
+
+    all_users = dealer_data + transporter_data
+
+    return render(request, 'transporter/view_users.html', {
+        'users_json': json.dumps(all_users),
+        'total_users': len(all_users),
+        'total_dealers': len(dealer_data),
+        'total_transporters': len(transporter_data),
+        'server_error': server_error,
+    })
 
 @login_required
 def fetch_users(request):
     """
     Fetch all Dealer and Transporter records and return them as JSON.
-    Uses select_related to avoid N+1 queries on dealer.user / transporter.user.
     """
     try:
-        # select_related('user') → single JOIN query instead of N+1
-        dealers = Dealer.objects.select_related('user').all()
+        # Fetch all dealers
+        dealers = Dealer.objects.all()
         dealer_data = [
             {
                 "role": "Dealer",
-                "dealer_code": dealer.dealer_code or '-',
+                "dealer_code": dealer.dealer_code,
                 "username": dealer.user.username if dealer.user else '-',
-                "name": dealer.name or '-',
-                "company_name": getattr(dealer, 'company_name', '') or '-',
-                "email": dealer.email or '-',
-                "phone_number_1": getattr(dealer, 'phone_number_1', '') or '-',
-                "phone_number_2": getattr(dealer, 'phone_number_2', '') or '-',
-                "mobile_number_1": getattr(dealer, 'mobile_number_1', '') or '-',
-                "mobile_number_2": getattr(dealer, 'mobile_number_2', '') or '-',
-                "address": dealer.address or '-',
-                "state": dealer.state or '-',
-                "city": dealer.city or '-',
+                "name": dealer.name,
+                "company_name": dealer.company_name,
+                "email": dealer.email,
+                "phone_number_1": dealer.phone_number_1,
+                "phone_number_2": dealer.phone_number_2 or '-',
+                "mobile_number_1": dealer.mobile_number_1,
+                "mobile_number_2": dealer.mobile_number_2 or '-',
+                "address": dealer.address,
+                "state": dealer.state,
+                "city": dealer.city,
             }
             for dealer in dealers
         ]
 
-        # select_related('user') → single JOIN query
-        transporters = Transporter.objects.select_related('user').all()
+        # Fetch all transporters
+        transporters = Transporter.objects.all()
         transporter_data = [
             {
                 "role": "Transporter",
-                # Safe format: transporter_id could be None
-                "transporter_id": f"T{transporter.transporter_id:04d}" if transporter.transporter_id else '-',
+                "transporter_id": f"T{transporter.transporter_id:04d}",
                 "username": transporter.user.username if transporter.user else '-',
-                "name": transporter.name or '-',
-                "company_name": getattr(transporter, 'company_name', '') or '-',
-                "email": transporter.email or '-',
-                "phone_number_1": getattr(transporter, 'phone_number_1', '') or '-',
-                "phone_number_2": getattr(transporter, 'phone_number_2', '') or '-',
-                "mobile_number_1": getattr(transporter, 'mobile_number_1', '') or '-',
-                "mobile_number_2": getattr(transporter, 'mobile_number_2', '') or '-',
-                "address": transporter.address or '-',
-                "state": transporter.state or '-',
-                "city": transporter.city or '-',
+                "name": transporter.name,
+                "company_name": transporter.company_name,
+                "email": transporter.email,
+                "phone_number_1": transporter.phone_number_1,
+                "phone_number_2": transporter.phone_number_2 or '-',
+                "mobile_number_1": transporter.mobile_number_1,
+                "mobile_number_2": transporter.mobile_number_2 or '-',
+                "address": transporter.address,
+                "state": transporter.state,
+                "city": transporter.city,
             }
             for transporter in transporters
         ]
@@ -3617,12 +3671,11 @@ def fetch_users(request):
         users = dealer_data + transporter_data
 
         if not users:
-            return JsonResponse({"success": True, "users": []})
+            return JsonResponse({"success": False, "message": "No users found."})
 
         return JsonResponse({"success": True, "users": users})
     except Exception as e:
-        import traceback
-        return JsonResponse({"success": False, "message": f"Error fetching users: {str(e)}", "detail": traceback.format_exc()})
+        return JsonResponse({"success": False, "message": f"Error fetching users: {str(e)}"})
 
 
 
