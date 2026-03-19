@@ -346,15 +346,8 @@
     if (!open) { menu.style.display = 'block'; if (arr) arr.style.transform = 'rotate(90deg)'; }
   }
 
-  // ── CSRF ──────────────────────────────────────────────────────────
-  function getCookie(n) {
-    let v = null;
-    if (document.cookie) document.cookie.split(';').forEach(c => {
-      c = c.trim();
-      if (c.startsWith(n + '=')) v = decodeURIComponent(c.substring(n.length + 1));
-    });
-    return v;
-  }
+  // ── CSRF — directly from Django template (reliable, no cookie dependency) ──
+  const CSRF_TOKEN = '{{ csrf_token }}';
 
   // ── Toast ─────────────────────────────────────────────────────────
   function showToast(msg, type = 'success') {
@@ -503,7 +496,7 @@
     try {
       const res = await fetch("{% url 'transporter:update_user' %}", {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
         body: JSON.stringify(payload)
       });
 
