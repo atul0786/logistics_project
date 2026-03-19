@@ -272,6 +272,9 @@
               <option value="delivery">Delivery</option>
               <option value="both">Both</option>
             </select>
+            <a href="{% url 'transporter:export_party_master_excel' %}" class="btn btn-success" title="Download all party data as Excel">
+              <i class="fas fa-file-excel"></i> Export Excel
+            </a>
           </div>
         </div>
         <div class="tbl-wrap">
