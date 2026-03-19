@@ -1,0 +1,309 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DDM / DRS Report — Good Way Express</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root{--primary:#1a252f;--primary-light:#3498db;--secondary:#e74c3c;--success:#27ae60;--warning:#f39c12;--border:#e0e6ed;--text:#34495e;--bg:#f5f7fa;}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
+    .sidebar{width:240px;background:var(--primary);color:white;height:100vh;position:fixed;left:0;top:0;display:flex;flex-direction:column;z-index:1000;box-shadow:2px 0 15px rgba(0,0,0,.15);overflow-y:auto;}
+    .logo-section{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.08);}
+    .logo{display:flex;align-items:center;gap:10px;}
+    .logo-icon{width:36px;height:36px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+    .logo-text{font-size:14px;font-weight:700;line-height:1.2;}.logo-sub{font-size:10px;color:rgba(255,255,255,.45);}
+    .nav-section{padding:12px 0;flex:1;}
+    .nav-title{padding:6px 16px 4px;font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+    .nav-menu{list-style:none;}.nav-item{margin:1px 0;}
+    .nav-link{display:flex;align-items:center;gap:10px;padding:.55rem 1rem;color:rgba(255,255,255,.65);text-decoration:none;font-size:.82rem;transition:all .2s;}
+    .nav-link:hover{color:white;background:rgba(255,255,255,.07);}
+    .nav-link i{width:16px;text-align:center;font-size:.85rem;}
+    .sub-menu{list-style:none;background:rgba(0,0,0,.15);}
+    .sub-menu a{display:block;padding:.4rem 1rem .4rem 2.6rem;font-size:.78rem;color:rgba(255,255,255,.55);text-decoration:none;transition:color .2s;}
+    .sub-menu a:hover,.sub-menu a.active-sub{color:white;font-weight:600;}
+    .sidebar-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.08);}
+    .logout-btn{width:100%;background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);padding:.45rem;border-radius:6px;cursor:pointer;font-size:.78rem;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+    .logout-btn:hover{background:rgba(231,76,60,.2);color:#e74c3c;border-color:#e74c3c;}
+    .main-content{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
+    .topbar{background:white;padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 8px rgba(0,0,0,.06);position:sticky;top:0;z-index:100;}
+    .topbar-left{display:flex;align-items:center;gap:14px;}
+    .menu-toggle{display:none;background:none;border:none;font-size:18px;color:#333;cursor:pointer;}
+    .page-title-bar{font-size:1.05rem;font-weight:700;color:#2c3e50;display:flex;align-items:center;gap:8px;}
+    .page-title-bar i{color:var(--primary-light);}
+    .user-chip{display:flex;align-items:center;gap:8px;background:#f1f5f9;border:1px solid #e2e8f0;padding:.35rem .875rem;border-radius:2rem;font-size:.8rem;color:#334155;font-weight:600;}
+    .page-body{padding:24px;flex:1;}
+    .stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.25rem;}
+    .stat-card{background:white;border-radius:10px;padding:1rem 1.25rem;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.05);display:flex;align-items:center;gap:.875rem;}
+    .stat-icon{width:42px;height:42px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+    .stat-label{font-size:.7rem;color:#64748b;font-weight:500;margin-bottom:.15rem;}
+    .stat-val{font-size:1.45rem;font-weight:800;color:#1a252f;line-height:1;}
+    .card{background:white;border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,.05);overflow:hidden;margin-bottom:1.25rem;}
+    .card-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+    .card-title{font-size:.95rem;font-weight:700;color:#1a252f;display:flex;align-items:center;gap:8px;}
+    .card-title i{color:var(--primary-light);}
+    .card-body{padding:16px 20px;}
+    .filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.875rem;align-items:end;}
+    .form-group{display:flex;flex-direction:column;gap:.3rem;}
+    .form-group label{font-size:.75rem;font-weight:600;color:#334155;}
+    .form-group input,.form-group select{padding:.48rem .7rem;border:1.5px solid #e2e8f0;border-radius:7px;font-size:.84rem;outline:none;transition:border-color .2s;}
+    .form-group input:focus,.form-group select:focus{border-color:var(--primary-light);}
+    .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.1rem;border-radius:7px;border:none;cursor:pointer;font-size:.84rem;font-weight:600;transition:all .2s;text-decoration:none;}
+    .btn-primary{background:var(--primary-light);color:white;}.btn-primary:hover{background:#2980b9;}
+    .btn-success{background:var(--success);color:white;}.btn-success:hover{filter:brightness(.9);}
+    .btn-secondary{background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;}.btn-secondary:hover{background:#e2e8f0;}
+    .btn-actions{display:flex;gap:.625rem;align-items:center;flex-wrap:wrap;}
+    .ddm-row{background:#1a252f!important;cursor:pointer;}
+    .ddm-row td{color:white!important;font-weight:700;font-size:.82rem;border-bottom:2px solid #3498db!important;}
+    .ddm-row:hover{background:#243444!important;}
+    .detail-row td{font-size:.79rem;padding:.45rem .875rem;}
+    .detail-row:hover td{background:#f0f7ff!important;}
+    .tbl-wrap{overflow-x:auto;}
+    table{width:100%;border-collapse:collapse;}
+    th{background:#1a252f;color:white;padding:.65rem .875rem;text-align:left;white-space:nowrap;font-size:.72rem;font-weight:700;position:sticky;top:0;z-index:2;}
+    td{padding:.6rem .875rem;border-bottom:1px solid #f1f5f9;color:#334155;vertical-align:middle;white-space:nowrap;}
+    .badge{display:inline-block;padding:.2rem .6rem;border-radius:2rem;font-size:.68rem;font-weight:700;white-space:nowrap;}
+    .s-delivered{background:#dcfce7;color:#166534;}
+    .s-pending{background:#fef9c3;color:#854d0e;}
+    .s-other{background:#fee2e2;color:#991b1b;}
+    .ddm-badge{background:rgba(52,152,219,.25);color:#bde3ff;border:1px solid rgba(52,152,219,.4);font-size:.72rem;padding:.2rem .55rem;border-radius:4px;font-weight:700;}
+    .progress-wrap{display:flex;align-items:center;gap:6px;}
+    .progress-bar{height:6px;background:rgba(255,255,255,.2);border-radius:3px;overflow:hidden;width:70px;display:inline-block;}
+    .progress-fill{height:100%;background:#27ae60;border-radius:3px;}
+    .loading-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9998;align-items:center;justify-content:center;flex-direction:column;gap:12px;}
+    .loading-overlay.show{display:flex;}
+    .spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;}
+    .loading-txt{color:white;font-size:.9rem;font-weight:600;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .pagination-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid var(--border);flex-wrap:wrap;gap:10px;}
+    .pg-info{font-size:.8rem;color:#64748b;font-weight:500;}.pg-info strong{color:#1a252f;}
+    .pg-controls{display:flex;align-items:center;gap:4px;}
+    .pg-btn{min-width:32px;height:32px;padding:0 8px;border:1.5px solid #e2e8f0;border-radius:6px;background:white;color:#334155;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s;}
+    .pg-btn:hover:not(:disabled){border-color:var(--primary-light);color:var(--primary-light);}
+    .pg-btn.active{background:var(--primary-light);color:white;border-color:var(--primary-light);}
+    .pg-btn:disabled{opacity:.35;cursor:not-allowed;}
+    .toast-container{position:fixed;top:1rem;right:1rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem;}
+    .toast{display:flex;align-items:center;gap:.75rem;padding:.875rem 1.25rem;border-radius:.625rem;font-size:.84rem;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.15);animation:slideIn .3s ease;min-width:260px;}
+    .toast-success{background:#dcfce7;color:#166534;border:1px solid #86efac;}
+    .toast-error{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+    @media(max-width:900px){.sidebar{width:0;overflow:hidden;}.sidebar.open{width:240px;}.main-content{margin-left:0;}.menu-toggle{display:block;}}
+  </style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+<div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><div class="loading-txt" id="loadingTxt">Loading...</div></div>
+<div class="sidebar" id="sidebar">
+  <div class="logo-section"><div class="logo"><div class="logo-icon"><i class="fas fa-shipping-fast"></i></div><div><div class="logo-text">Good Way Express</div><div class="logo-sub">Transport Panel</div></div></div></div>
+  <div class="nav-section">
+    <div class="nav-title">Main</div>
+    <ul class="nav-menu">
+      <li class="nav-item"><a href="{% url 'transporter:home' %}" class="nav-link"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+      <li class="nav-item"><a href="{% url 'transporter:receive' %}" class="nav-link"><i class="fas fa-clock"></i><span>Pending Requests</span></a></li>
+      <li class="nav-item">
+        <a href="#" class="nav-link" onclick="toggleSub('sub-del',this);return false;"><i class="fas fa-clipboard-list"></i><span>Delivery Management</span><i class="fas fa-chevron-right" id="arr-del" style="margin-left:auto;font-size:10px;transition:transform .2s;"></i></a>
+        <ul class="sub-menu" id="sub-del" style="display:none;">
+          <li><a href="{% url 'transporter:delivery_cnotes' %}">Single Delivery</a></li>
+          <li><a href="{% url 'transporter:ddm_settlement' %}">DDM Settlements</a></li>
+        </ul>
+      </li>
+    </ul>
+    <div class="nav-title">Reports &amp; Masters</div>
+    <ul class="nav-menu">
+      <li class="nav-item">
+        <a href="#" class="nav-link" onclick="toggleSub('sub-rep',this);return false;"><i class="fas fa-chart-bar"></i><span>Reports</span><i class="fas fa-chevron-right" id="arr-rep" style="margin-left:auto;font-size:10px;transition:transform .2s;transform:rotate(90deg);"></i></a>
+        <ul class="sub-menu" id="sub-rep" style="display:block;">
+          <li><a href="{% url 'transporter:all_booking_register' %}">Booking Register</a></li>
+          <li><a href="{% url 'transporter:loading_sheet_report' %}">Loading Sheet Report</a></li>
+          <li><a href="{% url 'transporter:drs_report' %}" class="active-sub">DDM / DRS Report</a></li>
+        </ul>
+      </li>
+      <li class="nav-item">
+        <a href="#" class="nav-link" onclick="toggleSub('sub-mas',this);return false;"><i class="fas fa-cog"></i><span>Master</span><i class="fas fa-chevron-right" id="arr-mas" style="margin-left:auto;font-size:10px;transition:transform .2s;"></i></a>
+        <ul class="sub-menu" id="sub-mas" style="display:none;">
+          <li><a href="{% url 'transporter:rate_card_master' %}">Rate Card Master</a></li>
+          <li><a href="{% url 'transporter:billing' %}">Billing Dealer</a></li>
+          <li><a href="{% url 'transporter:bill_manage' %}">Bill Management</a></li>
+          <li><a href="{% url 'transporter:manage_location' %}">Manage Location</a></li>
+          <li><a href="{% url 'transporter:party_master' %}">Party Master</a></li>
+          <li><a href="{% url 'transporter:add_user' %}">Add User</a></li>
+          <li><a href="{% url 'transporter:view_users' %}">View Users</a></li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+  <div class="sidebar-footer"><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button></form></div>
+</div>
+<div class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+      <div class="page-title-bar"><i class="fas fa-truck"></i> DDM / DRS Report</div>
+    </div>
+    <div class="topbar-right"><div class="user-chip"><i class="fas fa-user"></i> {{ request.user.username }}</div></div>
+  </div>
+  <div class="page-body">
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-icon" style="background:#dbeafe;"><i class="fas fa-file-invoice" style="color:#2563eb;"></i></div><div><div class="stat-label">Total DDMs</div><div class="stat-val" id="statDDMs">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#e0f2fe;"><i class="fas fa-boxes" style="color:#0369a1;"></i></div><div><div class="stat-label">Total CNotes</div><div class="stat-val" id="statCNotes">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#dcfce7;"><i class="fas fa-check-circle" style="color:#16a34a;"></i></div><div><div class="stat-label">Delivered</div><div class="stat-val" id="statDelivered">—</div></div></div>
+      <div class="stat-card"><div class="stat-icon" style="background:#ede9fe;"><i class="fas fa-rupee-sign" style="color:#7c3aed;"></i></div><div><div class="stat-label">Total Amount</div><div class="stat-val" id="statAmount">—</div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-filter"></i> Filters</div>
+        <div class="btn-actions">
+          <button class="btn btn-primary" onclick="loadReport()"><i class="fas fa-search"></i> Search</button>
+          <button class="btn btn-secondary" onclick="resetFilters()"><i class="fas fa-undo"></i> Reset</button>
+          <button class="btn btn-success" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Export Excel</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="filter-grid">
+          <div class="form-group"><label>Date From</label><input type="date" id="f_date_from"></div>
+          <div class="form-group"><label>Date To</label><input type="date" id="f_date_to"></div>
+          <div class="form-group"><label>DDM Number</label><input type="text" id="f_ddm_no" placeholder="e.g. DDM-1"></div>
+          <div class="form-group"><label>Truck No.</label><input type="text" id="f_truck_no" placeholder="Vehicle number"></div>
+          <div class="form-group"><label>CNote Status</label>
+            <select id="f_status">
+              <option value="">All Statuses</option>
+              <option value="Delivered">Delivered</option>
+              <option value="due delivered">Due Delivered (Pending)</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Search</label><input type="text" id="f_search" placeholder="CNote, consignee, destination..." oninput="applyClientSearch()"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fas fa-truck"></i> DDM Records <span id="tableInfo" style="font-size:.75rem;color:#64748b;font-weight:400;margin-left:6px;"></span></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <label style="font-size:.78rem;color:#64748b;">Per page:</label>
+          <select style="padding:.3rem .6rem;border:1.5px solid #e2e8f0;border-radius:6px;font-size:.8rem;outline:none;" id="pgSizeSelect" onchange="changePageSize(this.value)">
+            <option value="25">25</option><option value="50" selected>50</option><option value="100">100</option><option value="0">All</option>
+          </select>
+        </div>
+      </div>
+      <div class="tbl-wrap" style="max-height:65vh;overflow-y:auto;">
+        <table>
+          <thead><tr>
+            <th style="width:36px;">#</th><th>DDM No.</th><th>Date</th><th>Truck No.</th>
+            <th>Driver</th><th>Driver Mobile</th><th>Lorry Hire</th>
+            <th>Total CNotes</th><th>Delivered</th><th>Pending</th><th>Progress</th><th>Total Amount</th>
+          </tr></thead>
+          <tbody id="reportBody">
+            <tr><td colspan="12" style="text-align:center;padding:3rem;color:#94a3b8;"><i class="fas fa-truck" style="font-size:2rem;display:block;margin-bottom:8px;opacity:.3;"></i>Apply filters and click Search.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination-bar" id="paginationBar" style="display:none;">
+        <div class="pg-info" id="pgInfo"></div>
+        <div class="pg-controls" id="pgControls"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function toggleSub(id,el){const m=document.getElementById(id),a=el.querySelector(".fa-chevron-right"),open=m.style.display==="block";document.querySelectorAll(".sub-menu").forEach(x=>x.style.display="none");document.querySelectorAll("[id^=\"arr-\"]").forEach(x=>x.style.transform="");if(!open){m.style.display="block";if(a)a.style.transform="rotate(90deg)";}}
+function showToast(msg,type="error"){const c=document.getElementById("toastContainer"),t=document.createElement("div");t.className="toast toast-"+type;t.innerHTML="<i class=\"fas fa-"+(type==="success"?"check-circle":"exclamation-circle")+"\"></i> "+msg;c.appendChild(t);setTimeout(()=>t.remove(),4000);}
+var allDDMs=[],filteredDDMs=[],currentPage=1,pageSize=50;
+function statusBadge(s){const sl=(s||"").toLowerCase(),cls=sl==="delivered"?"s-delivered":(sl.includes("pending")||sl.includes("due")?"s-pending":"s-other");return`<span class="badge ${cls}">${s||"—"}</span>`;}
+async function loadReport(){
+  const params=new URLSearchParams({date_from:document.getElementById("f_date_from").value,date_to:document.getElementById("f_date_to").value,ddm_no:document.getElementById("f_ddm_no").value.trim(),status:document.getElementById("f_status").value,truck_no:document.getElementById("f_truck_no").value.trim()});
+  document.getElementById("loadingTxt").textContent="Loading DDM data...";
+  document.getElementById("loadingOverlay").classList.add("show");
+  try{
+    const res=await fetch("/transporter/drs-report/data/?"+params),text=await res.text();
+    let data;try{data=JSON.parse(text);}catch{throw new Error("Server returned invalid response");}
+    if(!data.success)throw new Error(data.message||"Failed to load");
+    allDDMs=data.results;
+    const s=data.summary;
+    document.getElementById("statDDMs").textContent=s.total_ddms.toLocaleString();
+    document.getElementById("statCNotes").textContent=s.total_cnotes.toLocaleString();
+    document.getElementById("statDelivered").textContent=s.total_delivered.toLocaleString();
+    document.getElementById("statAmount").textContent="₹"+s.total_amount.toLocaleString("en-IN",{maximumFractionDigits:0});
+    currentPage=1;applyClientSearch();
+    document.getElementById("paginationBar").style.display="flex";
+    showToast("Loaded "+s.total_ddms+" DDMs","success");
+  }catch(err){showToast(err.message,"error");document.getElementById("reportBody").innerHTML="<tr><td colspan=\"12\" style=\"text-align:center;padding:2rem;color:#e74c3c;\">"+err.message+"</td></tr>";}
+  finally{document.getElementById("loadingOverlay").classList.remove("show");}
+}
+function applyClientSearch(){
+  const q=(document.getElementById("f_search").value||"").toLowerCase();
+  filteredDDMs=!q?allDDMs:allDDMs.filter(d=>(d.ddm_no||"").toLowerCase().includes(q)||(d.truck_no||"").toLowerCase().includes(q)||(d.driver_name||"").toLowerCase().includes(q)||d.details.some(det=>(det.cnote_number||"").toLowerCase().includes(q)||(det.consignee||"").toLowerCase().includes(q)||(det.destination||"").toLowerCase().includes(q)));
+  currentPage=1;renderTable();
+}
+function renderTable(){
+  const total=filteredDDMs.length,size=parseInt(pageSize)||0,totalPg=size>0?Math.ceil(total/size):1;
+  if(currentPage>totalPg)currentPage=1;
+  const start=size>0?(currentPage-1)*size:0,end=size>0?Math.min(start+size,total):total,pageData=filteredDDMs.slice(start,end);
+  document.getElementById("tableInfo").textContent=total?"("+total+")":"";
+  const tbody=document.getElementById("reportBody");
+  if(!total){tbody.innerHTML="<tr><td colspan=\"12\" style=\"text-align:center;padding:2.5rem;color:#94a3b8;\"><i class=\"fas fa-truck\" style=\"font-size:2rem;display:block;margin-bottom:8px;opacity:.3;\"></i>No DDMs found.</td></tr>";document.getElementById("pgInfo").textContent="";document.getElementById("pgControls").innerHTML="";return;}
+  let html="";
+  pageData.forEach((ddm,i)=>{
+    const date=ddm.date?ddm.date.substring(0,10):"",pct=ddm.total_cnotes>0?Math.round((ddm.delivered/ddm.total_cnotes)*100):0;
+    html+=`<tr class="ddm-row" onclick="toggleDetails('det-${start+i}')">
+      <td style="color:#94a3b8;font-size:.72rem;">${start+i+1}</td>
+      <td><span class="ddm-badge">${ddm.ddm_no}</span></td>
+      <td>${date}</td><td>${ddm.truck_no||"—"}</td><td>${ddm.driver_name||"—"}</td><td>${ddm.driver_no||"—"}</td>
+      <td>₹${Number(ddm.lorry_hire||0).toLocaleString("en-IN",{maximumFractionDigits:0})}</td>
+      <td style="text-align:center;">${ddm.total_cnotes}</td>
+      <td style="text-align:center;color:#86efac;">${ddm.delivered}</td>
+      <td style="text-align:center;color:#fde68a;">${ddm.pending}</td>
+      <td><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><span style="font-size:.7rem;color:#94a3b8;">${pct}%</span></div></td>
+      <td style="text-align:right;">₹${Number(ddm.total_amount||0).toLocaleString("en-IN",{maximumFractionDigits:0})}</td>
+    </tr>`;
+    html+=`<tr id="det-${start+i}" style="display:none;"><td colspan="12" style="padding:0;background:#f8fafc;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr style="background:#334155;">
+          <th style="padding:.4rem .875rem;color:white;font-size:.7rem;text-align:left;">CNote No.</th>
+          <th style="padding:.4rem .875rem;color:white;font-size:.7rem;text-align:left;">Consignee</th>
+          <th style="padding:.4rem .875rem;color:white;font-size:.7rem;text-align:left;">Destination</th>
+          <th style="padding:.4rem .875rem;color:white;font-size:.7rem;text-align:center;">Pkgs</th>
+          <th style="padding:.4rem .875rem;color:white;font-size:.7rem;text-align:right;">Amount</th>
+          <th style="padding:.4rem .875rem;color:white;font-size:.7rem;text-align:center;">Pay Type</th>
+          <th style="padding:.4rem .875rem;color:white;font-size:.7rem;text-align:center;">Status</th>
+          <th style="padding:.4rem .875rem;color:white;font-size:.7rem;text-align:left;">Remark</th>
+        </tr></thead>
+        <tbody>${ddm.details.map(d=>`<tr class="detail-row"><td style="font-weight:700;color:var(--primary-light);">${d.cnote_number}</td><td>${d.consignee||"—"}</td><td>${d.destination||"—"}</td><td style="text-align:center;">${d.total_pkt||0}</td><td style="text-align:right;">₹${Number(d.amount||0).toLocaleString("en-IN",{maximumFractionDigits:0})}</td><td style="text-align:center;text-transform:uppercase;font-size:.72rem;">${d.payment_type||"—"}</td><td style="text-align:center;">${statusBadge(d.status)}</td><td style="color:#64748b;font-size:.75rem;">${d.remark||"—"}</td></tr>`).join("")}</tbody>
+      </table></td></tr>`;
+  });
+  tbody.innerHTML=html;
+  document.getElementById("pgInfo").innerHTML="Showing <strong>"+(start+1)+"–"+end+"</strong> of <strong>"+total+"</strong> DDMs"+(total<allDDMs.length?" (filtered from "+allDDMs.length+")":"");
+  renderPgControls(currentPage,totalPg);
+}
+function toggleDetails(id){const row=document.getElementById(id);if(row)row.style.display=row.style.display==="none"?"table-row":"none";}
+function renderPgControls(cur,total){
+  const c=document.getElementById("pgControls");if(total<=1){c.innerHTML="";return;}
+  const btn=(lbl,p,active,dis)=>`<button class="pg-btn${active?" active":""}" ${dis?"disabled":""} ${!dis&&!active?`onclick="goPage(${p})"`:""} >${lbl}</button>`;
+  let html=btn("‹",cur-1,false,cur===1);
+  const pages=new Set([1,total,cur,cur-1,cur+1,cur-2,cur+2].filter(p=>p>=1&&p<=total));
+  let prev=0;[...pages].sort((a,b)=>a-b).forEach(p=>{if(prev&&p-prev>1)html+=`<button class="pg-btn" style="border:none;">…</button>`;html+=btn(p,p,p===cur);prev=p;});
+  html+=btn("›",cur+1,false,cur===total);c.innerHTML=html;
+}
+function goPage(p){currentPage=p;renderTable();}
+function changePageSize(v){pageSize=parseInt(v)||0;currentPage=1;renderTable();}
+function resetFilters(){
+  ["f_date_from","f_date_to","f_ddm_no","f_truck_no","f_search"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("f_status").value="";allDDMs=[];filteredDDMs=[];
+  ["statDDMs","statCNotes","statDelivered","statAmount"].forEach(id=>document.getElementById(id).textContent="—");
+  document.getElementById("reportBody").innerHTML="<tr><td colspan=\"12\" style=\"text-align:center;padding:3rem;color:#94a3b8;\"><i class=\"fas fa-truck\" style=\"font-size:2rem;display:block;margin-bottom:8px;opacity:.3;\"></i>Apply filters and click Search.</td></tr>";
+  document.getElementById("tableInfo").textContent="";document.getElementById("pgInfo").textContent="";document.getElementById("pgControls").innerHTML="";
+}
+function exportExcel(){
+  const p=new URLSearchParams({date_from:document.getElementById("f_date_from").value,date_to:document.getElementById("f_date_to").value,ddm_no:document.getElementById("f_ddm_no").value.trim(),status:document.getElementById("f_status").value,truck_no:document.getElementById("f_truck_no").value.trim()});
+  document.getElementById("loadingTxt").textContent="Generating Excel...";
+  document.getElementById("loadingOverlay").classList.add("show");
+  setTimeout(()=>{window.location.href="/transporter/drs-report/export/?"+p;document.getElementById("loadingOverlay").classList.remove("show");},300);
+}
+(function(){
+  const today=new Date().toISOString().split("T")[0],from=new Date();from.setDate(from.getDate()-30);
+  document.getElementById("f_date_to").value=today;document.getElementById("f_date_from").value=from.toISOString().split("T")[0];
+})();
+</script>
+</body>
+</html>
