@@ -84,6 +84,7 @@ urlpatterns = [
     path('drs-report/',        views.drs_report,        name='drs_report'),
     path('drs-report/data/',   views.drs_report_data,   name='drs_report_data'),
     path('drs-report/export/', views.drs_report_export, name='drs_report_export'),
+    path('ddm-details/', views.ddm_details_page, name='ddm_details_page'),
     
     # DDM settlement
     path('ddm-settlement/', views.ddm_settlement, name='ddm_settlement'),
