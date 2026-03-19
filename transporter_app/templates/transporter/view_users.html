@@ -364,6 +364,7 @@
   }
 
   let allUsers = [], sortKey = null, sortDir = 'asc';
+  const userMap = {};  // username → user object (safe data access without HTML injection)
 
   async function fetchUsers() {
     try {
@@ -374,6 +375,8 @@
       const data = await res.json();
       if (data.success && data.users && data.users.length > 0) {
         allUsers = data.users;
+        // Build safe lookup map by username
+        allUsers.forEach(u => { userMap[u.username] = u; });
         renderTable();
         updateStats();
       } else {
@@ -433,7 +436,7 @@
         <td>${u.city || '—'}</td>
         <td>
           <div class="action-btns">
-            <button class="btn btn-warning btn-sm" onclick='openEditModal(${JSON.stringify(u)})'>
+            <button class="btn btn-warning btn-sm" onclick="openEditModal('${u.username.replace(/'/g, &quot;&#39;&quot;)}')">
               <i class="fas fa-edit"></i> Edit
             </button>
             <a href="{% url 'transporter:reset_password' %}?username=${encodeURIComponent(u.username)}"
@@ -453,8 +456,9 @@
   }
 
   // ──── EDIT MODAL ────────────────────────────────────────────────────────────
-  function openEditModal(u) {
-    // Store keys for save
+  function openEditModal(username) {
+    const u = userMap[username];
+    if (!u) { showToast('User data not found. Please refresh.', 'error'); return; }
     document.getElementById('edit_username_key').value  = u.username || '';
     document.getElementById('edit_role_key').value      = u.role     || '';
 
@@ -537,6 +541,7 @@
           allUsers[idx] = { ...allUsers[idx], ...payload,
             mobile_number_1: payload.phone_number,
             phone_number_1:  payload.phone_number };
+          userMap[username] = allUsers[idx];  // keep map in sync
         }
         renderTable();
         updateStats();
