@@ -129,6 +129,18 @@
     .toast-warning{background:#fef9c3;color:#854d0e;border:1px solid #fde68a;}
     @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
 
+    /* ── PAGINATION ────────────────────────────────────────────────── */
+    .pagination-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid var(--border);flex-wrap:wrap;gap:10px;}
+    .pg-info{font-size:.8rem;color:#64748b;font-weight:500;}
+    .pg-info strong{color:#1a252f;}
+    .pg-controls{display:flex;align-items:center;gap:4px;}
+    .pg-btn{min-width:32px;height:32px;padding:0 8px;border:1.5px solid #e2e8f0;border-radius:6px;background:white;color:#334155;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;}
+    .pg-btn:hover:not(:disabled){border-color:var(--primary-light);color:var(--primary-light);}
+    .pg-btn.active{background:var(--primary-light);color:white;border-color:var(--primary-light);}
+    .pg-btn:disabled{opacity:.35;cursor:not-allowed;}
+    .pg-btn.ellipsis{cursor:default;border-color:transparent;background:transparent;}
+    .pg-size-sel{padding:.3rem .6rem;border:1.5px solid #e2e8f0;border-radius:6px;font-size:.8rem;outline:none;background:white;color:#334155;cursor:pointer;}
+
     /* ── EMPTY ─────────────────────────────────────────────────────── */
     .empty-state{text-align:center;padding:3rem;color:#94a3b8;}
     .empty-state i{font-size:2.5rem;display:block;margin-bottom:.75rem;opacity:.4;}
@@ -266,6 +278,7 @@
           <table>
             <thead>
               <tr>
+                <th style="width:40px;">#</th>
                 <th onclick="sortTable('party_code')">Code <i class="fas fa-sort" style="font-size:.6rem;"></i></th>
                 <th onclick="sortTable('party_name')">Party Name <i class="fas fa-sort" style="font-size:.6rem;"></i></th>
                 <th onclick="sortTable('display_name')">Display Name <i class="fas fa-sort" style="font-size:.6rem;"></i></th>
@@ -280,6 +293,23 @@
             </thead>
             <tbody id="partyTableBody"></tbody>
           </table>
+        </div>
+        <!-- Pagination Bar -->
+        <div class="pagination-bar" id="paginationBar">
+          <div class="pg-info" id="pgInfo">Showing — entries</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <label style="font-size:.78rem;color:#64748b;font-weight:500;">Rows:</label>
+              <select class="pg-size-sel" id="pageSizeSelect" onchange="changePageSize(this.value)">
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100" selected>100</option>
+                <option value="200">200</option>
+                <option value="0">All</option>
+              </select>
+            </div>
+            <div class="pg-controls" id="pgControls"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -557,6 +587,7 @@ allParties.forEach(p => { partyMap[p.id] = p; });
 
 // ── Table rendering ────────────────────────────────────────────────
 var sortKey = 'party_name', sortDir = 'asc';
+var currentPage = 1, pageSize = 100;
 
 function getFiltered() {
   const q    = (document.getElementById('searchInput').value || '').toLowerCase();
@@ -569,25 +600,44 @@ function getFiltered() {
   });
 }
 
+function getSorted(data) {
+  if (!sortKey) return data;
+  return [...data].sort((a, b) => {
+    const va = (a[sortKey]||'').toString().toLowerCase();
+    const vb = (b[sortKey]||'').toString().toLowerCase();
+    return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+}
+
 function renderTable() {
-  let data = getFiltered();
-  if (sortKey) {
-    data.sort((a, b) => {
-      const va = (a[sortKey]||'').toString().toLowerCase();
-      const vb = (b[sortKey]||'').toString().toLowerCase();
-      return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
-    });
-  }
-  const tbody = document.getElementById('partyTableBody');
-  if (!data.length) {
+  const filtered = getFiltered();
+  const sorted   = getSorted(filtered);
+  const total    = sorted.length;
+  const tbody    = document.getElementById('partyTableBody');
+
+  // Pagination calc
+  const size     = parseInt(pageSize) || 0;  // 0 = All
+  const totalPg  = size > 0 ? Math.ceil(total / size) : 1;
+  if (currentPage > totalPg) currentPage = totalPg || 1;
+  const start    = size > 0 ? (currentPage - 1) * size : 0;
+  const end      = size > 0 ? Math.min(start + size, total) : total;
+  const pageData = sorted.slice(start, end);
+
+  // Empty state
+  if (!total) {
     tbody.innerHTML = `<tr><td colspan="10">
-      <div class="empty-state"><i class="fas fa-building"></i><p>No parties found.</p></div>
+    <div class="empty-state"><i class="fas fa-building"></i><p>No parties found matching your search.</p></div>
     </td></tr>`;
+    document.getElementById('pgInfo').textContent = 'No results';
+    document.getElementById('pgControls').innerHTML = '';
     return;
   }
+
+  // Render rows
   const typeBadge = { booking:'badge-booking', delivery:'badge-delivery', both:'badge-both' };
-  tbody.innerHTML = data.map(p => `
+  tbody.innerHTML = pageData.map((p, idx) => `
     <tr>
+      <td style="color:#94a3b8;font-size:.72rem;">${start + idx + 1}</td>
       <td title="${p.party_code||''}">${p.party_code||'—'}</td>
       <td title="${p.party_name}" style="font-weight:600;">${p.party_name}</td>
       <td title="${p.display_name}">${p.display_name}</td>
@@ -609,17 +659,66 @@ function renderTable() {
       </td>
     </tr>
   `).join('');
+
+  // Info text
+  document.getElementById('pgInfo').innerHTML =
+    `Showing <strong>${start+1}–${end}</strong> of <strong>${total}</strong> parties` +
+    (total < allParties.length ? ` (filtered from ${allParties.length})` : '');
+
+  // Render page buttons
+  renderPgControls(currentPage, totalPg);
+}
+
+function renderPgControls(cur, total) {
+  const c = document.getElementById('pgControls');
+  if (total <= 1) { c.innerHTML = ''; return; }
+
+  const btn = (label, page, active=false, disabled=false, ellipsis=false) => {
+    const cls = ['pg-btn', active?'active':'', disabled?'':'', ellipsis?'ellipsis':''].filter(Boolean).join(' ');
+    const handler = ellipsis || disabled ? '' : `onclick="goPage(${page})"`;
+    return `<button class="${cls}" ${disabled?'disabled':''} ${handler}>${label}</button>`;
+  };
+
+  let html = '';
+  html += btn('‹ Prev', cur-1, false, cur===1);
+
+  // Page number logic — show first, last, current ±2, ellipsis in between
+  const pages = new Set([1, total, cur, cur-1, cur-2, cur+1, cur+2].filter(p => p>=1 && p<=total));
+  let prev = 0;
+  [...pages].sort((a,b)=>a-b).forEach(p => {
+    if (prev && p - prev > 1) html += btn('…', 0, false, false, true);
+    html += btn(p, p, p===cur);
+    prev = p;
+  });
+
+  html += btn('Next ›', cur+1, false, cur===total);
+  c.innerHTML = html;
+}
+
+function goPage(page) {
+  currentPage = page;
+  renderTable();
+  // Scroll table into view smoothly
+  document.getElementById('partyTableBody').closest('.tbl-wrap').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function changePageSize(val) {
+  pageSize = parseInt(val) || 0;
+  currentPage = 1;
+  renderTable();
 }
 
 function sortTable(key) {
   if (sortKey === key) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
   else { sortKey = key; sortDir = 'asc'; }
+  currentPage = 1;
   renderTable();
 }
 
-document.getElementById('searchInput').addEventListener('input', renderTable);
-document.getElementById('typeFilter').addEventListener('change', renderTable);
-renderTable();  // Instant — no loading spinner needed
+// Reset to page 1 on filter/search change
+document.getElementById('searchInput').addEventListener('input', () => { currentPage=1; renderTable(); });
+document.getElementById('typeFilter').addEventListener('change',  () => { currentPage=1; renderTable(); });
+renderTable(); // Instant render
 
 // ── Add Party ──────────────────────────────────────────────────────
 document.getElementById('addPartyForm').addEventListener('submit', async function(e) {
