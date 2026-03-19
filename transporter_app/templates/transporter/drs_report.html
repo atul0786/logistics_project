@@ -192,7 +192,7 @@
           <thead><tr>
             <th style="width:36px;">#</th><th>DDM No.</th><th>Date</th><th>Truck No.</th>
             <th>Driver</th><th>Driver Mobile</th><th>Lorry Hire</th>
-            <th>Total CNotes</th><th>Delivered</th><th>Pending</th><th>Progress</th><th>Total Amount</th>
+            <th>Total CNotes</th><th>Delivered</th><th>Pending</th><th>Progress</th><th>Total Amount</th><th style="width:60px;">View</th>
           </tr></thead>
           <tbody id="reportBody">
             <tr><td colspan="12" style="text-align:center;padding:3rem;color:#94a3b8;"><i class="fas fa-truck" style="font-size:2rem;display:block;margin-bottom:8px;opacity:.3;"></i>Apply filters and click Search.</td></tr>
@@ -242,7 +242,7 @@ function renderTable(){
   const start=size>0?(currentPage-1)*size:0,end=size>0?Math.min(start+size,total):total,pageData=filteredDDMs.slice(start,end);
   document.getElementById("tableInfo").textContent=total?"("+total+")":"";
   const tbody=document.getElementById("reportBody");
-  if(!total){tbody.innerHTML="<tr><td colspan=\"12\" style=\"text-align:center;padding:2.5rem;color:#94a3b8;\"><i class=\"fas fa-truck\" style=\"font-size:2rem;display:block;margin-bottom:8px;opacity:.3;\"></i>No DDMs found.</td></tr>";document.getElementById("pgInfo").textContent="";document.getElementById("pgControls").innerHTML="";return;}
+  if(!total){tbody.innerHTML="<tr><td colspan="13" style="text-align:center;padding:2.5rem;color:#94a3b8;\"><i class=\"fas fa-truck\" style=\"font-size:2rem;display:block;margin-bottom:8px;opacity:.3;\"></i>No DDMs found.</td></tr>";document.getElementById("pgInfo").textContent="";document.getElementById("pgControls").innerHTML="";return;}
   let html="";
   pageData.forEach((ddm,i)=>{
     const date=ddm.date?ddm.date.substring(0,10):"",pct=ddm.total_cnotes>0?Math.round((ddm.delivered/ddm.total_cnotes)*100):0;
@@ -256,8 +256,9 @@ function renderTable(){
       <td style="text-align:center;color:#fde68a;">${ddm.pending}</td>
       <td><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><span style="font-size:.7rem;color:#94a3b8;">${pct}%</span></div></td>
       <td style="text-align:right;">₹${Number(ddm.total_amount||0).toLocaleString("en-IN",{maximumFractionDigits:0})}</td>
+      <td style="text-align:center;"><a href="/transporter/ddm-details/?ddmId=${ddm.ddm_id}" target="_blank" title="View DDM Details" style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;background:rgba(52,152,219,.2);border-radius:6px;color:#3498db;border:1px solid rgba(52,152,219,.4);text-decoration:none;font-size:.9rem;" onclick="event.stopPropagation()"><i class="fas fa-eye"></i></a></td>
     </tr>`;
-    html+=`<tr id="det-${start+i}" style="display:none;"><td colspan="12" style="padding:0;background:#f8fafc;">
+    html+=`<tr id="det-${start+i}" style="display:none;"><td colspan="13" style="padding:0;background:#f8fafc;">
       <table style="width:100%;border-collapse:collapse;">
         <thead><tr style="background:#334155;">
           <th style="padding:.4rem .875rem;color:white;font-size:.7rem;text-align:left;">CNote No.</th>
@@ -291,7 +292,7 @@ function resetFilters(){
   ["f_date_from","f_date_to","f_ddm_no","f_truck_no","f_search"].forEach(id=>document.getElementById(id).value="");
   document.getElementById("f_status").value="";allDDMs=[];filteredDDMs=[];
   ["statDDMs","statCNotes","statDelivered","statAmount"].forEach(id=>document.getElementById(id).textContent="—");
-  document.getElementById("reportBody").innerHTML="<tr><td colspan=\"12\" style=\"text-align:center;padding:3rem;color:#94a3b8;\"><i class=\"fas fa-truck\" style=\"font-size:2rem;display:block;margin-bottom:8px;opacity:.3;\"></i>Apply filters and click Search.</td></tr>";
+  document.getElementById("reportBody").innerHTML="<tr><td colspan="13" style="text-align:center;padding:3rem;color:#94a3b8;\"><i class=\"fas fa-truck\" style=\"font-size:2rem;display:block;margin-bottom:8px;opacity:.3;\"></i>Apply filters and click Search.</td></tr>";
   document.getElementById("tableInfo").textContent="";document.getElementById("pgInfo").textContent="";document.getElementById("pgControls").innerHTML="";
 }
 function exportExcel(){
