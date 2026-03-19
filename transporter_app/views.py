@@ -643,10 +643,9 @@ def export_party_master_excel(request):
         )
     except Exception as e:
         import traceback
+        err_msg = "Export error: " + str(e) + "\n\n" + traceback.format_exc()
         return HttpResponse(
-            f"Export error: {str(e)}
-
-{traceback.format_exc()}",
+            err_msg,
             content_type='text/plain',
             status=500
         )
@@ -4878,3 +4877,9 @@ def update_user(request):
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error: {str(e)}'}, status=500)
 
+
+# ═══════════════════════════════════════════════════════════════════
+#  URLs — transporter_app/urls.py mein add karo
+# ═══════════════════════════════════════════════════════════════════
+
+# path('update-user/', views.update_user, name='update_user'),
