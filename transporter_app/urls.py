@@ -33,6 +33,7 @@ urlpatterns = [
     path('delete-party/<int:party_id>/', views.delete_party, name='delete_party'),
     path('edit-party/<int:party_id>/', views.edit_party, name='edit_party'),
     path('get-party-master-records/', views.get_party_master_records, name='get_party_master_records'),
+    path('export-party-master/', views.export_party_master_excel, name='export_party_master_excel'),
     
     # Location management
     path('edit-state/<int:id>/', views.edit_state, name='edit_state'),
