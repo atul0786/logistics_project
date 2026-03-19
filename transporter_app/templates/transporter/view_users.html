@@ -6,6 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>View Users — Good Way Express</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  {# Inject server-side JSON safely — prevents XSS via proper escaping #}
+  {{ users_json|json_script:"users-data" }}
+
   <style>
     :root{--primary:#1a252f;--primary-light:#3498db;--secondary:#e74c3c;--success:#27ae60;--warning:#f39c12;--border:#e0e6ed;--text:#34495e;}
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
@@ -37,7 +41,6 @@
     .menu-toggle{display:none;background:none;border:none;font-size:18px;color:#333;cursor:pointer;padding:4px;}
     .page-title-bar{font-size:1.05rem;font-weight:700;color:#2c3e50;display:flex;align-items:center;gap:8px;}
     .page-title-bar i{color:var(--primary-light);}
-    .topbar-right{display:flex;align-items:center;gap:12px;}
     .user-chip{display:flex;align-items:center;gap:8px;background:#f1f5f9;border:1px solid #e2e8f0;padding:.35rem .875rem;border-radius:2rem;font-size:.8rem;color:#334155;font-weight:600;}
     .page-body{padding:24px;flex:1;}
     .page-heading{font-size:1.15rem;font-weight:700;color:#1a252f;margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem;}
@@ -90,7 +93,7 @@
     .modal-header{padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;}
     .modal-header h3{font-size:.95rem;font-weight:700;color:#1a252f;display:flex;align-items:center;gap:8px;}
     .modal-header h3 i{color:var(--primary-light);}
-    .modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:#94a3b8;line-height:1;}
+    .modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:#94a3b8;}
     .modal-close:hover{color:#334155;}
     .modal-body{padding:20px;}
     .modal-footer{padding:12px 20px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:.75rem;}
@@ -99,7 +102,7 @@
     .form-group2{display:flex;flex-direction:column;gap:.3rem;}
     .form-group2 label{font-size:.78rem;font-weight:600;color:#334155;}
     .form-group2 input,.form-group2 select,.form-group2 textarea{padding:.48rem .7rem;border:1.5px solid #e2e8f0;border-radius:6px;font-size:.875rem;outline:none;transition:border-color .2s;}
-    .form-group2 input:focus,.form-group2 select:focus,.form-group2 textarea:focus{border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(52,152,219,.1);}
+    .form-group2 input:focus,.form-group2 select:focus,.form-group2 textarea:focus{border-color:var(--primary-light);}
     .form-group2 textarea{resize:vertical;min-height:70px;}
     .form-group2 input[disabled]{background:#f8fafc;color:#94a3b8;cursor:not-allowed;}
     .section-sep{grid-column:1/-1;font-size:.7rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #e2e8f0;padding-bottom:.4rem;margin-top:.5rem;}
@@ -112,10 +115,8 @@
     .toast-warning{background:#fef9c3;color:#854d0e;border:1px solid #fde68a;}
     @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
 
-    /* LOADING */
-    .loading-row td{text-align:center;padding:2.5rem;color:#94a3b8;}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .spinner{display:inline-block;width:22px;height:22px;border:2px solid #e2e8f0;border-top-color:var(--primary-light);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+    /* ERROR BANNER */
+    .error-banner{background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;padding:.875rem 1.25rem;border-radius:8px;margin-bottom:1.25rem;font-size:.85rem;display:flex;align-items:center;gap:.75rem;}
 
     @media(max-width:900px){
       .sidebar{width:0;overflow:hidden;} .sidebar.open{width:240px;}
@@ -211,19 +212,26 @@
   <div class="page-body">
     <div class="page-heading"><i class="fas fa-users"></i> User Management</div>
 
-    <!-- Stats -->
+    {% if server_error %}
+    <div class="error-banner">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span>Some data could not be loaded: {{ server_error }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Stats — rendered from server context, no AJAX needed -->
     <div class="stats-row">
       <div class="stat-card">
         <div class="stat-icon" style="background:#dbeafe;"><i class="fas fa-store" style="color:#2563eb;"></i></div>
-        <div><div class="stat-label">Total Dealers</div><div class="stat-value" id="totalDealers">—</div></div>
+        <div><div class="stat-label">Total Dealers</div><div class="stat-value">{{ total_dealers }}</div></div>
       </div>
       <div class="stat-card">
         <div class="stat-icon" style="background:#d1fae5;"><i class="fas fa-truck" style="color:#059669;"></i></div>
-        <div><div class="stat-label">Total Transporters</div><div class="stat-value" id="totalTransporters">—</div></div>
+        <div><div class="stat-label">Total Transporters</div><div class="stat-value">{{ total_transporters }}</div></div>
       </div>
       <div class="stat-card">
         <div class="stat-icon" style="background:#ede9fe;"><i class="fas fa-users" style="color:#7c3aed;"></i></div>
-        <div><div class="stat-label">Total Users</div><div class="stat-value" id="totalUsers">—</div></div>
+        <div><div class="stat-label">Total Users</div><div class="stat-value">{{ total_users }}</div></div>
       </div>
     </div>
 
@@ -261,9 +269,7 @@
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody id="userTableBody">
-            <tr class="loading-row"><td colspan="9"><span class="spinner"></span> Loading users...</td></tr>
-          </tbody>
+          <tbody id="userTableBody"></tbody>
         </table>
       </div>
     </div>
@@ -281,9 +287,7 @@
       <input type="hidden" id="edit_username_key">
       <input type="hidden" id="edit_role_key">
       <div class="form-grid2">
-
         <div class="section-sep">Account Info</div>
-
         <div class="form-group2">
           <label>Username</label>
           <input type="text" id="edit_username" disabled>
@@ -304,9 +308,7 @@
           <label>Email *</label>
           <input type="email" id="edit_email" placeholder="Email address">
         </div>
-
         <div class="section-sep">Contact &amp; Address</div>
-
         <div class="form-group2">
           <label>Phone Number</label>
           <input type="text" id="edit_phone" placeholder="Phone number">
@@ -335,15 +337,17 @@
 </div>
 
 <script>
+  // ── Sidebar accordion ─────────────────────────────────────────────
   function toggleSub(id, el) {
     const menu = document.getElementById(id);
-    const arr = el.querySelector('.fa-chevron-right');
-    const isOpen = menu.style.display === 'block';
+    const arr  = el.querySelector('.fa-chevron-right');
+    const open = menu.style.display === 'block';
     document.querySelectorAll('.sub-menu').forEach(m => m.style.display = 'none');
     document.querySelectorAll('[id^="arr-"]').forEach(a => a.style.transform = '');
-    if (!isOpen) { menu.style.display = 'block'; if (arr) arr.style.transform = 'rotate(90deg)'; }
+    if (!open) { menu.style.display = 'block'; if (arr) arr.style.transform = 'rotate(90deg)'; }
   }
 
+  // ── CSRF ──────────────────────────────────────────────────────────
   function getCookie(n) {
     let v = null;
     if (document.cookie) document.cookie.split(';').forEach(c => {
@@ -353,82 +357,32 @@
     return v;
   }
 
+  // ── Toast ─────────────────────────────────────────────────────────
   function showToast(msg, type = 'success') {
     const c = document.getElementById('toastContainer');
     const t = document.createElement('div');
-    const icons = { success: 'check-circle', error: 'times-circle', warning: 'exclamation-triangle' };
+    const icons = { success:'check-circle', error:'times-circle', warning:'exclamation-triangle' };
     t.className = `toast toast-${type}`;
     t.innerHTML = `<i class="fas fa-${icons[type] || 'info-circle'}"></i> ${msg}`;
     c.appendChild(t);
     setTimeout(() => t.remove(), 4000);
   }
 
-  let allUsers = [], sortKey = null, sortDir = 'asc';
-  const userMap = {};  // username → user object (safe data access without HTML injection)
+  // ── Data — loaded directly from Django context (no AJAX needed) ───
+  const INITIAL_USERS = JSON.parse(document.getElementById('users-data').textContent);
+  let allUsers = INITIAL_USERS;
+  const userMap = {};
+  allUsers.forEach(u => { userMap[u.username] = u; });
 
-  async function fetchUsers() {
-    document.getElementById('userTableBody').innerHTML =
-      `<tr class="loading-row"><td colspan="9"><span class="spinner"></span> Loading users...</td></tr>`;
+  let sortKey = null, sortDir = 'asc';
 
-    // 15 second timeout — agar server slow ho to hang na ho
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 15000);
-
-    try {
-      const res = await fetch("{% url 'transporter:fetch_users' %}", {
-        headers: { 'X-CSRFToken': getCookie('csrftoken') },
-        signal: controller.signal
-      });
-      clearTimeout(timer);
-
-      if (!res.ok) throw new Error(`Server error: HTTP ${res.status}`);
-
-      const data = await res.json();
-
-      if (data.success && data.users && data.users.length > 0) {
-        allUsers = data.users;
-        allUsers.forEach(u => { userMap[u.username] = u; });
-        renderTable();
-        updateStats();
-      } else if (data.success && (!data.users || data.users.length === 0)) {
-        document.getElementById('userTableBody').innerHTML =
-          `<tr><td colspan="9" style="text-align:center;padding:2.5rem;color:#94a3b8;">
-            <i class="fas fa-users" style="font-size:2rem;display:block;margin-bottom:8px;opacity:.3;"></i>
-            No users found.
-          </td></tr>`;
-      } else {
-        throw new Error(data.message || 'Failed to load users');
-      }
-    } catch (err) {
-      clearTimeout(timer);
-      const isTimeout = err.name === 'AbortError';
-      const msg = isTimeout ? 'Request timed out. Server is slow or unreachable.' : err.message;
-      document.getElementById('userTableBody').innerHTML =
-        `<tr><td colspan="9" style="text-align:center;padding:2rem;">
-          <i class="fas fa-exclamation-triangle" style="color:#e74c3c;font-size:1.5rem;display:block;margin-bottom:8px;"></i>
-          <span style="color:#e74c3c;font-size:.85rem;">${msg}</span><br>
-          <button onclick="fetchUsers()" class="btn btn-primary" style="margin-top:12px;font-size:.8rem;">
-            <i class="fas fa-redo"></i> Retry
-          </button>
-        </td></tr>`;
-      showToast(msg, 'error');
-    }
-  }
-
-  function updateStats() {
-    const dealers = allUsers.filter(u => u.role === 'Dealer').length;
-    const trans   = allUsers.filter(u => u.role === 'Transporter').length;
-    document.getElementById('totalDealers').textContent     = dealers;
-    document.getElementById('totalTransporters').textContent = trans;
-    document.getElementById('totalUsers').textContent       = allUsers.length;
-  }
-
+  // ── Table rendering ───────────────────────────────────────────────
   function getFiltered() {
     const q    = document.getElementById('searchInput').value.toLowerCase();
     const role = document.getElementById('roleFilter').value;
     return allUsers.filter(u => {
       const matchRole = !role || u.role === role;
-      const matchQ    = !q || JSON.stringify(u).toLowerCase().includes(q);
+      const matchQ    = !q   || JSON.stringify(u).toLowerCase().includes(q);
       return matchRole && matchQ;
     });
   }
@@ -444,12 +398,15 @@
         return 0;
       });
     }
+    const tbody = document.getElementById('userTableBody');
     if (!users.length) {
-      document.getElementById('userTableBody').innerHTML =
-        `<tr><td colspan="9" style="text-align:center;padding:2rem;color:#94a3b8;">No matching users found.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:2.5rem;color:#94a3b8;">
+        <i class="fas fa-users" style="font-size:2rem;display:block;margin-bottom:8px;opacity:.3;"></i>
+        No users found.</td></tr>`;
       return;
     }
-    document.getElementById('userTableBody').innerHTML = users.map(u => `
+    // Build rows — username passed as data-attr to avoid HTML injection
+    tbody.innerHTML = users.map(u => `
       <tr>
         <td><span class="badge badge-${u.role === 'Dealer' ? 'dealer' : 'transporter'}">${u.role || '—'}</span></td>
         <td style="font-weight:600;font-family:monospace;">${u.dealer_code || u.transporter_id || '—'}</td>
@@ -461,10 +418,10 @@
         <td>${u.city || '—'}</td>
         <td>
           <div class="action-btns">
-            <button class="btn btn-warning btn-sm" onclick="openEditModal('${u.username.replace(/'/g, &quot;&#39;&quot;)}')">
+            <button class="btn btn-warning btn-sm" data-username="${u.username}" onclick="openEditModal(this.dataset.username)">
               <i class="fas fa-edit"></i> Edit
             </button>
-            <a href="{% url 'transporter:reset_password' %}?username=${encodeURIComponent(u.username)}"
+            <a href="{% url 'transporter:reset_password' %}?username=${encodeURIComponent(u.username || '')}"
                class="btn btn-danger btn-sm">
               <i class="fas fa-key"></i> Reset Pwd
             </a>
@@ -480,28 +437,25 @@
     renderTable();
   }
 
-  // ──── EDIT MODAL ────────────────────────────────────────────────────────────
+  document.getElementById('searchInput').addEventListener('input', renderTable);
+  document.getElementById('roleFilter').addEventListener('change', renderTable);
+
+  // ── Edit Modal ────────────────────────────────────────────────────
   function openEditModal(username) {
     const u = userMap[username];
-    if (!u) { showToast('User data not found. Please refresh.', 'error'); return; }
+    if (!u) { showToast('User not found. Please refresh the page.', 'error'); return; }
+
     document.getElementById('edit_username_key').value  = u.username || '';
     document.getElementById('edit_role_key').value      = u.role     || '';
-
-    // Display-only fields
     document.getElementById('edit_username').value      = u.username || '';
     document.getElementById('edit_role_display').value  = u.role     || '';
+    document.getElementById('edit_name').value          = u.name     || '';
+    document.getElementById('edit_email').value         = u.email    || '';
+    document.getElementById('edit_state').value         = u.state    || '';
+    document.getElementById('edit_city').value          = u.city     || '';
+    document.getElementById('edit_address').value       = u.address  || '';
+    document.getElementById('edit_phone').value         = u.mobile_number_1 || u.phone_number_1 || '';
 
-    // Editable fields — map from both dealer and transporter field names
-    document.getElementById('edit_name').value    = u.name    || '';
-    document.getElementById('edit_email').value   = u.email   || '';
-    document.getElementById('edit_state').value   = u.state   || '';
-    document.getElementById('edit_city').value    = u.city    || '';
-    document.getElementById('edit_address').value = u.address || '';
-
-    // Phone: mobile_number_1 is what view returns for both
-    document.getElementById('edit_phone').value   = u.mobile_number_1 || u.phone_number_1 || '';
-
-    // Dealer code — only for dealers
     const dcGroup = document.getElementById('edit_dc_group');
     if (u.role === 'Dealer') {
       dcGroup.style.display = 'flex';
@@ -510,7 +464,6 @@
       dcGroup.style.display = 'none';
       document.getElementById('edit_dealer_code').value = '';
     }
-
     document.getElementById('editModal').classList.add('show');
   }
 
@@ -523,14 +476,10 @@
     const role     = document.getElementById('edit_role_key').value;
     const name     = document.getElementById('edit_name').value.trim();
     const email    = document.getElementById('edit_email').value.trim();
-
     if (!name || !email) { showToast('Name and Email are required.', 'error'); return; }
 
     const payload = {
-      username,
-      role,
-      name,
-      email,
+      username, role, name, email,
       phone_number: document.getElementById('edit_phone').value.trim(),
       state:        document.getElementById('edit_state').value.trim(),
       city:         document.getElementById('edit_city').value.trim(),
@@ -544,52 +493,47 @@
 
     const btn = document.getElementById('saveEditBtn');
     const txt = document.getElementById('saveEditText');
-    btn.disabled = true;
-    txt.textContent = 'Saving...';
+    btn.disabled = true; txt.textContent = 'Saving...';
 
     try {
       const res = await fetch("{% url 'transporter:update_user' %}", {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCookie('csrftoken')
-        },
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
         body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (data.success) {
         showToast(data.message || 'User updated successfully!', 'success');
         closeEditModal();
-        // Update local data and re-render
+        // Update local data
         const idx = allUsers.findIndex(u => u.username === username);
         if (idx !== -1) {
           allUsers[idx] = { ...allUsers[idx], ...payload,
             mobile_number_1: payload.phone_number,
             phone_number_1:  payload.phone_number };
-          userMap[username] = allUsers[idx];  // keep map in sync
+          userMap[username] = allUsers[idx];
         }
         renderTable();
-        updateStats();
       } else {
         showToast(data.message || 'Failed to update user.', 'error');
       }
     } catch (err) {
       showToast(err.message || 'Server error.', 'error');
     } finally {
-      btn.disabled = false;
-      txt.textContent = 'Save Changes';
+      btn.disabled = false; txt.textContent = 'Save Changes';
     }
   }
 
-  // Close modal on overlay click
   document.getElementById('editModal').addEventListener('click', function(e) {
     if (e.target === this) closeEditModal();
   });
 
-  document.getElementById('searchInput').addEventListener('input', renderTable);
-  document.getElementById('roleFilter').addEventListener('change', renderTable);
+  // ── Initial render — runs immediately (no AJAX wait) ──────────────
+  renderTable();
 
-  fetchUsers();
+  {% if server_error %}
+  showToast('Server error: {{ server_error|escapejs }}', 'error');
+  {% endif %}
 </script>
 </body>
 </html>
