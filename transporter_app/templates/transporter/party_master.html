@@ -1,1077 +1,805 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Party Management System</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <meta name="csrf-token" content="{{ csrf_token }}">
-    <style>
-        :root {
-            --primary-color: #4a90e2;
-            --primary-dark: #3a78c2;
-            --secondary-color: #f39c12;
-            --background-color: #f4f7fa;
-            --form-background: #ffffff;
-            --text-color: #333333;
-            --text-light: #777777;
-            --border-color: #e0e0e0;
-            --error-color: #e74c3c;
-            --success-color: #2ecc71;
-            --header-height: 60px;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Party Master — Good Way Express</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+  {# Server-side data — no AJAX on page load #}
+  <script>var PARTIES = {{ parties_json|safe }};</script>
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            line-height: 1.6;
-        }
+  <style>
+    :root{--primary:#1a252f;--primary-light:#3498db;--secondary:#e74c3c;--success:#27ae60;--warning:#f39c12;--border:#e0e6ed;--text:#34495e;--bg:#f5f7fa;}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+    /* ── SIDEBAR ───────────────────────────────────────────────────── */
+    .sidebar{width:240px;background:var(--primary);color:white;height:100vh;position:fixed;left:0;top:0;display:flex;flex-direction:column;z-index:1000;box-shadow:2px 0 15px rgba(0,0,0,.15);overflow-y:auto;}
+    .logo-section{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.08);}
+    .logo{display:flex;align-items:center;gap:10px;}
+    .logo-icon{width:36px;height:36px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+    .logo-text{font-size:14px;font-weight:700;line-height:1.2;}.logo-sub{font-size:10px;color:rgba(255,255,255,.45);}
+    .nav-section{padding:12px 0;flex:1;}
+    .nav-title{padding:6px 16px 4px;font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+    .nav-menu{list-style:none;}.nav-item{margin:1px 0;}
+    .nav-link{display:flex;align-items:center;gap:10px;padding:.55rem 1rem;color:rgba(255,255,255,.65);text-decoration:none;font-size:.82rem;transition:all .2s;}
+    .nav-link:hover{color:white;background:rgba(255,255,255,.07);}
+    .nav-link i{width:16px;text-align:center;font-size:.85rem;}
+    .sub-menu{list-style:none;background:rgba(0,0,0,.15);}
+    .sub-menu a{display:block;padding:.4rem 1rem .4rem 2.6rem;font-size:.78rem;color:rgba(255,255,255,.55);text-decoration:none;transition:color .2s;}
+    .sub-menu a:hover,.sub-menu a.active-sub{color:white;font-weight:600;}
+    .sidebar-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.08);}
+    .logout-btn{width:100%;background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);padding:.45rem;border-radius:6px;cursor:pointer;font-size:.78rem;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+    .logout-btn:hover{background:rgba(231,76,60,.2);color:#e74c3c;border-color:#e74c3c;}
 
-        header {
-            background-color: var(--primary-color);
-            color: white;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
+    /* ── MAIN ──────────────────────────────────────────────────────── */
+    .main-content{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
+    .topbar{background:white;padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 8px rgba(0,0,0,.06);position:sticky;top:0;z-index:100;}
+    .topbar-left{display:flex;align-items:center;gap:14px;}
+    .menu-toggle{display:none;background:none;border:none;font-size:18px;color:#333;cursor:pointer;}
+    .page-title-bar{font-size:1.05rem;font-weight:700;color:#2c3e50;display:flex;align-items:center;gap:8px;}
+    .page-title-bar i{color:var(--primary-light);}
+    .user-chip{display:flex;align-items:center;gap:8px;background:#f1f5f9;border:1px solid #e2e8f0;padding:.35rem .875rem;border-radius:2rem;font-size:.8rem;color:#334155;font-weight:600;}
+    .page-body{padding:24px;flex:1;}
 
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: var(--header-height);
-            padding: 0 20px;
-        }
+    /* ── TABS ──────────────────────────────────────────────────────── */
+    .tab-nav{display:flex;gap:4px;background:white;border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:1.25rem;width:fit-content;}
+    .tab-btn{padding:.5rem 1.25rem;border:none;border-radius:7px;cursor:pointer;font-size:.85rem;font-weight:600;color:#64748b;background:transparent;transition:all .2s;display:flex;align-items:center;gap:.4rem;}
+    .tab-btn.active{background:var(--primary-light);color:white;}
+    .tab-pane{display:none;}.tab-pane.active{display:block;}
 
-        .logo {
-            font-size: 24px;
-            font-weight: 700;
-        }
+    /* ── STATS ─────────────────────────────────────────────────────── */
+    .stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.25rem;}
+    .stat-card{background:white;border-radius:10px;padding:1rem 1.25rem;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.05);display:flex;align-items:center;gap:.875rem;}
+    .stat-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+    .stat-label{font-size:.7rem;color:#64748b;font-weight:500;margin-bottom:.15rem;}
+    .stat-val{font-size:1.45rem;font-weight:800;color:#1a252f;line-height:1;}
 
-        .nav-links {
-            display: flex;
-            gap: 20px;
-        }
+    /* ── CARDS ─────────────────────────────────────────────────────── */
+    .card{background:white;border-radius:12px;border:1px solid var(--border);box-shadow:0 1px 6px rgba(0,0,0,.05);overflow:hidden;margin-bottom:1.25rem;}
+    .card-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+    .card-title{font-size:.95rem;font-weight:700;color:#1a252f;display:flex;align-items:center;gap:8px;}
+    .card-title i{color:var(--primary-light);}
+    .card-body{padding:20px;}
 
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-            transition: opacity 0.3s;
-        }
+    /* ── FORM ──────────────────────────────────────────────────────── */
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+    .form-grid .full{grid-column:1/-1;}
+    .form-group{display:flex;flex-direction:column;gap:.3rem;}
+    .form-group label{font-size:.78rem;font-weight:600;color:#334155;}
+    .form-group label .req{color:var(--secondary);}
+    .form-group input,.form-group select,.form-group textarea{padding:.5rem .75rem;border:1.5px solid #e2e8f0;border-radius:7px;font-size:.875rem;outline:none;transition:border-color .2s;background:white;}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(52,152,219,.1);}
+    .form-group textarea{resize:vertical;min-height:75px;}
+    .form-group input[readonly]{background:#f8fafc;color:#94a3b8;cursor:not-allowed;}
+    .checkbox-row{display:flex;align-items:center;gap:.5rem;padding:.5rem 0;}
+    .checkbox-row input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--primary-light);}
+    .checkbox-row label{font-size:.85rem;font-weight:500;color:#334155;cursor:pointer;}
+    .section-sep{grid-column:1/-1;font-size:.7rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #e2e8f0;padding-bottom:.4rem;margin-top:.5rem;}
+    .form-actions{grid-column:1/-1;display:flex;gap:.75rem;margin-top:.5rem;}
 
-        .nav-links a:hover {
-            opacity: 0.8;
-        }
+    /* ── BUTTONS ───────────────────────────────────────────────────── */
+    .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.1rem;border-radius:7px;border:none;cursor:pointer;font-size:.84rem;font-weight:600;transition:all .2s;text-decoration:none;}
+    .btn-primary{background:var(--primary-light);color:white;}.btn-primary:hover{background:#2980b9;}
+    .btn-success{background:var(--success);color:white;}.btn-success:hover{filter:brightness(.9);}
+    .btn-warning{background:var(--warning);color:white;}.btn-warning:hover{filter:brightness(.9);}
+    .btn-danger{background:var(--secondary);color:white;}.btn-danger:hover{filter:brightness(.9);}
+    .btn-secondary{background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;}.btn-secondary:hover{background:#e2e8f0;}
+    .btn-sm{padding:.3rem .65rem;font-size:.75rem;}
+    .btn:disabled{opacity:.6;cursor:not-allowed;}
 
-        main {
-            margin-top: calc(var(--header-height) + 20px);
-        }
+    /* ── TABLE ─────────────────────────────────────────────────────── */
+    .controls-bar{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;}
+    .search-bar{display:flex;align-items:center;gap:.5rem;background:#f1f5f9;border:1px solid #e2e8f0;padding:.4rem .875rem;border-radius:.5rem;}
+    .search-bar input{border:none;outline:none;background:transparent;font-size:.84rem;width:220px;}
+    .search-bar i{color:#94a3b8;font-size:.84rem;}
+    .filter-sel{padding:.42rem .75rem;border:1px solid #e2e8f0;border-radius:.5rem;font-size:.84rem;outline:none;background:white;color:#334155;}
+    .tbl-wrap{overflow-x:auto;}
+    table{width:100%;border-collapse:collapse;font-size:.81rem;}
+    th{background:#f8fafc;color:#64748b;font-size:.7rem;font-weight:700;padding:.7rem 1rem;border-bottom:2px solid #e2e8f0;text-align:left;white-space:nowrap;cursor:pointer;user-select:none;}
+    th:hover{background:#e8f0fe;color:var(--primary-light);}
+    td{padding:.6rem 1rem;border-bottom:1px solid #f1f5f9;color:#334155;vertical-align:middle;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    tr:hover td{background:#f8fafc;}
+    .badge{display:inline-block;padding:.18rem .55rem;border-radius:2rem;font-size:.68rem;font-weight:700;white-space:nowrap;}
+    .badge-booking{background:#dbeafe;color:#1e40af;}
+    .badge-delivery{background:#d1fae5;color:#065f46;}
+    .badge-both{background:#ede9fe;color:#5b21b6;}
+    .badge-tbb{background:#fef3c7;color:#92400e;}
+    .action-btns{display:flex;gap:.3rem;}
 
-        .tab-container {
-            background-color: var(--form-background);
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
+    /* ── MODAL ─────────────────────────────────────────────────────── */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;}
+    .modal-overlay.show{display:flex;}
+    .modal-box{background:white;border-radius:12px;width:100%;max-width:760px;box-shadow:0 8px 32px rgba(0,0,0,.2);margin-bottom:40px;}
+    .modal-header{padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;}
+    .modal-header h3{font-size:.95rem;font-weight:700;color:#1a252f;display:flex;align-items:center;gap:8px;}
+    .modal-header h3 i{color:var(--primary-light);}
+    .modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:#94a3b8;line-height:1;}
+    .modal-close:hover{color:#334155;}
+    .modal-body{padding:20px;}
+    .modal-footer{padding:12px 20px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:.75rem;}
 
-        .tab-header {
-            display: flex;
-            background-color: #f1f5f9;
-        }
+    /* ── TOAST ─────────────────────────────────────────────────────── */
+    .toast-container{position:fixed;top:1rem;right:1rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem;}
+    .toast{display:flex;align-items:center;gap:.75rem;padding:.875rem 1.25rem;border-radius:.625rem;font-size:.84rem;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.15);animation:slideIn .3s ease;min-width:260px;}
+    .toast-success{background:#dcfce7;color:#166534;border:1px solid #86efac;}
+    .toast-error{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+    .toast-warning{background:#fef9c3;color:#854d0e;border:1px solid #fde68a;}
+    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
 
-        .tab-button {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            background-color: transparent;
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-color);
-            cursor: pointer;
-            transition: background-color 0.3s, color 0.3s;
-        }
+    /* ── EMPTY ─────────────────────────────────────────────────────── */
+    .empty-state{text-align:center;padding:3rem;color:#94a3b8;}
+    .empty-state i{font-size:2.5rem;display:block;margin-bottom:.75rem;opacity:.4;}
+    .empty-state p{font-size:.875rem;}
 
-        .tab-button.active {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .tab-content {
-            display: none;
-            padding: 30px;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .form-title {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: var(--primary-color);
-        }
-
-        .form-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: var(--text-color);
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 14px;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-        }
-
-        .form-group .input-icon {
-            position: relative;
-        }
-
-        .form-group .input-icon input {
-            padding-left: 35px;
-        }
-
-        .form-group .input-icon i {
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-light);
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .checkbox-group input[type="checkbox"] {
-            width: auto;
-            margin-right: 5px;
-        }
-
-        .required {
-            color: var(--error-color);
-        }
-
-        .save-btn {
-            display: inline-block;
-            padding: 12px 24px;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .save-btn:hover {
-            background-color: var(--primary-dark);
-        }
-
-        .error-message {
-            color: var(--error-color);
-            font-size: 12px;
-            margin-top: 5px;
-        }
-
-        .success-message {
-            color: var(--success-color);
-            font-size: 14px;
-            margin-top: 10px;
-            text-align: center;
-        }
-
-        .party-records-table {
-            margin-top: 20px;
-            overflow-x: auto; /* Horizontal scrolling */
-            overflow-y: auto; /* Vertical scrolling */
-            max-height: 400px; /* Optional for vertical scrolling limit */
-            border: 1px solid var(--border-color); /* Optional: Add border to the table container */
-        }
-
-        .table-container {
-            min-width: 800px; /* Set a minimum width for the table to enable horizontal scrolling */
-        }
-
-        #partyMasterTable {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-
-        #partyMasterTable th, #partyMasterTable td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-
-        #partyMasterTable th {
-            background-color: var(--primary-color);
-            color: white;
-            position: sticky;
-            top: 0;
-        }
-
-        #partyMasterTable tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-
-        #partyMasterTable tr:hover {
-            background-color: #ddd;
-        }
-
-        #partyMasterTable button {
-            margin: 2px;
-            padding: 5px 10px;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        #partyMasterTable button:hover {
-            background-color: var(--primary-dark);
-        }
-
-        .modal {
-            display: flex;
-            position: fixed;
-            z-index: 1001;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-
-        .modal-content {
-            background-color: #fefefe;
-            margin: auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 300px;
-            text-align: center;
-        }
-
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        @media (max-width: 768px) {
-            .form-container {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    @media(max-width:900px){
+      .sidebar{width:0;overflow:hidden;}.sidebar.open{width:240px;}
+      .main-content{margin-left:0;}.menu-toggle{display:block;}
+    }
+    @media(max-width:640px){.form-grid{grid-template-columns:1fr;}.form-grid .full{grid-column:1;}}
+  </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <div class="logo">PMS</div>
-            <div class="nav-links">
-                <a href="#" onclick="openTab(event, 'addNewParty')">Add New Party</a>
-                <a href="#" onclick="openTab(event, 'editParty')">Edit Party</a>
-                <a href="#" onclick="openTab(event, 'partyConfiguration')">Party Configuration</a>
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ══ SIDEBAR ══════════════════════════════════════════════════════ -->
+<div class="sidebar" id="sidebar">
+  <div class="logo-section">
+    <div class="logo">
+      <div class="logo-icon"><i class="fas fa-shipping-fast"></i></div>
+      <div><div class="logo-text">Good Way Express</div><div class="logo-sub">Transport Panel</div></div>
+    </div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-title">Main</div>
+    <ul class="nav-menu">
+      <li class="nav-item"><a href="{% url 'transporter:home' %}" class="nav-link"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+      <li class="nav-item"><a href="{% url 'transporter:receive' %}" class="nav-link"><i class="fas fa-clock"></i><span>Pending Requests</span></a></li>
+      <li class="nav-item">
+        <a href="#" class="nav-link" onclick="toggleSub('sub-del',this);return false;">
+          <i class="fas fa-clipboard-list"></i><span>Delivery Management</span>
+          <i class="fas fa-chevron-right" id="arr-del" style="margin-left:auto;font-size:10px;transition:transform .2s;"></i>
+        </a>
+        <ul class="sub-menu" id="sub-del" style="display:none;">
+          <li><a href="{% url 'transporter:delivery_cnotes' %}">Single Delivery</a></li>
+          <li><a href="{% url 'transporter:ddm_settlement' %}">DDM Settlements</a></li>
+        </ul>
+      </li>
+    </ul>
+    <div class="nav-title">Reports &amp; Masters</div>
+    <ul class="nav-menu">
+      <li class="nav-item">
+        <a href="#" class="nav-link" onclick="toggleSub('sub-rep',this);return false;">
+          <i class="fas fa-chart-bar"></i><span>Reports</span>
+          <i class="fas fa-chevron-right" id="arr-rep" style="margin-left:auto;font-size:10px;transition:transform .2s;"></i>
+        </a>
+        <ul class="sub-menu" id="sub-rep" style="display:none;">
+          <li><a href="{% url 'transporter:all_booking_register' %}">Booking Register</a></li>
+          <li><a href="{% url 'transporter:loading_sheet_report' %}">Loading Sheet Report</a></li>
+        </ul>
+      </li>
+      <li class="nav-item">
+        <a href="#" class="nav-link" onclick="toggleSub('sub-mas',this);return false;">
+          <i class="fas fa-cog"></i><span>Master</span>
+          <i class="fas fa-chevron-right" id="arr-mas" style="margin-left:auto;font-size:10px;transition:transform .2s;transform:rotate(90deg);"></i>
+        </a>
+        <ul class="sub-menu" id="sub-mas" style="display:block;">
+          <li><a href="{% url 'transporter:rate_card_master' %}">Rate Card Master</a></li>
+          <li><a href="{% url 'transporter:billing' %}">Billing Dealer</a></li>
+          <li><a href="{% url 'transporter:bill_manage' %}">Bill Management</a></li>
+          <li><a href="{% url 'transporter:manage_location' %}">Manage Location</a></li>
+          <li><a href="{% url 'transporter:party_master' %}" class="active-sub">Party Master</a></li>
+          <li><a href="{% url 'transporter:add_user' %}">Add User</a></li>
+          <li><a href="{% url 'transporter:view_users' %}">View Users</a></li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+  <div class="sidebar-footer">
+    <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+      <button type="submit" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </form>
+  </div>
+</div>
+
+<!-- ══ MAIN ══════════════════════════════════════════════════════════ -->
+<div class="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+      <div class="page-title-bar"><i class="fas fa-building"></i> Party Master</div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-chip"><i class="fas fa-user"></i> {{ request.user.username }}</div>
+    </div>
+  </div>
+
+  <div class="page-body">
+
+    <!-- Stats -->
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#dbeafe;"><i class="fas fa-building" style="color:#2563eb;"></i></div>
+        <div><div class="stat-label">Total Parties</div><div class="stat-val" id="statTotal">{{ total_parties }}</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#d1fae5;"><i class="fas fa-truck" style="color:#059669;"></i></div>
+        <div><div class="stat-label">Booking</div><div class="stat-val" id="statBooking">—</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#ede9fe;"><i class="fas fa-hand-holding-box" style="color:#7c3aed;"></i></div>
+        <div><div class="stat-label">Delivery</div><div class="stat-val" id="statDelivery">—</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#fef9c3;"><i class="fas fa-layer-group" style="color:#d97706;"></i></div>
+        <div><div class="stat-label">Both</div><div class="stat-val" id="statBoth">—</div></div>
+      </div>
+    </div>
+
+    <!-- Tab Nav -->
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('tab-list',this)"><i class="fas fa-list"></i> All Parties</button>
+      <button class="tab-btn" onclick="switchTab('tab-add',this)"><i class="fas fa-plus"></i> Add Party</button>
+    </div>
+
+    <!-- ── TAB: ALL PARTIES ───────────────────────────────────────── -->
+    <div id="tab-list" class="tab-pane active">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fas fa-list"></i> Party Records</div>
+          <div class="controls-bar">
+            <div class="search-bar">
+              <i class="fas fa-search"></i>
+              <input type="text" id="searchInput" placeholder="Search name, code, city, GST...">
             </div>
-        </nav>
-    </header>
-
-    <main>
-        <div class="container">
-            <div class="tab-container">
-                <div class="tab-header">
-                    <button class="tab-button active" onclick="openTab(event, 'addNewParty')">Add New Party</button>
-                    <button class="tab-button" onclick="openTab(event, 'editParty')">Edit Party</button>
-                    <button class="tab-button" onclick="openTab(event, 'partyConfiguration')">Party Configuration</button>
-                </div>
-
-                <div id="addNewParty" class="tab-content active">
-                    <h2 class="form-title">Add New Party</h2>
-                    <form id="addNewPartyForm" action="{% url 'transporter:add_party' %}" method="POST">
-                        {% csrf_token %}
-                        <div class="form-container">
-                            <div class="form-group">
-                                <label for="party_name">Party Name <span class="required">*</span></label>
-                                <input type="text" id="party_name" name="party_name" placeholder="ENTER PARTY NAME" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="display_name">Display Name <span class="required">*</span></label>
-                                <input type="text" id="display_name" name="display_name" placeholder="DISPLAY NAME" required>
-                            </div>
-
-                            <div class="form-group checkbox-group">
-                                <input type="checkbox" id="is_tbb" name="is_tbb">
-                                <label for="is_tbb">Is TBB?</label>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="mobile_number_1">Mobile Number 1 <span class="required">*</span></label>
-                                <div class="input-icon">
-                                    <i class="fas fa-mobile-alt"></i>
-                                    <input type="tel" id="mobile_number_1" name="mobile_number_1" placeholder="Enter Mobile Number" required pattern="[0-9]{10}" title="Enter a valid 10-digit mobile number">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="mobile_number_2">Mobile Number 2</label>
-                                <div class="input-icon">
-                                    <i class="fas fa-mobile-alt"></i>
-                                    <input type="tel" id="mobile_number_2" name="mobile_number_2" placeholder="Enter Mobile Number" pattern="[0-9]{10}" title="Enter a valid 10-digit mobile number">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="phone_number_1">Phone Number 1</label>
-                                <div class="input-icon">
-                                    <i class="fas fa-phone"></i>
-                                    <input type="tel" id="phone_number_1" name="phone_number_1" placeholder="Enter Phone Number" pattern="[0-9]{10}" title="Enter a valid 10-digit phone number">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="phone_number_2">Phone Number 2</label>
-                                <div class="input-icon">
-                                    <i class="fas fa-phone"></i>
-                                    <input type="tel" id="phone_number_2" name="phone_number_2" placeholder="Enter Phone Number" pattern="[0-9]{10}" title="Enter a valid 10-digit phone number">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="party_code">Party Code</label>
-                                <input type="text" id="party_code" name="party_code" placeholder="Party Code">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="gst_no">Party GST No.</label>
-                                <div class="input-icon">
-                                    <i class="fas fa-file-invoice"></i>
-                                    <input type="text" id="gst_no" name="gst_no" placeholder="Party GST No" pattern="^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$" title="Enter a valid GST number">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="pan_no">PAN No.</label>
-                                <div class="input-icon">
-                                    <i class="fas fa-id-card"></i>
-                                    <input type="text" id="pan_no" name="pan_no" placeholder="ENTER PAN NUMBER" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" title="Enter a valid PAN number">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                <div class="input-icon">
-                                    <i class="fas fa-envelope"></i>
-                                    <input type="email" id="email" name="email" placeholder="Enter Email">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="marketing_person">Marketing Person</label>
-                                <div class="input-icon">
-                                    <i class="fas fa-user-tie"></i>
-                                    <input type="text" id="marketing_person" name="marketing_person" placeholder="Enter Marketing Person">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="party_type">Party Type <span class="required">*</span></label>
-                                <select id="party_type" name="party_type" required>
-                                    <option value="">Select Party Type</option>
-                                    <option value="booking">Booking</option>
-                                    <option value="delivery">Delivery</option>
-                                    <option value="both">Booking & Delivery Both</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="country">Country</label>
-                                <input type="text" id="country" name="country" value="INDIA" readonly>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="state">State</label>
-                                <div class="input-icon">
-                                    <i class="fas fa-map"></i>
-                                    <input type="text" id="state" name="state" placeholder="Enter State">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="city">City <span class="required">*</span></label>
-                                <div class="input-icon">
-                                    <i class="fas fa-city"></i>
-                                    <input type="text" id="city" name="city" placeholder="Enter City" required>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="pincode">Pincode</label>
-                                <input type="text" id="pincode" name="pincode" placeholder="Enter Pincode" pattern="[0-9]{6}" title="Enter a valid 6-digit pincode">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="address">Address <span class="required">*</span></label>
-                                <div class="input-icon">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <textarea id="address" name="address" placeholder="Enter Address" required rows="3"></textarea>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="remark">Remark</label>
-                                <textarea id="remark" name="remark" placeholder="Enter Remark" rows="3"></textarea>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="save-btn">Save</button>
-                    </form>
-                    <div id="addNewPartyMessage" class="success-message"></div>
-                </div>
-
-                <div id="editParty" class="tab-content">
-                    <h2 class="form-title">Edit Party</h2>
-                    <form id="searchPartyForm" action="#" method="POST">
-                        <div class="form-group">
-                            <label for="search-party">Search Party</label>
-                            <div class="input-icon">
-                                <i class="fas fa-search"></i>
-                                <input type="text" id="search-party" name="search_party" placeholder="Enter Party Name or Code">
-                            </div>
-                        </div>
-                        <button type="button" id="fetchPartyDetails" class="save-btn">Show All Party Details</button>
-                        <div id="loadingIndicator" style="display:none; text-align:center; margin:10px;">Loading...</div>
-                    </form>
-                
-                    <div id="searchResults" class="search-results"></div>
-                
-                    <!-- Party Master Records Table -->
-                    <div class="party-records-table">
-                        <h3>Party Master Records</h3>
-                        <div class="table-container">
-                            <table id="partyMasterTable">
-                                <thead>
-                                    <tr>
-                                        <th>Party Code</th>
-                                        <th>Party Name</th>
-                                        <th>Display Name</th>
-                                        <th>Mobile Number 1</th>
-                                        <th>Mobile Number 2</th>
-                                        <th>Phone Number 1</th>
-                                        <th>Phone Number 2</th>
-                                        <th>GST No</th>
-                                        <th>PAN No</th>
-                                        <th>Email</th>
-                                        <th>Marketing Person</th>
-                                        <th>Party Type</th>
-                                        <th>Country</th>
-                                        <th>State</th>
-                                        <th>City</th>
-                                        <th>Pincode</th>
-                                        <th>Address</th>
-                                        <th>Is TBB</th>
-                                        <th>Remark</th>
-                                        <th>Created At</th>
-                                        <th>Updated At</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Table rows will be populated by JavaScript -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Edit Party Form -->
-                <form id="editPartyForm" action="{% url 'transporter:update_party' 0 %}" method="POST" style="display: none;">
-                    {% csrf_token %}
-                    <input type="hidden" id="edit_party_id" name="party_id">
-                    <div class="form-container">
-                        <div class="form-group">
-                            <label for="party_name">Party Name <span class="required">*</span></label>
-                            <input type="text" id="party_name" name="party_name" placeholder="ENTER PARTY NAME" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="display_name">Display Name <span class="required">*</span></label>
-                            <input type="text" id="display_name" name="display_name" placeholder="DISPLAY NAME" required>
-                        </div>
-
-                        <div class="form-group checkbox-group">
-                            <input type="checkbox" id="is_tbb" name="is_tbb">
-                            <label for="is_tbb">Is TBB?</label>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="mobile_number_1">Mobile Number 1 <span class="required">*</span></label>
-                            <div class="input-icon">
-                                <i class="fas fa-mobile-alt"></i>
-                                <input type="tel" id="mobile_number_1" name="mobile_number_1" placeholder="Enter Mobile Number" required pattern="[0-9]{10}" title="Enter a valid 10-digit mobile number">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="mobile_number_2">Mobile Number 2</label>
-                            <div class="input-icon">
-                                <i class="fas fa-mobile-alt"></i>
-                                <input type="tel" id="mobile_number_2" name="mobile_number_2" placeholder="Enter Mobile Number" pattern="[0-9]{10}" title="Enter a valid 10-digit mobile number">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="phone_number_1">Phone Number 1</label>
-                            <div class="input-icon">
-                                <i class="fas fa-phone"></i>
-                                <input type="tel" id="phone_number_1" name="phone_number_1" placeholder="Enter Phone Number" pattern="[0-9]{10}" title="Enter a valid 10-digit phone number">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="phone_number_2">Phone Number 2</label>
-                            <div class="input-icon">
-                                <i class="fas fa-phone"></i>
-                                <input type="tel" id="phone_number_2" name="phone_number_2" placeholder="Enter Phone Number" pattern="[0-9]{10}" title="Enter a valid 10-digit phone number">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="party_code">Party Code</label>
-                            <input type="text" id="party_code" name="party_code" placeholder="Party Code">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="gst_no">Party GST No.</label>
-                            <div class="input-icon">
-                                <i class="fas fa-file-invoice"></i>
-                                <input type="text" id="gst_no" name="gst_no" placeholder="Party GST No" pattern="^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$" title="Enter a valid GST number">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="pan_no">PAN No.</label>
-                            <div class="input-icon">
-                                <i class="fas fa-id-card"></i>
-                                <input type="text" id="pan_no" name="pan_no" placeholder="ENTER PAN NUMBER" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" title="Enter a valid PAN number">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <div class="input-icon">
-                                <i class="fas fa-envelope"></i>
-                                <input type="email" id="email" name="email" placeholder="Enter Email">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="marketing_person">Marketing Person</label>
-                            <div class="input-icon">
-                                <i class="fas fa-user-tie"></i>
-                                <input type="text" id="marketing_person" name="marketing_person" placeholder="Enter Marketing Person">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="party_type">Party Type <span class="required">*</span></label>
-                            <select id="party_type" name="party_type" required>
-                                <option value="">Select Party Type</option>
-                                <option value="booking">Booking</option>
-                                <option value="delivery">Delivery</option>
-                                <option value="both">Booking & Delivery Both</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="country">Country</label>
-                            <input type="text" id="country" name="country" value="INDIA" readonly>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="state">State</label>
-                            <div class="input-icon">
-                                <i class="fas fa-map"></i>
-                                <input type="text" id="state" name="state" placeholder="Enter State">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="city">City <span class="required">*</span></label>
-                            <div class="input-icon">
-                                <i class="fas fa-city"></i>
-                                <input type="text" id="city" name="city" placeholder="Enter City" required>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="pincode">Pincode</label>
-                            <input type="text" id="pincode" name="pincode" placeholder="Enter Pincode" pattern="[0-9]{6}" title="Enter a valid 6-digit pincode">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="address">Address <span class="required">*</span></label>
-                            <div class="input-icon">
-                                <i class="fas fa-map-marker-alt"></i>
-                                <textarea id="address" name="address" placeholder="Enter Address" required rows="3"></textarea>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="remark">Remark</label>
-                            <textarea id="remark" name="remark" placeholder="Enter Remark" rows="3"></textarea>
-                        </div>
-                    </div>
-                    <button type="submit" class="save-btn">Update Party</button>
-                </form>
-                <div id="editPartyMessage" class="success-message"></div>
-
-                <div id="partyConfiguration" class="tab-content">
-                    <h2 class="form-title">Party Configuration</h2>
-                    <form id="partyConfigForm" action="{% url 'transporter:save_config' %}" method="POST">
-                        {% csrf_token %}
-                        <div class="form-group">
-                            <label for="config_type">Configuration Type</label>
-                            <select id="config_type" name="config_type" required>
-                                <option value="">Select Configuration Type</option>
-                                <option value="type1">Type 1</option>
-                                <option value="type2">Type 2</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="config_value">Configuration Value</label>
-                            <input type="text" id="config_value" name="config_value" placeholder="Enter Configuration Value" required>
-                        </div>
-                        <button type="submit" class="save-btn">Save Configuration</button>
-                    </form>
-                    
-                    <div id="partyConfigMessage" class="success-message"></div>
-                </div>
-            </div>
+            <select id="typeFilter" class="filter-sel">
+              <option value="">All Types</option>
+              <option value="booking">Booking</option>
+              <option value="delivery">Delivery</option>
+              <option value="both">Both</option>
+            </select>
+          </div>
         </div>
-        <div id="successModal" class="modal" style="display: none;">
-            <div class="modal-content">
-                <span class="close" onclick="closeModal()">&times;</span>
-                <p>Your data has been successfully submitted.</p>
-                <button onclick="redirectToAddParty()">OK</button>
-            </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th onclick="sortTable('party_code')">Code <i class="fas fa-sort" style="font-size:.6rem;"></i></th>
+                <th onclick="sortTable('party_name')">Party Name <i class="fas fa-sort" style="font-size:.6rem;"></i></th>
+                <th onclick="sortTable('display_name')">Display Name <i class="fas fa-sort" style="font-size:.6rem;"></i></th>
+                <th>Mobile</th>
+                <th onclick="sortTable('party_type')">Type <i class="fas fa-sort" style="font-size:.6rem;"></i></th>
+                <th>GST No</th>
+                <th onclick="sortTable('city')">City <i class="fas fa-sort" style="font-size:.6rem;"></i></th>
+                <th onclick="sortTable('state')">State <i class="fas fa-sort" style="font-size:.6rem;"></i></th>
+                <th>TBB</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="partyTableBody"></tbody>
+          </table>
         </div>
-    </main>
+      </div>
+    </div>
 
-    <script>
-        function openTab(evt, tabName) {
-            var i, tabContent, tabButtons;
-            tabContent = document.getElementsByClassName("tab-content");
-            for (i = 0; i < tabContent.length; i++) {
-                tabContent[i].style.display = "none";
-            }
-            tabButtons = document.getElementsByClassName("tab-button");
-            for (i = 0; i < tabButtons.length; i++) {
-                tabButtons[i].className = tabButtons[i].className.replace(" active", "");
-            }
-            document.getElementById(tabName).style.display = "block";
-            evt.currentTarget.className += " active";
+    <!-- ── TAB: ADD PARTY ─────────────────────────────────────────── -->
+    <div id="tab-add" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="fas fa-plus-circle"></i> Add New Party</div>
+        </div>
+        <div class="card-body">
+          <form id="addPartyForm">
+            {% csrf_token %}
+            <div class="form-grid">
+              <div class="section-sep">Basic Information</div>
 
-            // Reset forms and messages when switching tabs
-            resetForms();
-        }
+              <div class="form-group">
+                <label>Party Name <span class="req">*</span></label>
+                <input type="text" name="party_name" placeholder="Enter party name" required>
+              </div>
+              <div class="form-group">
+                <label>Display Name <span class="req">*</span></label>
+                <input type="text" name="display_name" placeholder="Display name" required>
+              </div>
+              <div class="form-group">
+                <label>Party Code</label>
+                <input type="text" name="party_code" placeholder="e.g. PM001">
+              </div>
+              <div class="form-group">
+                <label>Party Type <span class="req">*</span></label>
+                <select name="party_type" required>
+                  <option value="">— Select Type —</option>
+                  <option value="booking">Booking</option>
+                  <option value="delivery">Delivery</option>
+                  <option value="both">Booking &amp; Delivery Both</option>
+                </select>
+              </div>
 
-        document.getElementById('fetchPartyDetails').addEventListener('click', function () {
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            loadingIndicator.style.display = 'block'; // Show loading spinner
+              <div class="section-sep">Contact Details</div>
 
-            fetch('/transporter/get-party-master-records/')
-                .then(response => response.json())
-                .then(data => {
-                    const tableBody = document.querySelector('#partyMasterTable tbody');
-                    tableBody.innerHTML = ''; // Clear existing rows
+              <div class="form-group">
+                <label>Mobile 1 <span class="req">*</span></label>
+                <input type="tel" name="mobile_number_1" placeholder="10-digit mobile" maxlength="15" required>
+              </div>
+              <div class="form-group">
+                <label>Mobile 2</label>
+                <input type="tel" name="mobile_number_2" placeholder="10-digit mobile" maxlength="15">
+              </div>
+              <div class="form-group">
+                <label>Phone 1</label>
+                <input type="tel" name="phone_number_1" placeholder="Phone number" maxlength="15">
+              </div>
+              <div class="form-group">
+                <label>Phone 2</label>
+                <input type="tel" name="phone_number_2" placeholder="Phone number" maxlength="15">
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" placeholder="Enter email">
+              </div>
+              <div class="form-group">
+                <label>Marketing Person</label>
+                <input type="text" name="marketing_person" placeholder="Name">
+              </div>
 
-                    data.forEach(record => {
-                        const row = `
-                            <tr>
-                                <td>${record.party_code || ''}</td>
-                                <td>${record.party_name}</td>
-                                <td>${record.display_name}</td>
-                                <td>${record.mobile_number_1}</td>
-                                <td>${record.mobile_number_2 || ''}</td>
-                                <td>${record.phone_number_1 || ''}</td>
-                                <td>${record.phone_number_2 || ''}</td>
-                                <td>${record.gst_no || ''}</td>
-                                <td>${record.pan_no || ''}</td>
-                                <td>${record.email || ''}</td>
-                                <td>${record.marketing_person || ''}</td>
-                                <td>${record.party_type}</td>
-                                <td>${record.country}</td>
-                                <td>${record.state || ''}</td>
-                                <td>${record.city}</td>
-                                <td>${record.pincode}</td>
-                                <td>${record.address}</td>
-                                <td>${record.is_tbb ? 'Yes' : 'No'}</td>
-                                <td>${record.remark || ''}</td>
-                                <td>${new Date(record.created_at).toLocaleString()}</td>
-                                <td>${new Date(record.updated_at).toLocaleString()}</td>
-                                <td>
-                                    <button onclick="editParty(${record.id})">Edit</button>
-                                    <button onclick="deleteParty(${record.id})">Delete</button>
-                                </td>
-                            </tr>
-                        `;
-                        tableBody.innerHTML += row;
-                    });
+              <div class="section-sep">Identity &amp; Address</div>
 
-                    loadingIndicator.style.display = 'none'; // Hide loading spinner
-                })
-                .catch(error => {
-                    console.error('Error fetching party master records:', error);
-                    loadingIndicator.style.display = 'none'; // Hide loading spinner
-                });
-        });
+              <div class="form-group">
+                <label>GST No.</label>
+                <input type="text" name="gst_no" placeholder="22AAAAA0000A1Z5" maxlength="15">
+              </div>
+              <div class="form-group">
+                <label>PAN No.</label>
+                <input type="text" name="pan_no" placeholder="ABCDE1234F" maxlength="10">
+              </div>
+              <div class="form-group">
+                <label>Country</label>
+                <input type="text" name="country" value="INDIA" readonly>
+              </div>
+              <div class="form-group">
+                <label>State</label>
+                <input type="text" name="state" placeholder="Enter state">
+              </div>
+              <div class="form-group">
+                <label>City <span class="req">*</span></label>
+                <input type="text" name="city" placeholder="Enter city" required>
+              </div>
+              <div class="form-group">
+                <label>Pincode</label>
+                <input type="text" name="pincode" placeholder="6-digit pincode" maxlength="6">
+              </div>
+              <div class="form-group full">
+                <label>Address <span class="req">*</span></label>
+                <textarea name="address" placeholder="Enter full address" required></textarea>
+              </div>
+              <div class="form-group full">
+                <label>Remark</label>
+                <textarea name="remark" placeholder="Optional remark"></textarea>
+              </div>
+              <div class="form-group full">
+                <div class="checkbox-row">
+                  <input type="checkbox" id="add_is_tbb" name="is_tbb">
+                  <label for="add_is_tbb">Is TBB (To Be Billed)?</label>
+                </div>
+              </div>
 
-        document.getElementById('search-party').addEventListener('input', function() {
-            const searchTerm = this.value.trim();
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            loadingIndicator.style.display = 'block'; // Show loading spinner
+              <div class="form-actions">
+                <button type="submit" class="btn btn-success" id="addBtn">
+                  <i class="fas fa-save"></i> <span id="addBtnText">Save Party</span>
+                </button>
+                <button type="reset" class="btn btn-secondary"><i class="fas fa-undo"></i> Reset</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
 
-            fetch(`/transporter/get-party-master-records/?search=${encodeURIComponent(searchTerm)}`)
-                .then(response => response.json())
-                .then(data => {
-                    const tableBody = document.querySelector('#partyMasterTable tbody');
-                    tableBody.innerHTML = ''; // Clear existing rows
+  </div><!-- /page-body -->
+</div><!-- /main-content -->
 
-                    data.forEach(record => {
-                        const row = `
-                            <tr>
-                                <td>${record.party_code || ''}</td>
-                                <td>${record.party_name}</td>
-                                <td>${record.display_name}</td>
-                                <td>${record.mobile_number_1}</td>
-                                <td>${record.mobile_number_2 || ''}</td>
-                                <td>${record.phone_number_1 || ''}</td>
-                                <td>${record.phone_number_2 || ''}</td>
-                                <td>${record.gst_no || ''}</td>
-                                <td>${record.pan_no || ''}</td>
-                                <td>${record.email || ''}</td>
-                                <td>${record.marketing_person || ''}</td>
-                                <td>${record.party_type}</td>
-                                <td>${record.country}</td>
-                                <td>${record.state || ''}</td>
-                                <td>${record.city}</td>
-                                <td>${record.pincode}</td>
-                                <td>${record.address}</td>
-                                <td>${record.is_tbb ? 'Yes' : 'No'}</td>
-                                <td>${record.remark || ''}</td>
-                                <td>${new Date(record.created_at).toLocaleString()}</td>
-                                <td>${new Date(record.updated_at).toLocaleString()}</td>
-                                <td>
-                                    <button onclick="editParty(${record .id})">Edit</button>
-                                    <button onclick="deleteParty(${record.id})">Delete</button>
-                                </td>
-                            </tr>
-                        `;
-                        tableBody.innerHTML += row;
-                    });
+<!-- ══ EDIT MODAL ════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3><i class="fas fa-edit"></i> Edit Party</h3>
+      <button class="modal-close" onclick="closeEdit()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit_id">
+      <div class="form-grid">
+        <div class="section-sep">Basic Information</div>
+        <div class="form-group">
+          <label>Party Name <span class="req">*</span></label>
+          <input type="text" id="e_party_name" required>
+        </div>
+        <div class="form-group">
+          <label>Display Name <span class="req">*</span></label>
+          <input type="text" id="e_display_name" required>
+        </div>
+        <div class="form-group">
+          <label>Party Code</label>
+          <input type="text" id="e_party_code">
+        </div>
+        <div class="form-group">
+          <label>Party Type <span class="req">*</span></label>
+          <select id="e_party_type" required>
+            <option value="booking">Booking</option>
+            <option value="delivery">Delivery</option>
+            <option value="both">Booking &amp; Delivery Both</option>
+          </select>
+        </div>
 
-                    loadingIndicator.style.display = 'none'; // Hide loading spinner
-                })
-                .catch(error => {
-                    console.error('Error fetching party master records:', error);
-                    loadingIndicator.style.display = 'none'; // Hide loading spinner
-                });
-        });
+        <div class="section-sep">Contact Details</div>
+        <div class="form-group">
+          <label>Mobile 1 <span class="req">*</span></label>
+          <input type="tel" id="e_mobile_number_1" required>
+        </div>
+        <div class="form-group">
+          <label>Mobile 2</label>
+          <input type="tel" id="e_mobile_number_2">
+        </div>
+        <div class="form-group">
+          <label>Phone 1</label>
+          <input type="tel" id="e_phone_number_1">
+        </div>
+        <div class="form-group">
+          <label>Phone 2</label>
+          <input type="tel" id="e_phone_number_2">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="e_email">
+        </div>
+        <div class="form-group">
+          <label>Marketing Person</label>
+          <input type="text" id="e_marketing_person">
+        </div>
 
-        function editParty(partyId) {
-            fetch(`/transporter/get-party/${partyId}/`)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('edit_party_id').value = data.id;
-                    document.getElementById('party_name').value = data.party_name;
-                    document.getElementById('display_name').value = data.display_name;
-                    document.getElementById('is_tbb').checked = data.is_tbb;
-                    document.getElementById('mobile_number_1').value = data.mobile_number_1;
-                    document.getElementById('mobile_number_2').value = data.mobile_number_2 || '';
-                    document.getElementById('phone_number_1').value = data.phone_number_1 || '';
-                    document.getElementById('phone_number_2').value = data.phone_number_2 || '';
-                    document.getElementById('party_code').value = data.party_code || '';
-                    document.getElementById('gst_no').value = data.gst_no || '';
-                    document.getElementById('pan_no').value = data.pan_no || '';
-                    document.getElementById('email').value = data.email || '';
-                    document.getElementById('marketing_person').value = data.marketing_person || '';
-                    document.getElementById('party_type').value = data.party_type;
-                    document.getElementById('country').value = data.country;
-                    document.getElementById('state').value = data.state || '';
-                    document.getElementById('city').value = data.city;
-                    document.getElementById('pincode').value = data.pincode;
-                    document.getElementById('address').value = data.address;
-                    document.getElementById('remark').value = data.remark || '';
+        <div class="section-sep">Identity &amp; Address</div>
+        <div class="form-group">
+          <label>GST No.</label>
+          <input type="text" id="e_gst_no">
+        </div>
+        <div class="form-group">
+          <label>PAN No.</label>
+          <input type="text" id="e_pan_no">
+        </div>
+        <div class="form-group">
+          <label>Country</label>
+          <input type="text" id="e_country" value="INDIA" readonly>
+        </div>
+        <div class="form-group">
+          <label>State</label>
+          <input type="text" id="e_state">
+        </div>
+        <div class="form-group">
+          <label>City <span class="req">*</span></label>
+          <input type="text" id="e_city" required>
+        </div>
+        <div class="form-group">
+          <label>Pincode</label>
+          <input type="text" id="e_pincode" maxlength="6">
+        </div>
+        <div class="form-group full">
+          <label>Address <span class="req">*</span></label>
+          <textarea id="e_address" required></textarea>
+        </div>
+        <div class="form-group full">
+          <label>Remark</label>
+          <textarea id="e_remark"></textarea>
+        </div>
+        <div class="form-group full">
+          <div class="checkbox-row">
+            <input type="checkbox" id="e_is_tbb">
+            <label for="e_is_tbb">Is TBB (To Be Billed)?</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeEdit()">Cancel</button>
+      <button class="btn btn-primary" id="saveEditBtn" onclick="saveEdit()">
+        <i class="fas fa-save"></i> <span id="saveEditText">Save Changes</span>
+      </button>
+    </div>
+  </div>
+</div>
 
-                    document.getElementById('editPartyForm').style.display = 'block';
-                    document.getElementById('editPartyForm').scrollIntoView({ behavior: 'smooth' });
-                })
-                .catch(error => console.error('Error fetching party details:', error));
-        }
-        
-        function deleteParty(partyId) {
-            if (confirm('Are you sure you want to delete this party?')) {
-                fetch(`/transporter/delete-party/${partyId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Party deleted successfully');
-                        fetchPartyMasterRecords(); // Refresh the table
-                    } else {
-                        alert('Failed to delete party');
-                    }
-                })
-                .catch(error => console.error('Error deleting party:', error));
-            }
-        }
+<script>
+// ── Sidebar ────────────────────────────────────────────────────────
+function toggleSub(id, el) {
+  const m = document.getElementById(id);
+  const a = el.querySelector('.fa-chevron-right');
+  const open = m.style.display === 'block';
+  document.querySelectorAll('.sub-menu').forEach(x => x.style.display = 'none');
+  document.querySelectorAll('[id^="arr-"]').forEach(x => x.style.transform = '');
+  if (!open) { m.style.display = 'block'; if (a) a.style.transform = 'rotate(90deg)'; }
+}
 
-        function resetForms() {
-            document.getElementById('addNewPartyForm').reset();
-            document.getElementById('searchPartyForm').reset();
-            document.getElementById('editPartyForm').reset();
-            document.getElementById('partyConfigForm').reset();
-            document.getElementById('addNewPartyMessage').textContent = '';
-            document.getElementById('editPartyMessage').textContent = '';
-            document.getElementById('partyConfigMessage').textContent = '';
-            document.getElementById('searchResults').innerHTML = '';
-            document.getElementById('editPartyForm').style.display = 'none';
-        }
+// ── CSRF ───────────────────────────────────────────────────────────
+const CSRF = '{{ csrf_token }}';
 
-        function validateForm(formId) {
-            const form = document.getElementById(formId);
-            const requiredFields = form.querySelectorAll('[required]');
-            let isValid = true;
+// ── Toast ──────────────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  const icons = {success:'check-circle',error:'times-circle',warning:'exclamation-triangle'};
+  t.className = `toast toast-${type}`;
+  t.innerHTML = `<i class="fas fa-${icons[type]||'info-circle'}"></i> ${msg}`;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
 
-            requiredFields.forEach(field => {
-                if (!field.value.trim()) {
-                    isValid = false;
-                    field.classList.add('invalid');
-                    let errorMessage = field.nextElementSibling;
-                    if (!errorMessage || !errorMessage.classList.contains('error-message')) {
-                        errorMessage = document.createElement('div');
-                        errorMessage.className = 'error-message';
-                        field.parentNode.insertBefore(errorMessage, field.nextSibling);
-                    }
-                    errorMessage.textContent = 'This field is required.';
-                } else {
-                    field.classList.remove('invalid');
-                    const errorMessage = field.nextElementSibling;
-                    if (errorMessage && errorMessage.classList.contains('error-message')) {
-                        errorMessage.remove();
-                    }
-                }
-            });
+// ── Tabs ───────────────────────────────────────────────────────────
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
 
-            return isValid;
-        }
+// ── Data (already loaded from Django — no AJAX wait) ───────────────
+var allParties = Array.isArray(PARTIES) ? PARTIES : [];
+var partyMap = {};
+allParties.forEach(p => { partyMap[p.id] = p; });
 
-        // Add event listeners for form submissions
-        document.getElementById('addNewPartyForm').addEventListener('submit', function(e) {
-            if (!validateForm('addNewPartyForm')) {
-                e.preventDefault();
-            }
-        });
+// Update stats
+(function updateStats() {
+  document.getElementById('statTotal').textContent    = allParties.length;
+  document.getElementById('statBooking').textContent  = allParties.filter(p => p.party_type === 'booking').length;
+  document.getElementById('statDelivery').textContent = allParties.filter(p => p.party_type === 'delivery').length;
+  document.getElementById('statBoth').textContent     = allParties.filter(p => p.party_type === 'both').length;
+})();
 
-        document.getElementById('searchPartyForm').addEventListener('submit', function(e) {
-            if (!validateForm('searchPartyForm')) {
-                e.preventDefault();
-            }
-        });
+// ── Table rendering ────────────────────────────────────────────────
+var sortKey = 'party_name', sortDir = 'asc';
 
-        document.getElementById('editPartyForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            if (validateForm('editPartyForm')) {
-                const formData = new FormData(this);
-                const partyId = document.getElementById('edit_party_id').value;
-                fetch(`/transporter/update-party/${partyId}/`, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Party updated successfully');
-                        fetchPartyMasterRecords();
-                        document.getElementById('editPartyForm').style.display = 'none';
-                    } else {
-                        alert('Failed to update party');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('There was an error updating the party.');
-                });
-            }
-        });
+function getFiltered() {
+  const q    = (document.getElementById('searchInput').value || '').toLowerCase();
+  const type = document.getElementById('typeFilter').value;
+  return allParties.filter(p => {
+    const matchType = !type || p.party_type === type;
+    const matchQ    = !q   || [p.party_name,p.display_name,p.party_code,p.city,p.state,p.gst_no,p.pan_no,p.mobile_number_1]
+                                 .some(v => (v||'').toLowerCase().includes(q));
+    return matchType && matchQ;
+  });
+}
 
-        function showModal() {
-            document.getElementById('successModal').style.display = 'flex';
-        }
-    
-        function closeModal() {
-            document.getElementById('successModal').style.display = 'none';
-        }
-    
-        function redirectToAddParty() {
-            closeModal();
-            openTab(event, 'addNewParty'); // Redirect to Add New Party tab
-        }
-    
-        document.getElementById('addNewPartyForm').addEventListener('submit', function(e) {
-            e.preventDefault(); // Prevent default form submission
-    
-            if (validateForm('addNewPartyForm')) {
-                // Perform AJAX request to submit the form
-                const formData = new FormData(this);
-                fetch(this.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}' // Include CSRF token
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        showModal(); // Show success modal
-                    } else {
-                        // Handle error response
-                        alert('There was an error submitting the form.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('There was an error submitting the form.');
-                });
-            }
-        });
+function renderTable() {
+  let data = getFiltered();
+  if (sortKey) {
+    data.sort((a, b) => {
+      const va = (a[sortKey]||'').toString().toLowerCase();
+      const vb = (b[sortKey]||'').toString().toLowerCase();
+      return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+  }
+  const tbody = document.getElementById('partyTableBody');
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="10">
+      <div class="empty-state"><i class="fas fa-building"></i><p>No parties found.</p></div>
+    </td></tr>`;
+    return;
+  }
+  const typeBadge = { booking:'badge-booking', delivery:'badge-delivery', both:'badge-both' };
+  tbody.innerHTML = data.map(p => `
+    <tr>
+      <td title="${p.party_code||''}">${p.party_code||'—'}</td>
+      <td title="${p.party_name}" style="font-weight:600;">${p.party_name}</td>
+      <td title="${p.display_name}">${p.display_name}</td>
+      <td>${p.mobile_number_1||'—'}</td>
+      <td><span class="badge ${typeBadge[p.party_type]||''}">${p.party_type||'—'}</span></td>
+      <td>${p.gst_no||'—'}</td>
+      <td>${p.city||'—'}</td>
+      <td>${p.state||'—'}</td>
+      <td>${p.is_tbb ? '<span class="badge badge-tbb">TBB</span>' : '—'}</td>
+      <td>
+        <div class="action-btns">
+          <button class="btn btn-warning btn-sm" data-id="${p.id}" onclick="openEdit(this.dataset.id)">
+            <i class="fas fa-edit"></i> Edit
+          </button>
+          <button class="btn btn-danger btn-sm" data-id="${p.id}" onclick="deleteParty(this.dataset.id)">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
 
-        document.getElementById('search-party').addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#partyMasterTable tbody tr');
-            
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                if(text.includes(searchTerm)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        });
+function sortTable(key) {
+  if (sortKey === key) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  else { sortKey = key; sortDir = 'asc'; }
+  renderTable();
+}
 
-        document.addEventListener('DOMContentLoaded', fetchPartyMasterRecords);
-        
-        function fetchPartyMasterRecords() {
-            fetch('/transporter/get-party-master-records/')
-                .then(response => response.json())
-                .then(data => {
-                    const tableBody = document.querySelector('#partyMasterTable tbody');
-                    tableBody.innerHTML = ''; // Clear existing rows
+document.getElementById('searchInput').addEventListener('input', renderTable);
+document.getElementById('typeFilter').addEventListener('change', renderTable);
+renderTable();  // Instant — no loading spinner needed
 
-                    data.forEach(record => {
-                        const row = `
-                            <tr>
-                                <td>${record.party_code || ''}</td>
-                                <td>${record.party_name}</td>
-                                <td>${record.display_name}</td>
-                                <td>${record.mobile_number_1}</td>
-                                <td>${record.mobile_number_2 || ''}</td>
-                                <td>${record.phone_number_1 || ''}</td>
-                                <td>${record.phone_number_2 || ''}</td>
-                                <td>${record.gst_no || ''}</td>
-                                <td>${record.pan_no || ''}</td>
-                                <td>${record.email || ''}</td>
-                                <td>${record.marketing_person || ''}</td>
-                                <td>${record.party_type}</td>
-                                <td>${record.country}</td>
-                                <td>${record.state || ''}</td>
-                                <td>${record.city}</td>
-                                <td>${record.pincode}</td>
-                                <td>${record.address}</td>
-                                <td>${record.is_tbb ? 'Yes' : 'No'}</td>
-                                <td>${record.remark || ''}</td>
-                                <td>${new Date(record.created_at).toLocaleString()}</td>
-                                <td>${new Date(record.updated_at).toLocaleString()}</td>
-                                <td>
-                                    <button onclick="editParty(${record.id})">Edit</button>
-                                    <button onclick="deleteParty(${record.id })">Delete</button>
-                                </td>
-                            </tr>
-                        `;
-                        tableBody.innerHTML += row;
-                    });
-                })
-                .catch(error => {
-                    console.error('Error fetching party master records:', error);
-                });
-        }
-    </script>
+// ── Add Party ──────────────────────────────────────────────────────
+document.getElementById('addPartyForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('addBtn');
+  const txt = document.getElementById('addBtnText');
+  btn.disabled = true; txt.textContent = 'Saving...';
+
+  try {
+    const fd = new FormData(this);
+    // Checkbox: FormData doesn't include unchecked checkboxes
+    if (!this.querySelector('[name="is_tbb"]').checked) fd.set('is_tbb', '');
+
+    const res = await fetch("{% url 'transporter:add_party' %}", {
+      method: 'POST', body: fd,
+      headers: { 'X-CSRFToken': CSRF }
+    });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch { data = { success: res.ok, message: res.ok ? 'Party saved.' : 'Server error.' }; }
+
+    if (data.success) {
+      showToast(data.message || 'Party added successfully!', 'success');
+      this.reset();
+      if (data.party) {
+        allParties.unshift(data.party);
+        partyMap[data.party.id] = data.party;
+      }
+      // Update stats
+      document.getElementById('statTotal').textContent = allParties.length;
+      document.getElementById('statBooking').textContent  = allParties.filter(p=>p.party_type==='booking').length;
+      document.getElementById('statDelivery').textContent = allParties.filter(p=>p.party_type==='delivery').length;
+      document.getElementById('statBoth').textContent     = allParties.filter(p=>p.party_type==='both').length;
+      // Switch to list tab and refresh
+      switchTab('tab-list', document.querySelector('.tab-btn'));
+      renderTable();
+    } else {
+      const errs = data.errors ? Object.values(data.errors).join(', ') : '';
+      showToast(data.message + (errs ? ': ' + errs : ''), 'error');
+    }
+  } catch (err) {
+    showToast(err.message || 'Server error.', 'error');
+  } finally {
+    btn.disabled = false; txt.textContent = 'Save Party';
+  }
+});
+
+// ── Edit Modal ─────────────────────────────────────────────────────
+function openEdit(id) {
+  const p = partyMap[parseInt(id)];
+  if (!p) { showToast('Party not found. Please refresh.', 'error'); return; }
+
+  document.getElementById('edit_id').value       = p.id;
+  document.getElementById('e_party_name').value  = p.party_name    || '';
+  document.getElementById('e_display_name').value= p.display_name  || '';
+  document.getElementById('e_party_code').value  = p.party_code    || '';
+  document.getElementById('e_party_type').value  = p.party_type    || '';
+  document.getElementById('e_mobile_number_1').value = p.mobile_number_1 || '';
+  document.getElementById('e_mobile_number_2').value = p.mobile_number_2 || '';
+  document.getElementById('e_phone_number_1').value  = p.phone_number_1  || '';
+  document.getElementById('e_phone_number_2').value  = p.phone_number_2  || '';
+  document.getElementById('e_email').value            = p.email            || '';
+  document.getElementById('e_marketing_person').value = p.marketing_person || '';
+  document.getElementById('e_gst_no').value  = p.gst_no  || '';
+  document.getElementById('e_pan_no').value  = p.pan_no  || '';
+  document.getElementById('e_country').value = p.country || 'INDIA';
+  document.getElementById('e_state').value   = p.state   || '';
+  document.getElementById('e_city').value    = p.city    || '';
+  document.getElementById('e_pincode').value = p.pincode || '';
+  document.getElementById('e_address').value = p.address || '';
+  document.getElementById('e_remark').value  = p.remark  || '';
+  document.getElementById('e_is_tbb').checked = !!p.is_tbb;
+
+  document.getElementById('editModal').classList.add('show');
+}
+
+function closeEdit() { document.getElementById('editModal').classList.remove('show'); }
+
+async function saveEdit() {
+  const id = parseInt(document.getElementById('edit_id').value);
+  const party_name   = document.getElementById('e_party_name').value.trim();
+  const display_name = document.getElementById('e_display_name').value.trim();
+  const city         = document.getElementById('e_city').value.trim();
+  const mobile_number_1 = document.getElementById('e_mobile_number_1').value.trim();
+  const party_type   = document.getElementById('e_party_type').value;
+  const address      = document.getElementById('e_address').value.trim();
+
+  if (!party_name || !display_name || !city || !mobile_number_1 || !party_type || !address) {
+    showToast('Please fill all required fields.', 'warning'); return;
+  }
+
+  const payload = {
+    party_name, display_name, party_type, city, address, mobile_number_1,
+    party_code:         document.getElementById('e_party_code').value.trim(),
+    mobile_number_2:    document.getElementById('e_mobile_number_2').value.trim(),
+    phone_number_1:     document.getElementById('e_phone_number_1').value.trim(),
+    phone_number_2:     document.getElementById('e_phone_number_2').value.trim(),
+    email:              document.getElementById('e_email').value.trim(),
+    marketing_person:   document.getElementById('e_marketing_person').value.trim(),
+    gst_no:             document.getElementById('e_gst_no').value.trim(),
+    pan_no:             document.getElementById('e_pan_no').value.trim(),
+    country:            document.getElementById('e_country').value.trim(),
+    state:              document.getElementById('e_state').value.trim(),
+    pincode:            document.getElementById('e_pincode').value.trim(),
+    remark:             document.getElementById('e_remark').value.trim(),
+    is_tbb:             document.getElementById('e_is_tbb').checked,
+  };
+
+  const btn = document.getElementById('saveEditBtn');
+  const txt = document.getElementById('saveEditText');
+  btn.disabled = true; txt.textContent = 'Saving...';
+
+  try {
+    const res = await fetch(`/transporter/edit-party/${id}/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify(payload)
+    });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error(res.ok ? 'Unexpected response.' : `HTTP ${res.status}`); }
+
+    if (data.success) {
+      showToast('Party updated successfully!', 'success');
+      closeEdit();
+      // Update local data
+      const idx = allParties.findIndex(p => p.id === id);
+      if (idx !== -1) {
+        allParties[idx] = { ...allParties[idx], ...payload };
+        partyMap[id] = allParties[idx];
+      }
+      renderTable();
+    } else {
+      showToast(data.error || data.message || 'Failed to update.', 'error');
+    }
+  } catch (err) {
+    showToast(err.message || 'Server error.', 'error');
+  } finally {
+    btn.disabled = false; txt.textContent = 'Save Changes';
+  }
+}
+
+// ── Delete ─────────────────────────────────────────────────────────
+async function deleteParty(id) {
+  id = parseInt(id);
+  const p = partyMap[id];
+  if (!confirm(`Delete party "${p ? p.party_name : id}"? This cannot be undone.`)) return;
+  try {
+    const res = await fetch(`/transporter/delete-party/${id}/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': CSRF }
+    });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error('Unexpected server response.'); }
+
+    if (data.success) {
+      showToast('Party deleted.', 'warning');
+      allParties = allParties.filter(p => p.id !== id);
+      delete partyMap[id];
+      document.getElementById('statTotal').textContent = allParties.length;
+      document.getElementById('statBooking').textContent  = allParties.filter(p=>p.party_type==='booking').length;
+      document.getElementById('statDelivery').textContent = allParties.filter(p=>p.party_type==='delivery').length;
+      document.getElementById('statBoth').textContent     = allParties.filter(p=>p.party_type==='both').length;
+      renderTable();
+    } else {
+      showToast(data.error || 'Failed to delete.', 'error');
+    }
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+// Close modal on overlay click
+document.getElementById('editModal').addEventListener('click', function(e) {
+  if (e.target === this) closeEdit();
+});
+</script>
 </body>
 </html>
