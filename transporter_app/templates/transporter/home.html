@@ -188,9 +188,10 @@
     <div class="topbar-left">
       <div class="search-bar">
         <i data-lucide="search"></i>
-        <input type="text" placeholder="Search requests, vehicles...">
+        <input type="text" id="homeSearchInput" placeholder="Enter CNote number...">
       </div>
-      <button class="btn btn-primary" onclick="window.open('{% url 'transporter:cnotes_search' %}','_blank')">
+      <button class="btn btn-primary" onclick="(function(){const v=document.getElementById('homeSearchInput').value.trim();window.open('/transporter/cnotes-search/'+(v?'?cn='+encodeURIComponent(v):''),'_blank');})()"
+
         <i data-lucide="search"></i> Search CNotes
       </button>
       <button class="btn btn-success" onclick="window.open('/transporter/ddm/','_blank')">
