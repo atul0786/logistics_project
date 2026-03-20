@@ -285,7 +285,7 @@
             <div class="form-grid">
               <div class="form-group">
                 <label>State Name <span class="req">*</span></label>
-                <input type="text" id="stateName" name="state" placeholder="Enter state name" required>
+                <input type="text" id="stateName" name="name" placeholder="Enter state name" required>
               </div>
               <div class="form-group">
                 <label>Capital <span class="req">*</span></label>
@@ -640,7 +640,7 @@ async function saveState() {
   btn.disabled = true; txt.textContent = 'Saving...';
   try {
     const fd = new FormData();
-    fd.append('state', document.getElementById('es_name').value);
+    fd.append('name', document.getElementById('es_name').value);
     fd.append('capital', document.getElementById('es_capital').value);
     fd.append('description', document.getElementById('es_description').value);
     const res = await axios.post(`/transporter/api/edit-state/${id}/`, fd);
