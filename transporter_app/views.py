@@ -3300,27 +3300,28 @@ def bill_detail(request, bill_id):
         'dealer': {
             'name': bill.dealer.name,
             'address': bill.dealer.address,
-            'gstn': bill.dealer.gstn,  # Corrected field
+            'gstn': bill.dealer.gstn,
             'phone_number_1': bill.dealer.phone_number_1,
             'email': bill.dealer.email
         },
         'status': bill.status,
         'items': [{
-            'id': item.id,
+            'id': item.id,                          # BillItem id
+            'cnote_id': item.cnote_id,              # ← NAYI LINE: actual CNote FK id
             'cnote_number': item.cnote_number,
             'created_date': item.created_date.isoformat(),
             'payment_type': item.payment_type,
-            'amount': float(item.amount)
+            'amount': float(item.amount),
+            'consignee_name': item.consignee_name,  # ← NAYI LINE: consignee name add
+            'total_art': item.total_art,            # ← NAYI LINE: total art add
         } for item in items],
         'subtotal': float(bill.subtotal),
         'gst_percentage': float(bill.gst_percentage),
         'gst_amount': float(bill.gst_amount),
         'total_amount': float(bill.total_amount)
     }
-    return JsonResponse(response)    
-
-logger = logging.getLogger(__name__)
-
+    return JsonResponse(response)
+ 
 @login_required
 def update_bill(request, bill_id):
     if request.method not in ['POST', 'PUT']:
@@ -3601,51 +3602,55 @@ def remove_cnote_from_bill(request, bill_id):
         bill = Bill.objects.get(id=bill_id)
         data = json.loads(request.body)
         cnote_id = data.get('cnote_id')
-
-        bill_item = BillItem.objects.get(bill=bill, cnote_id=cnote_id)
+        bill_item_id = data.get('bill_item_id')  # ← NAYI: fallback
+ 
+        if cnote_id:
+            bill_item = BillItem.objects.get(bill=bill, cnote_id=cnote_id)
+        elif bill_item_id:
+            bill_item = BillItem.objects.get(id=bill_item_id, bill=bill)  # ← NAYI
+        else:
+            return JsonResponse({'status': 'error', 'message': 'cnote_id or bill_item_id required'}, status=400)
+ 
         bill_item.delete()
-
+ 
         # Update bill totals
         bill.subtotal = sum(item.amount for item in bill.items.all())
         bill.gst_amount = bill.subtotal * (bill.gst_percentage / Decimal('100'))
         bill.total_amount = bill.subtotal + bill.gst_amount
         bill.save()
-
+ 
         bill_data = {
             'id': bill.id,
             'bill_number': bill.bill_number,
             'created_at': bill.created_at.isoformat(),
-            'dealer': {
-                'name': bill.dealer.name
-            },
-            'items': [
-                {
-                    'id': item.id,
-                    'cnote_number': item.cnote_number,
-                    'created_date': item.created_date.isoformat(),
-                    'amount': float(item.amount),
-                    'payment_type': item.payment_type
-                } for item in bill.items.all()
-            ],
+            'dealer': {'name': bill.dealer.name},
+            'items': [{
+                'id': item.id,
+                'cnote_id': item.cnote_id,
+                'cnote_number': item.cnote_number,
+                'created_date': item.created_date.isoformat(),
+                'amount': float(item.amount),
+                'payment_type': item.payment_type,
+                'consignee_name': item.consignee_name,
+                'total_art': item.total_art,
+            } for item in bill.items.all()],
             'subtotal': float(bill.subtotal),
             'gst_percentage': float(bill.gst_percentage),
             'gst_amount': float(bill.gst_amount),
             'total_amount': float(bill.total_amount),
             'status': bill.status
         }
-
+ 
         logger.info(f"CNote removed from bill {bill.bill_number}")
         return JsonResponse({'status': 'success', 'bill': bill_data})
+ 
     except Bill.DoesNotExist:
-        logger.error(f"Bill with ID {bill_id} not found")
         return JsonResponse({'status': 'error', 'message': 'Bill not found'}, status=404)
     except BillItem.DoesNotExist:
-        logger.error(f"BillItem with CNote ID {cnote_id} not found in bill {bill_id}")
         return JsonResponse({'status': 'error', 'message': 'CNote not found in this bill'}, status=404)
     except Exception as e:
         logger.error(f"Error removing CNote from bill: {str(e)}", exc_info=True)
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-    
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500) 
 
 @login_required
 def dealer_list(request):
