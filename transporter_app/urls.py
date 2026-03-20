@@ -41,6 +41,9 @@ urlpatterns = [
     path('add-city/', views.add_city, name='add_city'),
     path('edit-city/<int:id>/', views.edit_city, name='edit_city'),
     path('delete-city/<int:id>/', views.delete_city, name='delete_city'),
+    path('api/add-state/',             views.add_state_api,    name='add_state_api'),
+    path('api/edit-state/<int:id>/',   views.edit_state_api,   name='edit_state_api'),
+    path('api/delete-state/<int:id>/', views.delete_state_api, name='delete_state_api'),
     
     # Configuration
     path('save-config/', views.save_config, name='save_config'),
