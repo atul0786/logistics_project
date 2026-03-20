@@ -419,7 +419,7 @@ async function loadBills(page=1){
         <td>${statusBadge(b.status)}</td>
         <td onclick="event.stopPropagation()">
           <div class="btn-actions">
-            <a href="/transporter/bill/${b.id}/print/" target="_blank" class="btn btn-primary btn-sm" title="Print"><i class="fas fa-print"></i></a>
+            <a href="/transporter/billing/?bill_id=${b.id}" target="_blank" class="btn btn-primary btn-sm" title="Print / View Bill"><i class="fas fa-print"></i></a>
             <button class="btn btn-warning btn-sm" onclick="loadDetailAndEdit(${b.id})" title="Edit"><i class="fas fa-edit"></i></button>
             ${b.status!=='cancelled'?`<button class="btn btn-danger btn-sm" onclick="cancelBillById(${b.id})" title="Cancel"><i class="fas fa-ban"></i></button>`:''}
           </div>
@@ -479,7 +479,7 @@ function populateDetail(d){
   document.getElementById('dSubFoot').textContent  = '₹'+Number(d.subtotal||0).toFixed(2);
   document.getElementById('dGSTFoot').textContent  = '₹'+Number(d.gst_amount||0).toFixed(2);
   document.getElementById('dTotalFoot').textContent= '₹'+Number(d.total_amount||0).toFixed(2);
-  document.getElementById('printBtn').href         = '/transporter/bill/'+d.id+'/print/';
+  document.getElementById('printBtn').href = '/transporter/billing/?bill_id='+d.id;
   // Show/hide cancel & edit buttons
   const canEdit   = d.status === 'pending';
   const canCancel = d.status !== 'cancelled';
@@ -501,7 +501,7 @@ function populateDetail(d){
       <td style="text-transform:uppercase;font-size:.72rem;">${it.payment_type||'—'}</td>
       <td>${it.consignee_name||'—'}</td>
       <td style="text-align:right;">₹${Number(it.amount||0).toFixed(2)}</td>
-      <td>${canEdit?`<button class="btn btn-danger btn-sm" data-cid="${it.cnote_id||it.id}" onclick="removeCNote(this.dataset.cid)"><i class="fas fa-times"></i></button>`:'—'}</td>
+      <td>${canEdit?`<button class="btn btn-danger btn-sm" data-cid="${it.cnote_id}" data-billitem="${it.id}" onclick="removeCNote(this.dataset.cid, this.dataset.billitem)"><i class="fas fa-times"></i></button>`:'—'}</td>
     </tr>`).join('');
 }
 
@@ -572,15 +572,20 @@ async function cancelBillById(id){
 }
 
 // ── Remove CNote from Bill ───────────────────────────────────────
-async function removeCNote(cnoteId){
+async function removeCNote(cnoteId, billItemId){
   if(!selectedBillId) return;
   if(!confirm('Remove this CNote from the bill?')) return;
   setLoading(true);
   try{
+    // cnote_id may be undefined if bill_detail doesn't return it
+    // If not available, pass billitem_id so server can look up
+    const payload = cnoteId && cnoteId!=='undefined'
+      ? {cnote_id: parseInt(cnoteId)}
+      : {bill_item_id: parseInt(billItemId)};
     const [data] = await safeFetch('/transporter/bill/'+selectedBillId+'/remove-cnote/',{
       method:'POST',
       headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},
-      body:JSON.stringify({cnote_id:parseInt(cnoteId)})
+      body:JSON.stringify(payload)
     });
     if(data.status==='success'){
       showToast('CNote removed.','warning');
