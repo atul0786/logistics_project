@@ -190,10 +190,9 @@
         <i data-lucide="search"></i>
         <input type="text" id="homeSearchInput" placeholder="Enter CNote number...">
       </div>
-      <button class="btn btn-primary" onclick="(function(){const v=document.getElementById('homeSearchInput').value.trim();window.open('/transporter/cnotes-search/'+(v?'?cn='+encodeURIComponent(v):''),'_blank');})()"
-
-        <i data-lucide="search"></i> Search CNotes
-      </button>
+      <button class="btn btn-primary" onclick="(function(){const v=document.getElementById('homeSearchInput').value.trim();window.open('/transporter/cnotes-search/'+(v?'?cn='+encodeURIComponent(v):''),'_blank');})()" style="display:inline-flex;align-items:center;gap:6px;">
+  <i class="fas fa-search"></i> Search CNotes
+</button>
       <button class="btn btn-success" onclick="window.open('/transporter/ddm/','_blank')">
         <i data-lucide="plus"></i> Create DRS
       </button>
