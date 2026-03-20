@@ -469,6 +469,75 @@ function resetSearch(){
   window.history.pushState({},'',window.location.pathname);
   location.reload();
 }
+
+// ── Auto-load bill from URL param (from bill_manage print button) ──
+(function(){
+  const urlParams = new URLSearchParams(window.location.search);
+  const billId = urlParams.get('bill_id');
+  if(!billId) return;
+
+  // Show loading
+  document.getElementById('loadingOverlay').classList.add('show');
+
+  fetch('/transporter/bill/'+billId+'/')
+    .then(r=>r.text())
+    .then(text=>{
+      let d;
+      try{ d=JSON.parse(text); }catch{ throw new Error('Server error'); }
+
+      // Populate dealer info
+      document.getElementById('bDealerName').textContent = d.dealer?.name||'—';
+      document.getElementById('bDealerAddr').textContent = d.dealer?.address||'';
+      document.getElementById('bDealerGST').textContent  = d.dealer?.gstn ? 'GST: '+d.dealer.gstn : '';
+
+      // Invoice meta
+      document.getElementById('bInvoiceNo').textContent = d.bill_number;
+      document.getElementById('bDate').textContent      = d.created_at?d.created_at.substring(0,10):'—';
+
+      // Period
+      let period = '';
+      if(d.from_date && d.to_date) period = d.from_date+' to '+d.to_date;
+      else if(d.bill_month) period = 'Month '+d.bill_month+(d.bill_year?'/'+d.bill_year:'');
+      document.getElementById('bPeriod').textContent = period||'—';
+
+      // GST from bill
+      const gstPct = d.gst_percentage||18;
+      document.getElementById('gstSelect').value = gstPct;
+
+      // Populate items table
+      const tbody = document.getElementById('billItemsBody');
+      tbody.innerHTML = (d.items||[]).map((it,i)=>`
+        <tr>
+          <td>${i+1}</td>
+          <td style="font-weight:600;color:#2563eb;">${it.cnote_number||'—'}</td>
+          <td>${it.created_date||'—'}</td>
+          <td><span class="badge badge-${(it.payment_type||'').toLowerCase().replace(' ','')}">${(it.payment_type||'N/A').toUpperCase()}</span></td>
+          <td>${it.consignee_name||'—'}</td>
+          <td style="text-align:center;">${it.total_art||'—'}</td>
+          <td style="text-align:right;">₹${Number(it.amount||0).toFixed(2)}</td>
+        </tr>`).join('');
+
+      // Totals
+      document.getElementById('bSubtotal').textContent = '₹'+Number(d.subtotal||0).toFixed(2);
+      document.getElementById('bGSTRate').textContent  = d.gst_percentage||18;
+      document.getElementById('bGSTAmt').textContent   = '₹'+Number(d.gst_amount||0).toFixed(2);
+      document.getElementById('bTotal').textContent    = '₹'+Number(d.total_amount||0).toFixed(2);
+
+      // Show bill card directly, hide search form
+      document.getElementById('billCard').style.display = 'block';
+      document.querySelector('.card.no-print').style.display = 'none';
+
+      // Mark save button as already saved
+      const saveBtn = document.getElementById('saveBillBtn');
+      saveBtn.disabled = true;
+      document.getElementById('saveBtnTxt').textContent = 'Already Saved';
+
+      // Auto-print option
+      document.getElementById('billCard').scrollIntoView({behavior:'smooth'});
+    })
+    .catch(e=>{ console.error(e); })
+    .finally(()=>{ document.getElementById('loadingOverlay').classList.remove('show'); });
+})();
 </script>
 </body>
 </html>
